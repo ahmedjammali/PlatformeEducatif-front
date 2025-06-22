@@ -1,1 +1,275 @@
-/* You can add global styles to this file, and also import other style files */
+
+:root {
+  /* Primary Colors */
+  --color-primary-dark: #626F47;
+  --color-primary: #A4B465;
+  --color-secondary: #F5ECD5;
+  --color-accent: #F0BB78;
+  
+  /* Neutral Colors */
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+  --color-gray-light: #F5F5F5;
+  --color-gray: #E0E0E0;
+  --color-gray-dark: #666666;
+  
+  /* Semantic Colors */
+  --color-success: #4CAF50;
+  --color-error: #F44336;
+  --color-warning: #FF9800;
+  --color-info: #2196F3;
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  --gradient-secondary: linear-gradient(135deg, var(--color-secondary), var(--color-accent));
+  --gradient-accent: linear-gradient(135deg, var(--color-accent), var(--color-secondary));
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(98, 111, 71, 0.1);
+  --shadow-md: 0 4px 20px rgba(98, 111, 71, 0.15);
+  --shadow-lg: 0 10px 30px rgba(98, 111, 71, 0.2);
+  --shadow-xl: 0 20px 40px rgba(98, 111, 71, 0.25);
+  
+  /* Border Radius */
+  --radius-sm: 10px;
+  --radius-md: 20px;
+  --radius-lg: 30px;
+  --radius-full: 50%;
+  
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-base: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  
+  /* Z-index layers */
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-navbar: 1000;
+  --z-modal: 2000;
+  --z-tooltip: 3000;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+  
+  /* Font Sizes */
+  --font-xs: 0.75rem;
+  --font-sm: 0.875rem;
+  --font-base: 1rem;
+  --font-lg: 1.125rem;
+  --font-xl: 1.25rem;
+  --font-2xl: 1.5rem;
+  --font-3xl: 2rem;
+  --font-4xl: 3rem;
+  
+  /* Container */
+  --container-max-width: 1200px;
+  --container-padding: 2rem;
+}
+
+/* Global Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--color-primary-dark);
+  background-color: var(--color-secondary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: var(--spacing-md);
+}
+
+h1 { font-size: var(--font-4xl); }
+h2 { font-size: var(--font-3xl); }
+h3 { font-size: var(--font-2xl); }
+h4 { font-size: var(--font-xl); }
+h5 { font-size: var(--font-lg); }
+h6 { font-size: var(--font-base); }
+
+/* Links */
+a {
+  color: var(--color-primary-dark);
+  text-decoration: none;
+  transition: var(--transition-base);
+}
+
+a:hover {
+  color: var(--color-primary);
+}
+
+/* Buttons Base */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+
+/* Utility Classes */
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+}
+
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.mt-1 { margin-top: var(--spacing-sm); }
+.mt-2 { margin-top: var(--spacing-md); }
+.mt-3 { margin-top: var(--spacing-lg); }
+.mt-4 { margin-top: var(--spacing-xl); }
+
+.mb-1 { margin-bottom: var(--spacing-sm); }
+.mb-2 { margin-bottom: var(--spacing-md); }
+.mb-3 { margin-bottom: var(--spacing-lg); }
+.mb-4 { margin-bottom: var(--spacing-xl); }
+
+/* Material Theme Customization */
+.mat-primary {
+  background-color: var(--color-primary-dark) !important;
+}
+
+.mat-accent {
+  background-color: var(--color-primary) !important;
+}
+
+.mat-warn {
+  background-color: var(--color-error) !important;
+}
+
+/* Custom Snackbar Styles */
+.success-snackbar {
+  background-color: var(--color-success) !important;
+  color: white !important;
+}
+
+.error-snackbar {
+  background-color: var(--color-error) !important;
+  color: white !important;
+}
+
+.warning-snackbar {
+  background-color: var(--color-warning) !important;
+  color: white !important;
+}
+
+.info-snackbar {
+  background-color: var(--color-info) !important;
+  color: white !important;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1200px) {
+  :root {
+    --container-padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --container-padding: 1rem;
+    --font-4xl: 2.5rem;
+    --font-3xl: 1.75rem;
+    --font-2xl: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --font-4xl: 2rem;
+    --font-3xl: 1.5rem;
+    --font-2xl: 1.125rem;
+  }
+}

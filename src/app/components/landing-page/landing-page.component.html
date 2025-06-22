@@ -1,0 +1,266 @@
+<div class="landing-page">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-background">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+    </div>
+    
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1 class="hero-title">
+          <span class="title-line">Bienvenue à</span>
+          <span class="title-highlight">HibaSchool</span>
+        </h1>
+        <p class="hero-subtitle">
+          L'excellence éducative à portée de main. Une plateforme moderne pour un apprentissage innovant et personnalisé.
+        </p>
+        <div class="hero-actions">
+          <button class="cta-primary" (click)="navigateToLogin()">
+            <span>Commencer</span>
+            <span class="arrow">→</span>
+          </button>
+          <button class="cta-secondary" (click)="scrollToSection('about')">
+            <span>En savoir plus</span>
+          </button>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item" *ngFor="let stat of statistics.slice(0, 3)">
+            <span class="stat-icon">{{ stat.icon }}</span>
+            <span class="stat-number">{{ stat.number }}</span>
+            <span class="stat-label">{{ stat.label }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="hero-visual">
+        <div class="floating-card card-1">
+          <span class="card-icon">📚</span>
+          <span class="card-text">Cours Interactifs</span>
+        </div>
+        <div class="floating-card card-2">
+          <span class="card-icon">🎯</span>
+          <span class="card-text">Objectifs Clairs</span>
+        </div>
+        <div class="floating-card card-3">
+          <span class="card-icon">📈</span>
+          <span class="card-text">Progrès Visible</span>
+        </div>
+        <div class="main-visual">
+          <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#626F47;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#A4B465;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <circle cx="200" cy="200" r="150" fill="url(#gradient1)" opacity="0.1"/>
+            <circle cx="200" cy="200" r="120" fill="url(#gradient1)" opacity="0.2"/>
+            <circle cx="200" cy="200" r="90" fill="url(#gradient1)" opacity="0.3"/>
+            <circle cx="200" cy="200" r="60" fill="#A4B465"/>
+            <text x="200" y="210" text-anchor="middle" fill="#F5ECD5" font-size="48" font-weight="bold">HS</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section" id="about">
+    <div class="section-container">
+      <div class="section-header">
+        <h2 class="section-title">Pourquoi Choisir HibaSchool?</h2>
+        <p class="section-subtitle">Découvrez les avantages qui font notre différence</p>
+      </div>
+      
+      <div class="features-grid">
+        <div class="feature-card" *ngFor="let feature of features; let i = index" 
+             [style.animation-delay]="i * 0.1 + 's'">
+          <div class="feature-icon" [style.background-color]="feature.color + '20'">
+            <span>{{ feature.icon }}</span>
+          </div>
+          <h3 class="feature-title">{{ feature.title }}</h3>
+          <p class="feature-description">{{ feature.description }}</p>
+          <div class="feature-decoration" [style.background-color]="feature.color"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Statistics Section -->
+  <section class="statistics-section">
+    <div class="stats-background">
+      <div class="stats-pattern"></div>
+    </div>
+    <div class="section-container">
+      <div class="stats-grid">
+        <div class="stat-card" *ngFor="let stat of statistics; let i = index"
+             [style.animation-delay]="i * 0.15 + 's'">
+          <div class="stat-icon-wrapper">
+            <span class="stat-icon">{{ stat.icon }}</span>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number" [attr.data-target]="stat.number">{{ stat.number }}</h3>
+            <p class="stat-label">{{ stat.label }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials Section -->
+  <section class="testimonials-section">
+    <div class="section-container">
+      <div class="section-header">
+        <h2 class="section-title">Ce que disent nos utilisateurs</h2>
+        <p class="section-subtitle">Témoignages de notre communauté</p>
+      </div>
+      
+      <div class="testimonials-wrapper">
+        <div class="testimonial-card" 
+             *ngFor="let testimonial of testimonials; let i = index"
+             [class.active]="i === currentTestimonialIndex">
+          <div class="testimonial-header">
+            <div class="testimonial-avatar" [style.background]="'linear-gradient(135deg, #626F47, #A4B465)'">
+              {{ testimonial.avatar }}
+            </div>
+            <div class="testimonial-info">
+              <h4 class="testimonial-name">{{ testimonial.name }}</h4>
+              <p class="testimonial-role">{{ testimonial.role }}</p>
+            </div>
+            <div class="testimonial-rating">
+              <span class="star" *ngFor="let star of [1,2,3,4,5]">⭐</span>
+            </div>
+          </div>
+          <p class="testimonial-message">"{{ testimonial.message }}"</p>
+        </div>
+      </div>
+      
+      <div class="testimonial-indicators">
+        <span class="indicator" 
+              *ngFor="let testimonial of testimonials; let i = index"
+              [class.active]="i === currentTestimonialIndex"
+              (click)="currentTestimonialIndex = i"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="cta-background">
+      <div class="cta-shape cta-shape-1"></div>
+      <div class="cta-shape cta-shape-2"></div>
+    </div>
+    <div class="section-container">
+      <div class="cta-content">
+        <h2 class="cta-title">Prêt à transformer votre éducation?</h2>
+        <p class="cta-subtitle">Rejoignez HibaSchool aujourd'hui et découvrez une nouvelle façon d'apprendre</p>
+        <button class="cta-button" (click)="navigateToLogin()">
+          <span>Commencer Maintenant</span>
+          <span class="button-arrow">→</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section class="contact-section" id="contact">
+    <div class="section-container">
+      <div class="contact-grid">
+        <div class="contact-info">
+          <h2 class="contact-title">Contactez-nous</h2>
+          <p class="contact-subtitle">Nous sommes là pour répondre à toutes vos questions</p>
+          
+          <div class="contact-items">
+            <div class="contact-item">
+              <span class="contact-icon">📍</span>
+              <div>
+                <h4>Adresse</h4>
+                <p>123 Avenue de l'Éducation, Tunis 1000</p>
+              </div>
+            </div>
+            <div class="contact-item">
+              <span class="contact-icon">📞</span>
+              <div>
+                <h4>Téléphone</h4>
+                <p>+216 71 234 567</p>
+              </div>
+            </div>
+            <div class="contact-item">
+              <span class="contact-icon">✉️</span>
+              <div>
+                <h4>Email</h4>
+                <p>contact@hibaschool.tn</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="contact-form">
+  <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <input 
+        type="text" 
+        placeholder="Votre nom" 
+        class="form-control"
+        formControlName="name"
+        [class.is-invalid]="name?.invalid && (name?.dirty || name?.touched)">
+      <div *ngIf="name?.invalid && (name?.dirty || name?.touched)" class="invalid-feedback">
+        <div *ngIf="name?.errors?.['required']">Name is required</div>
+        <div *ngIf="name?.errors?.['minlength']">Name must be at least 2 characters</div>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <input 
+        type="email" 
+        placeholder="Votre email" 
+        class="form-control"
+        formControlName="email"
+        [class.is-invalid]="email?.invalid && (email?.dirty || email?.touched)">
+      <div *ngIf="email?.invalid && (email?.dirty || email?.touched)" class="invalid-feedback">
+        <div *ngIf="email?.errors?.['required']">Email is required</div>
+        <div *ngIf="email?.errors?.['email']">Please enter a valid email</div>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <input 
+        type="tel" 
+        placeholder="Votre téléphone" 
+        class="form-control"
+        formControlName="phone"
+        [class.is-invalid]="phone?.invalid && (phone?.dirty || phone?.touched)">
+      <div *ngIf="phone?.invalid && (phone?.dirty || phone?.touched)" class="invalid-feedback">
+        <div *ngIf="phone?.errors?.['required']">Phone number is required</div>
+        <div *ngIf="phone?.errors?.['pattern']">Please enter a valid 8-digit phone number</div>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <textarea 
+        placeholder="Votre message" 
+        rows="4" 
+        class="form-control"
+        formControlName="message"
+        [class.is-invalid]="message?.invalid && (message?.dirty || message?.touched)"></textarea>
+      <div *ngIf="message?.invalid && (message?.dirty || message?.touched)" class="invalid-feedback">
+        <div *ngIf="message?.errors?.['required']">Message is required</div>
+        <div *ngIf="message?.errors?.['minlength']">Message must be at least 10 characters</div>
+      </div>
+    </div>
+    
+    <button 
+      type="submit" 
+      class="submit-button"
+      [disabled]="contactForm.invalid || isLoading">
+      <span>{{ isLoading ? 'Sending...' : 'Envoyer' }}</span>
+      <span class="send-icon">📤</span>
+    </button>
+  </form>
+</div>
+      </div>
+    </div>
+  </section>
+</div>

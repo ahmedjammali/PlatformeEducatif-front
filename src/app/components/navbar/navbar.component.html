@@ -1,0 +1,91 @@
+<nav class="navbar" [class.scrolled]="isScrolled" *ngIf="!isAdmin" >
+  <div class="navbar-container">
+    <!-- Logo Section -->
+    <div class="navbar-logo" routerLink="/">
+      <div class="logo-icon">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r="18" stroke="#626F47" stroke-width="2" fill="#A4B465"/>
+          <path d="M20 10 L25 20 L20 30 L15 20 Z" fill="#626F47"/>
+          <circle cx="20" cy="20" r="5" fill="#F5ECD5"/>
+        </svg>
+      </div>
+      <span class="logo-text">HibaSchool</span>
+    </div>
+
+    <!-- Desktop Navigation -->
+    <div class="navbar-menu desktop-menu">
+      <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+        <span class="nav-icon">🏠</span>
+        Accueil
+      </a>
+      <a class="nav-link" (click)="scrollToSection('about')">
+        <span class="nav-icon">📚</span>
+        À Propos
+      </a>
+      <a class="nav-link" (click)="scrollToSection('contact')">
+        <span class="nav-icon">📧</span>
+        Contact
+      </a>
+      
+      <div class="nav-actions">
+        <button *ngIf="!isLoggedIn" class="login-btn" (click)="navigateToLogin()">
+          <span class="btn-icon">👤</span>
+          Connexion
+        </button>
+        
+        <div *ngIf="isLoggedIn" class="user-menu">
+          <button class="user-btn" (click)="navigateToDashboard()">
+            <span class="user-avatar">{{ userName?.charAt(0)?.toUpperCase() }}</span>
+            <span class="user-name">{{ userName }}</span>
+          </button>
+          <button class="logout-btn" (click)="logout()">
+            <span class="btn-icon">🚪</span>
+            Déconnexion
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" (click)="toggleMobileMenu()">
+      <span class="hamburger" [class.open]="isMobileMenuOpen">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+    </button>
+  </div>
+
+  <!-- Mobile Navigation -->
+  <div class="mobile-menu" [class.open]="isMobileMenuOpen">
+    <a class="mobile-nav-link" routerLink="/" (click)="closeMobileMenu()">
+      <span class="nav-icon">🏠</span>
+      Accueil
+    </a>
+    <a class="mobile-nav-link" (click)="scrollToSection('about')">
+      <span class="nav-icon">📚</span>
+      À Propos
+    </a>
+    <a class="mobile-nav-link" (click)="scrollToSection('contact')">
+      <span class="nav-icon">📧</span>
+      Contact
+    </a>
+    
+    <div class="mobile-nav-actions">
+      <button *ngIf="!isLoggedIn" class="mobile-login-btn" (click)="navigateToLogin()">
+        <span class="btn-icon">👤</span>
+        Connexion
+      </button>
+      
+      <div *ngIf="isLoggedIn" class="mobile-user-section">
+        <button class="mobile-dashboard-btn" (click)="navigateToDashboard()">
+          <span class="user-avatar">{{ userName?.charAt(0)?.toUpperCase() }}</span>
+          Tableau de bord
+        </button>
+        <button class="mobile-logout-btn" (click)="logout()">
+          Déconnexion
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>

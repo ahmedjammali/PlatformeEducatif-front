@@ -1,0 +1,319 @@
+<!-- classes-management.component.html -->
+<app-layout>
+  <div class="classes-container">
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1>Gestion des Classes</h1>
+        <p class="header-subtitle">Créer et gérer les classes de votre établissement</p>
+      </div>
+      
+      <button class="btn-primary" (click)="openCreateClassModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+          <line x1="12" y1="11" x2="12" y2="17"/>
+          <line x1="9" y1="14" x2="15" y2="14"/>
+        </svg>
+        <span>Nouvelle Classe</span>
+      </button>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Rechercher</label>
+        <div class="search-input">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input 
+            type="text" 
+            placeholder="Nom de la classe..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange()"
+          />
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Niveau</label>
+        <select [(ngModel)]="selectedGrade" (ngModelChange)="onFilterChange()">
+          <option value="">Tous les niveaux</option>
+          <option value="6ème">6ème</option>
+          <option value="5ème">5ème</option>
+          <option value="4ème">4ème</option>
+          <option value="3ème">3ème</option>
+          <option value="2nde">2nde</option>
+          <option value="1ère">1ère</option>
+          <option value="Terminale">Terminale</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Année Scolaire</label>
+        <select [(ngModel)]="selectedYear" (ngModelChange)="onFilterChange()">
+          <option value="">Toutes les années</option>
+          <option value="2024">2024-2025</option>
+          <option value="2023">2023-2024</option>
+        </select>
+      </div>
+
+      <button class="btn-secondary" (click)="resetFilters()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="1 4 1 10 7 10"/>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+        </svg>
+        Réinitialiser
+      </button>
+    </div>
+
+    <!-- Classes Grid -->
+    <div class="classes-grid">
+      <div class="class-card" *ngFor="let class of filteredClasses" [class.inactive]="!class.isActive">
+        <div class="class-header">
+          <h3>{{ class.name }}</h3>
+          <div class="class-badge" [class.active]="class.isActive" [class.inactive]="!class.isActive">
+            {{ class.isActive ? 'Active' : 'Inactive' }}
+          </div>
+        </div>
+
+        <div class="class-info">
+          <div class="info-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span>Niveau: <strong>{{ class.grade }}</strong></span>
+          </div>
+
+          <div class="info-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span>Année: <strong>{{ class.academicYear }}</strong></span>
+          </div>
+
+          <div class="info-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span>Étudiants: <strong>{{ class.students?.length || 0 }}</strong></span>
+          </div>
+
+          <div class="info-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c0 1.1 3.13 2 6 2s6-.9 6-2v-5"/>
+            </svg>
+            <span>Enseignants: <strong>{{ class.teacherSubjects?.length || 0 }}</strong></span>
+          </div>
+        </div>
+
+        <div class="class-subjects">
+          <h4>Matières enseignées:</h4>
+          <div class="subjects-list">
+            <span class="subject-tag" *ngFor="let ts of class.teacherSubjects">
+              {{ getSubjectsForTeacher(ts) }}
+            </span>
+            <span class="no-subjects" *ngIf="!class.teacherSubjects || class.teacherSubjects.length === 0">
+              Aucune matière assignée
+            </span>
+          </div>
+        </div>
+
+        <div class="class-actions">
+          <button class="action-btn" (click)="viewClassDetails(class)" title="Voir détails">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            Détails
+          </button>
+          <button class="action-btn" (click)="editClass(class)" title="Modifier">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Modifier
+          </button>
+          <button class="action-btn" (click)="manageStudents(class)" title="Gérer étudiants">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="8.5" cy="7" r="4"/>
+              <line x1="20" y1="8" x2="20" y2="14"/>
+              <line x1="23" y1="11" x2="17" y2="11"/>
+            </svg>
+            Étudiants
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="filteredClasses.length === 0 && !isLoading">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+        </svg>
+        <h3>Aucune classe trouvée</h3>
+        <p>Commencez par créer votre première classe</p>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Chargement des classes...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create/Edit Class Modal -->
+  <div class="modal-overlay" *ngIf="showClassModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingClass ? 'Modifier la Classe' : 'Créer une Nouvelle Classe' }}</h2>
+        <button class="close-btn" (click)="closeModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="classForm" (ngSubmit)="saveClass()" class="class-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nom de la classe <span class="required">*</span></label>
+            <input 
+              type="text" 
+              formControlName="name" 
+              placeholder="Ex: 6ème A"
+              [class.error]="isFieldInvalid('name')"
+            />
+            <span class="error-message" *ngIf="isFieldInvalid('name')">
+              Le nom est requis
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label>Niveau <span class="required">*</span></label>
+            <select formControlName="grade" [class.error]="isFieldInvalid('grade')">
+              <option value="">Sélectionner un niveau</option>
+              <option value="6ème">6ème</option>
+              <option value="5ème">5ème</option>
+              <option value="4ème">4ème</option>
+              <option value="3ème">3ème</option>
+              <option value="2nde">2nde</option>
+              <option value="1ère">1ère</option>
+              <option value="Terminale">Terminale</option>
+            </select>
+            <span class="error-message" *ngIf="isFieldInvalid('grade')">
+              Le niveau est requis
+            </span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Année Scolaire <span class="required">*</span></label>
+            <select formControlName="academicYear" [class.error]="isFieldInvalid('academicYear')">
+              <option value="">Sélectionner l'année</option>
+              <option value="2024">2024-2025</option>
+              <option value="2023">2023-2024</option>
+            </select>
+            <span class="error-message" *ngIf="isFieldInvalid('academicYear')">
+              L'année scolaire est requise
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label>Statut</label>
+            <select formControlName="isActive">
+              <option [value]="true">Active</option>
+              <option [value]="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeModal()">Annuler</button>
+          <button type="submit" class="btn-primary" [disabled]="classForm.invalid || isSaving">
+            <span *ngIf="!isSaving">{{ editingClass ? 'Mettre à jour' : 'Créer' }}</span>
+            <span *ngIf="isSaving" class="saving">
+              <span class="spinner-small"></span>
+              Enregistrement...
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Students Management Modal -->
+  <div class="modal-overlay" *ngIf="showStudentsModal" (click)="closeStudentsModal()">
+    <div class="modal-content large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Gérer les Étudiants - {{ selectedClass?.name }}</h2>
+        <button class="close-btn" (click)="closeStudentsModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="students-management">
+        <div class="management-section">
+          <h3>Étudiants non assignés</h3>
+          <div class="search-box">
+            <input 
+              type="text" 
+              placeholder="Rechercher un étudiant..."
+              [(ngModel)]="studentSearchTerm"
+              (ngModelChange)="filterAvailableStudents()"
+            />
+          </div>
+          <div class="students-list">
+            <div class="student-item" *ngFor="let student of filteredAvailableStudents">
+              <span>{{ student.name }}</span>
+              <button class="add-btn" (click)="addStudentToClass(student)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
+            <p class="no-data" *ngIf="filteredAvailableStudents.length === 0">
+              Aucun étudiant disponible
+            </p>
+          </div>
+        </div>
+
+        <div class="management-section">
+          <h3>Étudiants de la classe ({{ classStudents.length }})</h3>
+          <div class="students-list">
+            <div class="student-item assigned" *ngFor="let student of classStudents">
+              <span>{{ student.name }}</span>
+              <button class="remove-btn" (click)="removeStudentFromClass(student)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <p class="no-data" *ngIf="classStudents.length === 0">
+              Aucun étudiant dans cette classe
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-layout>
