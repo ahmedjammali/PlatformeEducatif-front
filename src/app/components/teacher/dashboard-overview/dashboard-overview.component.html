@@ -1,0 +1,57 @@
+<!-- dashboard-overview.component.html -->
+<section class="content-section overview-section">
+  <h2 class="section-title">Dashboard Overview</h2>
+  
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon subjects-icon">📚</div>
+      <div class="stat-content">
+        <h3 class="stat-value">{{ stats.totalSubjects }}</h3>
+        <p class="stat-label">Subjects Teaching</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon classes-icon">👥</div>
+      <div class="stat-content">
+        <h3 class="stat-value">{{ stats.totalClasses }}</h3>
+        <p class="stat-label">Total Classes</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon exercises-icon">📝</div>
+      <div class="stat-content">
+        <h3 class="stat-value">{{ stats.totalExercises }}</h3>
+        <p class="stat-label">Created Exercises</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon students-icon">🎓</div>
+      <div class="stat-content">
+        <h3 class="stat-value">{{ stats.totalStudents }}</h3>
+        <p class="stat-label">Total Students</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <h3 class="subsection-title">Quick Actions</h3>
+    <div class="action-buttons">
+      <button class="action-btn primary-btn" (click)="onCreateExercise()">
+        <span class="btn-icon">➕</span>
+        Create New Exercise
+      </button>
+      <button class="action-btn secondary-btn" (click)="onEnterGrades()">
+        <span class="btn-icon">📊</span>
+        Enter Grades
+      </button>
+      <button class="action-btn accent-btn" (click)="onViewProgress()">
+        <span class="btn-icon">📈</span>
+        View Progress
+      </button>
+    </div>
+  </div>
+</section>

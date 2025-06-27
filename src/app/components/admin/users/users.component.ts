@@ -1,43 +1,38 @@
 // users-management.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subject, takeUntil, debounceTime } from 'rxjs';
+import { Subject, takeUntil, debounceTime, forkJoin, of } from 'rxjs';
 import { UserService } from '../../../services/user.service';
 import { ClassService } from '../../../services/class.service';
-import { SubjectService } from '../../../services/subject.service';
 import { AuthService } from '../../../services/auth.service';
-import { User } from '../../../models/user.model';
+import { User, TeachingClass } from '../../../models/user.model';
 import { Class } from '../../../models/class.model';
 import { Subject as SubjectModel } from '../../../models/subject.model';
-
-interface TeachingAssignment {
-  classId: string;
-  subjectIds: string[];
-}
+import { School } from '../../../models/school.model';
 
 @Component({
   selector: 'app-users',
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.css']
 })
-export class UsersComponent {
-// Data
+export class UsersComponent implements OnInit, OnDestroy {
+  // Data
   users: User[] = [];
   paginatedUsers: User[] = [];
-  classes: Class[] = [];
-  subjects: SubjectModel[] = [];
+  classNamesCache: { [key: string]: string } = {}; // Cache for class names
   
   // UI State
   isLoading = false;
   isSaving = false;
   showUserModal = false;
+  showViewModal = false;
   showPassword = false;
   editingUser: User | null = null;
+  viewingUser: User | null = null;
   
   // Filters
   searchTerm = '';
   selectedRole = '';
-  selectedClass = '';
   sortField = 'createdAt';
   sortOrder: 'asc' | 'desc' = 'desc';
   
@@ -57,7 +52,6 @@ export class UsersComponent {
   
   // Forms
   userForm!: FormGroup;
-  teachingAssignments: TeachingAssignment[] = [];
   
   // Auth
   isSuperAdmin = false;
@@ -69,7 +63,6 @@ export class UsersComponent {
     private fb: FormBuilder,
     private userService: UserService,
     private classService: ClassService,
-    private subjectService: SubjectService,
     private authService: AuthService
   ) {
     this.initializeForm();
@@ -77,7 +70,7 @@ export class UsersComponent {
 
   ngOnInit(): void {
     this.isSuperAdmin = this.authService.isSuperAdmin();
-    this.loadInitialData();
+    this.loadUsers();
     this.setupSearch();
   }
 
@@ -91,8 +84,7 @@ export class UsersComponent {
       name: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      role: ['', Validators.required],
-      studentClass: ['']
+      role: ['', Validators.required]
     });
   }
 
@@ -107,12 +99,6 @@ export class UsersComponent {
       });
   }
 
-  private loadInitialData(): void {
-    this.loadUsers();
-    this.loadClasses();
-    this.loadSubjects();
-  }
-
   private loadUsers(): void {
     this.isLoading = true;
     
@@ -122,40 +108,64 @@ export class UsersComponent {
         next: (response) => {
           this.users = response.users;
           this.updateStats();
-          this.filterAndPaginateUsers();
-          this.isLoading = false;
+          this.loadMissingClassNames().then(() => {
+            this.filterAndPaginateUsers();
+            this.isLoading = false;
+          });
         },
         error: (error) => {
           console.error('Error loading users:', error);
           this.isLoading = false;
+          alert('Erreur lors du chargement des utilisateurs');
         }
       });
   }
 
-  private loadClasses(): void {
-    this.classService.getClasses()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          this.classes = response.classes;
-        },
-        error: (error) => {
-          console.error('Error loading classes:', error);
+  private async loadMissingClassNames(): Promise<void> {
+    // Collect all unique class IDs that need to be loaded
+    const classIdsToLoad = new Set<string>();
+    
+    this.users.forEach(user => {
+      // Check student class
+      if (user.role === 'student' && user.studentClass && typeof user.studentClass === 'string') {
+        if (!this.classNamesCache[user.studentClass]) {
+          classIdsToLoad.add(user.studentClass);
         }
-      });
-  }
+      }
+      
+      // Check teaching classes
+      if (user.role === 'teacher' && user.teachingClasses) {
+        user.teachingClasses.forEach(tc => {
+          if (typeof tc.class === 'string' && !this.classNamesCache[tc.class]) {
+            classIdsToLoad.add(tc.class);
+          }
+        });
+      }
+    });
 
-  private loadSubjects(): void {
-    this.subjectService.getSubjects()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (subjects) => {
-          this.subjects = subjects;
-        },
-        error: (error) => {
-          console.error('Error loading subjects:', error);
-        }
+    if (classIdsToLoad.size === 0) {
+      return; // No classes to load
+    }
+
+    // Load all missing classes
+    const classRequests = Array.from(classIdsToLoad).map(classId =>
+      this.classService.getClassById(classId).pipe(
+        takeUntil(this.destroy$)
+      )
+    );
+
+    try {
+      const classResponses = await forkJoin(classRequests).toPromise();
+      
+      // Cache the class names
+      classResponses?.forEach((response, index) => {
+        const classId = Array.from(classIdsToLoad)[index];
+        this.classNamesCache[classId] = response.class.name;
       });
+    } catch (error) {
+      console.error('Error loading class names:', error);
+      // Continue without class names if there's an error
+    }
   }
 
   private updateStats(): void {
@@ -182,24 +192,6 @@ export class UsersComponent {
       filtered = filtered.filter(user => user.role === this.selectedRole);
     }
     
-    // Apply class filter (for students)
-    if (this.selectedClass) {
-      filtered = filtered.filter(user => {
-        if (user.role === 'student') {
-          return typeof user.studentClass === 'string' 
-            ? user.studentClass === this.selectedClass
-            : user.studentClass?._id === this.selectedClass;
-        }
-        if (user.role === 'teacher') {
-          return user.teachingClasses?.some(tc => {
-            const classId = typeof tc.class === 'string' ? tc.class : tc.class._id;
-            return classId === this.selectedClass;
-          });
-        }
-        return false;
-      });
-    }
-    
     // Apply sorting
     filtered.sort((a, b) => {
       let aVal: any = a[this.sortField as keyof User];
@@ -212,6 +204,11 @@ export class UsersComponent {
       if (this.sortField === 'createdAt') {
         aVal = new Date(aVal as string).getTime();
         bVal = new Date(bVal as string).getTime();
+      }
+      
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        aVal = aVal.toLowerCase();
+        bVal = bVal.toLowerCase();
       }
       
       if (this.sortOrder === 'asc') {
@@ -242,7 +239,6 @@ export class UsersComponent {
   resetFilters(): void {
     this.searchTerm = '';
     this.selectedRole = '';
-    this.selectedClass = '';
     this.currentPage = 1;
     this.filterAndPaginateUsers();
   }
@@ -262,7 +258,7 @@ export class UsersComponent {
     this.editingUser = null;
     this.userForm.reset();
     this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
-    this.teachingAssignments = [{ classId: '', subjectIds: [] }];
+    this.userForm.get('password')?.updateValueAndValidity();
     this.showUserModal = true;
   }
 
@@ -271,26 +267,21 @@ export class UsersComponent {
     this.userForm.patchValue({
       name: user.name,
       email: user.email,
-      role: user.role,
-      studentClass: user.role === 'student' ? 
-        (typeof user.studentClass === 'string' ? user.studentClass : user.studentClass?._id) : ''
+      role: user.role
     });
     
     // Remove password requirement for editing
     this.userForm.get('password')?.clearValidators();
     this.userForm.get('password')?.updateValueAndValidity();
     
-    // Setup teaching assignments for teachers
-    if (user.role === 'teacher' && user.teachingClasses) {
-      this.teachingAssignments = user.teachingClasses.map(tc => ({
-        classId: typeof tc.class === 'string' ? tc.class : tc.class._id || '',
-        subjectIds: tc.subjects.map(s => typeof s === 'string' ? s : s._id || '')
-      }));
-    } else {
-      this.teachingAssignments = [{ classId: '', subjectIds: [] }];
-    }
-    
     this.showUserModal = true;
+  }
+
+  editUserFromView(): void {
+    if (this.viewingUser) {
+      this.closeViewModal();
+      this.editUser(this.viewingUser);
+    }
   }
 
   closeModal(): void {
@@ -298,6 +289,26 @@ export class UsersComponent {
     this.editingUser = null;
     this.userForm.reset();
     this.showPassword = false;
+  }
+
+  viewUser(user: User): void {
+    this.userService.getUserById(user._id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (userData) => {
+          this.viewingUser = userData;
+          this.showViewModal = true;
+        },
+        error: (error) => {
+          console.error('Error loading user details:', error);
+          alert('Erreur lors du chargement des détails de l\'utilisateur');
+        }
+      });
+  }
+
+  closeViewModal(): void {
+    this.showViewModal = false;
+    this.viewingUser = null;
   }
 
   saveUser(): void {
@@ -322,22 +333,16 @@ export class UsersComponent {
       userData.password = formValue.password;
     }
     
-    if (formValue.role === 'student' && formValue.studentClass) {
-      userData.studentClass = formValue.studentClass;
-    }
-    
     const saveObservable = this.editingUser
       ? this.userService.updateUser(this.editingUser._id!, userData)
       : this.userService.createUser(userData);
     
     saveObservable.pipe(takeUntil(this.destroy$)).subscribe({
-      next: (savedUser) => {
-        // Handle teacher assignments separately
-        if (formValue.role === 'teacher') {
-          this.saveTeacherAssignments(savedUser._id!);
-        } else {
-          this.onSaveSuccess();
-        }
+      next: () => {
+        this.isSaving = false;
+        this.closeModal();
+        this.loadUsers();
+        alert(this.editingUser ? 'Utilisateur mis à jour avec succès!' : 'Utilisateur créé avec succès!');
       },
       error: (error) => {
         console.error('Error saving user:', error);
@@ -345,42 +350,6 @@ export class UsersComponent {
         alert('Erreur lors de l\'enregistrement. Veuillez réessayer.');
       }
     });
-  }
-
-  private saveTeacherAssignments(teacherId: string): void {
-    const validAssignments = this.teachingAssignments.filter(a => a.classId && a.subjectIds.length > 0);
-    
-    if (validAssignments.length === 0) {
-      this.onSaveSuccess();
-      return;
-    }
-    
-    // For simplicity, we'll need to make multiple API calls
-    // In a real app, you might want to batch these
-    let completed = 0;
-    validAssignments.forEach(assignment => {
-      this.classService.assignTeacher(assignment.classId, {
-        teacherId: teacherId,
-        subjectIds: assignment.subjectIds
-      }).pipe(takeUntil(this.destroy$)).subscribe({
-        next: () => {
-          completed++;
-          if (completed === validAssignments.length) {
-            this.onSaveSuccess();
-          }
-        },
-        error: (error) => {
-          console.error('Error assigning teacher:', error);
-        }
-      });
-    });
-  }
-
-  private onSaveSuccess(): void {
-    this.isSaving = false;
-    this.closeModal();
-    this.loadUsers();
-    alert(this.editingUser ? 'Utilisateur mis à jour avec succès!' : 'Utilisateur créé avec succès!');
   }
 
   deleteUser(user: User): void {
@@ -397,48 +366,6 @@ export class UsersComponent {
             alert('Erreur lors de la suppression. Veuillez réessayer.');
           }
         });
-    }
-  }
-
-  viewUser(user: User): void {
-    // TODO: Implement user details view
-    console.log('View user:', user);
-  }
-
-  // Role change handling
-  onRoleChange(): void {
-    const role = this.userForm.get('role')?.value;
-    
-    if (role === 'student') {
-      this.userForm.get('studentClass')?.setValidators(Validators.required);
-    } else {
-      this.userForm.get('studentClass')?.clearValidators();
-    }
-    
-    this.userForm.get('studentClass')?.updateValueAndValidity();
-  }
-
-  // Teaching assignments
-  addAssignment(): void {
-    this.teachingAssignments.push({ classId: '', subjectIds: [] });
-  }
-
-  removeAssignment(index: number): void {
-    this.teachingAssignments.splice(index, 1);
-  }
-
-  onClassChange(index: number): void {
-    this.teachingAssignments[index].subjectIds = [];
-  }
-
-  toggleSubject(assignmentIndex: number, subjectId: string): void {
-    const assignment = this.teachingAssignments[assignmentIndex];
-    const index = assignment.subjectIds.indexOf(subjectId);
-    
-    if (index > -1) {
-      assignment.subjectIds.splice(index, 1);
-    } else {
-      assignment.subjectIds.push(subjectId);
     }
   }
 
@@ -515,13 +442,6 @@ export class UsersComponent {
     return !!(field && field.invalid && (field.dirty || field.touched));
   }
 
-  getClassName(classRef: any): string {
-    if (!classRef) return '-';
-    return typeof classRef === 'string' 
-      ? this.classes.find(c => c._id === classRef)?.name || classRef
-      : classRef.name || '-';
-  }
-
   getRoleLabel(role: string): string {
     const labels: { [key: string]: string } = {
       'student': 'Étudiant',
@@ -553,5 +473,47 @@ export class UsersComponent {
     }
     
     return colors[Math.abs(hash) % colors.length];
+  }
+
+  // Helper methods for safe property access
+  getSchoolName(school: School | string | undefined): string {
+    if (!school) return 'Non spécifié';
+    return typeof school === 'string' ? school : school.name;
+  }
+
+  getCreatedByName(createdBy: User | string | undefined): string {
+    if (!createdBy) return 'Système';
+    return typeof createdBy === 'string' ? createdBy : createdBy.name;
+  }
+
+  getClassName(classRef: Class | string | undefined): string {
+    if (!classRef) return 'Non assigné';
+    
+    if (typeof classRef === 'string') {
+      // Try to get from cache first
+      return this.classNamesCache[classRef] || classRef;
+    }
+    
+    return classRef.name;
+  }
+
+  getSubjectName(subject: any): string {
+    if (!subject) return '';
+    return typeof subject === 'string' ? subject : subject.name;
+  }
+
+  // Helper method to safely get subjects array for template
+  getSubjectsArray(subjects: SubjectModel[] | string[] | undefined): any[] {
+    if (!subjects) return [];
+    return Array.isArray(subjects) ? subjects : [];
+  }
+
+  // Helper method to get teaching classes display for table
+  getTeachingClassesDisplay(teachingClasses: TeachingClass[] | undefined): string {
+    if (!teachingClasses || teachingClasses.length === 0) {
+      return 'Non assigné';
+    }
+    
+    return teachingClasses.map(tc => this.getClassName(tc.class)).join(', ');
   }
 }

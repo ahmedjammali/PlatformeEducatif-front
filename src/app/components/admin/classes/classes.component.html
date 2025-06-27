@@ -153,6 +153,20 @@
             </svg>
             Étudiants
           </button>
+          <button class="action-btn" (click)="manageTeachers(class)" title="Gérer enseignants">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c0 1.1 3.13 2 6 2s6-.9 6-2v-5"/>
+            </svg>
+            Enseignants
+          </button>
+          <button class="action-btn delete" (click)="deleteClass(class)" title="Supprimer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            Supprimer
+          </button>
         </div>
       </div>
 
@@ -256,6 +270,117 @@
     </div>
   </div>
 
+  <!-- Class Details Modal -->
+  <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+    <div class="modal-content extra-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Détails de la Classe - {{ classDetails?.class?.name || 'Classe' }}</h2>
+        <button class="close-btn" (click)="closeDetailsModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="class-details" *ngIf="classDetails">
+        <div class="details-grid">
+          <!-- Class Info -->
+          <div class="detail-card">
+            <h3>Informations Générales</h3>
+            <div class="info-list">
+              <div class="info-item">
+                <span class="label">Nom:</span>
+                <span class="value">{{ classDetails.class.name }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Niveau:</span>
+                <span class="value">{{ classDetails.class.grade }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Année scolaire:</span>
+                <span class="value">{{ classDetails.class.academicYear }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Statut:</span>
+                <span class="value" [class.active]="classDetails.class.isActive" [class.inactive]="!classDetails.class.isActive">
+                  {{ classDetails.class.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Statistics -->
+          <div class="detail-card" *ngIf="classDetails.statistics">
+            <h3>Statistiques</h3>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-number">{{ classDetails.statistics.totalStudents || 0 }}</div>
+                <div class="stat-label">Étudiants</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number">{{ classDetails.statistics.totalTeachers || 0 }}</div>
+                <div class="stat-label">Enseignants</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number">{{ classDetails.statistics.totalSubjects || 0 }}</div>
+                <div class="stat-label">Matières</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Teachers Section -->
+        <div class="detail-section">
+          <h3>Enseignants et Matières</h3>
+          <div class="teachers-list" *ngIf="classDetails.class.teacherSubjects && classDetails.class.teacherSubjects.length > 0">
+            <div class="teacher-item" *ngFor="let ts of classDetails.class.teacherSubjects">
+              <div class="teacher-info">
+                <div class="teacher-name">{{ getTeacherName(ts.teacher) }}</div>
+                <div class="teacher-subjects">
+                  <span class="subject-chip" *ngFor="let subject of getSubjectsArray(ts.subjects)">
+                    {{ getSubjectName(subject) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="no-data" *ngIf="!classDetails.class.teacherSubjects || classDetails.class.teacherSubjects.length === 0">
+            Aucun enseignant assigné
+          </div>
+        </div>
+
+        <!-- Students Section -->
+        <div class="detail-section">
+          <h3>Liste des Étudiants</h3>
+          <div class="students-grid" *ngIf="classDetails.class.students && classDetails.class.students.length > 0">
+            <div class="student-item" *ngFor="let student of getStudentsArray(classDetails.class.students)">
+              <div class="student-avatar">{{ getStudentInitials(student) }}</div>
+              <div class="student-info">
+                <div class="student-name">{{ getStudentName(student) }}</div>
+                <div class="student-email">{{ getStudentEmail(student) }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="no-data" *ngIf="!classDetails.class.students || classDetails.class.students.length === 0">
+            Aucun étudiant dans cette classe
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeDetailsModal()">Fermer</button>
+        <button class="btn-primary" (click)="editClassFromDetails()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Modifier
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Students Management Modal -->
   <div class="modal-overlay" *ngIf="showStudentsModal" (click)="closeStudentsModal()">
     <div class="modal-content large" (click)="$event.stopPropagation()">
@@ -310,6 +435,92 @@
             </div>
             <p class="no-data" *ngIf="classStudents.length === 0">
               Aucun étudiant dans cette classe
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teachers Management Modal -->
+  <div class="modal-overlay" *ngIf="showTeachersModal" (click)="closeTeachersModal()">
+    <div class="modal-content large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Gérer les Enseignants - {{ selectedClass?.name }}</h2>
+        <button class="close-btn" (click)="closeTeachersModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="teachers-management">
+        <!-- Add Teacher Section -->
+        <div class="management-section add-teacher">
+          <h3>Assigner un Enseignant</h3>
+          <div class="teacher-form">
+            <div class="form-group">
+              <label>Sélectionner un enseignant</label>
+              <select [(ngModel)]="selectedTeacherId">
+                <option value="">Choisir un enseignant...</option>
+                <option *ngFor="let teacher of availableTeachers" [value]="teacher._id">
+                  {{ teacher.name }} ({{ teacher.email }})
+                </option>
+              </select>
+            </div>
+            
+            <div class="form-group" *ngIf="selectedTeacherId">
+              <label>Matières à enseigner</label>
+              <div class="subjects-selection">
+                <label class="checkbox-item" *ngFor="let subject of subjects">
+                  <input 
+                    type="checkbox" 
+                    [checked]="selectedSubjectIds.includes(subject._id!)"
+                    (change)="toggleSubjectSelection(subject._id!)"
+                  />
+                  <span>{{ subject.name }}</span>
+                </label>
+              </div>
+            </div>
+
+            <button 
+              class="btn-primary" 
+              (click)="assignTeacherToClass()"
+              [disabled]="!selectedTeacherId || selectedSubjectIds.length === 0"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Assigner Enseignant
+            </button>
+          </div>
+        </div>
+
+        <!-- Current Teachers Section -->
+        <div class="management-section current-teachers">
+          <h3>Enseignants Assignés ({{ classTeachers.length }})</h3>
+          <div class="teachers-list">
+            <div class="teacher-assignment" *ngFor="let teacher of classTeachers">
+              <div class="teacher-info">
+                <div class="teacher-name">{{ teacher.teacher.name }}</div>
+                <div class="teacher-email">{{ teacher.teacher.email }}</div>
+                <div class="teacher-subjects">
+                  <span class="subject-tag" *ngFor="let subject of teacher.subjects">
+                    {{ getSubjectName(subject) }}
+                  </span>
+                </div>
+              </div>
+              <button class="remove-btn" (click)="removeTeacherFromClass(teacher.teacher._id!)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <p class="no-data" *ngIf="classTeachers.length === 0">
+              Aucun enseignant assigné à cette classe
             </p>
           </div>
         </div>

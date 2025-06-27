@@ -1,0 +1,70 @@
+<!-- teacher-layout.component.html -->
+<div class="teacher-dashboard">
+  <!-- Header Section -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="welcome-section">
+        <h1 class="welcome-title">Welcome, {{ currentUser?.name }}</h1>
+        <p class="school-name">{{ school?.name }}</p>
+      </div>
+      <div class="header-actions">
+        <div class="user-menu">
+          <span class="user-name">{{ currentUser?.name }}</span>
+          <button class="logout-btn" (click)="logout()">
+            <span class="logout-icon">↪</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <img src="assets/logo.png" alt="Logo" class="logo">
+    </div>
+    <ul class="nav-menu">
+      <li class="nav-item" [class.active]="activeSection === 'overview'">
+        <a (click)="setActiveSection('overview')" class="nav-link">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">Overview</span>
+        </a>
+      </li>
+      <li class="nav-item" [class.active]="activeSection === 'subjects'">
+        <a (click)="setActiveSection('subjects')" class="nav-link">
+          <span class="nav-icon">📚</span>
+          <span class="nav-text">My Subjects</span>
+        </a>
+      </li>
+      <li class="nav-item" [class.active]="activeSection === 'exercises'">
+        <a (click)="setActiveSection('exercises')" class="nav-link">
+          <span class="nav-icon">📝</span>
+          <span class="nav-text">Exercises</span>
+        </a>
+      </li>
+      <li class="nav-item" [class.active]="activeSection === 'classes'">
+        <a (click)="setActiveSection('classes')" class="nav-link">
+          <span class="nav-icon">👥</span>
+          <span class="nav-text">My Classes</span>
+        </a>
+      </li>
+      <li class="nav-item" [class.active]="activeSection === 'grades'">
+        <a (click)="setActiveSection('grades')" class="nav-link">
+          <span class="nav-icon">📈</span>
+          <span class="nav-text">Grades</span>
+        </a>
+      </li>
+      <li class="nav-item" [class.active]="activeSection === 'progress'">
+        <a (click)="setActiveSection('progress')" class="nav-link">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">Student Progress</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <ng-content></ng-content>
+  </main>
+</div>

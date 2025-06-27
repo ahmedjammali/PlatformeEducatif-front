@@ -52,6 +52,9 @@ import { GradesComponent } from './components/admin/grades/grades.component';
 import { ContactComponent } from './components/admin/contact/contact.component';
 import { TeacherDashboardComponent } from './components/teacher/teacher-dashboard/teacher-dashboard.component';
 import { ExerciseFormComponent } from './components/teacher/exercise-form/exercise-form.component';
+import { TeacherLayoutComponent } from './components/teacher/teacher-layout/teacher-layout.component';
+import { DashboardOverviewComponent } from './components/teacher/dashboard-overview/dashboard-overview.component';
+import { TeacherSubjectsComponent } from './components/teacher/teacher-subjects/teacher-subjects.component';
 
 
 const MaterialModules = [
@@ -84,7 +87,10 @@ const MaterialModules = [
     GradesComponent,
     ContactComponent,
     TeacherDashboardComponent,
-    ExerciseFormComponent
+    ExerciseFormComponent,
+    TeacherLayoutComponent,
+    DashboardOverviewComponent,
+    TeacherSubjectsComponent
   ],
   imports: [
     BrowserModule,

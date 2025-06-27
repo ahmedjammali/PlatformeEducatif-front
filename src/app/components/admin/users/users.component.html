@@ -47,14 +47,6 @@
         </select>
       </div>
 
-      <div class="filter-group">
-        <label>Classe</label>
-        <select [(ngModel)]="selectedClass" (ngModelChange)="onFilterChange()">
-          <option value="">Toutes les classes</option>
-          <option *ngFor="let class of classes" [value]="class._id">{{ class.name }}</option>
-        </select>
-      </div>
-
       <button class="btn-secondary" (click)="resetFilters()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="1 4 1 10 7 10"/>
@@ -148,12 +140,12 @@
                 <div *ngIf="user.role === 'student' && user.studentClass" class="class-info">
                   {{ getClassName(user.studentClass) }}
                 </div>
-                <div *ngIf="user.role === 'teacher' && user.teachingClasses" class="teaching-info">
-                  <span *ngFor="let tc of user.teachingClasses; let last = last">
-                    {{ getClassName(tc.class) }}<span *ngIf="!last">, </span>
-                  </span>
+                <div *ngIf="user.role === 'teacher'" class="teaching-info">
+                  {{ getTeachingClassesDisplay(user.teachingClasses) }}
                 </div>
-                <span *ngIf="user.role === 'admin'" class="text-muted">-</span>
+                <span *ngIf="user.role === 'admin'" class="text-muted">
+                  Non assigné
+                </span>
               </td>
               <td>{{ formatDate(user.createdAt) }}</td>
               <td>
@@ -283,7 +275,7 @@
               [class.error]="isFieldInvalid('name')"
             />
             <span class="error-message" *ngIf="isFieldInvalid('name')">
-              Le nom est requis
+              Le nom est requis (minimum 3 caractères)
             </span>
           </div>
 
@@ -304,7 +296,7 @@
         <div class="form-row">
           <div class="form-group">
             <label>Rôle <span class="required">*</span></label>
-            <select formControlName="role" (change)="onRoleChange()">
+            <select formControlName="role">
               <option value="">Sélectionner un rôle</option>
               <option value="teacher">Enseignant</option>
               <option value="student">Étudiant</option>
@@ -339,59 +331,6 @@
           </div>
         </div>
 
-        <!-- Student-specific fields -->
-        <div class="form-group" *ngIf="userForm.get('role')?.value === 'student'">
-          <label>Classe <span class="required">*</span></label>
-          <select formControlName="studentClass">
-            <option value="">Sélectionner une classe</option>
-            <option *ngFor="let class of classes" [value]="class._id">{{ class.name }}</option>
-          </select>
-          <span class="error-message" *ngIf="isFieldInvalid('studentClass') && userForm.get('role')?.value === 'student'">
-            La classe est requise pour un étudiant
-          </span>
-        </div>
-
-        <!-- Teacher-specific fields -->
-        <div *ngIf="userForm.get('role')?.value === 'teacher'">
-          <div class="form-group">
-            <label>Classes et Matières</label>
-            <div class="teaching-assignments">
-              <div *ngFor="let assignment of teachingAssignments; let i = index" class="assignment-row">
-                <select [(ngModel)]="assignment.classId" [ngModelOptions]="{standalone: true}" (change)="onClassChange(i)">
-                  <option value="">Sélectionner une classe</option>
-                  <option *ngFor="let class of classes" [value]="class._id">{{ class.name }}</option>
-                </select>
-                
-                <div class="subjects-select" *ngIf="assignment.classId">
-                  <label class="checkbox-group" *ngFor="let subject of subjects">
-                    <input 
-                      type="checkbox" 
-                      [checked]="assignment.subjectIds.includes(subject._id!)"
-                      (change)="toggleSubject(i, subject._id!)"
-                    />
-                    <span>{{ subject.name }}</span>
-                  </label>
-                </div>
-
-                <button type="button" class="remove-btn" (click)="removeAssignment(i)" *ngIf="teachingAssignments.length > 1">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
-                </button>
-              </div>
-              
-              <button type="button" class="add-assignment-btn" (click)="addAssignment()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Ajouter une classe
-              </button>
-            </div>
-          </div>
-        </div>
-
         <div class="modal-footer">
           <button type="button" class="btn-secondary" (click)="closeModal()">Annuler</button>
           <button type="submit" class="btn-primary" [disabled]="userForm.invalid || isSaving">
@@ -403,6 +342,91 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- View User Modal -->
+  <div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
+    <div class="modal-content view-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Détails de l'Utilisateur</h2>
+        <button class="close-btn" (click)="closeViewModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="user-details" *ngIf="viewingUser">
+        <div class="user-profile">
+          <div class="user-avatar-large" [style.background-color]="getAvatarColor(viewingUser.name)">
+            {{ viewingUser.name.charAt(0).toUpperCase() }}
+          </div>
+          <div class="user-basic-info">
+            <h3>{{ viewingUser.name }}</h3>
+            <p class="user-email">{{ viewingUser.email }}</p>
+            <span class="role-badge" [class]="viewingUser.role">
+              {{ getRoleLabel(viewingUser.role) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="user-info-grid">
+          <div class="info-card">
+            <h4>Informations Générales</h4>
+            <div class="info-row">
+              <span class="label">École:</span>
+              <span class="value">{{ getSchoolName(viewingUser.school) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Créé par:</span>
+              <span class="value">{{ getCreatedByName(viewingUser.createdBy) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Date de création:</span>
+              <span class="value">{{ formatDate(viewingUser.createdAt) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Dernière modification:</span>
+              <span class="value">{{ formatDate(viewingUser.updatedAt) }}</span>
+            </div>
+          </div>
+
+          <!-- Student-specific info -->
+          <div class="info-card" *ngIf="viewingUser.role === 'student'">
+            <h4>Information Étudiant</h4>
+            <div class="info-row">
+              <span class="label">Classe assignée:</span>
+              <span class="value">
+                {{ getClassName(viewingUser.studentClass) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Teacher-specific info -->
+          <div class="info-card" *ngIf="viewingUser.role === 'teacher'">
+            <h4>Information Enseignant</h4>
+            <div class="teaching-assignments" *ngIf="viewingUser.teachingClasses && viewingUser.teachingClasses.length > 0">
+              <div *ngFor="let tc of viewingUser.teachingClasses" class="assignment-detail">
+                <div class="class-name">{{ getClassName(tc.class) }}</div>
+                <div class="subjects">
+                  <span *ngFor="let subject of getSubjectsArray(tc.subjects); let last = last" class="subject-tag">
+                    {{ getSubjectName(subject) }}<span *ngIf="!last">, </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="!viewingUser.teachingClasses || viewingUser.teachingClasses.length === 0" class="no-assignments">
+              <span class="text-muted">Aucune classe assignée</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeViewModal()">Fermer</button>
+      </div>
     </div>
   </div>
 </app-layout>

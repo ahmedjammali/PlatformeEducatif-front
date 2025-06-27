@@ -20,15 +20,21 @@ export class ClassesComponent implements OnInit, OnDestroy {
   filteredClasses: Class[] = [];
   subjects: SubjectModel[] = [];
   allStudents: User[] = [];
+  allTeachers: User[] = [];
   availableStudents: User[] = [];
+  availableTeachers: User[] = [];
   filteredAvailableStudents: User[] = [];
   classStudents: User[] = [];
+  classTeachers: any[] = [];
+  classDetails: { class: Class; statistics: any } | null = null;
   
   // UI State
   isLoading = false;
   isSaving = false;
   showClassModal = false;
   showStudentsModal = false;
+  showTeachersModal = false;
+  showDetailsModal = false;
   editingClass: Class | null = null;
   selectedClass: Class | null = null;
   
@@ -37,6 +43,10 @@ export class ClassesComponent implements OnInit, OnDestroy {
   selectedGrade = '';
   selectedYear = '';
   studentSearchTerm = '';
+  
+  // Teacher Assignment
+  selectedTeacherId = '';
+  selectedSubjectIds: string[] = [];
   
   // Form
   classForm!: FormGroup;
@@ -59,6 +69,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
     this.loadClasses();
     this.loadSubjects();
     this.loadAllStudents();
+    this.loadAllTeachers();
   }
 
   ngOnDestroy(): void {
@@ -90,6 +101,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error loading classes:', error);
           this.isLoading = false;
+          alert('Erreur lors du chargement des classes');
         }
       });
   }
@@ -116,6 +128,19 @@ export class ClassesComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading students:', error);
+        }
+      });
+  }
+
+  private loadAllTeachers(): void {
+    this.userService.getUsers({ role: 'teacher' })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.allTeachers = response.users;
+        },
+        error: (error) => {
+          console.error('Error loading teachers:', error);
         }
       });
   }
@@ -175,6 +200,13 @@ export class ClassesComponent implements OnInit, OnDestroy {
     this.showClassModal = true;
   }
 
+  editClassFromDetails(): void {
+    if (this.classDetails) {
+      this.closeDetailsModal();
+      this.editClass(this.classDetails.class);
+    }
+  }
+
   closeModal(): void {
     this.showClassModal = false;
     this.editingClass = null;
@@ -211,18 +243,42 @@ export class ClassesComponent implements OnInit, OnDestroy {
     });
   }
 
+  deleteClass(classItem: Class): void {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer la classe "${classItem.name}"? Cette action est irréversible.`)) {
+      this.classService.deleteClass(classItem._id!)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.loadClasses();
+            alert('Classe supprimée avec succès!');
+          },
+          error: (error) => {
+            console.error('Error deleting class:', error);
+            alert('Erreur lors de la suppression. Veuillez réessayer.');
+          }
+        });
+    }
+  }
+
+  // Class Details
   viewClassDetails(classItem: Class): void {
     this.classService.getClassById(classItem._id!)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('Class details:', response);
-          // TODO: Implement details view
+          this.classDetails = response;
+          this.showDetailsModal = true;
         },
         error: (error) => {
           console.error('Error loading class details:', error);
+          alert('Erreur lors du chargement des détails de la classe');
         }
       });
+  }
+
+  closeDetailsModal(): void {
+    this.showDetailsModal = false;
+    this.classDetails = null;
   }
 
   // Students Management
@@ -284,6 +340,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
             (this.classes[classIndex].students as string[]).push(student._id!);
             this.applyFilters();
           }
+          alert(`${student.name} ajouté à la classe avec succès!`);
         },
         error: (error) => {
           console.error('Error adding student:', error);
@@ -309,6 +366,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
                 .filter(id => id !== student._id);
               this.applyFilters();
             }
+            alert(`${student.name} retiré de la classe avec succès!`);
           },
           error: (error) => {
             console.error('Error removing student:', error);
@@ -325,6 +383,115 @@ export class ClassesComponent implements OnInit, OnDestroy {
     this.classStudents = [];
     this.availableStudents = [];
     this.filteredAvailableStudents = [];
+  }
+
+  // Teachers Management
+  manageTeachers(classItem: Class): void {
+    this.selectedClass = classItem;
+    this.selectedTeacherId = '';
+    this.selectedSubjectIds = [];
+    this.loadClassTeachers(classItem._id!);
+    this.updateAvailableTeachers();
+    this.showTeachersModal = true;
+  }
+
+  private loadClassTeachers(classId: string): void {
+    this.classService.getClassTeachers(classId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.classTeachers = response.teachers;
+          this.updateAvailableTeachers();
+        },
+        error: (error) => {
+          console.error('Error loading class teachers:', error);
+        }
+      });
+  }
+
+  private updateAvailableTeachers(): void {
+    const assignedTeacherIds = this.classTeachers.map(t => t.teacher._id);
+    this.availableTeachers = this.allTeachers.filter(t => 
+      !assignedTeacherIds.includes(t._id)
+    );
+  }
+
+  toggleSubjectSelection(subjectId: string): void {
+    const index = this.selectedSubjectIds.indexOf(subjectId);
+    if (index > -1) {
+      this.selectedSubjectIds.splice(index, 1);
+    } else {
+      this.selectedSubjectIds.push(subjectId);
+    }
+  }
+
+  assignTeacherToClass(): void {
+    if (!this.selectedClass || !this.selectedTeacherId || this.selectedSubjectIds.length === 0) {
+      return;
+    }
+
+    this.classService.assignTeacher(this.selectedClass._id!, {
+      teacherId: this.selectedTeacherId,
+      subjectIds: this.selectedSubjectIds
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.loadClassTeachers(this.selectedClass!._id!);
+        this.selectedTeacherId = '';
+        this.selectedSubjectIds = [];
+        
+        // Update the teacher count in the main view
+        const classIndex = this.classes.findIndex(c => c._id === this.selectedClass!._id);
+        if (classIndex > -1) {
+          // Refresh the class data
+          this.loadClasses();
+        }
+        
+        const teacherName = this.allTeachers.find(t => t._id === this.selectedTeacherId)?.name;
+        alert(`Enseignant assigné avec succès!`);
+      },
+      error: (error) => {
+        console.error('Error assigning teacher:', error);
+        alert('Erreur lors de l\'assignation de l\'enseignant.');
+      }
+    });
+  }
+
+  removeTeacherFromClass(teacherId: string): void {
+    if (!this.selectedClass) return;
+    
+    const teacher = this.classTeachers.find(t => t.teacher._id === teacherId);
+    const teacherName = teacher ? teacher.teacher.name : 'cet enseignant';
+    
+    if (confirm(`Retirer ${teacherName} de la classe?`)) {
+      this.classService.removeTeacher(this.selectedClass._id!, teacherId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.loadClassTeachers(this.selectedClass!._id!);
+            
+            // Update the teacher count in the main view
+            const classIndex = this.classes.findIndex(c => c._id === this.selectedClass!._id);
+            if (classIndex > -1) {
+              this.loadClasses();
+            }
+            
+            alert(`${teacherName} retiré de la classe avec succès!`);
+          },
+          error: (error) => {
+            console.error('Error removing teacher:', error);
+            alert('Erreur lors du retrait de l\'enseignant.');
+          }
+        });
+    }
+  }
+
+  closeTeachersModal(): void {
+    this.showTeachersModal = false;
+    this.selectedClass = null;
+    this.selectedTeacherId = '';
+    this.selectedSubjectIds = [];
+    this.classTeachers = [];
+    this.availableTeachers = [];
   }
 
   // Utility Methods
@@ -347,5 +514,50 @@ export class ClassesComponent implements OnInit, OnDestroy {
         return s.name;
       })
       .join(', ');
+  }
+
+  getSubjectName(subject: any): string {
+    if (!subject) return 'Matière inconnue';
+    return typeof subject === 'string' 
+      ? this.subjects.find(s => s._id === subject)?.name || subject
+      : subject.name;
+  }
+
+  getTeacherName(teacher: any): string {
+    if (!teacher) return 'Enseignant inconnu';
+    return typeof teacher === 'string' 
+      ? this.allTeachers.find(t => t._id === teacher)?.name || teacher
+      : teacher.name;
+  }
+
+  getStudentName(student: any): string {
+    if (!student) return 'Étudiant inconnu';
+    return typeof student === 'string' 
+      ? this.allStudents.find(s => s._id === student)?.name || student
+      : student.name;
+  }
+
+  getStudentEmail(student: any): string {
+    if (!student) return '';
+    return typeof student === 'string' 
+      ? this.allStudents.find(s => s._id === student)?.email || ''
+      : student.email;
+  }
+
+  getStudentInitials(student: any): string {
+    const name = this.getStudentName(student);
+    return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().substring(0, 2);
+  }
+
+  // Helper method to safely get subjects array for template
+  getSubjectsArray(subjects: any): any[] {
+    if (!subjects) return [];
+    return Array.isArray(subjects) ? subjects : [];
+  }
+
+  // Helper method to safely get students array for template
+  getStudentsArray(students: any): any[] {
+    if (!students) return [];
+    return Array.isArray(students) ? students : [];
   }
 }
