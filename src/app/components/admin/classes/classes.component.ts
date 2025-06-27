@@ -82,6 +82,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
+          console.log('Classes loaded:', response);
           this.classes = response.classes;
           this.applyFilters();
           this.isLoading = false;

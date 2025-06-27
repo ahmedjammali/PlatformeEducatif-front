@@ -51,16 +51,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   quickAction(action: string): void {
     switch (action) {
       case 'add-student':
-        this.router.navigate(['/admin/users/new'], { queryParams: { role: 'student' } });
+        this.router.navigate(['/admin/users']);
         break;
       case 'add-teacher':
-        this.router.navigate(['/admin/users/new'], { queryParams: { role: 'teacher' } });
+        this.router.navigate(['/admin/users']);
         break;
       case 'create-class':
-        this.router.navigate(['/admin/classes/new']);
-        break;
-      case 'generate-report':
-        this.router.navigate(['/admin/reports/generate']);
+        this.router.navigate(['/admin/classes']);
         break;
     }
   }
@@ -97,7 +94,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('Classes response:', response);
           this.stats.totalClasses = response.pagination?.total || response.classes.length;
         },
         error: (error) => {
@@ -110,7 +106,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (subjects) => {
-          console.log('Subjects response:', subjects);
           this.stats.totalSubjects = subjects.length;
         },
         error: (error) => {

@@ -1,4 +1,3 @@
-
 /* Dashboard Container */
 .dashboard-container {
   display: flex;
@@ -94,6 +93,20 @@
   margin-bottom: 4px;
 }
 
+/* Navigation Divider */
+.nav-divider {
+  margin: 20px 0 12px 0;
+  padding: 0 20px;
+}
+
+.nav-divider span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .nav-link {
   display: flex;
   align-items: center;
@@ -141,6 +154,10 @@
 }
 
 .sidebar.collapsed .nav-link span {
+  display: none;
+}
+
+.sidebar.collapsed .nav-divider {
   display: none;
 }
 

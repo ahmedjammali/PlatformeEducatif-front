@@ -71,7 +71,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'users': '/admin/users',
       'classes': '/admin/classes',
       'subjects': '/admin/subjects',
-      'reports': '/admin/reports',
+      'grades': '/admin/grades',
+      'contact': '/admin/contact',
       'schools': '/superadmin/schools'
     };
 
@@ -87,6 +88,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'users': 'Gestion des Utilisateurs',
       'classes': 'Gestion des Classes',
       'subjects': 'Gestion des Matières',
+      'grades': 'Notes des Étudiants',
+      'contact': 'Contact',
       'reports': 'Rapports et Statistiques',
       'schools': 'Gestion de l\'École'
     };
@@ -139,6 +142,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
       this.activeRoute = 'classes';
     } else if (currentUrl.includes('/subjects')) {
       this.activeRoute = 'subjects';
+    } else if (currentUrl.includes('/grades')) {
+      this.activeRoute = 'grades';
+    } else if (currentUrl.includes('/contact')) {
+      this.activeRoute = 'contact';
     } else if (currentUrl.includes('/reports')) {
       this.activeRoute = 'reports';
     } else if (currentUrl.includes('/schools')) {

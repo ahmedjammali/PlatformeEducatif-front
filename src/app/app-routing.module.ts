@@ -8,6 +8,11 @@ import { ClassesComponent } from './components/admin/classes/classes.component';
 import { SubjectsComponent } from './components/admin/subjects/subjects.component';
 import { ReportsComponent } from './components/admin/reports/reports.component';
 import { SchoolsComponent } from './components/superadmin/schools/schools.component';
+import { ContactComponent } from './components/admin/contact/contact.component';
+import { GradesComponent } from './components/admin/grades/grades.component';
+import { TeacherDashboardComponent } from './components/teacher/teacher-dashboard/teacher-dashboard.component';
+
+
 
 const routes: Routes = [
     {
@@ -18,9 +23,12 @@ const routes: Routes = [
     {path: 'admin/dashboard', component : DashboardComponent},
     {path: 'admin/users', component : UsersComponent},
     {path: 'admin/classes', component : ClassesComponent},
-    {path: 'admin/classes', component : ClassesComponent},
+    {path: 'admin/subjects', component : SubjectsComponent},
     {path: 'admin/reports', component : ReportsComponent},
     {path: 'superadmin/schools', component : SchoolsComponent},
+    {path: 'admin/contact', component : ContactComponent},
+    {path: 'admin/grades', component : GradesComponent},
+    {path: 'teacher/dashboard', component : TeacherDashboardComponent},
 
 ];
 

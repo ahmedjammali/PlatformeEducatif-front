@@ -48,6 +48,10 @@ import { SubjectsComponent } from './components/admin/subjects/subjects.componen
 import { ReportsComponent } from './components/admin/reports/reports.component';
 import { SchoolsComponent } from './components/superadmin/schools/schools.component';
 import { LayoutComponent } from './components/admin/layout/layout.component';
+import { GradesComponent } from './components/admin/grades/grades.component';
+import { ContactComponent } from './components/admin/contact/contact.component';
+import { TeacherDashboardComponent } from './components/teacher/teacher-dashboard/teacher-dashboard.component';
+import { ExerciseFormComponent } from './components/teacher/exercise-form/exercise-form.component';
 
 
 const MaterialModules = [
@@ -76,7 +80,11 @@ const MaterialModules = [
     SubjectsComponent,
     ReportsComponent,
     SchoolsComponent,
-    LayoutComponent
+    LayoutComponent,
+    GradesComponent,
+    ContactComponent,
+    TeacherDashboardComponent,
+    ExerciseFormComponent
   ],
   imports: [
     BrowserModule,

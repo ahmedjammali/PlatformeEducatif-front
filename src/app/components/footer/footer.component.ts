@@ -58,7 +58,7 @@ export class FooterComponent implements OnInit, OnDestroy {
   }
 
   private updateAdminStatus(): void {
-    this.isAdmin = this.authService.isAdminOrHigher();
+    this.isAdmin = this.authService.isLoggedIn();
   }
 
   scrollToTop(): void {
