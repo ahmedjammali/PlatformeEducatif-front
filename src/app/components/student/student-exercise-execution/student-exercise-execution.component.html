@@ -1,0 +1,189 @@
+<!-- student-exercise-execution.component.html -->
+     <app-student-navbar></app-student-navbar>
+<div class="exercise-execution" *ngIf="exercise">
+  <!-- Header -->
+  <div class="exercise-header">
+    <div class="header-top">
+      <button class="back-button" (click)="goBack()">
+        <span class="icon">←</span>
+      </button>
+      <div class="exercise-info">
+        <h1>{{ exercise.title }}</h1>
+        <div class="exercise-meta">
+          <span class="subject">{{ getSubjectName() }}</span>
+          <span class="type">{{ exercise.type === 'qcm' ? 'QCM' : 'Texte à trous' }}</span>
+          <span class="difficulty" [attr.data-difficulty]="exercise.difficulty">
+            {{ getDifficultyLabel(exercise.difficulty) }}
+          </span>
+        </div>
+      </div>
+      <div class="timer" *ngIf="showTimer">
+        <span class="icon">⏱️</span>
+        <span>{{ formatTime(elapsedTime) }}</span>
+      </div>
+    </div>
+    
+    <!-- Instructions -->
+    <div class="instructions" *ngIf="exercise.metadata?.instructions">
+      <h3>Instructions:</h3>
+      <p>{{ exercise.metadata?.instructions }}</p>
+    </div>
+  </div>
+
+  <!-- Progress Bar -->
+  <div class="question-progress">
+    <div class="progress-info">
+      <span>Question {{ currentQuestionIndex + 1 }} sur {{ getTotalQuestions() }}</span>
+      <span>{{ getTotalAnswered() }} répondue(s)</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="getProgressPercentage()"></div>
+    </div>
+  </div>
+
+  <!-- QCM Exercise -->
+  <div class="exercise-content qcm-content" *ngIf="exercise.type === 'qcm'">
+    <div class="question-container" *ngFor="let question of exercise.qcmQuestions; let i = index" 
+         [class.active]="i === currentQuestionIndex">
+      
+      <div class="question-header">
+        <h3>Question {{ i + 1 }}</h3>
+        <span class="points">{{ question.points }} point{{ question.points > 1 ? 's' : '' }}</span>
+      </div>
+      
+      <div class="question-text">
+        <p>{{ question.questionText }}</p>
+      </div>
+      
+      <div class="options-container">
+        <div class="option" 
+             *ngFor="let option of question.options"
+             [class.selected]="isOptionSelected(i, option._id)"
+             (click)="selectOption(i, option._id)">
+          <div class="option-radio">
+            <div class="radio-inner" *ngIf="isOptionSelected(i, option._id)"></div>
+          </div>
+          <span class="option-text">{{ option.text }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Safer Fill Blanks Template Section -->
+<div class="exercise-content fill-blanks-content" *ngIf="exercise.type === 'fill_blanks'">
+  <div class="question-container" 
+       *ngFor="let question of exercise.fillBlankQuestions; let i = index; trackBy: trackByFn"
+       [class.active]="i === currentQuestionIndex">
+    
+    <div class="question-header">
+      <h3>Question {{ i + 1 }}</h3>
+      <span class="points">{{ question?.points || 0 }} point{{ (question?.points || 0) > 1 ? 's' : '' }}</span>
+    </div>
+    
+    <div class="fill-blank-sentence" *ngIf="question?.sentence">
+      <ng-container *ngFor="let part of getSentenceParts(question); let j = index; trackBy: trackByPartFn">
+        <span *ngIf="!part.isBlank">{{ part.text }}</span>
+        <input *ngIf="part.isBlank && part.blankIndex !== undefined && fillBlankAnswers[i]?.blanks"
+               type="text"
+               class="blank-input"
+               [(ngModel)]="fillBlankAnswers[i].blanks[part.blankIndex]"
+               (input)="onBlankChange(i, part.blankIndex)"
+               placeholder="..."
+               [style.width.ch]="getInputWidth(question?.blanks?.[part.blankIndex])">
+      </ng-container>
+    </div>
+    
+    <div class="hint" *ngIf="question?.hint">
+      <span class="icon">💡</span>
+      <span>Indice: {{ question.hint }}</span>
+    </div>
+  </div>
+</div>
+
+  <!-- Navigation Buttons -->
+  <div class="navigation-buttons">
+    <button class="nav-button prev" 
+            (click)="previousQuestion()"
+            [disabled]="currentQuestionIndex === 0">
+      <span class="icon">←</span>
+      Précédent
+    </button>
+    
+    <div class="question-indicators">
+      <span class="indicator" 
+            *ngFor="let q of getQuestions(); let i = index"
+            [class.active]="i === currentQuestionIndex"
+            [class.answered]="isQuestionAnswered(i)"
+            (click)="goToQuestion(i)">
+        {{ i + 1 }}
+      </span>
+    </div>
+    
+    <button class="nav-button next" 
+            (click)="nextQuestion()"
+            [disabled]="currentQuestionIndex === getTotalQuestions() - 1">
+      Suivant
+      <span class="icon">→</span>
+    </button>
+  </div>
+
+  <!-- Submit Section -->
+  <div class="submit-section" *ngIf="canSubmit()">
+    <div class="submit-info">
+      <p>Vous avez répondu à {{ getTotalAnswered() }} question(s) sur {{ getTotalQuestions() }}.</p>
+      <p *ngIf="getTotalAnswered() < getTotalQuestions()" class="warning">
+        <span class="icon">⚠️</span>
+        Attention: Certaines questions n'ont pas été répondues.
+      </p>
+    </div>
+    <button class="submit-button" 
+            (click)="submitExercise()"
+            [disabled]="submitting">
+      {{ submitting ? 'Envoi en cours...' : 'Soumettre l\'exercice' }}
+    </button>
+  </div>
+
+  <!-- Results Modal -->
+  <div class="results-modal" *ngIf="showResults" (click)="closeResults($event)">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h2>Résultats de l'exercice</h2>
+      
+      <div class="results-summary">
+        <div class="score-display">
+          <span class="score-value">{{ results.totalPointsEarned }}/{{ results.maxPossiblePoints }}</span>
+          <span class="score-label">points</span>
+        </div>
+        <div class="accuracy-display">
+          <span class="accuracy-value">{{ results.accuracyPercentage }}%</span>
+          <span class="accuracy-label">de réussite</span>
+        </div>
+      </div>
+      
+      <div class="attempt-info">
+        <p>Tentative {{ results.attemptNumber }}/{{ exercise.metadata?.maxAttempts || 1 }}</p>
+      </div>
+      
+      <div class="results-actions">
+        <button class="btn-secondary" (click)="viewDetailedResults()">
+          Voir les détails
+        </button>
+        <button class="btn-primary" (click)="finishExercise()">
+          Terminer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="loading">
+  <div class="loader"></div>
+  <p>Chargement de l'exercice...</p>
+</div>
+
+<!-- Error State -->
+<div class="error-container" *ngIf="error">
+  <div class="error-icon">⚠️</div>
+  <p>{{ error }}</p>
+  <button class="retry-button" (click)="loadExercise()">Réessayer</button>
+</div>

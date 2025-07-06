@@ -6,6 +6,131 @@
   padding: 20px;
 }
 
+/* Delete Modal Specific Styles */
+.delete-modal {
+  max-width: 500px;
+}
+
+.delete-modal-content {
+  padding: 24px;
+  text-align: center;
+}
+
+.warning-icon {
+  margin: 0 auto 24px;
+  color: #ff9800;
+}
+
+.delete-message h3 {
+  font-size: 1.25rem;
+  color: var(--color-primary-dark);
+  margin: 0 0 24px 0;
+  font-weight: 600;
+}
+
+.user-details-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background-color: var(--color-gray-light);
+  border-radius: var(--radius-sm);
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.user-info-summary {
+  flex: 1;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  margin-bottom: 4px;
+  font-size: 1rem;
+}
+
+.user-email {
+  color: var(--color-gray-dark);
+  font-size: 0.875rem;
+  margin-bottom: 8px;
+}
+
+.warning-text {
+  text-align: left;
+}
+
+.warning-text p {
+  margin: 0 0 16px 0;
+  color: var(--color-gray-dark);
+  line-height: 1.5;
+}
+
+.impact-warning {
+  background-color: rgba(255, 152, 0, 0.05);
+  border: 1px solid rgba(255, 152, 0, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.impact-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #e65100;
+  margin-bottom: 12px;
+  font-size: 0.875rem;
+}
+
+.affected-classes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.affected-classes li {
+  padding: 6px 0;
+  color: var(--color-gray-dark);
+  font-size: 0.875rem;
+}
+
+.affected-classes li strong {
+  color: var(--color-primary-dark);
+}
+
+.additional-impact {
+  margin-top: 16px;
+}
+
+.impact-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  background-color: rgba(244, 67, 54, 0.05);
+  border: 1px solid rgba(244, 67, 54, 0.2);
+  border-radius: var(--radius-sm);
+  color: #d32f2f;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.impact-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.delete-footer {
+  gap: 16px;
+}
+
+.delete-footer .btn-danger {
+  gap: 8px;
+}
+
 /* Page Header */
 .page-header {
   display: flex;
@@ -943,6 +1068,17 @@ select:focus {
   .info-row .value {
     text-align: left;
   }
+  
+  .user-details-summary {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .delete-modal {
+    max-width: none;
+    margin: 16px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -998,6 +1134,18 @@ select:focus {
   .subject-tag {
     font-size: 0.7rem;
     padding: 3px 6px;
+  }
+  
+  .delete-modal-content {
+    padding: 16px;
+  }
+  
+  .warning-icon {
+    margin-bottom: 16px;
+  }
+  
+  .user-details-summary {
+    padding: 16px;
   }
 }
 

@@ -7,7 +7,7 @@ export interface Exercise {
   _id?: string;
   title: string;
   type: 'qcm' | 'fill_blanks';
-  subject: Subject | string;
+  subject: Subject ;
   class: Class | string;
   createdBy: User | string;
   school: School | string;

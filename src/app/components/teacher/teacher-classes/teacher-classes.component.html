@@ -1,0 +1,193 @@
+<!-- teacher-classes.component.html -->
+<section class="content-section classes-section">
+  <h2 class="section-title">Mes classes</h2>
+  
+  <div class="classes-grid">
+    <div class="class-card" *ngFor="let classItem of classes">
+      <div class="class-header">
+        <h3 class="class-name">{{ classItem.name }}</h3>
+        <span class="class-grade">{{ classItem.grade }}</span>
+      </div>
+      <div class="class-info">
+        <div class="info-item">
+          <span class="info-label">Année scolaire:</span>
+          <span class="info-value">{{ classItem.academicYear }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Élèves:</span>
+          <span class="info-value">{{ classItem.students.length || 0 }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Matières enseignées:</span>
+          <div class="subjects-list">
+            <span class="subject-tag" *ngFor="let subject of getClassSubjects(classItem)">
+              {{ subject }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="class-actions">
+        <button class="action-btn" (click)="viewClassDetails(classItem)" [disabled]="loadingClassId === classItem._id">
+          <span *ngIf="loadingClassId !== classItem._id">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            Voir les détails
+          </span>
+          <span *ngIf="loadingClassId === classItem._id" class="loading-text">
+            <span class="spinner-small"></span>
+            Chargement...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- État vide -->
+  <div class="empty-state" *ngIf="classes.length === 0">
+    <div class="empty-icon">👥</div>
+    <h3 class="empty-title">Aucune classe assignée</h3>
+    <p class="empty-text">Vous n'avez pas encore de classes assignées</p>
+  </div>
+</section>
+
+<!-- Modal des détails de classe -->
+<div class="modal-overlay" *ngIf="showClassModal" (click)="closeClassModal()">
+  <div class="modal-content class-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-info">
+        <h2 class="modal-title">{{ selectedClassDetails?.class?.name }}</h2>
+        <span class="grade-badge">{{ selectedClassDetails?.class?.grade }}</span>
+      </div>
+      <button class="close-btn" (click)="closeClassModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedClassDetails">
+      <!-- Statistiques d'aperçu de la classe -->
+      <div class="stats-section">
+        <div class="stat-card">
+          <div class="stat-icon students-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <h3>{{ selectedClassDetails.statistics.totalStudents || 0 }}</h3>
+            <p>Total élèves</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon exercises-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <h3>{{ selectedClassDetails.statistics.totalExercises || 0 }}</h3>
+            <p>Total exercices</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon teachers-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <h3>{{ selectedClassDetails.statistics.totalTeachers || 0 }}</h3>
+            <p>Total enseignants</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations de la classe -->
+      <div class="class-details-section">
+        <h3 class="section-subtitle">Informations de la classe</h3>
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="detail-label">Année scolaire</span>
+            <span class="detail-value">{{ selectedClassDetails.class.academicYear }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">École</span>
+            <span class="detail-value">{{ getSchoolName(selectedClassDetails.class.school) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Statut</span>
+            <span class="detail-value" [class.active]="selectedClassDetails.class.isActive" [class.inactive]="!selectedClassDetails.class.isActive">
+              {{ selectedClassDetails.class.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section des enseignants et matières -->
+      <div class="teachers-section" *ngIf="hasTeacherSubjects()">
+        <h3 class="section-subtitle">Enseignants et matières</h3>
+        <div class="teachers-list">
+          <div class="teacher-card" *ngFor="let teacherSubject of selectedClassDetails.class.teacherSubjects">
+            <div class="teacher-info">
+              <div class="teacher-avatar">
+                {{ getTeacherInitial(teacherSubject.teacher) }}
+              </div>
+              <div class="teacher-details">
+                <h4 class="teacher-name">{{ getTeacherName(teacherSubject.teacher) }}</h4>
+                <p class="teacher-email">{{ getTeacherEmail(teacherSubject.teacher) }}</p>
+              </div>
+            </div>
+            <div class="teacher-subjects">
+              <span class="subject-pill" *ngFor="let subject of getSubjectsArray(teacherSubject.subjects)">
+                {{ getSubjectName(subject) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section des élèves -->
+      <div class="students-section" *ngIf="hasStudents()">
+        <h3 class="section-subtitle">Élèves ({{ getStudentsCount() }})</h3>
+        <div class="students-list">
+          <div class="student-card" *ngFor="let student of getStudentsArray(selectedClassDetails.class.students); let i = index">
+            <div class="student-avatar">
+              {{ getStudentInitial(student) }}
+            </div>
+            <div class="student-info">
+              <h4 class="student-name">{{ getStudentName(student) }}</h4>
+              <p class="student-email">{{ getStudentEmail(student) }}</p>
+            </div>
+            <div class="student-number">
+              #{{ i + 1 }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- État vide pour les élèves -->
+      <div class="empty-students" *ngIf="!hasStudents()">
+        <div class="empty-icon">👨‍🎓</div>
+        <h4>Aucun élève inscrit</h4>
+        <p>Cette classe n'a pas encore d'élèves inscrits.</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeClassModal()">Fermer</button>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 // exercise-form.component.ts
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, AbstractControl } from '@angular/forms';
 import { ExerciseService } from '../../../services/exercise.service';
 import { Subject } from '../../../models/subject.model';
@@ -17,9 +17,11 @@ interface ExtendedUser extends User {
   templateUrl: './exercise-form.component.html',
   styleUrls: ['./exercise-form.component.css']
 })
-export class ExerciseFormComponent implements OnInit {
+export class ExerciseFormComponent implements OnInit, OnChanges {
   @Input() subjects: Subject[] = [];
   @Input() classes: Class[] = [];
+  @Input() exerciseToEdit: Exercise | null = null;
+  @Input() isEditMode: boolean = false;
   @Output() exerciseCreated = new EventEmitter<Exercise>();
   @Output() cancelled = new EventEmitter<void>();
 
@@ -33,12 +35,21 @@ export class ExerciseFormComponent implements OnInit {
     private exerciseService: ExerciseService,
     private authService: AuthService
   ) {
-     this.currentUser = this.authService.getCurrentUser() as ExtendedUser | null;
+    this.currentUser = this.authService.getCurrentUser() as ExtendedUser | null;
     console.log('Current User:', this.currentUser);
   }
 
   ngOnInit(): void {
     this.initializeForm();
+    if (this.isEditMode && this.exerciseToEdit) {
+      this.populateFormForEdit();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['exerciseToEdit'] && this.exerciseToEdit && this.exerciseForm) {
+      this.populateFormForEdit();
+    }
   }
 
   private initializeForm(): void {
@@ -56,10 +67,91 @@ export class ExerciseFormComponent implements OnInit {
       fillBlankQuestions: this.fb.array([])
     });
 
-    // Listen to type changes to clear questions
-    this.exerciseForm.get('type')?.valueChanges.subscribe(type => {
-      this.onTypeChange();
+    // Listen to type changes to clear questions only in create mode
+    if (!this.isEditMode) {
+      this.exerciseForm.get('type')?.valueChanges.subscribe(type => {
+        this.onTypeChange();
+      });
+    }
+  }
+
+  private populateFormForEdit(): void {
+    if (!this.exerciseToEdit) return;
+
+    // Get IDs for subject and class
+    const subjectId = typeof this.exerciseToEdit.subject === 'string' 
+      ? this.exerciseToEdit.subject 
+      : this.exerciseToEdit.subject._id;
+    
+    const classId = typeof this.exerciseToEdit.class === 'string' 
+      ? this.exerciseToEdit.class 
+      : this.exerciseToEdit.class._id;
+
+    // Basic form values
+    this.exerciseForm.patchValue({
+      title: this.exerciseToEdit.title,
+      type: this.exerciseToEdit.type,
+      subject: subjectId,
+      class: classId,
+      difficulty: this.exerciseToEdit.difficulty || 'medium',
+      instructions: this.exerciseToEdit.metadata?.instructions || '',
+      estimatedTime: this.exerciseToEdit.metadata?.estimatedTime || 30,
+      maxAttempts: this.exerciseToEdit.metadata?.maxAttempts || 2,
+      dueDate: this.exerciseToEdit.dueDate ? new Date(this.exerciseToEdit.dueDate).toISOString().slice(0, 16) : ''
     });
+
+    // Disable type change in edit mode
+    this.exerciseForm.get('type')?.disable();
+
+    // Trigger subject change to populate filtered classes
+    this.onSubjectChange();
+
+    // Clear existing questions
+    while (this.qcmQuestions.length !== 0) {
+      this.qcmQuestions.removeAt(0);
+    }
+    while (this.fillBlankQuestions.length !== 0) {
+      this.fillBlankQuestions.removeAt(0);
+    }
+
+    // Populate questions based on type
+    if (this.exerciseToEdit.type === 'qcm' && this.exerciseToEdit.qcmQuestions) {
+      this.exerciseToEdit.qcmQuestions.forEach(question => {
+        const questionGroup = this.fb.group({
+          questionText: [question.questionText, Validators.required],
+          options: this.fb.array([]),
+          points: [question.points, [Validators.required, Validators.min(1)]]
+        });
+
+        const optionsArray = questionGroup.get('options') as FormArray;
+        question.options.forEach(option => {
+          optionsArray.push(this.fb.group({
+            text: [option.text, Validators.required],
+            isCorrect: [option.isCorrect]
+          }));
+        });
+
+        this.qcmQuestions.push(questionGroup);
+      });
+    } else if (this.exerciseToEdit.type === 'fill_blanks' && this.exerciseToEdit.fillBlankQuestions) {
+      this.exerciseToEdit.fillBlankQuestions.forEach(question => {
+        const questionGroup = this.fb.group({
+          sentence: [question.sentence, Validators.required],
+          blanks: this.fb.array([]),
+          points: [question.points, [Validators.required, Validators.min(1)]]
+        });
+
+        const blanksArray = questionGroup.get('blanks') as FormArray;
+        question.blanks.forEach((blank, index) => {
+          blanksArray.push(this.fb.group({
+            position: [index],
+            correctAnswer: [blank.correctAnswer, Validators.required]
+          }));
+        });
+
+        this.fillBlankQuestions.push(questionGroup);
+      });
+    }
   }
 
   get qcmQuestions(): FormArray {
@@ -224,7 +316,8 @@ export class ExerciseFormComponent implements OnInit {
     if (this.exerciseForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
       
-      const formValue = this.exerciseForm.value;
+      // Get form values including disabled fields
+      const formValue = this.exerciseForm.getRawValue();
       
       // Calculate total points
       let totalPoints = 0;
@@ -264,8 +357,12 @@ export class ExerciseFormComponent implements OnInit {
         exerciseData.fillBlankQuestions = formValue.fillBlankQuestions;
       }
 
-      // Create exercise
-      this.exerciseService.createExercise(exerciseData).subscribe({
+      // Call appropriate service method
+      const serviceCall = this.isEditMode && this.exerciseToEdit?._id
+        ? this.exerciseService.updateExercise(this.exerciseToEdit._id, exerciseData)
+        : this.exerciseService.createExercise(exerciseData);
+
+      serviceCall.subscribe({
         next: (exercise) => {
           this.isSubmitting = false;
           this.exerciseCreated.emit(exercise);
@@ -273,8 +370,8 @@ export class ExerciseFormComponent implements OnInit {
         },
         error: (error) => {
           this.isSubmitting = false;
-          console.error('Error creating exercise:', error);
-          alert('Failed to create exercise. Please try again.');
+          console.error(`Error ${this.isEditMode ? 'updating' : 'creating'} exercise:`, error);
+          alert(`Failed to ${this.isEditMode ? 'update' : 'create'} exercise. Please try again.`);
         }
       });
     } else {
@@ -313,5 +410,8 @@ export class ExerciseFormComponent implements OnInit {
     while (this.fillBlankQuestions.length !== 0) {
       this.fillBlankQuestions.removeAt(0);
     }
+
+    // Re-enable type field if it was disabled
+    this.exerciseForm.get('type')?.enable();
   }
 }

@@ -1,0 +1,43 @@
+<div class="unauthorized-container">
+  <div class="unauthorized-content">
+    <!-- Icon Section -->
+    <div class="icon-wrapper">
+      <mat-icon class="lock-icon">lock</mat-icon>
+    </div>
+    
+    <!-- Content Section -->
+    <div class="content-section">
+      <h1 class="title">Access Denied</h1>
+      <h2 class="subtitle">You don't have permission to access this page</h2>
+      <p class="description">
+        Sorry, but you don't have the necessary permissions to view this content. 
+        Please contact your administrator if you believe this is an error.
+      </p>
+    </div>
+    
+    <!-- Actions Section -->
+    <div class="actions-section">
+      <button mat-raised-button class="primary-button" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Go Back
+      </button>
+      <button mat-stroked-button class="secondary-button" (click)="goHome()">
+        <mat-icon>home</mat-icon>
+        Go to Home
+      </button>
+    </div>
+    
+    <!-- Contact Section -->
+    <div class="contact-section">
+      <p class="contact-text">
+        Need help? 
+        <a href="mailto:support@example.com" class="contact-link">Contact Support</a>
+      </p>
+    </div>
+  </div>
+  
+  <!-- Background Decorations -->
+  <div class="bg-decoration decoration-1"></div>
+  <div class="bg-decoration decoration-2"></div>
+  <div class="bg-decoration decoration-3"></div>
+</div>

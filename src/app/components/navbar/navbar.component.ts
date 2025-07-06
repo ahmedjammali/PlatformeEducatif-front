@@ -2,6 +2,7 @@ import { Component, OnInit, HostListener, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { Subscription } from 'rxjs';
+import { SchoolService } from 'src/app/services/school.service';
 
 @Component({
   selector: 'app-navbar',
@@ -14,15 +15,30 @@ export class NavbarComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   userName: string | null = null;
   isAdmin = false;
+    schoolName  : string  = ""  ; // Replace with actual school name
 
   private subscriptions: Subscription = new Subscription();
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService , private schoolService: SchoolService
   ) {}
 
   ngOnInit(): void {
+
+     // Fetch school name from service
+    this.schoolService.getSchool().subscribe({
+      next: (response) => {
+        console.log('School data fetched:', response);
+        this.schoolName = response.school.name || 'Your School';
+        console.log('School Name:', this.schoolName);
+      },
+      error: (error) => {
+        console.error('Error fetching school name:', error);
+        this.schoolName = 'Your School'; // Fallback in case of error
+      }
+    });
+
     // Subscribe to authentication changes
     this.subscriptions.add(
       this.authService.isAuthenticated$.subscribe(isAuth => {

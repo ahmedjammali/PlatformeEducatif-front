@@ -1,10 +1,10 @@
-// subjects-management.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject as RxSubject, takeUntil } from 'rxjs';
 import { SubjectService } from '../../../services/subject.service';
 import { ClassService } from '../../../services/class.service';
 import { UserService } from '../../../services/user.service';
+import { ToasterService } from '../../../services/toaster.service';
 import { Subject as SubjectModel } from '../../../models/subject.model';
 import { Class } from '../../../models/class.model';
 import { User } from '../../../models/user.model';
@@ -25,7 +25,9 @@ export class SubjectsComponent implements OnInit, OnDestroy {
   isLoading = false;
   isSaving = false;
   showSubjectModal = false;
+  showDeleteModal = false;
   editingSubject: SubjectModel | null = null;
+  subjectToDelete: SubjectModel | null = null;
   
   // Search
   searchTerm = '';
@@ -42,7 +44,8 @@ export class SubjectsComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private subjectService: SubjectService,
     private classService: ClassService,
-    private userService: UserService
+    private userService: UserService,
+    private toasterService: ToasterService
   ) {
     this.initializeForm();
   }
@@ -80,6 +83,7 @@ export class SubjectsComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error loading subjects:', error);
           this.isLoading = false;
+          this.toasterService.error('Impossible de charger les matières. Veuillez réessayer.');
         }
       });
   }
@@ -95,6 +99,7 @@ export class SubjectsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading classes:', error);
+          this.toasterService.warning('Certaines données n\'ont pas pu être chargées.');
         }
       });
 
@@ -108,6 +113,7 @@ export class SubjectsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading teachers:', error);
+          this.toasterService.warning('Les données des enseignants n\'ont pas pu être chargées.');
         }
       });
   }
@@ -156,7 +162,7 @@ export class SubjectsComponent implements OnInit, OnDestroy {
       const term = this.searchTerm.toLowerCase();
       this.filteredSubjects = this.subjects.filter(s => 
         s.name.toLowerCase().includes(term) ||
-        s.description.toLowerCase().includes(term)
+        (s.description && s.description.toLowerCase().includes(term))
       );
     } else {
       this.filteredSubjects = [...this.subjects];
@@ -191,11 +197,13 @@ export class SubjectsComponent implements OnInit, OnDestroy {
       Object.keys(this.subjectForm.controls).forEach(key => {
         this.subjectForm.get(key)?.markAsTouched();
       });
+      this.toasterService.warning('Veuillez corriger les erreurs dans le formulaire.');
       return;
     }
 
     this.isSaving = true;
     const formValue = this.subjectForm.value;
+    const isEditing = !!this.editingSubject; // Store the editing state
     
     // Clean up empty fields
     if (!formValue.description) {
@@ -214,38 +222,65 @@ export class SubjectsComponent implements OnInit, OnDestroy {
         this.isSaving = false;
         this.closeModal();
         this.loadSubjects();
-        alert(this.editingSubject ? 'Matière mise à jour avec succès!' : 'Matière créée avec succès!');
+        
+        if (isEditing) {
+          this.toasterService.success('Matiere mise a jour avec succes!');
+        } else {
+          this.toasterService.success('Matiere creee avec succes!');
+        }
       },
       error: (error) => {
         console.error('Error saving subject:', error);
         this.isSaving = false;
-        alert('Erreur lors de l\'enregistrement. Veuillez réessayer.');
+        this.toasterService.error('Erreur lors de l\'enregistrement. Veuillez reessayer.');
       }
     });
   }
 
-  deleteSubject(subject: SubjectModel): void {
-    const stats = this.subjectStats.get(subject._id!);
+  // Delete Modal Methods
+  openDeleteModal(subject: SubjectModel): void {
+    this.subjectToDelete = subject;
+    this.showDeleteModal = true;
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.subjectToDelete = null;
+  }
+
+  confirmDeleteSubject(): void {
+    if (!this.subjectToDelete) return;
+
+    const stats = this.subjectStats.get(this.subjectToDelete._id!);
     
     if (stats && (stats.teacherCount > 0 || stats.classCount > 0)) {
-      alert(`Cette matière ne peut pas être supprimée car elle est utilisée par ${stats.teacherCount} enseignant(s) et dans ${stats.classCount} classe(s).`);
+      this.toasterService.warning(
+        `Cette matiere ne peut pas etre supprimee car elle est utilisee par ${stats.teacherCount} enseignant(s) et dans ${stats.classCount} classe(s).`,
+        'Suppression impossible'
+      );
+      this.closeDeleteModal();
       return;
     }
-    
-    if (confirm(`Êtes-vous sûr de vouloir supprimer la matière "${subject.name}"?`)) {
-      this.subjectService.deleteSubject(subject._id!)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.loadSubjects();
-            alert('Matière supprimée avec succès!');
-          },
-          error: (error) => {
-            console.error('Error deleting subject:', error);
-            alert('Erreur lors de la suppression. Cette matière est peut-être utilisée dans des classes.');
-          }
-        });
-    }
+
+    const subjectName = this.subjectToDelete.name;
+
+    this.subjectService.deleteSubject(this.subjectToDelete._id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.closeDeleteModal();
+          this.loadSubjects();
+          this.toasterService.success(`"${subjectName}" a ete supprimee avec succes!`);
+        },
+        error: (error) => {
+          console.error('Error deleting subject:', error);
+          this.toasterService.error('Erreur lors de la suppression. Cette matiere est peut-etre utilisee dans des classes.');
+        }
+      });
+  }
+
+  deleteSubject(subject: SubjectModel): void {
+    this.openDeleteModal(subject);
   }
 
   // Utility Methods
@@ -262,5 +297,29 @@ export class SubjectsComponent implements OnInit, OnDestroy {
   getClassCount(subjectId?: string): number {
     if (!subjectId) return 0;
     return this.subjectStats.get(subjectId)?.classCount || 0;
+  }
+
+  // Helper method to check if subject can be deleted
+  canDeleteSubject(subjectId?: string): boolean {
+    if (!subjectId) return false;
+    const stats = this.subjectStats.get(subjectId);
+    return !stats || (stats.teacherCount === 0 && stats.classCount === 0);
+  }
+
+  // Helper method to get usage details for delete warning
+  getSubjectUsageDetails(subject: SubjectModel): string[] {
+    const details: string[] = [];
+    const stats = this.subjectStats.get(subject._id!);
+    
+    if (stats) {
+      if (stats.teacherCount > 0) {
+        details.push(`${stats.teacherCount} enseignant(s) enseignent cette matière`);
+      }
+      if (stats.classCount > 0) {
+        details.push(`${stats.classCount} classe(s) ont cette matière dans leur programme`);
+      }
+    }
+    
+    return details;
   }
 }

@@ -1,0 +1,983 @@
+/* teacher-grades.component.css */
+
+.grades-section {
+  padding: 2rem;
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Section Header */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: var(--font-2xl);
+  color: var(--color-primary-dark);
+  margin: 0;
+}
+
+/* Filters */
+.filters-container {
+  background: var(--color-white);
+  border: 2px solid var(--color-gray);
+  border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: var(--gradient-primary);
+  color: var(--color-white);
+  border-bottom: 1px solid var(--color-gray);
+}
+
+.filters-title {
+  margin: 0;
+  font-size: var(--font-lg);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reset-filters-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--color-white);
+  padding: 0.5rem 1rem;
+  font-size: var(--font-sm);
+}
+
+.reset-filters-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.filter-group.primary {
+  border-left: 4px solid var(--color-primary);
+  padding-left: 1rem;
+}
+
+.filter-group.disabled {
+  opacity: 0.6;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  margin-bottom: 0.5rem;
+  font-size: var(--font-sm);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-group label i {
+  font-size: var(--font-sm);
+  opacity: 0.7;
+}
+
+.filter-help {
+  color: var(--color-gray-dark);
+  font-size: var(--font-xs);
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+/* Active Filters */
+.active-filters {
+  padding: 1rem 1.5rem;
+  background-color: var(--color-gray-light);
+  border-top: 1px solid var(--color-gray);
+}
+
+.active-filters-label {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  font-size: var(--font-sm);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--gradient-accent);
+  color: var(--color-primary-dark);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  font-weight: 500;
+  border: 1px solid var(--color-accent);
+}
+
+.filter-tag i {
+  font-size: 0.75em;
+  opacity: 0.8;
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  color: var(--color-primary-dark);
+  font-size: var(--font-sm);
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 0.25rem;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-base);
+}
+
+.tag-remove:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--color-error);
+}
+
+/* Form Elements */
+.form-select,
+.form-input,
+.form-textarea {
+  padding: 0.75rem;
+  border: 2px solid var(--color-gray);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-base);
+  transition: var(--transition-base);
+  background-color: var(--color-white);
+}
+
+.form-select:focus,
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(164, 180, 101, 0.1);
+}
+
+/* Buttons */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-base);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  font-size: var(--font-base);
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  color: var(--color-white);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  background-color: var(--color-gray);
+  color: var(--color-primary-dark);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-gray-dark);
+  color: var(--color-white);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid currentColor;
+}
+
+.btn-outline:hover {
+  background-color: currentColor;
+  color: var(--color-white);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-icon {
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-edit {
+  color: var(--color-primary);
+}
+
+.btn-edit:hover {
+  background-color: rgba(164, 180, 101, 0.1);
+}
+
+.btn-delete {
+  color: var(--color-error);
+}
+
+.btn-delete:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* View Toggle */
+.view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  background-color: var(--color-gray-light);
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  width: fit-content;
+}
+
+.toggle-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--color-gray-dark);
+}
+
+.toggle-btn.active {
+  background-color: var(--color-white);
+  color: var(--color-primary-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-gray);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--color-gray-dark);
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--color-gray);
+}
+
+.empty-state h3 {
+  margin-bottom: 0.5rem;
+  color: var(--color-primary-dark);
+}
+
+/* Table View */
+.grades-table-container {
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.grades-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.grades-table th {
+  background: var(--gradient-primary);
+  color: var(--color-white);
+  padding: 1rem;
+  font-weight: 600;
+  text-align: left;
+  font-size: var(--font-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.grades-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-gray);
+  vertical-align: middle;
+}
+
+.grade-row:hover {
+  background-color: var(--color-gray-light);
+}
+
+.student-cell {
+  min-width: 180px;
+}
+
+.student-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.student-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gradient-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: var(--color-primary-dark);
+  font-size: var(--font-sm);
+}
+
+.exam-name {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exam-type-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.exam-type-badge[data-type="controle"] {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--color-info);
+}
+
+.exam-type-badge[data-type="devoir"] {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--color-success);
+}
+
+.exam-type-badge[data-type="examen"] {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: var(--color-warning);
+}
+
+.exam-type-badge[data-type="test"] {
+  background-color: rgba(156, 39, 176, 0.1);
+  color: #9C27B0;
+}
+
+.exam-type-badge[data-type="oral"] {
+  background-color: rgba(0, 150, 136, 0.1);
+  color: #009688;
+}
+
+.exam-type-badge[data-type="tp"] {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: #FFC107;
+}
+
+.exam-type-badge[data-type="autre"] {
+  background-color: rgba(96, 125, 139, 0.1);
+  color: #607D8B;
+}
+
+.grade-value {
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-base);
+}
+
+.grade-excellent {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--color-success);
+}
+
+.grade-good {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--color-info);
+}
+
+.grade-average {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: var(--color-warning);
+}
+
+.grade-poor {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--color-error);
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Students View */
+.students-view {
+  animation: slideInUp 0.5s ease-out;
+}
+
+.students-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.student-card {
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-base);
+}
+
+.student-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.student-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-gray);
+}
+
+.student-avatar.large {
+  width: 50px;
+  height: 50px;
+  font-size: var(--font-lg);
+}
+
+.student-details {
+  flex: 1;
+}
+
+.student-details h3 {
+  margin: 0;
+  color: var(--color-primary-dark);
+  font-size: var(--font-lg);
+}
+
+.student-email {
+  color: var(--color-gray-dark);
+  font-size: var(--font-sm);
+  margin: 0;
+}
+
+.student-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: var(--font-lg);
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.stat-label {
+  font-size: var(--font-xs);
+  color: var(--color-gray-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.student-grades {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.grade-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background-color: var(--color-gray-light);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-base);
+}
+
+.grade-item:hover {
+  background-color: var(--color-gray);
+}
+
+.grade-info {
+  flex: 1;
+}
+
+.grade-exam {
+  display: block;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  font-size: var(--font-sm);
+}
+
+.grade-type {
+  font-size: var(--font-xs);
+  color: var(--color-gray-dark);
+  text-transform: uppercase;
+}
+
+.grade-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.grade-coeff {
+  font-size: var(--font-xs);
+  color: var(--color-gray-dark);
+}
+
+.grade-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+  animation: slideInUp 0.3s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-gray);
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--color-primary-dark);
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: var(--font-lg);
+  cursor: pointer;
+  color: var(--color-gray-dark);
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-base);
+}
+
+.btn-close:hover {
+  background-color: var(--color-gray-light);
+}
+
+/* Form */
+.grade-form {
+  padding: 1.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  margin-bottom: 0.5rem;
+  font-size: var(--font-sm);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-gray);
+}
+
+.form-help {
+  color: var(--color-gray-dark);
+  font-size: var(--font-xs);
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+/* Icons (assuming you're using an icon font or similar) */
+.icon-plus::before { content: '+'; }
+.icon-table::before { content: '⊞'; }
+.icon-users::before { content: '👥'; }
+.icon-alert-circle::before { content: '⚠'; }
+.icon-clipboard::before { content: '📋'; }
+.icon-edit::before { content: '✏'; }
+.icon-trash::before { content: '🗑'; }
+.icon-x::before { content: '✕'; }
+.icon-filter::before { content: '🔍'; }
+.icon-refresh::before { content: '🔄'; }
+.icon-school::before { content: '🏫'; }
+.icon-book::before { content: '📚'; }
+.icon-calendar::before { content: '📅'; }
+.icon-graduation-cap::before { content: '🎓'; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .grades-section {
+    padding: 1rem;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .students-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .student-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .student-stats {
+    align-self: stretch;
+    justify-content: space-around;
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .table-responsive {
+    font-size: var(--font-sm);
+  }
+  
+  .grades-table th,
+  .grades-table td {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .view-toggle {
+    width: 100%;
+  }
+  
+  .toggle-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* Delete Modal Specific Styles */
+.delete-modal-overlay {
+  z-index: calc(var(--z-modal) + 1);
+}
+
+.delete-modal-content {
+  max-width: 500px;
+  border: 2px solid var(--color-error);
+}
+
+.delete-modal-header {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.05));
+  border-bottom: 1px solid rgba(244, 67, 54, 0.2);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.delete-icon-container {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-error), #d32f2f);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
+.delete-modal-header h3 {
+  flex: 1;
+  margin: 0;
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.delete-modal-body {
+  padding: 2rem;
+}
+
+.delete-warning-message {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.delete-warning-message p {
+  margin: 0.5rem 0;
+  color: var(--color-primary-dark);
+}
+
+.warning-text {
+  font-size: var(--font-sm);
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.grade-details-card {
+  background: linear-gradient(135deg, var(--color-gray-light), #f8f9fa);
+  border: 1px solid var(--color-gray);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.grade-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.grade-detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--color-gray-dark);
+  font-size: var(--font-sm);
+}
+
+.detail-value {
+  color: var(--color-primary-dark);
+  font-weight: 500;
+}
+
+.detail-value.grade-highlight {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-weight: bold;
+}
+
+.delete-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid var(--color-gray);
+  background-color: var(--color-gray-light);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--color-error), #d32f2f);
+  color: white;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d32f2f, #b71c1c);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+.btn-danger:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.delete-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+/* Icon styles */
+.icon-alert-triangle::before { 
+  content: '⚠️'; 
+  font-style: normal;
+}
+
+/* Animation for delete modal */
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.delete-modal-content {
+  animation: slideInDown 0.3s ease-out;
+}
+
+/* Responsive adjustments for delete modal */
+@media (max-width: 480px) {
+  .delete-modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .delete-modal-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .delete-modal-actions {
+    flex-direction: column;
+  }
+  
+  .grade-detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}

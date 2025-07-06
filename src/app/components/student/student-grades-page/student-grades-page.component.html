@@ -1,0 +1,173 @@
+<!-- student-grades-page.component.html -->
+<div class="grades-page">
+  <!-- Navbar -->
+  <app-student-navbar></app-student-navbar>
+
+  <!-- Main Content -->
+  <div class="page-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-left">
+          <h1>Mes Notes</h1>
+          <p class="page-description">Consultez l'ensemble de vos notes et suivez votre progression académique</p>
+        </div>
+        <div class="header-decoration">
+          <div class="floating-icon">📊</div>
+          <div class="floating-icon">📈</div>
+          <div class="floating-icon">🎯</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Statistics -->
+    <div class="quick-stats" *ngIf="statistics">
+      <div class="stats-grid">
+        <div class="quick-stat-card overall-average">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-content">
+            <h4>Moyenne Générale</h4>
+            <p class="stat-value">{{ statistics.moyenneGenerale?.toFixed(2) || 'N/A' }}<span class="unit">/20</span></p>
+          </div>
+        </div>
+        <div class="quick-stat-card total-grades">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <h4>Total des Notes</h4>
+            <p class="stat-value">{{ grades?.length || 0 }}<span class="unit"> notes</span></p>
+          </div>
+        </div>
+        <div class="quick-stat-card best-grade">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-content">
+            <h4>Meilleure Note</h4>
+            <p class="stat-value">{{ statistics.meilleureNote || 'N/A' }}<span class="unit">/20</span></p>
+          </div>
+        </div>
+     
+      </div>
+    </div>
+
+    <!-- Grades Section -->
+    <div class="grades-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="title-icon">📋</span>
+          Toutes mes Notes
+        </h2>
+        
+        <!-- Filters -->
+        <div class="filters-container">
+          <div class="filters">
+            <select [(ngModel)]="selectedTrimester" (change)="filterGrades()" class="filter-select">
+              <option value="">Tous les trimestres</option>
+              <option value="1er Trimestre">1er Trimestre</option>
+              <option value="2ème Trimestre">2ème Trimestre</option>
+              <option value="3ème Trimestre">3ème Trimestre</option>
+            </select>
+            <select [(ngModel)]="selectedSubjectFilter" (change)="filterGrades()" class="filter-select">
+              <option value="">Toutes les matières</option>
+              <option *ngFor="let subject of subjects" [value]="subject._id">
+                {{ subject.name }}
+              </option>
+            </select>
+            <select [(ngModel)]="selectedExamType" (change)="filterGrades()" class="filter-select">
+              <option value="">Tous les types</option>
+              <option value="controle">Contrôle</option>
+              <option value="devoir">Devoir</option>
+              <option value="examen">Examen</option>
+              <option value="test">Test</option>
+              <option value="oral">Oral</option>
+              <option value="tp">TP</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+          <button class="reset-filters-btn" (click)="resetFilters()" [disabled]="!hasActiveFilters()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18l-2 13H5L3 6z"></path>
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Réinitialiser
+          </button>
+        </div>
+      </div>
+
+      <!-- Grades Cards -->
+      <div class="grades-container" *ngIf="filteredGrades && filteredGrades.length > 0">
+        <div class="grades-grid">
+          <div class="grade-card" 
+               *ngFor="let grade of filteredGrades" 
+               [class.good-grade]="grade.grade >= 15" 
+               [class.average-grade]="grade.grade >= 10 && grade.grade < 15" 
+               [class.low-grade]="grade.grade < 10">
+            
+            <div class="grade-header">
+              <div class="grade-info">
+                <h4 class="exam-name">{{ grade.examName }}</h4>
+                <div class="grade-meta">
+                  <span class="subject-name">{{ getSubjectName(grade.subject) }}</span>
+                  <span class="exam-date">{{ formatDate(grade.examDate) }}</span>
+                </div>
+              </div>
+              <div class="grade-score">
+                <span class="grade-value">{{ grade.grade }}</span>
+                <span class="grade-total">/20</span>
+              </div>
+            </div>
+
+            <div class="grade-details">
+              <div class="detail-row">
+                <span class="exam-type-badge" [attr.data-type]="grade.examType">
+                  {{ grade.examType }}
+                </span>
+                <span class="coefficient">
+                  Coef. {{ grade.coefficient || 1 }}
+                </span>
+              </div>
+              
+              <div class="detail-row">
+                <span class="trimester">{{ grade.trimester }}</span>
+              </div>
+              
+              <div class="comments" *ngIf="grade.comments">
+                <div class="comments-icon">💬</div>
+                <p>{{ grade.comments }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="!filteredGrades || filteredGrades.length === 0">
+        <div class="empty-icon">📝</div>
+        <h3>Aucune note trouvée</h3>
+        <p *ngIf="hasActiveFilters()">Essayez de modifier vos filtres pour voir plus de résultats</p>
+        <p *ngIf="!hasActiveFilters()">Aucune note n'est disponible pour le moment</p>
+        <button *ngIf="hasActiveFilters()" class="reset-btn" (click)="resetFilters()">
+          Réinitialiser les filtres
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="loading">
+      <div class="loader"></div>
+      <p>Chargement de vos notes...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-container" *ngIf="error && !loading">
+      <div class="error-icon">⚠️</div>
+      <h3>Oops! Une erreur s'est produite</h3>
+      <p>{{ error }}</p>
+      <button class="retry-button" (click)="loadData()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23,4 23,10 17,10"></polyline>
+          <path d="M20.49,15A9,9 0 1,1 5.64,5.64L1,10"></path>
+        </svg>
+        Réessayer
+      </button>
+    </div>
+  </div>
+</div>

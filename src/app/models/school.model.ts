@@ -21,3 +21,7 @@ export interface ToggleSchoolAccessRequest {
   block: boolean;
   reason?: string;
 }
+
+export interface UpdateSchoolNameRequest {
+  name: string;
+}

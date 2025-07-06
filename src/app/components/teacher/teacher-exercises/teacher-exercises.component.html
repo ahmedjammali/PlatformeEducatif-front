@@ -1,0 +1,329 @@
+<!-- teacher-exercises.component.html -->
+<section class="content-section exercises-section">
+  <div class="section-header">
+    <h2 class="section-title">Gestion des exercices</h2>
+    <button class="create-btn" (click)="openCreateExerciseModal()">
+      <span class="btn-icon">➕</span>
+      Créer un exercice
+    </button>
+  </div>
+
+  <!-- Barre de filtres -->
+  <div class="filters-bar">
+    <div class="filters-container">
+      <div class="filter-group">
+        <label class="filter-label">Matière:</label>
+        <div class="filter-input-wrapper">
+          <span class="filter-icon">📚</span>
+          <select class="filter-select" [(ngModel)]="selectedSubjectId" (change)="filterExercises()">
+            <option value="">Toutes les matières</option>
+            <option *ngFor="let subject of subjects" [value]="subject._id!">
+              {{ subject.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Type:</label>
+        <div class="filter-input-wrapper">
+          <span class="filter-icon">📝</span>
+          <select class="filter-select" [(ngModel)]="selectedExerciseType" (change)="filterExercises()">
+            <option value="">Tous les types</option>
+            <option value="qcm">QCM</option>
+            <option value="fill_blanks">Texte à trous</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Classe:</label>
+        <div class="filter-input-wrapper">
+          <span class="filter-icon">👥</span>
+          <select class="filter-select" [(ngModel)]="selectedClassId" (change)="filterExercises()">
+            <option value="">Toutes les classes</option>
+            <option *ngFor="let class of classes" [value]="class._id!">
+              {{ class.name }} - {{ class.grade }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <button class="reset-filters-btn" (click)="resetFilters()" 
+            [disabled]="!selectedSubjectId && !selectedExerciseType && !selectedClassId"
+            title="Réinitialiser tous les filtres">
+      <span class="reset-icon">🔄</span>
+      Réinitialiser les filtres
+    </button>
+  </div>
+
+  <!-- Liste des exercices -->
+  <div class="exercises-list">
+    <div class="exercise-card" *ngFor="let exercise of filteredExercises">
+      <div class="exercise-header">
+        <h3 class="exercise-title">{{ exercise.title }}</h3>
+        <span class="exercise-type" [class]="exercise.type">
+          {{ exercise.type === 'qcm' ? 'QCM' : 'Texte à trous' }}
+        </span>
+      </div>
+      <div class="exercise-meta">
+        <span class="meta-item">
+          <span class="meta-icon">📚</span>
+          {{ getSubjectName(exercise.subject) }}
+        </span>
+        <span class="meta-item">
+          <span class="meta-icon">👥</span>
+          {{ getClassName(exercise.class) }}
+        </span>
+        <span class="meta-item">
+          <span class="meta-icon">📊</span>
+          {{ exercise.difficulty === 'easy' ? 'Facile' : exercise.difficulty === 'medium' ? 'Moyen' : 'Difficile' }}
+        </span>
+        <span class="meta-item">
+          <span class="meta-icon">⏱️</span>
+          {{ exercise.metadata?.estimatedTime || 0 }} min
+        </span>
+      </div>
+      <div class="exercise-stats">
+        <div class="stat">
+          <span class="stat-label">Points totaux:</span>
+          <span class="stat-value">{{ exercise.totalPoints || 0 }}</span>
+        </div>
+      </div>
+      <div class="exercise-actions">
+        <button class="action-btn view-btn" (click)="viewExercise(exercise)">
+          <span class="btn-icon">👁️</span>
+          Voir
+        </button>
+        <button class="action-btn edit-btn" (click)="editExercise(exercise)">
+          <span class="btn-icon">✏️</span>
+          Modifier
+        </button>
+        <button class="action-btn delete-btn" (click)="openDeleteConfirmation(exercise)">
+          <span class="btn-icon">🗑️</span>
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- État vide -->
+  <div class="empty-state" *ngIf="filteredExercises.length === 0">
+    <div class="empty-icon">📝</div>
+    <h3 class="empty-title">Aucun exercice trouvé</h3>
+    <p class="empty-text">Créez votre premier exercice pour commencer</p>
+    <button class="create-btn" (click)="openCreateExerciseModal()">
+      <span class="btn-icon">➕</span>
+      Créer un exercice
+    </button>
+  </div>
+
+  <!-- Modal de création d'exercice -->
+  <div class="modal-overlay" *ngIf="showCreateExerciseModal" (click)="closeCreateExerciseModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Créer un nouvel exercice</h2>
+        <button class="close-btn" (click)="closeCreateExerciseModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <app-exercise-form 
+          [subjects]="subjects" 
+          [classes]="classes"
+          (exerciseCreated)="onExerciseCreated($event)"
+          (cancelled)="closeCreateExerciseModal()">
+        </app-exercise-form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de modification d'exercice -->
+  <div class="modal-overlay" *ngIf="showEditExerciseModal" (click)="closeEditExerciseModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Modifier l'exercice</h2>
+        <button class="close-btn" (click)="closeEditExerciseModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <app-exercise-form 
+          [subjects]="subjects" 
+          [classes]="classes"
+          [exerciseToEdit]="selectedExercise"
+          [isEditMode]="true"
+          (exerciseCreated)="onExerciseUpdated($event)"
+          (cancelled)="closeEditExerciseModal()">
+        </app-exercise-form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de détails de l'exercice -->
+  <div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
+    <div class="modal-content view-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Détails de l'exercice</h2>
+        <button class="close-btn" (click)="closeViewModal()">✕</button>
+      </div>
+      <div class="modal-body" *ngIf="viewExerciseDetails">
+        <!-- Section informations de base -->
+        <div class="details-section">
+          <h3 class="section-subtitle">Informations de base</h3>
+          <div class="details-grid">
+            <div class="detail-item">
+              <span class="detail-label">Titre:</span>
+              <span class="detail-value">{{ viewExerciseDetails.title }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Type:</span>
+              <span class="detail-value exercise-type" [class]="viewExerciseDetails.type">
+                {{ viewExerciseDetails.type === 'qcm' ? 'Choix multiples' : 'Texte à trous' }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Matière:</span>
+              <span class="detail-value">{{ getSubjectName(viewExerciseDetails.subject) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Classe:</span>
+              <span class="detail-value">{{ getClassName(viewExerciseDetails.class) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Difficulté:</span>
+              <span class="detail-value difficulty-badge" [class]="viewExerciseDetails.difficulty">
+                {{ viewExerciseDetails.difficulty === 'easy' ? 'Facile' : viewExerciseDetails.difficulty === 'medium' ? 'Moyen' : 'Difficile' }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Points totaux:</span>
+              <span class="detail-value">{{ viewExerciseDetails.totalPoints || 0 }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section métadonnées -->
+        <div class="details-section" *ngIf="viewExerciseDetails.metadata">
+          <h3 class="section-subtitle">Paramètres de l'exercice</h3>
+          <div class="details-grid">
+            <div class="detail-item" *ngIf="viewExerciseDetails.metadata.instructions">
+              <span class="detail-label">Consignes:</span>
+              <span class="detail-value">{{ viewExerciseDetails.metadata.instructions }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Temps estimé:</span>
+              <span class="detail-value">{{ viewExerciseDetails.metadata.estimatedTime || 0 }} minutes</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Tentatives max:</span>
+              <span class="detail-value">{{ viewExerciseDetails.metadata.maxAttempts || 'Illimité' }}</span>
+            </div>
+            <div class="detail-item" *ngIf="viewExerciseDetails.dueDate">
+              <span class="detail-label">Date limite:</span>
+              <span class="detail-value">{{ viewExerciseDetails.dueDate | date:'medium' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section questions pour QCM -->
+        <div class="details-section" *ngIf="viewExerciseDetails.type === 'qcm' && viewExerciseDetails.qcmQuestions && viewExerciseDetails.qcmQuestions.length > 0">
+          <h3 class="section-subtitle">Questions</h3>
+          <div class="questions-list">
+            <div class="question-detail" *ngFor="let question of viewExerciseDetails.qcmQuestions; let i = index">
+              <div class="question-header-detail">
+                <h4 class="question-title">Question {{ i + 1 }} ({{ question.points }} points)</h4>
+              </div>
+              <p class="question-text">{{ question.questionText }}</p>
+              <div class="options-list">
+                <div class="option-detail" *ngFor="let option of question.options; let j = index" 
+                     [class.correct-option]="option.isCorrect">
+                  <span class="option-letter">{{ getOptionLetter(j) }}.</span>
+                  <span class="option-text">{{ option.text }}</span>
+                  <span class="correct-indicator" *ngIf="option.isCorrect">✓</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section questions pour texte à trous -->
+        <div class="details-section" *ngIf="viewExerciseDetails.type === 'fill_blanks' && viewExerciseDetails.fillBlankQuestions && viewExerciseDetails.fillBlankQuestions.length > 0">
+          <h3 class="section-subtitle">Questions</h3>
+          <div class="questions-list">
+            <div class="question-detail" *ngFor="let question of viewExerciseDetails.fillBlankQuestions; let i = index">
+              <div class="question-header-detail">
+                <h4 class="question-title">Question {{ i + 1 }} ({{ question.points }} points)</h4>
+              </div>
+              <p class="question-text">{{ question.sentence }}</p>
+              <div class="blanks-answers">
+                <div class="blank-answer" *ngFor="let blank of question.blanks; let j = index">
+                  <span class="blank-label">Trou {{ j + 1 }}:</span>
+                  <span class="blank-correct-answer">{{ blank.correctAnswer }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Informations de création -->
+        <div class="details-section creation-info">
+          <div class="detail-item">
+            <span class="detail-label">Créé le:</span>
+            <span class="detail-value">{{ viewExerciseDetails.createdAt | date:'medium' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="viewExerciseDetails.updatedAt">
+            <span class="detail-label">Dernière modification:</span>
+            <span class="detail-value">{{ viewExerciseDetails.updatedAt | date:'medium' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn close-action-btn" (click)="closeViewModal()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de confirmation de suppression -->
+  <div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+    <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header delete-header">
+        <h2 class="modal-title">
+          <span class="warning-icon">⚠️</span>
+          Confirmer la suppression
+        </h2>
+        <button class="close-btn" (click)="closeDeleteModal()">✕</button>
+      </div>
+      <div class="modal-body delete-body" *ngIf="exerciseToDelete">
+        <div class="delete-warning-message">
+          <p class="delete-title">Êtes-vous sûr de vouloir supprimer cet exercice ?</p>
+          <div class="exercise-info-delete">
+            <div class="info-item">
+              <span class="info-label">Exercice:</span>
+              <span class="info-value">{{ exerciseToDelete.title }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Type:</span>
+              <span class="info-value">{{ exerciseToDelete.type === 'qcm' ? 'Choix multiples' : 'Texte à trous' }}</span>
+            </div>
+          </div>
+          <div class="delete-consequences">
+            <p class="consequences-title">
+              <span class="danger-icon">⚠️</span>
+              Cette action supprimera définitivement :
+            </p>
+            <ul class="consequences-list">
+              <li>Toutes les questions et réponses associées à cet exercice</li>
+              <li>Tous les progrès et tentatives des élèves pour cet exercice</li>
+              <li>Toutes les notes et données de performance</li>
+            </ul>
+            <p class="final-warning">Cette action ne peut pas être annulée !</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer delete-footer">
+        <button class="cancel-btn" (click)="closeDeleteModal()">
+          Annuler
+        </button>
+        <button class="confirm-delete-btn" (click)="confirmDelete()">
+          <span class="delete-icon">🗑️</span>
+          Oui, supprimer l'exercice
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

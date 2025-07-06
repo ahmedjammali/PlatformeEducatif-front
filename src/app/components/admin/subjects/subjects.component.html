@@ -1,182 +1,280 @@
 <app-layout>
+  <!-- Toaster Component -->
+  <app-toaster></app-toaster>
 
-<!-- subjects-management.component.html -->
-<div class="subjects-container">
-  <!-- Header Section -->
-  <div class="page-header">
-    <div class="header-content">
-      <h1>Gestion des Matières</h1>
-      <p class="header-subtitle">Gérer les matières enseignées dans votre établissement</p>
-    </div>
-    
-    <button class="btn-primary" (click)="openCreateSubjectModal()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-        <line x1="12" y1="6" x2="16" y2="6"/>
-        <line x1="12" y1="10" x2="16" y2="10"/>
-        <line x1="12" y1="14" x2="16" y2="14"/>
-      </svg>
-      <span>Nouvelle Matière</span>
-    </button>
-  </div>
-
-  <!-- Search Bar -->
-  <div class="search-section">
-    <div class="search-input">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/>
-        <path d="m21 21-4.35-4.35"/>
-      </svg>
-      <input 
-        type="text" 
-        placeholder="Rechercher une matière..."
-        [(ngModel)]="searchTerm"
-        (ngModelChange)="filterSubjects()"
-      />
-    </div>
-  </div>
-
-  <!-- Subjects Grid -->
-  <div class="subjects-grid">
-    <div class="subject-card" *ngFor="let subject of filteredSubjects">
-      <div class="subject-image">
-        <img *ngIf="subject.imagePath" [src]="subject.imagePath" [alt]="subject.name" />
-        <div class="default-image" *ngIf="!subject.imagePath">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-          </svg>
-        </div>
+  <!-- subjects-management.component.html -->
+  <div class="subjects-container">
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1>Gestion des Matières</h1>
+        <p class="header-subtitle">Gérer les matières enseignées dans votre établissement</p>
       </div>
       
-      <div class="subject-content">
-        <h3>{{ subject.name }}</h3>
-        <p class="subject-description">{{ subject.description || 'Aucune description disponible' }}</p>
-        
-        <div class="subject-stats">
-          <div class="stat-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            <span>{{ getTeacherCount(subject._id) }} enseignant(s)</span>
-          </div>
-          
-          <div class="stat-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-            </svg>
-            <span>{{ getClassCount(subject._id) }} classe(s)</span>
-          </div>
-        </div>
-        
-        <div class="subject-actions">
-          <button class="action-btn" (click)="editSubject(subject)" title="Modifier">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-            Modifier
-          </button>
-          <button class="action-btn danger" (click)="deleteSubject(subject)" title="Supprimer">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-            </svg>
-            Supprimer
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div class="empty-state" *ngIf="filteredSubjects.length === 0 && !isLoading">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-      </svg>
-      <h3>Aucune matière trouvée</h3>
-      <p>Commencez par créer votre première matière</p>
-    </div>
-
-    <!-- Loading State -->
-    <div class="loading-state" *ngIf="isLoading">
-      <div class="spinner"></div>
-      <p>Chargement des matières...</p>
-    </div>
-  </div>
-</div>
-
-<!-- Create/Edit Subject Modal -->
-<div class="modal-overlay" *ngIf="showSubjectModal" (click)="closeModal()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>{{ editingSubject ? 'Modifier la Matière' : 'Créer une Nouvelle Matière' }}</h2>
-      <button class="close-btn" (click)="closeModal()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
+      <button class="btn-primary" (click)="openCreateSubjectModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          <line x1="12" y1="6" x2="16" y2="6"/>
+          <line x1="12" y1="10" x2="16" y2="10"/>
+          <line x1="12" y1="14" x2="16" y2="14"/>
         </svg>
+        <span>Nouvelle Matière</span>
       </button>
     </div>
 
-    <form [formGroup]="subjectForm" (ngSubmit)="saveSubject()" class="subject-form">
-      <div class="form-group">
-        <label>Nom de la matière <span class="required">*</span></label>
+    <!-- Search Bar -->
+    <div class="search-section">
+      <div class="search-input">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
         <input 
           type="text" 
-          formControlName="name" 
-          placeholder="Ex: Mathématiques"
-          [class.error]="isFieldInvalid('name')"
+          placeholder="Rechercher une matière..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="filterSubjects()"
         />
-        <span class="error-message" *ngIf="isFieldInvalid('name')">
-          Le nom est requis (minimum 2 caractères)
-        </span>
       </div>
+    </div>
 
-      <div class="form-group">
-        <label>Description</label>
-        <textarea 
-          formControlName="description" 
-          placeholder="Description de la matière..."
-          rows="4"
-        ></textarea>
-      </div>
-
-      <div class="form-group">
-        <label>Image de la matière</label>
-        <div class="image-upload">
-          <input 
-            type="text" 
-            formControlName="imagePath" 
-            placeholder="URL de l'image (optionnel)"
-          />
-          <p class="helper-text">Entrez l'URL d'une image représentant cette matière</p>
+    <!-- Subjects Grid -->
+    <div class="subjects-grid">
+      <div class="subject-card" *ngFor="let subject of filteredSubjects">
+        <div class="subject-image">
+          <img *ngIf="subject.imagePath" [src]="subject.imagePath" [alt]="subject.name" />
+          <div class="default-image" *ngIf="!subject.imagePath">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+          </div>
+        </div>
+        
+        <div class="subject-content">
+          <h3>{{ subject.name }}</h3>
+          <p class="subject-description">{{ subject.description || 'Aucune description disponible' }}</p>
+          
+          <div class="subject-stats">
+            <div class="stat-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <span>{{ getTeacherCount(subject._id) }} enseignant(s)</span>
+            </div>
+            
+            <div class="stat-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+              </svg>
+              <span>{{ getClassCount(subject._id) }} classe(s)</span>
+            </div>
+          </div>
+          
+          <div class="subject-actions">
+            <button class="action-btn" (click)="editSubject(subject)" title="Modifier">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Modifier
+            </button>
+            <button class="action-btn danger" (click)="deleteSubject(subject)" title="Supprimer">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              Supprimer
+            </button>
+          </div>
         </div>
       </div>
 
-      <div class="image-preview" *ngIf="subjectForm.get('imagePath')?.value">
-        <img [src]="subjectForm.get('imagePath')?.value" alt="Aperçu" />
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="filteredSubjects.length === 0 && !isLoading">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        <h3>Aucune matière trouvée</h3>
+        <p>Commencez par créer votre première matière</p>
       </div>
 
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" (click)="closeModal()">Annuler</button>
-        <button type="submit" class="btn-primary" [disabled]="subjectForm.invalid || isSaving">
-          <span *ngIf="!isSaving">{{ editingSubject ? 'Mettre à jour' : 'Créer' }}</span>
-          <span *ngIf="isSaving" class="saving">
-            <span class="spinner-small"></span>
-            Enregistrement...
-          </span>
+      <!-- Loading State -->
+      <div class="loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Chargement des matières...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+    <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirmer la suppression</h2>
+        <button class="close-btn" (click)="closeDeleteModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
         </button>
       </div>
-    </form>
+
+      <div class="delete-modal-content" *ngIf="subjectToDelete">
+        <div class="warning-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+
+        <div class="delete-message">
+          <h3>Êtes-vous sûr de vouloir supprimer cette matière ?</h3>
+          
+          <div class="subject-details-summary">
+            <div class="subject-image-small">
+              <img *ngIf="subjectToDelete.imagePath" [src]="subjectToDelete.imagePath" [alt]="subjectToDelete.name" />
+              <div class="default-image-small" *ngIf="!subjectToDelete.imagePath">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="subject-info-summary">
+              <div class="subject-name">{{ subjectToDelete.name }}</div>
+              <div class="subject-description-small" *ngIf="subjectToDelete.description">
+                {{ subjectToDelete.description }}
+              </div>
+            </div>
+          </div>
+
+          <div class="warning-text">
+            <p><strong>Cette action est irréversible.</strong> La matière sera définitivement supprimée du système.</p>
+            
+            <div class="impact-warning" *ngIf="!canDeleteSubject(subjectToDelete._id)">
+              <div class="impact-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                Cette matière ne peut pas être supprimée :
+              </div>
+              <ul class="usage-details">
+                <li *ngFor="let detail of getSubjectUsageDetails(subjectToDelete)">
+                  {{ detail }}
+                </li>
+              </ul>
+              <p class="cannot-delete-note">
+                Veuillez d'abord retirer cette matière des classes et enseignants avant de la supprimer.
+              </p>
+            </div>
+
+            <div class="additional-impact" *ngIf="canDeleteSubject(subjectToDelete._id)">
+              <p class="impact-note">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                Cette matière n'est actuellement utilisée dans aucune classe et par aucun enseignant.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer delete-footer">
+        <button type="button" class="btn-secondary" (click)="closeDeleteModal()">
+          Annuler
+        </button>
+        <button 
+          type="button" 
+          class="btn-danger" 
+          (click)="confirmDeleteSubject()"
+          [disabled]="!canDeleteSubject(subjectToDelete?._id)"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          Supprimer définitivement
+        </button>
+      </div>
+    </div>
   </div>
-</div>
 
+  <!-- Create/Edit Subject Modal -->
+  <div class="modal-overlay" *ngIf="showSubjectModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingSubject ? 'Modifier la Matière' : 'Créer une Nouvelle Matière' }}</h2>
+        <button class="close-btn" (click)="closeModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
 
+      <form [formGroup]="subjectForm" (ngSubmit)="saveSubject()" class="subject-form">
+        <div class="form-group">
+          <label>Nom de la matière <span class="required">*</span></label>
+          <input 
+            type="text" 
+            formControlName="name" 
+            placeholder="Ex: Mathématiques"
+            [class.error]="isFieldInvalid('name')"
+          />
+          <span class="error-message" *ngIf="isFieldInvalid('name')">
+            Le nom est requis (minimum 2 caractères)
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea 
+            formControlName="description" 
+            placeholder="Description de la matière..."
+            rows="4"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Image de la matière</label>
+          <div class="image-upload">
+            <input 
+              type="text" 
+              formControlName="imagePath" 
+              placeholder="URL de l'image (optionnel)"
+            />
+            <p class="helper-text">Entrez l'URL d'une image représentant cette matière</p>
+          </div>
+        </div>
+
+        <div class="image-preview" *ngIf="subjectForm.get('imagePath')?.value">
+          <img [src]="subjectForm.get('imagePath')?.value" alt="Aperçu" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeModal()">Annuler</button>
+          <button type="submit" class="btn-primary" [disabled]="subjectForm.invalid || isSaving">
+            <span *ngIf="!isSaving">{{ editingSubject ? 'Mettre à jour' : 'Créer' }}</span>
+            <span *ngIf="isSaving" class="saving">
+              <span class="spinner-small"></span>
+              Enregistrement...
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </app-layout>
-

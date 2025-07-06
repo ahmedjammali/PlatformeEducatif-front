@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BaseService } from './base.service';
-import { School, CreateSchoolRequest, ToggleSchoolAccessRequest } from '../models/school.model';
+import { School, CreateSchoolRequest, ToggleSchoolAccessRequest, UpdateSchoolNameRequest } from '../models/school.model';
 
 @Injectable({
   providedIn: 'root'
@@ -33,4 +33,32 @@ export class SchoolService extends BaseService {
       request
     );
   }
+
+  updateSchoolName(request: UpdateSchoolNameRequest): Observable<{ 
+    message: string; 
+    school: {
+      id: string;
+      name: string;
+      oldName: string;
+      isActive: boolean;
+      updatedAt: string;
+    }
+  }> {
+    return this.http.put<{ 
+      message: string; 
+      school: {
+        id: string;
+        name: string;
+        oldName: string;
+        isActive: boolean;
+        updatedAt: string;
+      }
+    }>(
+      `${this.apiUrl}${this.endpoint}/name`,
+      request
+    );
+  }
+
+
+
 }

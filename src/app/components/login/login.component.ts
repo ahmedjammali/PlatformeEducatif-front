@@ -5,6 +5,8 @@ import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { LoginRequest } from '../../models/user.model';
+import { SchoolService } from 'src/app/services/school.service';
+import { School } from 'src/app/models/school.model';
 
 @Component({
   selector: 'app-login',
@@ -18,16 +20,32 @@ export class LoginComponent implements OnInit, OnDestroy {
   errorMessage = '';
   focusedField = '';
   availableRoles = ['admin', 'teacher', 'student'];
-  
+  schoolName  : string  = ""  ; // Replace with actual school name
+
+
   private destroy$ = new Subject<void>();
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router , private schoolService: SchoolService
   ) {}
 
   ngOnInit(): void {
+
+    // Fetch school name from service
+    this.schoolService.getSchool().subscribe({
+      next: (response) => {
+        console.log('School data fetched:', response);
+        this.schoolName = response.school.name || 'Your School';
+        console.log('School Name:', this.schoolName);
+      },
+      error: (error) => {
+        console.error('Error fetching school name:', error);
+        this.schoolName = 'Your School'; // Fallback in case of error
+      }
+    });
+
     // Check if user is already logged in
     if (this.authService.isLoggedIn()) {
       this.navigateToAppropriateDashboard();

@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AuthService } from 'src/app/services/auth.service';
 import { Subscription } from 'rxjs';
+import { SchoolService } from 'src/app/services/school.service';
 
 @Component({
   selector: 'app-footer',
@@ -11,6 +12,7 @@ export class FooterComponent implements OnInit, OnDestroy {
   currentYear = new Date().getFullYear();
   isAdmin = false;
   private subscriptions: Subscription = new Subscription();
+    schoolName  : string  = ""  ;
 
 
 
@@ -35,9 +37,23 @@ export class FooterComponent implements OnInit, OnDestroy {
     hours: 'Lun - Ven: 8h00 - 17h00'
   };
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService , private schoolService: SchoolService) {}
 
   ngOnInit(): void {
+
+     // Fetch school name from service
+    this.schoolService.getSchool().subscribe({
+      next: (response) => {
+        console.log('School data fetched:', response);
+        this.schoolName = response.school.name || 'Your School';
+        console.log('School Name:', this.schoolName);
+      },
+      error: (error) => {
+        console.error('Error fetching school name:', error);
+        this.schoolName = 'Your School'; // Fallback in case of error
+      }
+    });
+
     // Subscribe to authentication changes
     this.subscriptions.add(
       this.authService.isAuthenticated$.subscribe(() => {

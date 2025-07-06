@@ -89,4 +89,12 @@ export class ClassService extends BaseService {
       `${this.apiUrl}${this.endpoint}/${classId}/teachers`
     );
   }
+
+
+  getStudentClass(): Observable<{ class: any; subjects: any[] }> {
+    return this.http.get<{ class: any; subjects: any[] }>(
+      `${this.apiUrl}${this.endpoint}/student/my-class`
+    );
+  }
+
 }

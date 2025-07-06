@@ -4,6 +4,8 @@ import { ContactService } from 'src/app/services/contact.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Contact } from 'src/app/models/contact.model';
+import { AuthService } from 'src/app/services/auth.service';
+import { SchoolService } from 'src/app/services/school.service';
 
 interface Feature {
   icon: string;
@@ -33,6 +35,8 @@ interface Testimonial {
 })
 export class LandingPageComponent implements OnInit {
 
+
+    schoolName  : string  = ""  ; // Replace with actual school name
   contactForm: FormGroup;
   isLoading = false;
   features: Feature[] = [
@@ -98,7 +102,7 @@ export class LandingPageComponent implements OnInit {
 
   constructor(private router: Router ,private fb: FormBuilder,
     private contactService: ContactService,
-    private snackBar: MatSnackBar) { 
+    private snackBar: MatSnackBar ,  private authService: AuthService  ,private schoolService: SchoolService ) { 
        this.contactForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
@@ -108,6 +112,25 @@ export class LandingPageComponent implements OnInit {
     }
 
   ngOnInit(): void {
+
+     // Fetch school name from service
+    this.schoolService.getSchool().subscribe({
+      next: (response) => {
+        console.log('School data fetched:', response);
+        this.schoolName = response.school.name || 'Your School';
+        console.log('School Name:', this.schoolName);
+      },
+      error: (error) => {
+        console.error('Error fetching school name:', error);
+        this.schoolName = 'Your School'; // Fallback in case of error
+      }
+    });
+
+    const isLoggin = this.authService.isLoggedIn();
+    if (isLoggin) {
+      this.router.navigate(['/login']);
+      return;
+    }
     this.startTestimonialCarousel();
   }
 

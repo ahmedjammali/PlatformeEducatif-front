@@ -5,6 +5,7 @@ import { Subject, takeUntil, debounceTime, forkJoin, of } from 'rxjs';
 import { UserService } from '../../../services/user.service';
 import { ClassService } from '../../../services/class.service';
 import { AuthService } from '../../../services/auth.service';
+import { ToasterService } from '../../../services/toaster.service';
 import { User, TeachingClass } from '../../../models/user.model';
 import { Class } from '../../../models/class.model';
 import { Subject as SubjectModel } from '../../../models/subject.model';
@@ -26,9 +27,11 @@ export class UsersComponent implements OnInit, OnDestroy {
   isSaving = false;
   showUserModal = false;
   showViewModal = false;
+  showDeleteModal = false;
   showPassword = false;
   editingUser: User | null = null;
   viewingUser: User | null = null;
+  userToDelete: User | null = null;
   
   // Filters
   searchTerm = '';
@@ -63,7 +66,8 @@ export class UsersComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private userService: UserService,
     private classService: ClassService,
-    private authService: AuthService
+    private authService: AuthService,
+    private toasterService: ToasterService  // Keep as private since we're using separate component
   ) {
     this.initializeForm();
   }
@@ -116,7 +120,7 @@ export class UsersComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error loading users:', error);
           this.isLoading = false;
-          alert('Erreur lors du chargement des utilisateurs');
+          this.toasterService.error('Impossible de charger les utilisateurs. Veuillez réessayer.');
         }
       });
   }
@@ -164,7 +168,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       });
     } catch (error) {
       console.error('Error loading class names:', error);
-      // Continue without class names if there's an error
+      this.toasterService.warning('Certaines informations de classe n\'ont pas pu être chargées.');
     }
   }
 
@@ -241,6 +245,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.selectedRole = '';
     this.currentPage = 1;
     this.filterAndPaginateUsers();
+    this.toasterService.info('Filtres réinitialisés');
   }
 
   sortBy(field: string): void {
@@ -301,7 +306,7 @@ export class UsersComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading user details:', error);
-          alert('Erreur lors du chargement des détails de l\'utilisateur');
+          this.toasterService.error('Impossible de charger les détails de l\'utilisateur.');
         }
       });
   }
@@ -316,6 +321,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       Object.keys(this.userForm.controls).forEach(key => {
         this.userForm.get(key)?.markAsTouched();
       });
+      this.toasterService.warning('Veuillez corriger les erreurs dans le formulaire.');
       return;
     }
 
@@ -342,31 +348,57 @@ export class UsersComponent implements OnInit, OnDestroy {
         this.isSaving = false;
         this.closeModal();
         this.loadUsers();
-        alert(this.editingUser ? 'Utilisateur mis à jour avec succès!' : 'Utilisateur créé avec succès!');
+        
+        if (this.editingUser) {
+          this.toasterService.success('Utilisateur mis à jour avec succès!');
+        } else {
+          this.toasterService.success('Utilisateur créé avec succès!');
+        }
       },
       error: (error) => {
         console.error('Error saving user:', error);
         this.isSaving = false;
-        alert('Erreur lors de l\'enregistrement. Veuillez réessayer.');
+        this.toasterService.error(error.error?.message || 'Erreur lors de la sauvegarde. Veuillez réessayer.');
       }
     });
   }
 
+  // Delete Modal Methods
+  openDeleteModal(user: User): void {
+    this.userToDelete = user;
+    this.showDeleteModal = true;
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.userToDelete = null;
+  }
+
+  confirmDeleteUser(): void {
+    if (!this.userToDelete) return;
+
+    const userId = this.userToDelete._id!;
+    const userName = this.userToDelete.name;
+
+    this.userService.deleteUser(userId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.closeDeleteModal();
+          this.loadUsers();
+          // Clear selection if deleted user was selected
+          this.selectedUsers = this.selectedUsers.filter(id => id !== userId);
+          this.toasterService.success(`${userName} a été supprimé avec succès!`);
+        },
+        error: (error) => {
+          console.error('Error deleting user:', error);
+          this.toasterService.error('Erreur lors de la suppression. Veuillez réessayer.');
+        }
+      });
+  }
+
   deleteUser(user: User): void {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${user.name}?`)) {
-      this.userService.deleteUser(user._id!)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.loadUsers();
-            alert('Utilisateur supprimé avec succès!');
-          },
-          error: (error) => {
-            console.error('Error deleting user:', error);
-            alert('Erreur lors de la suppression. Veuillez réessayer.');
-          }
-        });
-    }
+    this.openDeleteModal(user);
   }
 
   // Selection methods
@@ -397,13 +429,31 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   deleteSelected(): void {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${this.selectedUsers.length} utilisateur(s)?`)) {
-      // TODO: Implement bulk delete
-      console.log('Delete selected:', this.selectedUsers);
+    if (this.selectedUsers.length === 0) {
+      this.toasterService.warning('Aucun utilisateur sélectionné.');
+      return;
     }
+
+    const count = this.selectedUsers.length;
+    this.toasterService.warning(
+      `La suppression en masse de ${count} utilisateur(s) n'est pas encore disponible.`,
+      'Fonctionnalité à venir'
+    );
+    
+    // TODO: Implement bulk delete with confirmation modal
+    console.log('Delete selected:', this.selectedUsers);
   }
 
   exportSelected(): void {
+    if (this.selectedUsers.length === 0) {
+      this.toasterService.warning('Aucun utilisateur sélectionné pour l\'export.');
+      return;
+    }
+
+    this.toasterService.info(
+      `Export de ${this.selectedUsers.length} utilisateur(s) en cours...`
+    );
+    
     // TODO: Implement export functionality
     console.log('Export selected:', this.selectedUsers);
   }
@@ -515,5 +565,25 @@ export class UsersComponent implements OnInit, OnDestroy {
     }
     
     return teachingClasses.map(tc => this.getClassName(tc.class)).join(', ');
+  }
+
+  // Helper method to get user's assigned classes for deletion warning
+  getUserAssignedClasses(user: User): string[] {
+    const classes: string[] = [];
+    
+    if (user.role === 'student' && user.studentClass) {
+      classes.push(this.getClassName(user.studentClass));
+    }
+    
+    if (user.role === 'teacher' && user.teachingClasses) {
+      user.teachingClasses.forEach(tc => {
+        const className = this.getClassName(tc.class);
+        if (!classes.includes(className)) {
+          classes.push(className);
+        }
+      });
+    }
+    
+    return classes.filter(className => className !== 'Non assigné');
   }
 }

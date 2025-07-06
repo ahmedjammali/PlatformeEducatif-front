@@ -4,12 +4,9 @@
   <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
     <div class="sidebar-header">
       <div class="logo-section">
-        <div class="logo-mini" *ngIf="sidebarCollapsed">
-          <span>HS</span>
-        </div>
         <div class="logo-full" *ngIf="!sidebarCollapsed">
-          <span class="logo-text">Hiba</span>
-          <span class="logo-accent">School</span>
+          <span class="logo-text" *ngIf="!schoolInfo" >school </span> 
+          <span class="logo-accent"  *ngIf="schoolInfo">{{ schoolInfo.name }}</span>
         </div>
       </div>
       <button class="toggle-btn" (click)="toggleSidebar()">
@@ -121,7 +118,7 @@
           <p class="user-role">{{ getUserRoleLabel() }}</p>
         </div>
       </div>
-      <button class="logout-btn" (click)="logout()" [title]="'Déconnexion'">
+      <button class="logout-btn" (click)="openLogoutModal()" [title]="'Déconnexion'">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
           <polyline points="16 17 21 12 16 7"/>
@@ -170,4 +167,60 @@
       <ng-content></ng-content>
     </div>
   </main>
+
+  <!-- Logout Confirmation Modal -->
+  <div class="modal-overlay" *ngIf="showLogoutModal" (click)="closeLogoutModal()">
+    <div class="modal-content logout-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirmer la déconnexion</h2>
+        <button class="close-btn" (click)="closeLogoutModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="logout-content">
+        <div class="logout-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </div>
+        <div class="logout-message">
+          <h3>Êtes-vous sûr de vouloir vous déconnecter ?</h3>
+          <p>Vous devrez vous reconnecter pour accéder à nouveau à votre compte.</p>
+          <div class="user-info-box">
+            <div class="user-avatar">
+              {{ currentUser?.name?.charAt(0) || 'A' }}
+            </div>
+            <div class="user-details">
+              <span class="user-name">{{ currentUser?.name }}</span>
+              <span class="user-role">{{ getUserRoleLabel() }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeLogoutModal()">Annuler</button>
+        <button type="button" class="btn-danger" (click)="confirmLogout()" [disabled]="isLoggingOut">
+          <span *ngIf="!isLoggingOut">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Se déconnecter
+          </span>
+          <span *ngIf="isLoggingOut" class="logging-out">
+            <span class="spinner-small"></span>
+            Déconnexion...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

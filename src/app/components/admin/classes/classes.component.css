@@ -1,6 +1,6 @@
 /* classes-management.component.css */
 
-/* CSS Variables */
+/* CSS Variables
 :root {
   --color-primary: #A4B465;
   --color-primary-dark: #626F47;
@@ -20,7 +20,7 @@
   --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
   --transition-base: all 0.3s ease;
   --z-modal: 1000;
-}
+} */
 
 /* Container */
 .classes-container {
@@ -1156,5 +1156,126 @@ select:focus {
   .student-item:hover,
   .teacher-assignment:hover {
     transform: none;
+  }
+}
+
+
+/* Add these styles to your existing classes-management.component.css */
+
+/* Delete Modal Styles */
+.delete-modal {
+  max-width: 500px;
+}
+
+.delete-content {
+  padding: 24px;
+  text-align: center;
+}
+
+.delete-icon {
+  margin-bottom: 20px;
+  color: var(--color-error);
+  display: flex;
+  justify-content: center;
+}
+
+.delete-message h3 {
+  color: var(--color-primary-dark);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.delete-message p {
+  color: var(--color-gray-dark);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0 0 20px 0;
+}
+
+.delete-message p strong {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.warning-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background-color: rgba(255, 152, 0, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  margin-top: 16px;
+}
+
+.warning-box svg {
+  color: var(--color-warning);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.warning-box span {
+  color: #e65100;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* Danger Button */
+.btn-danger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-danger svg {
+  flex-shrink: 0;
+}
+
+/* Additional responsive styles for delete modal */
+@media (max-width: 768px) {
+  .delete-modal {
+    margin: 10px;
+    width: calc(100% - 20px);
+    max-width: none;
+  }
+  
+  .delete-content {
+    padding: 16px;
+  }
+  
+  .delete-message h3 {
+    font-size: 1.125rem;
+  }
+  
+  .warning-box {
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .warning-box span {
+    font-size: 0.8rem;
   }
 }

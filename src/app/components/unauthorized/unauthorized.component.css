@@ -1,0 +1,247 @@
+.unauthorized-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-secondary) 0%, #f8f4e6 100%);
+  position: relative;
+  overflow: hidden;
+  padding: var(--spacing-md);
+}
+
+.unauthorized-content {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  padding: var(--spacing-3xl);
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+  position: relative;
+  z-index: var(--z-base);
+  animation: slideInUp 0.8s ease-out;
+}
+
+/* Icon Section */
+.icon-wrapper {
+  margin-bottom: var(--spacing-2xl);
+  position: relative;
+}
+
+.lock-icon {
+  font-size: 80px !important;
+  width: 80px !important;
+  height: 80px !important;
+  color: var(--color-primary-dark);
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: pulse 2s infinite;
+}
+
+/* Content Section */
+.content-section {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.title {
+  color: var(--color-primary-dark);
+  font-size: var(--font-3xl);
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  animation: slideInDown 0.8s ease-out 0.2s both;
+}
+
+.subtitle {
+  color: var(--color-gray-dark);
+  font-size: var(--font-xl);
+  font-weight: 500;
+  margin-bottom: var(--spacing-lg);
+  animation: slideInDown 0.8s ease-out 0.4s both;
+}
+
+.description {
+  color: var(--color-gray-dark);
+  font-size: var(--font-base);
+  line-height: 1.6;
+  max-width: 400px;
+  margin: 0 auto var(--spacing-lg);
+  animation: fadeIn 0.8s ease-out 0.6s both;
+}
+
+/* Actions Section */
+.actions-section {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-2xl);
+  animation: slideInUp 0.8s ease-out 0.8s both;
+}
+
+.primary-button {
+  background: var(--gradient-primary) !important;
+  color: var(--color-white) !important;
+  border: none !important;
+  padding: var(--spacing-md) var(--spacing-xl) !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 600 !important;
+  box-shadow: var(--shadow-md) !important;
+  transition: var(--transition-base) !important;
+}
+
+.primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.secondary-button {
+  border: 2px solid var(--color-primary) !important;
+  color: var(--color-primary-dark) !important;
+  padding: var(--spacing-md) var(--spacing-xl) !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 600 !important;
+  transition: var(--transition-base) !important;
+}
+
+.secondary-button:hover {
+  background: var(--color-primary) !important;
+  color: var(--color-white) !important;
+  transform: translateY(-2px);
+}
+
+.primary-button mat-icon,
+.secondary-button mat-icon {
+  margin-right: var(--spacing-sm);
+}
+
+/* Contact Section */
+.contact-section {
+  animation: fadeIn 0.8s ease-out 1s both;
+}
+
+.contact-text {
+  color: var(--color-gray-dark);
+  font-size: var(--font-sm);
+}
+
+.contact-link {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  text-decoration: underline;
+  transition: var(--transition-base);
+}
+
+.contact-link:hover {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+/* Background Decorations */
+.bg-decoration {
+  position: absolute;
+  border-radius: var(--radius-full);
+  opacity: 0.1;
+  animation: float 6s ease-in-out infinite;
+}
+
+.decoration-1 {
+  width: 200px;
+  height: 200px;
+  background: var(--gradient-primary);
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.decoration-2 {
+  width: 150px;
+  height: 150px;
+  background: var(--gradient-accent);
+  top: 60%;
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.decoration-3 {
+  width: 100px;
+  height: 100px;
+  background: var(--gradient-secondary);
+  bottom: 20%;
+  left: 20%;
+  animation-delay: 4s;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .unauthorized-content {
+    padding: var(--spacing-2xl);
+    margin: var(--spacing-md);
+  }
+  
+  .lock-icon {
+    font-size: 60px !important;
+    width: 60px !important;
+    height: 60px !important;
+  }
+  
+  .title {
+    font-size: var(--font-2xl);
+  }
+  
+  .subtitle {
+    font-size: var(--font-lg);
+  }
+  
+  .actions-section {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .primary-button,
+  .secondary-button {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .bg-decoration {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .unauthorized-content {
+    padding: var(--spacing-xl);
+  }
+  
+  .lock-icon {
+    font-size: 50px !important;
+    width: 50px !important;
+    height: 50px !important;
+  }
+  
+  .title {
+    font-size: var(--font-xl);
+  }
+  
+  .subtitle {
+    font-size: var(--font-base);
+  }
+}
+
+/* Loading State Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.loading {
+  background: linear-gradient(90deg, transparent, rgba(164, 180, 101, 0.1), transparent);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}

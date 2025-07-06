@@ -1,116 +1,116 @@
 <!-- exercise-form.component.html -->
 <div class="exercise-form">
   <form [formGroup]="exerciseForm" (ngSubmit)="onSubmit()">
-    <!-- Basic Information -->
+    <!-- Informations de base -->
     <div class="form-section">
-      <h3 class="form-section-title">Basic Information</h3>
+      <h3 class="form-section-title">Informations de base</h3>
       
       <div class="form-grid">
         <div class="form-group">
-          <label class="form-label">Exercise Title *</label>
+          <label class="form-label">Titre de l'exercice *</label>
           <input 
             type="text" 
             class="form-control" 
             formControlName="title"
-            placeholder="Enter exercise title">
+            placeholder="Saisissez le titre de l'exercice">
           <div class="error-message" *ngIf="exerciseForm.get('title')?.touched && exerciseForm.get('title')?.errors?.['required']">
-            Title is required
+            Le titre est requis
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Exercise Type *</label>
+          <label class="form-label">Type d'exercice *</label>
           <select class="form-control" formControlName="type" (change)="onTypeChange()">
-            <option value="">Select type</option>
-            <option value="qcm">Multiple Choice (QCM)</option>
-            <option value="fill_blanks">Fill in the Blanks</option>
+            <option value="">Sélectionnez le type</option>
+            <option value="qcm">Choix multiples (QCM)</option>
+            <option value="fill_blanks">Texte à trous</option>
           </select>
           <div class="error-message" *ngIf="exerciseForm.get('type')?.touched && exerciseForm.get('type')?.errors?.['required']">
-            Type is required
+            Le type est requis
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Subject *</label>
+          <label class="form-label">Matière *</label>
           <select class="form-control" formControlName="subject" (change)="onSubjectChange()">
-            <option value="">Select subject</option>
+            <option value="">Sélectionnez la matière</option>
             <option *ngFor="let subject of subjects" [value]="subject._id!">
               {{ subject.name }}
             </option>
           </select>
           <div class="error-message" *ngIf="exerciseForm.get('subject')?.touched && exerciseForm.get('subject')?.errors?.['required']">
-            Subject is required
+            La matière est requise
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Class *</label>
+          <label class="form-label">Classe *</label>
           <select class="form-control" formControlName="class">
-            <option value="">Select class</option>
+            <option value="">Sélectionnez la classe</option>
             <option *ngFor="let class of filteredClasses" [value]="class._id!">
               {{ class.name }} - {{ class.grade }}
             </option>
           </select>
           <div class="error-message" *ngIf="exerciseForm.get('class')?.touched && exerciseForm.get('class')?.errors?.['required']">
-            Class is required
+            La classe est requise
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Difficulty Level *</label>
+          <label class="form-label">Niveau de difficulté *</label>
           <div class="difficulty-options">
             <label class="radio-option" [class.selected]="exerciseForm.get('difficulty')?.value === 'easy'">
               <input type="radio" formControlName="difficulty" value="easy">
-              <span class="radio-label easy">Easy</span>
+              <span class="radio-label easy">Facile</span>
             </label>
             <label class="radio-option" [class.selected]="exerciseForm.get('difficulty')?.value === 'medium'">
               <input type="radio" formControlName="difficulty" value="medium">
-              <span class="radio-label medium">Medium</span>
+              <span class="radio-label medium">Moyen</span>
             </label>
             <label class="radio-option" [class.selected]="exerciseForm.get('difficulty')?.value === 'hard'">
               <input type="radio" formControlName="difficulty" value="hard">
-              <span class="radio-label hard">Hard</span>
+              <span class="radio-label hard">Difficile</span>
             </label>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Exercise Settings -->
+    <!-- Paramètres de l'exercice -->
     <div class="form-section">
-      <h3 class="form-section-title">Exercise Settings</h3>
+      <h3 class="form-section-title">Paramètres de l'exercice</h3>
       
       <div class="form-grid">
         <div class="form-group">
-          <label class="form-label">Instructions</label>
+          <label class="form-label">Consignes</label>
           <textarea 
             class="form-control" 
             formControlName="instructions"
             rows="3"
-            placeholder="Provide instructions for students">
+            placeholder="Fournissez des consignes pour les élèves">
           </textarea>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Estimated Time (minutes)</label>
+          <label class="form-label">Temps estimé (minutes)</label>
           <input 
             type="number" 
             class="form-control" 
             formControlName="estimatedTime"
-            placeholder="e.g., 30">
+            placeholder="ex: 30">
         </div>
 
         <div class="form-group">
-          <label class="form-label">Maximum Attempts</label>
+          <label class="form-label">Nombre d'essais maximum</label>
           <input 
             type="number" 
             class="form-control" 
             formControlName="maxAttempts"
-            placeholder="e.g., 2">
+            placeholder="ex: 2">
         </div>
 
         <div class="form-group">
-          <label class="form-label">Due Date (Optional)</label>
+          <label class="form-label">Date limite (Optionnel)</label>
           <input 
             type="datetime-local" 
             class="form-control" 
@@ -119,17 +119,17 @@
       </div>
     </div>
 
-    <!-- Questions Section -->
+    <!-- Section des questions -->
     <div class="form-section">
       <div class="section-header">
         <h3 class="form-section-title">Questions</h3>
         <button type="button" class="add-question-btn" (click)="addQuestion()">
           <span class="btn-icon">➕</span>
-          Add Question
+          Ajouter une question
         </button>
       </div>
 
-      <!-- QCM Questions -->
+      <!-- Questions QCM -->
       <div *ngIf="exerciseForm.get('type')?.value === 'qcm'" formArrayName="qcmQuestions">
         <div class="question-card" *ngFor="let question of qcmQuestions.controls; let i = index" [formGroupName]="i">
           <div class="question-header">
@@ -140,12 +140,12 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Question Text *</label>
+            <label class="form-label">Texte de la question *</label>
             <textarea 
               class="form-control" 
               formControlName="questionText"
               rows="2"
-              placeholder="Enter the question">
+              placeholder="Saisissez la question">
             </textarea>
           </div>
 
@@ -155,7 +155,7 @@
               type="number" 
               class="form-control small-input" 
               formControlName="points"
-              placeholder="e.g., 2">
+              placeholder="ex: 2">
           </div>
 
           <div class="options-section">
@@ -166,7 +166,7 @@
                   type="text" 
                   class="form-control option-input" 
                   formControlName="text"
-                  placeholder="Enter option {{ j + 1 }}">
+                  placeholder="Saisissez l'option {{ j + 1 }}">
                 <label class="checkbox-label">
                   <input 
                     type="checkbox" 
@@ -181,14 +181,14 @@
               </div>
               <button type="button" class="add-option-btn" (click)="addOption(i)" *ngIf="getOptions(i).length < 6">
                 <span class="btn-icon">➕</span>
-                Add Option
+                Ajouter une option
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Fill Blanks Questions -->
+      <!-- Questions à trous -->
       <div *ngIf="exerciseForm.get('type')?.value === 'fill_blanks'" formArrayName="fillBlankQuestions">
         <div class="question-card" *ngFor="let question of fillBlankQuestions.controls; let i = index" [formGroupName]="i">
           <div class="question-header">
@@ -199,14 +199,14 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Sentence with Blanks *</label>
+            <label class="form-label">Phrase avec des trous *</label>
             <textarea 
               class="form-control" 
               formControlName="sentence"
               rows="2"
-              placeholder="Use ___ to indicate blanks (e.g., The capital of France is ___)">
+              placeholder="Utilisez ___ pour indiquer les trous (ex: La capitale de la France est ___)">
             </textarea>
-            <div class="help-text">Use three underscores (___) to indicate where blanks should appear</div>
+            <div class="help-text">Utilisez trois tirets bas (___) pour indiquer où les trous doivent apparaître</div>
           </div>
 
           <div class="form-group">
@@ -215,51 +215,51 @@
               type="number" 
               class="form-control small-input" 
               formControlName="points"
-              placeholder="e.g., 2">
+              placeholder="ex: 2">
           </div>
 
           <div class="blanks-section" formArrayName="blanks">
-            <label class="form-label">Correct Answers *</label>
+            <label class="form-label">Réponses correctes *</label>
             <div class="blank-item" *ngFor="let blank of getBlanks(i).controls; let j = index" [formGroupName]="j">
-              <span class="blank-number">Blank {{ j + 1 }}:</span>
+              <span class="blank-number">Trou {{ j + 1 }}:</span>
               <input 
                 type="text" 
                 class="form-control blank-input" 
                 formControlName="correctAnswer"
-                placeholder="Enter correct answer">
+                placeholder="Saisissez la réponse correcte">
               <button type="button" class="remove-blank-btn" (click)="removeBlank(i, j)" *ngIf="getBlanks(i).length > 1">
                 <span class="remove-icon">✕</span>
               </button>
             </div>
             <button type="button" class="add-blank-btn" (click)="addBlank(i)">
               <span class="btn-icon">➕</span>
-              Add Blank
+              Ajouter un trou
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Empty State -->
+      <!-- État vide -->
       <div class="empty-questions" *ngIf="(exerciseForm.get('type')?.value === 'qcm' && qcmQuestions.length === 0) || (exerciseForm.get('type')?.value === 'fill_blanks' && fillBlankQuestions.length === 0)">
         <div class="empty-icon">❓</div>
-        <p class="empty-text">No questions added yet</p>
+        <p class="empty-text">Aucune question ajoutée pour le moment</p>
         <button type="button" class="add-question-btn" (click)="addQuestion()">
           <span class="btn-icon">➕</span>
-          Add Your First Question
+          Ajouter votre première question
         </button>
       </div>
     </div>
 
-    <!-- Form Actions -->
+    <!-- Actions du formulaire -->
     <div class="form-actions">
       <button type="button" class="cancel-btn" (click)="onCancel()">
-        Cancel
+        Annuler
       </button>
       <button type="submit" class="submit-btn" [disabled]="!exerciseForm.valid || isSubmitting">
-        <span *ngIf="!isSubmitting">Create Exercise</span>
+        <span *ngIf="!isSubmitting">Créer l'exercice</span>
         <span *ngIf="isSubmitting" class="loading">
           <span class="spinner"></span>
-          Creating...
+          Création en cours...
         </span>
       </button>
     </div>

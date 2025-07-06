@@ -1,0 +1,163 @@
+<!-- student-subject-exercises.component.html -->
+<app-student-navbar></app-student-navbar>
+
+<div class="subject-exercises">
+
+  <!-- Header -->
+  <div class="exercises-header">
+    <div class="header-content">
+      <button class="back-button" (click)="goBack()">
+        <span class="icon">←</span>
+      </button>
+      <div class="title-section">
+        <h1>{{ subjectName }}</h1>
+        <p class="subtitle">Exercices disponibles</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Difficulté:</label>
+      <select [(ngModel)]="selectedDifficulty" (change)="loadExercises()" class="filter-select">
+        <option value="">Toutes</option>
+        <option value="easy">Facile</option>
+        <option value="medium">Moyen</option>
+        <option value="hard">Difficile</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Statut:</label>
+      <select [(ngModel)]="selectedStatus" (change)="filterExercises()" class="filter-select">
+        <option value="">Tous</option>
+        <option value="not_started">Non commencé</option>
+        <option value="in_progress">En cours</option>
+        <option value="completed">Terminé</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Exercises List -->
+  <div class="exercises-container" *ngIf="!loading && filteredExercises.length > 0">
+    <div class="exercise-card" 
+         *ngFor="let exercise of filteredExercises"
+         [class.completed]="exercise.status === 'completed'"
+         [class.in-progress]="exercise.status === 'in_progress'">
+      
+      <!-- Exercise Header -->
+      <div class="exercise-header-card">
+        <div class="exercise-title-section">
+          <h3>{{ exercise.title }}</h3>
+          <div class="exercise-meta">
+            <span class="type-badge" [attr.data-type]="exercise.type">
+              {{ exercise.type === 'qcm' ? 'QCM' : 'Texte à trous' }}
+            </span>
+            <span class="difficulty-badge" [attr.data-difficulty]="exercise.difficulty">
+              {{ getDifficultyLabel(exercise.difficulty) }}
+            </span>
+          </div>
+        </div>
+        <div class="points-display">
+          <span class="points-value">{{ exercise.totalPoints }}</span>
+          <span class="points-label">points</span>
+        </div>
+      </div>
+
+      <!-- Exercise Details -->
+      <div class="exercise-details">
+        <div class="detail-item" *ngIf="exercise.dueDate">
+          <span class="icon">📅</span>
+          <span>Date limite: {{ formatDate(exercise.dueDate) }}</span>
+        </div>
+        <div class="detail-item" *ngIf="exercise.metadata?.maxAttempts">
+          <span class="icon">🔄</span>
+          <span>Tentatives: {{ getAttemptsText(exercise) }}</span>
+        </div>
+      </div>
+
+      <!-- Progress Section - Multiple Attempts -->
+      <div class="progress-section" *ngIf="exercise.allAttempts && exercise.allAttempts.length > 0">
+        <div class="progress-header">
+          <span>Mes tentatives</span>
+          <span class="attempts-count">{{ exercise.allAttempts.length }} / {{ exercise.metadata?.maxAttempts || 1 }}</span>
+        </div>
+        
+        <!-- List all attempts -->
+        <div class="attempts-list">
+          <div class="attempt-item" *ngFor="let attempt of exercise.allAttempts; let attemptIndex = index"
+               [class.best-attempt]="isBestAttempt(exercise, attempt)">
+            
+            <div class="attempt-header">
+              <span class="attempt-number">Tentative {{ attempt.attemptNumber }}</span>
+              <span class="attempt-date">{{ formatDateTime(attempt.completedAt) }}</span>
+            </div>
+            
+            <div class="attempt-details">
+              <div class="attempt-score">
+                <span class="score-label">Score:</span>
+                <span class="score-value">{{ attempt.totalPointsEarned }}/{{ attempt.maxPossiblePoints }}</span>
+              </div>
+              <div class="attempt-accuracy">
+                <span class="accuracy-label">Réussite:</span>
+                <span class="accuracy-value" 
+                      [class.success]="attempt.accuracyPercentage >= 80"
+                      [class.warning]="attempt.accuracyPercentage >= 50 && attempt.accuracyPercentage < 80"
+                      [class.danger]="attempt.accuracyPercentage < 50">
+                  {{ attempt.accuracyPercentage }}%
+                </span>
+              </div>
+              <div class="attempt-time">
+                <span class="time-label">Durée:</span>
+                <span class="time-value">{{ formatDuration(attempt.timeSpent) }}</span>
+              </div>
+            </div>
+            
+            <div class="attempt-actions">
+              <button class="btn-view-details" (click)="viewAttemptDetails(exercise, attempt)">
+                Voir les détails
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Attempts Section -->
+      <div class="no-progress-section" *ngIf="!exercise.allAttempts || exercise.allAttempts.length === 0">
+        <div class="empty-progress">
+          <span class="icon">📝</span>
+          <span>Pas encore commencé</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button class="btn-primary" 
+                (click)="startExercise(exercise)"
+                *ngIf="canStartExercise(exercise)">
+          {{ getStartButtonText(exercise) }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!loading && filteredExercises.length === 0">
+    <div class="empty-icon">📚</div>
+    <h3>Aucun exercice trouvé</h3>
+    <p>Il n'y a pas d'exercices disponibles pour cette matière avec les filtres sélectionnés.</p>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="loader"></div>
+    <p>Chargement des exercices...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error">
+    <div class="error-icon">⚠️</div>
+    <p>{{ error }}</p>
+    <button class="retry-button" (click)="loadExercises()">Réessayer</button>
+  </div>
+</div>

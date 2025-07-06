@@ -1,5 +1,8 @@
 <!-- users-management.component.html -->
 <app-layout>
+  <!-- Toaster Component -->
+  <app-toaster></app-toaster>
+
   <div class="users-container">
     <!-- Header Section -->
     <div class="page-header">
@@ -248,6 +251,103 @@
           <polyline points="9 18 15 12 9 6"/>
         </svg>
       </button>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+    <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirmer la suppression</h2>
+        <button class="close-btn" (click)="closeDeleteModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="delete-modal-content" *ngIf="userToDelete">
+        <div class="warning-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+
+        <div class="delete-message">
+          <h3>Êtes-vous sûr de vouloir supprimer cet utilisateur ?</h3>
+          
+          <div class="user-details-summary">
+            <div class="user-avatar" [style.background-color]="getAvatarColor(userToDelete.name)">
+              {{ userToDelete.name.charAt(0).toUpperCase() }}
+            </div>
+            <div class="user-info-summary">
+              <div class="user-name">{{ userToDelete.name }}</div>
+              <div class="user-email">{{ userToDelete.email }}</div>
+              <span class="role-badge" [class]="userToDelete.role">
+                {{ getRoleLabel(userToDelete.role) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="warning-text">
+            <p><strong>Cette action est irréversible.</strong> L'utilisateur sera définitivement supprimé du système.</p>
+            
+            <div class="impact-warning" *ngIf="getUserAssignedClasses(userToDelete).length > 0">
+              <div class="impact-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                Impact sur les classes :
+              </div>
+              <ul class="affected-classes">
+                <li *ngFor="let className of getUserAssignedClasses(userToDelete)">
+                  L'utilisateur sera retiré de : <strong>{{ className }}</strong>
+                </li>
+              </ul>
+            </div>
+
+            <div class="additional-impact" *ngIf="userToDelete.role === 'teacher'">
+              <p class="impact-note">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                Tous les cours, évaluations et données associées à cet enseignant seront également supprimés.
+              </p>
+            </div>
+
+            <div class="additional-impact" *ngIf="userToDelete.role === 'student'">
+              <p class="impact-note">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                Toutes les notes, devoirs et données de cet étudiant seront définitivement perdus.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer delete-footer">
+        <button type="button" class="btn-secondary" (click)="closeDeleteModal()">
+          Annuler
+        </button>
+        <button type="button" class="btn-danger" (click)="confirmDeleteUser()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          Supprimer définitivement
+        </button>
+      </div>
     </div>
   </div>
 

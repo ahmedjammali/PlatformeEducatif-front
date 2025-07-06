@@ -669,3 +669,455 @@
   font-size: 0.875rem;
   line-height: 1.5;
 }
+
+
+/* School Name Container */
+.school-name-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.edit-name-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-gray-dark);
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-name-btn:hover {
+  background-color: rgba(164, 180, 101, 0.1);
+  color: var(--color-primary);
+}
+
+.edit-name-btn:active {
+  transform: scale(0.95);
+}
+
+/* Form Hint */
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--color-gray-dark);
+  margin-top: 4px;
+  display: block;
+}
+
+/* Enhanced Modal Styling */
+.modal-content {
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 1;
+}
+
+/* Button with Icon */
+.btn-primary svg {
+  flex-shrink: 0;
+}
+
+/* Loading States */
+.saving {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Success Animation */
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.success-animation {
+  animation: successPulse 0.3s ease-in-out;
+}
+
+/* Enhanced Focus States */
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(164, 180, 101, 0.1);
+}
+
+/* Improved Error States */
+.form-group input.error:focus,
+.form-group textarea.error:focus {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 4px rgba(244, 67, 54, 0.1);
+}
+
+/* Enhanced Detail Row for Name */
+.detail-row .school-name-container span {
+  color: var(--color-primary-dark);
+  font-weight: 500;
+}
+
+/* Modal Enhancements */
+.modal-overlay {
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+  .school-name-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .edit-name-btn {
+    align-self: flex-start;
+  }
+  
+  .modal-content {
+    margin: 20px;
+    width: calc(100% - 40px);
+    max-height: calc(100vh - 40px);
+  }
+  
+  .detail-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .detail-row .school-name-container {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .school-name-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .school-name-container span {
+    word-break: break-word;
+  }
+  
+  .edit-name-btn {
+    padding: 8px;
+  }
+}
+
+/* Enhanced Input Styling */
+.form-group input[type="text"]:focus {
+  background-color: rgba(164, 180, 101, 0.02);
+}
+
+/* Character Counter */
+.character-counter {
+  font-size: 0.75rem;
+  color: var(--color-gray-dark);
+  text-align: right;
+  margin-top: 4px;
+}
+
+.character-counter.warning {
+  color: var(--color-accent);
+}
+
+.character-counter.error {
+  color: var(--color-error);
+}
+
+/* Enhanced Button States */
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(164, 180, 101, 0.3);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background-color: rgba(164, 180, 101, 0.05);
+  transform: translateY(-1px);
+}
+
+/* Loading Spinner Enhancement */
+.spinner-small {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+/* Tooltip-like styling for edit button */
+.edit-name-btn::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--color-primary-dark);
+  color: white;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-base);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.edit-name-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+  bottom: calc(100% + 8px);
+}
+
+/* Focus trap for modals */
+.modal-content:focus {
+  outline: none;
+}
+
+/* Enhanced form validation styling */
+.form-group.success input {
+  border-color: var(--color-success);
+}
+
+.form-group.success .success-message {
+  font-size: 0.75rem;
+  color: var(--color-success);
+  margin-top: 4px;
+  display: block;
+}
+
+/* Improved modal transitions */
+.modal-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Enhanced accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus indicators */
+.edit-name-btn:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Enhanced error states */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.error-message::before {
+  content: "⚠";
+  color: var(--color-error);
+  font-size: 0.75rem;
+}
+
+/* Add these styles to your existing school-management.component.css */
+
+/* Confirmation Modal */
+.confirmation-modal .modal-overlay {
+  z-index: 1001; /* Higher than regular modals */
+}
+
+.confirmation-content {
+  max-width: 500px;
+  text-align: center;
+}
+
+.confirmation-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 24px;
+}
+
+.confirmation-icon.danger {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--color-error);
+}
+
+.confirmation-icon.warning {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: var(--color-accent);
+}
+
+.confirmation-icon.info {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--color-info);
+}
+
+.confirmation-message {
+  margin-bottom: 32px;
+}
+
+.confirmation-message p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-primary-dark);
+  margin: 0;
+}
+
+/* Button variants for confirmation modal */
+.btn-warning {
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-warning:hover {
+  background-color: #e67e22;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-info {
+  background-color: var(--color-info);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-info:hover {
+  background-color: #1976d2;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Enhanced modal animations */
+.confirmation-modal .modal-content {
+  animation: bounceIn 0.4s ease-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(-50px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05) translateY(0);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Enhanced toaster positioning */
+app-toaster {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1050; /* Above all modals */
+}
+
+/* Responsive confirmation modal */
+@media (max-width: 768px) {
+  .confirmation-content {
+    margin: 20px;
+    width: calc(100% - 40px);
+  }
+  
+  .confirmation-icon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 20px;
+  }
+  
+  .confirmation-icon svg {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .confirmation-message {
+    margin-bottom: 24px;
+  }
+  
+  .confirmation-message p {
+    font-size: 0.875rem;
+  }
+}

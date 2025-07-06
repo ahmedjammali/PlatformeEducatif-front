@@ -1,70 +1,213 @@
 <!-- teacher-layout.component.html -->
-<div class="teacher-dashboard">
-  <!-- Header Section -->
-  <header class="dashboard-header">
-    <div class="header-content">
-      <div class="welcome-section">
-        <h1 class="welcome-title">Welcome, {{ currentUser?.name }}</h1>
-        <p class="school-name">{{ school?.name }}</p>
-      </div>
-      <div class="header-actions">
-        <div class="user-menu">
-          <span class="user-name">{{ currentUser?.name }}</span>
-          <button class="logout-btn" (click)="logout()">
-            <span class="logout-icon">↪</span>
-          </button>
+<div class="dashboard-container">
+  <!-- Navigation latérale -->
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
+    <div class="sidebar-header">
+      <div class="logo-section">
+        <div class="logo-mini" *ngIf="sidebarCollapsed">
+          <span>S</span>
+        </div>
+        <div class="logo-full" *ngIf="!sidebarCollapsed">
+          <!-- <span class="logo-text">Hiba</span> -->
+          <span class="logo-accent">{{ school?.name }}</span>
         </div>
       </div>
+      <button class="toggle-btn" (click)="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path *ngIf="!sidebarCollapsed" d="M3 12h18M3 6h18M3 18h18"/>
+          <path *ngIf="sidebarCollapsed" d="M4 6l6 6-6 6M12 6l6 6-6 6"/>
+        </svg>
+      </button>
     </div>
-  </header>
 
-  <!-- Navigation Sidebar -->
-  <nav class="sidebar">
-    <div class="sidebar-header">
-      <img src="assets/logo.png" alt="Logo" class="logo">
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        <!-- Aperçu -->
+        <li class="nav-item" [class.active]="activeSection === 'overview'">
+          <a (click)="setActiveSection('overview')" class="nav-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <span *ngIf="!sidebarCollapsed">Tableau de Bord</span>
+          </a>
+        </li>
+
+        <!-- Mes Matières -->
+        <li class="nav-item" [class.active]="activeSection === 'subjects'">
+          <a (click)="setActiveSection('subjects')" class="nav-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              <path d="M12 6h4M12 10h4M12 14h4"/>
+            </svg>
+            <span *ngIf="!sidebarCollapsed">Mes Matières</span>
+          </a>
+        </li>
+
+        <!-- Mes Classes -->
+        <li class="nav-item" [class.active]="activeSection === 'classes'">
+          <a (click)="setActiveSection('classes')" class="nav-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span *ngIf="!sidebarCollapsed">Mes Classes</span>
+          </a>
+        </li>
+
+        <!-- Exercices -->
+        <li class="nav-item" [class.active]="activeSection === 'exercises'">
+          <a (click)="setActiveSection('exercises')" class="nav-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10,9 9,9 8,9"/>
+            </svg>
+            <span *ngIf="!sidebarCollapsed">Exercices</span>
+          </a>
+        </li>
+
+        <!-- Notes -->
+        <li class="nav-item" [class.active]="activeSection === 'grades'">
+          <a (click)="setActiveSection('grades')" class="nav-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+              <path d="M19 11H15a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+              <path d="M12 2L8 6h8L12 2z"/>
+              <path d="M8 6v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V6"/>
+            </svg>
+            <span *ngIf="!sidebarCollapsed">Notes</span>
+          </a>
+        </li>
+
+        <!-- Progrès Étudiants -->
+        <li class="nav-item" [class.active]="activeSection === 'progress'">
+          <a (click)="setActiveSection('progress')" class="nav-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3v18h18"/>
+              <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+            </svg>
+            <span *ngIf="!sidebarCollapsed">Progrès Étudiants</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar">
+          {{ currentUser?.name?.charAt(0) || 'T' }}
+        </div>
+        <div class="user-details" *ngIf="!sidebarCollapsed">
+          <p class="user-name">{{ currentUser?.name }}</p>
+          <p class="user-role">Enseignant</p>
+        </div>
+      </div>
+      <button class="logout-btn" (click)="openLogoutModal()" [title]="'Déconnexion'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
     </div>
-    <ul class="nav-menu">
-      <li class="nav-item" [class.active]="activeSection === 'overview'">
-        <a (click)="setActiveSection('overview')" class="nav-link">
-          <span class="nav-icon">📊</span>
-          <span class="nav-text">Overview</span>
-        </a>
-      </li>
-      <li class="nav-item" [class.active]="activeSection === 'subjects'">
-        <a (click)="setActiveSection('subjects')" class="nav-link">
-          <span class="nav-icon">📚</span>
-          <span class="nav-text">My Subjects</span>
-        </a>
-      </li>
-      <li class="nav-item" [class.active]="activeSection === 'exercises'">
-        <a (click)="setActiveSection('exercises')" class="nav-link">
-          <span class="nav-icon">📝</span>
-          <span class="nav-text">Exercises</span>
-        </a>
-      </li>
-      <li class="nav-item" [class.active]="activeSection === 'classes'">
-        <a (click)="setActiveSection('classes')" class="nav-link">
-          <span class="nav-icon">👥</span>
-          <span class="nav-text">My Classes</span>
-        </a>
-      </li>
-      <li class="nav-item" [class.active]="activeSection === 'grades'">
-        <a (click)="setActiveSection('grades')" class="nav-link">
-          <span class="nav-icon">📈</span>
-          <span class="nav-text">Grades</span>
-        </a>
-      </li>
-      <li class="nav-item" [class.active]="activeSection === 'progress'">
-        <a (click)="setActiveSection('progress')" class="nav-link">
-          <span class="nav-icon">📊</span>
-          <span class="nav-text">Student Progress</span>
-        </a>
-      </li>
-    </ul>
-  </nav>
+  </aside>
 
-  <!-- Main Content Area -->
+  <!-- Zone de contenu principal -->
   <main class="main-content">
-    <ng-content></ng-content>
+    <!-- En-tête supérieur -->
+    <header class="top-header">
+      <div class="header-left">
+        <h1 class="page-title">{{ getPageTitle() }}</h1>
+        <p class="breadcrumb">
+          <span>Accueil</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+          <span>{{ getPageTitle() }}</span>
+        </p>
+      </div>
+
+      <div class="header-right">
+        <div class="school-info" *ngIf="school">
+          <span class="school-name">{{ school.name }}</span>
+          <span class="teacher-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+            Enseignant
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Zone de contenu pour les composants enfants -->
+    <div class="content-area">
+      <ng-content></ng-content>
+    </div>
   </main>
+
+  <!-- Modal de confirmation de déconnexion -->
+  <div class="modal-overlay" *ngIf="showLogoutModal" (click)="closeLogoutModal()">
+    <div class="modal-content logout-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirmer la déconnexion</h2>
+        <button class="close-btn" (click)="closeLogoutModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="logout-content">
+        <div class="logout-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </div>
+        <div class="logout-message">
+          <h3>Êtes-vous sûr de vouloir vous déconnecter ?</h3>
+          <p>Vous devrez vous reconnecter pour accéder à nouveau à votre compte.</p>
+          <div class="user-info-box">
+            <div class="user-avatar">
+              {{ currentUser?.name?.charAt(0) || 'T' }}
+            </div>
+            <div class="user-details">
+              <span class="user-name">{{ currentUser?.name }}</span>
+              <span class="user-role">Enseignant</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeLogoutModal()">Annuler</button>
+        <button type="button" class="btn-danger" (click)="confirmLogout()" [disabled]="isLoggingOut">
+          <span *ngIf="!isLoggingOut">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Se déconnecter
+          </span>
+          <span *ngIf="isLoggingOut" class="logging-out">
+            <span class="spinner-small"></span>
+            Déconnexion...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

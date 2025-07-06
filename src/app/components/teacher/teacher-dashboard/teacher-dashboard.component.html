@@ -1,320 +1,59 @@
-<!-- 
-<div class="teacher-dashboard">
+<!-- teacher-dashboard.component.html -->
+<app-teacher-layout [(activeSection)]="activeSection" *ngIf="!isLoading">
+  <!-- Section Aperçu -->
+  <app-dashboard-overview 
+    *ngIf="activeSection === 'overview'"
+    [stats]="dashboardStats"
+    (createExercise)="openCreateExerciseModal()"
+    (enterGrades)="setActiveSection('grades')"
+    (viewProgress)="setActiveSection('progress')">
+  </app-dashboard-overview>
 
-  <header class="dashboard-header">
-    <div class="header-content">
-      <div class="welcome-section">
-        <h1 class="welcome-title">Welcome, {{ currentUser?.name }}</h1>
-        <p class="school-name">{{ school?.name }}</p>
-      </div>
-      <div class="header-actions">
-        <div class="user-menu">
-          <span class="user-name">{{ currentUser?.name }}</span>
-          <button class="logout-btn" (click)="logout()">
-            <span class="logout-icon">↪</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </header>
+  <!-- Section Matières -->
+  <app-teacher-subjects
+    *ngIf="activeSection === 'subjects'"
+    [subjects]="teachingSubjects"
+    [subjectStats]="subjectStatsMap"
+    (subjectSelected)="onSubjectSelected($event)"
+    (viewDetails)="onViewSubjectDetails($event)">
+  </app-teacher-subjects>
 
+  <!-- Section Exercices -->
+  <app-teacher-exercises
+    *ngIf="activeSection === 'exercises'"
+    [exercises]="allExercises"
+    [subjects]="teachingSubjects"
+    [classes]="myClasses"
+    (exerciseCreated)="onExerciseCreated($event)"
+    (exerciseDeleted)="onExerciseDeleted($event)"
+    (refreshExercises)="loadTeacherData()">
+  </app-teacher-exercises>
 
-  <nav class="sidebar">
-    <div class="sidebar-header">
-      <img src="assets/logo.png" alt="Logo" class="logo">
-    </div>
-    <ul class="nav-menu">
-      <li class="nav-item" [class.active]="activeSection === 'overview'">
-        <a (click)="setActiveSection('overview')" class="nav-link">
-          <span class="nav-icon">📊</span>
-          <span class="nav-text">Overview</span>
-        </a>
-      </li>
-      <li class="nav-item" [class.active]="activeSection === 'subjects'">
-        <a (click)="setActiveSection('subjects')" class="nav-link">
-          <span class="nav-icon">📚</span>
-          <span class="nav-text">My Subjects</span>
-        </a>
-      </li>
-      <li class="nav-item" [class.active]="activeSection === 'exercises'">
-        <a (click)="setActiveSection('exercises')" class="nav-link">
-          <span class="nav-icon">📝</span>
-          <span class="nav-text">Exercises</span>
-        </a>
-      </li>
-      <li class="nav-item" [class.active]="activeSection === 'classes'">
-        <a (click)="setActiveSection('classes')" class="nav-link">
-          <span class="nav-icon">👥</span>
-          <span class="nav-text">My Classes</span>
-        </a>
-      </li>
-      <li class="nav-item" [class.active]="activeSection === 'grades'">
-        <a (click)="setActiveSection('grades')" class="nav-link">
-          <span class="nav-icon">📈</span>
-          <span class="nav-text">Grades</span>
-        </a>
-      </li>
-      <li class="nav-item" [class.active]="activeSection === 'progress'">
-        <a (click)="setActiveSection('progress')" class="nav-link">
-          <span class="nav-icon">📊</span>
-          <span class="nav-text">Student Progress</span>
-        </a>
-      </li>
-    </ul>
-  </nav>
+  <!-- Section Classes -->
+  <app-teacher-classes
+    *ngIf="activeSection === 'classes'"
+    [classes]="myClasses"
+    [classSubjectsMapping]="classSubjectsMapping">
+  </app-teacher-classes>
 
+  <!-- Section Notes -->
+  <app-teacher-grades
+    *ngIf="activeSection === 'grades'"
+    [classes]="myClasses"
+    [teachingSubjects]="teachingSubjects">
+  </app-teacher-grades>
 
-  <main class="main-content">
+  <!-- Section Progrès -->
+  <app-student-progress 
+    *ngIf="activeSection === 'progress'" 
+    [myClasses]="myClasses"
+    [teachingSubjects]="teachingSubjects" 
+    [allExercises]="allExercises">
+  </app-student-progress>
+</app-teacher-layout>
 
-    <section *ngIf="activeSection === 'overview'" class="content-section overview-section">
-      <h2 class="section-title">Dashboard Overview</h2>
-      
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon subjects-icon">📚</div>
-          <div class="stat-content">
-            <h3 class="stat-value">{{ teachingSubjects.length }}</h3>
-            <p class="stat-label">Subjects Teaching</p>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon classes-icon">👥</div>
-          <div class="stat-content">
-            <h3 class="stat-value">{{ totalClasses }}</h3>
-            <p class="stat-label">Total Classes</p>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon exercises-icon">📝</div>
-          <div class="stat-content">
-            <h3 class="stat-value">{{ totalExercises }}</h3>
-            <p class="stat-label">Created Exercises</p>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon students-icon">🎓</div>
-          <div class="stat-content">
-            <h3 class="stat-value">{{ totalStudents }}</h3>
-            <p class="stat-label">Total Students</p>
-          </div>
-        </div>
-      </div>
-
-
-      <div class="quick-actions">
-        <h3 class="subsection-title">Quick Actions</h3>
-        <div class="action-buttons">
-          <button class="action-btn primary-btn" (click)="openCreateExerciseModal()">
-            <span class="btn-icon">➕</span>
-            Create New Exercise
-          </button>
-          <button class="action-btn secondary-btn" (click)="setActiveSection('grades')">
-            <span class="btn-icon">📊</span>
-            Enter Grades
-          </button>
-          <button class="action-btn accent-btn" (click)="setActiveSection('progress')">
-            <span class="btn-icon">📈</span>
-            View Progress
-          </button>
-        </div>
-      </div>
-    </section>
-
-
-    <section *ngIf="activeSection === 'subjects'" class="content-section subjects-section">
-      <h2 class="section-title">My Teaching Subjects</h2>
-      
-      <div class="subjects-grid">
-        <div class="subject-card" *ngFor="let subject of teachingSubjects" (click)="selectSubject(subject)">
-          <div class="subject-header" [style.background]="getSubjectGradient(subject)">
-            <img [src]="subject.imagePath || 'assets/default-subject.png'" alt="{{ subject.name }}" class="subject-image">
-          </div>
-          <div class="subject-body">
-            <h3 class="subject-name">{{ subject.name }}</h3>
-            <p class="subject-description">{{ subject.description }}</p>
-            <div class="subject-stats">
-              <span class="stat-item">
-                <span class="stat-icon">👥</span>
-                {{ getSubjectClassCount(subject._id!) }} Classes
-              </span>
-              <span class="stat-item">
-                <span class="stat-icon">📝</span>
-                {{ getSubjectExerciseCount(subject._id!) }} Exercises
-              </span>
-            </div>
-          </div>
-          <div class="subject-actions">
-            <button class="view-btn" (click)="viewSubjectDetails(subject); $event.stopPropagation()">
-              View Details
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-    <section *ngIf="activeSection === 'exercises'" class="content-section exercises-section">
-      <div class="section-header">
-        <h2 class="section-title">Exercises Management</h2>
-        <button class="create-btn" (click)="openCreateExerciseModal()">
-          <span class="btn-icon">➕</span>
-          Create Exercise
-        </button>
-      </div>
-
-
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label class="filter-label">Subject:</label>
-          <select class="filter-select" [(ngModel)]="selectedSubjectId" (change)="filterExercises()">
-            <option value="">All Subjects</option>
-            <option *ngFor="let subject of teachingSubjects" [value]="subject._id!">
-              {{ subject.name }}
-            </option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label class="filter-label">Type:</label>
-          <select class="filter-select" [(ngModel)]="selectedExerciseType" (change)="filterExercises()">
-            <option value="">All Types</option>
-            <option value="qcm">QCM</option>
-            <option value="fill_blanks">Fill in the Blanks</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label class="filter-label">Class:</label>
-          <select class="filter-select" [(ngModel)]="selectedClassId" (change)="filterExercises()">
-            <option value="">All Classes</option>
-            <option *ngFor="let class of myClasses" [value]="class._id!">
-              {{ class.name }}
-            </option>
-          </select>
-        </div>
-      </div>
-
-
-      <div class="exercises-list">
-        <div class="exercise-card" *ngFor="let exercise of filteredExercises">
-          <div class="exercise-header">
-            <h3 class="exercise-title">{{ exercise.title }}</h3>
-            <span class="exercise-type" [class]="exercise.type">
-              {{ exercise.type === 'qcm' ? 'QCM' : 'Fill Blanks' }}
-            </span>
-          </div>
-          <div class="exercise-meta">
-            <span class="meta-item">
-              <span class="meta-icon">📚</span>
-              {{ getSubjectName(exercise.subject) }}
-            </span>
-            <span class="meta-item">
-              <span class="meta-icon">👥</span>
-              {{ getClassName(exercise.class) }}
-            </span>
-            <span class="meta-item">
-              <span class="meta-icon">📊</span>
-              {{ exercise.difficulty }}
-            </span>
-            <span class="meta-item">
-              <span class="meta-icon">⏱️</span>
-              {{ exercise.metadata?.estimatedTime || 0 }} min
-            </span>
-          </div>
-          <div class="exercise-stats">
-            <div class="stat">
-              <span class="stat-label">Total Points:</span>
-              <span class="stat-value">{{ exercise.totalPoints || 0 }}</span>
-            </div>
-          </div>
-          <div class="exercise-actions">
-            <button class="action-btn view-btn" (click)="viewExercise(exercise)">
-              <span class="btn-icon">👁️</span>
-              View
-            </button>
-            <button class="action-btn edit-btn" (click)="editExercise(exercise)">
-              <span class="btn-icon">✏️</span>
-              Edit
-            </button>
-            <button class="action-btn progress-btn" (click)="viewExerciseProgress(exercise)">
-              <span class="btn-icon">📊</span>
-              Progress
-            </button>
-            <button class="action-btn delete-btn" (click)="deleteExercise(exercise)">
-              <span class="btn-icon">🗑️</span>
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-
-
-      <div class="empty-state" *ngIf="filteredExercises.length === 0">
-        <div class="empty-icon">📝</div>
-        <h3 class="empty-title">No exercises found</h3>
-        <p class="empty-text">Create your first exercise to get started</p>
-        <button class="create-btn" (click)="openCreateExerciseModal()">
-          <span class="btn-icon">➕</span>
-          Create Exercise
-        </button>
-      </div>
-    </section>
-
-    <section *ngIf="activeSection === 'classes'" class="content-section classes-section">
-      <h2 class="section-title">My Classes</h2>
-      
-      <div class="classes-grid">
-        <div class="class-card" *ngFor="let classItem of myClasses">
-          <div class="class-header">
-            <h3 class="class-name">{{ classItem.name }}</h3>
-            <span class="class-grade">{{ classItem.grade }}</span>
-          </div>
-          <div class="class-info">
-            <div class="info-item">
-              <span class="info-label">Academic Year:</span>
-              <span class="info-value">{{ classItem.academicYear }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Students:</span>
-              <span class="info-value">{{ classItem.students?.length || 0 }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Subjects Teaching:</span>
-              <div class="subjects-list">
-                <span class="subject-tag" *ngFor="let subject of getClassSubjects(classItem)">
-                  {{ subject }}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="class-actions">
-            <button class="action-btn" (click)="viewClassDetails(classItem)">
-              View Students
-            </button>
-            <button class="action-btn" (click)="viewClassProgress(classItem)">
-              Class Progress
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <div class="modal-overlay" *ngIf="showCreateExerciseModal" (click)="closeCreateExerciseModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2 class="modal-title">Create New Exercise</h2>
-        <button class="close-btn" (click)="closeCreateExerciseModal()">✕</button>
-      </div>
-      <div class="modal-body">
-        <app-exercise-form 
-          [subjects]="teachingSubjects" 
-          [classes]="myClasses"
-          (exerciseCreated)="onExerciseCreated($event)"
-          (cancelled)="closeCreateExerciseModal()">
-        </app-exercise-form>
-      </div>
-    </div>
-  </div>
-</div> -->
+<!-- État de chargement -->
+<div class="loading-container" *ngIf="isLoading">
+  <div class="spinner"></div>
+  <p>Chargement du tableau de bord...</p>
+</div>

@@ -1,0 +1,156 @@
+<!-- student-exercise-results.component.html -->
+<app-student-navbar></app-student-navbar>
+<div class="exercise-results" *ngIf="exercise && progress">
+  <!-- Header -->
+  <div class="results-header">
+    <button class="back-button" (click)="goBack()">
+      <span class="icon">←</span>
+    </button>
+    <div class="header-content">
+      <h1>Résultats de l'exercice</h1>
+      <p class="exercise-title">{{ exercise.title }}</p>
+    </div>
+  </div>
+
+  <!-- Score Summary -->
+  <div class="score-summary">
+    <div class="score-card main-score">
+      <div class="score-visual">
+        <div class="score-circle" [attr.data-performance]="getPerformanceLevel()">
+          <svg viewBox="0 0 100 100" class="circular-progress">
+            <circle cx="50" cy="50" r="45" class="progress-bg"></circle>
+            <circle cx="50" cy="50" r="45" class="progress-fill" 
+                    [style.stroke-dasharray]="getCircleProgress()"
+                    [style.stroke-dashoffset]="getCircleOffset()"></circle>
+          </svg>
+          <div class="score-text">
+            <span class="percentage">{{ progress.accuracyPercentage }}%</span>
+            <span class="label">Réussite</span>
+          </div>
+        </div>
+      </div>
+      <div class="score-details">
+        <h2>Score Total</h2>
+        <p class="points">{{ progress.totalPointsEarned }} / {{ progress.maxPossiblePoints }} points</p>
+        <p class="attempt">Tentative {{ progress.attemptNumber }}</p>
+        <p class="time">Temps: {{ formatTime(progress.timeSpent) }}</p>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-icon">✓</span>
+        <span class="stat-value">{{ getCorrectAnswersCount() }}</span>
+        <span class="stat-label">Réponses correctes</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">✗</span>
+        <span class="stat-value">{{ getIncorrectAnswersCount() }}</span>
+        <span class="stat-label">Réponses incorrectes</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Detailed Results -->
+  <div class="detailed-results">
+    <h2>Détail des réponses</h2>
+
+    <!-- QCM Results -->
+    <div class="questions-review" *ngIf="exercise.type === 'qcm'">
+      <div class="question-review" *ngFor="let question of exercise.qcmQuestions; let i = index"
+           [class.correct]="isQCMAnswerCorrect(i)"
+           [class.incorrect]="!isQCMAnswerCorrect(i)">
+        
+        <div class="question-header">
+          <h3>Question {{ i + 1 }}</h3>
+          <div class="question-status">
+            <span class="status-icon" *ngIf="isQCMAnswerCorrect(i)">✓</span>
+            <span class="status-icon" *ngIf="!isQCMAnswerCorrect(i)">✗</span>
+            <span class="points">{{ getQCMPoints(i) }} / {{ question.points }} points</span>
+          </div>
+        </div>
+
+        <div class="question-content">
+          <p class="question-text">{{ question.questionText }}</p>
+          
+          <div class="options-review">
+            <div class="option-review" *ngFor="let option of question.options"
+                 [class.selected]="option._id && isOptionSelected(i, option._id)"
+                 [class.correct]="option.isCorrect"
+                 [class.incorrect]="option._id && isOptionSelected(i, option._id) && !option.isCorrect">
+              <span class="option-indicator">
+                <span *ngIf="option.isCorrect" class="correct-mark">✓</span>
+                <span *ngIf="option._id && isOptionSelected(i, option._id) && !option.isCorrect" class="incorrect-mark">✗</span>
+              </span>
+              <span class="option-text">{{ option.text }}</span>
+            </div>
+          </div>
+
+          <div class="explanation" *ngIf="question.explanation && exercise.metadata?.showAnswersAfterCompletion">
+            <h4>Explication:</h4>
+            <p>{{ question.explanation }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fill Blanks Results -->
+    <div class="questions-review" *ngIf="exercise.type === 'fill_blanks'">
+      <div class="question-review" *ngFor="let question of exercise.fillBlankQuestions; let i = index"
+           [class.correct]="isFillBlankAnswerCorrect(i)"
+           [class.incorrect]="!isFillBlankAnswerCorrect(i)">
+        
+        <div class="question-header">
+          <h3>Question {{ i + 1 }}</h3>
+          <div class="question-status">
+            <span class="status-icon" *ngIf="isFillBlankAnswerCorrect(i)">✓</span>
+            <span class="status-icon" *ngIf="!isFillBlankAnswerCorrect(i)">✗</span>
+            <span class="points">{{ getFillBlankPoints(i) }} / {{ question.points }} points</span>
+          </div>
+        </div>
+
+        <div class="question-content">
+          <div class="fill-blank-review">
+            <p class="sentence-review">
+              <span *ngFor="let part of getReviewSentenceParts(question, i)">
+                <span *ngIf="!part.isBlank">{{ part.text }}</span>
+                <span *ngIf="part.isBlank" class="blank-review" 
+                      [class.correct]="part.isCorrect"
+                      [class.incorrect]="!part.isCorrect">
+                  <span class="student-answer">{{ part.studentAnswer || '(vide)' }}</span>
+                  <span class="correct-answer" *ngIf="!part.isCorrect && exercise.metadata?.showAnswersAfterCompletion">
+                    → {{ part.correctAnswer }}
+                  </span>
+                </span>
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="actions-section">
+    <button class="btn-secondary" (click)="retryExercise()" *ngIf="canRetry()">
+      Réessayer ({{ getRemainingAttempts() }} tentative(s) restante(s))
+    </button>
+    <button class="btn-primary" (click)="backToExercises()">
+      Retour aux exercices
+    </button>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="loading">
+  <div class="loader"></div>
+  <p>Chargement des résultats...</p>
+</div>
+
+<!-- Error State -->
+<div class="error-container" *ngIf="error">
+  <div class="error-icon">⚠️</div>
+  <p>{{ error }}</p>
+  <button class="retry-button" (click)="loadResults()">Réessayer</button>
+</div>

@@ -11,7 +11,7 @@
       <div class="hero-text">
         <h1 class="hero-title">
           <span class="title-line">Bienvenue à</span>
-          <span class="title-highlight">HibaSchool</span>
+          <span class="title-highlight">{{schoolName}}</span>
         </h1>
         <p class="hero-subtitle">
           L'excellence éducative à portée de main. Une plateforme moderne pour un apprentissage innovant et personnalisé.
@@ -70,7 +70,7 @@
   <section class="features-section" id="about">
     <div class="section-container">
       <div class="section-header">
-        <h2 class="section-title">Pourquoi Choisir HibaSchool?</h2>
+        <h2 class="section-title">Pourquoi Choisir {{schoolName}}?</h2>
         <p class="section-subtitle">Découvrez les avantages qui font notre différence</p>
       </div>
       
@@ -155,7 +155,7 @@
     <div class="section-container">
       <div class="cta-content">
         <h2 class="cta-title">Prêt à transformer votre éducation?</h2>
-        <p class="cta-subtitle">Rejoignez HibaSchool aujourd'hui et découvrez une nouvelle façon d'apprendre</p>
+        <p class="cta-subtitle">Rejoignez {{schoolName}} aujourd'hui et découvrez une nouvelle façon d'apprendre</p>
         <button class="cta-button" (click)="navigateToLogin()">
           <span>Commencer Maintenant</span>
           <span class="button-arrow">→</span>
@@ -191,7 +191,7 @@
               <span class="contact-icon">✉️</span>
               <div>
                 <h4>Email</h4>
-                <p>contact@hibaschool.tn</p>
+                <p>contact@{{schoolName}}.tn</p>
               </div>
             </div>
           </div>

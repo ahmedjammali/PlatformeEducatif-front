@@ -70,4 +70,18 @@ export class ExerciseService extends BaseService {
       { params }
     );
   }
+
+  getExercisesBySubject(
+  subjectId: string,
+      filters?: { page?: number; limit?: number; difficulty?: string; status?: string }
+    ): Observable<{ exercises: Exercise[]; pagination: any }> {
+      const params = this.buildParams(filters || {});
+      return this.http.get<{ exercises: Exercise[]; pagination: any }>(
+        `${this.apiUrl}${this.endpoint}/subject/${subjectId}`,
+        { params }
+      );
+    }
+
+
+
 }

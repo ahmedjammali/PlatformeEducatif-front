@@ -19,6 +19,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
   activeRoute = 'dashboard';
   isSuperAdmin = false;
   notificationCount = 3;
+  
+  // Logout modal state
+  showLogoutModal = false;
+  isLoggingOut = false;
 
   private destroy$ = new Subject<void>();
 
@@ -114,10 +118,29 @@ export class LayoutComponent implements OnInit, OnDestroy {
     // TODO: Implement notifications component
   }
 
-  logout(): void {
-    if (confirm('Êtes-vous sûr de vouloir vous déconnecter?')) {
+  // Logout Modal Methods
+  openLogoutModal(): void {
+    this.showLogoutModal = true;
+  }
+
+  closeLogoutModal(): void {
+    this.showLogoutModal = false;
+    this.isLoggingOut = false;
+  }
+
+  confirmLogout(): void {
+    this.isLoggingOut = true;
+    
+    // Simulate logout delay for better UX
+    setTimeout(() => {
       this.authService.logout();
-    }
+      this.closeLogoutModal();
+    }, 500);
+  }
+
+  // Keep the old logout method for backward compatibility (but update it to use modal)
+  logout(): void {
+    this.openLogoutModal();
   }
 
   private loadSchoolInfo(): void {

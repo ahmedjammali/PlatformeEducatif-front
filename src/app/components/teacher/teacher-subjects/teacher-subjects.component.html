@@ -1,1 +1,27 @@
-<p>teacher-subjects works!</p>
+<!-- teacher-subjects.component.html -->
+<section class="content-section subjects-section">
+  <h2 class="section-title">Mes matières enseignées</h2>
+  
+  <div class="subjects-grid">
+    <div class="subject-card" *ngFor="let subject of subjects" (click)="selectSubject(subject)">
+      <div class="subject-header" [style.background]="getSubjectGradient(subject)">
+        <img [src]="subject.imagePath || 'assets/default-subject.png'" alt="{{ subject.name }}" class="subject-image">
+      </div>
+      <div class="subject-body">
+        <h3 class="subject-name">{{ subject.name }}</h3>
+        <p class="subject-description">{{ subject.description }}</p>
+        <div class="subject-stats">
+          <span class="stat-item">
+            <span class="stat-icon">👥</span>
+            {{ getSubjectClassCount(subject) }} Classes
+          </span>
+          <span class="stat-item">
+            <span class="stat-icon">📝</span>
+            {{ getSubjectExerciseCount(subject) }} Exercices
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>

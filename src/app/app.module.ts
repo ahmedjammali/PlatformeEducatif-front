@@ -55,6 +55,20 @@ import { ExerciseFormComponent } from './components/teacher/exercise-form/exerci
 import { TeacherLayoutComponent } from './components/teacher/teacher-layout/teacher-layout.component';
 import { DashboardOverviewComponent } from './components/teacher/dashboard-overview/dashboard-overview.component';
 import { TeacherSubjectsComponent } from './components/teacher/teacher-subjects/teacher-subjects.component';
+import { TeacherExercisesComponent } from './components/teacher/teacher-exercises/teacher-exercises.component';
+import { TeacherClassesComponent } from './components/teacher/teacher-classes/teacher-classes.component';
+import { ToasterComponent } from './components/toaster/toaster.component';
+import { TeacherGradesComponent } from './components/teacher/teacher-grades/teacher-grades.component';
+import { StudentProgressComponent } from './components/teacher/student-progress/student-progress.component';
+import { UnauthorizedComponent } from './components/unauthorized/unauthorized.component';
+import { StudentDashboardComponent } from './components/student/student-dashboard/student-dashboard.component';
+import { StudentSubjectExercisesComponent } from './components/student/student-subject-exercises/student-subject-exercises.component';
+import { StudentExerciseExecutionComponent } from './components/student/student-exercise-execution/student-exercise-execution.component';
+import { StudentExerciseResultsComponent } from './components/student/student-exercise-results/student-exercise-results.component';
+import { StudentNavbarComponent } from './components/student/student-navbar/student-navbar.component';
+import { StudentGradesPageComponent } from './components/student/student-grades-page/student-grades-page.component';
+
+
 
 
 const MaterialModules = [
@@ -90,7 +104,21 @@ const MaterialModules = [
     ExerciseFormComponent,
     TeacherLayoutComponent,
     DashboardOverviewComponent,
-    TeacherSubjectsComponent
+    TeacherSubjectsComponent,
+    TeacherExercisesComponent,
+    TeacherClassesComponent,
+    ToasterComponent,
+    TeacherGradesComponent,
+    StudentProgressComponent,
+    UnauthorizedComponent,
+    StudentDashboardComponent,
+    StudentSubjectExercisesComponent,
+    StudentExerciseExecutionComponent,
+    StudentExerciseResultsComponent,
+    StudentNavbarComponent,
+    StudentGradesPageComponent,
+
+
   ],
   imports: [
     BrowserModule,

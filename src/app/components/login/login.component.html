@@ -14,8 +14,8 @@
         <div class="welcome-content">
           <div class="logo-container">
             <div class="logo">
-              <span class="logo-text">Hiba</span>
-              <span class="logo-accent">School</span>
+              <span class="logo-accent" *ngIf = "schoolName" >{{schoolName}}</span>
+              <!-- <span class="logo-accent" *ngIf = "!schoolName" >School</span> -->
             </div>
             <div class="logo-tagline">Excellence in Education</div>
           </div>

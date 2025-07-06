@@ -1,0 +1,155 @@
+<!-- student-dashboard.component.html -->
+<div class="student-dashboard">
+  <!-- Navbar -->
+  <app-student-navbar></app-student-navbar>
+
+  <!-- Main Content -->
+  <div class="dashboard-content">
+    <!-- Header Section -->
+    <div class="dashboard-header">
+      <div class="header-content">
+        <h1>Mon Tableau de Bord</h1>
+        <p class="welcome-message">Suivez vos performances académiques</p>
+      </div>
+      <div class="header-decoration">
+        <div class="floating-icon">📚</div>
+        <div class="floating-icon">🎯</div>
+        <div class="floating-icon">⭐</div>
+      </div>
+    </div>
+
+    <!-- Class and Academic Info Card -->
+    <div class="info-card class-info-card" *ngIf="classInfo">
+      <div class="card-header">
+        <div class="header-left">
+          <h2>Ma Classe</h2>
+          <span class="academic-year">Année {{ classInfo.class.academicYear }}</span>
+        </div>
+        <div class="class-icon">🎓</div>
+      </div>
+      <div class="card-content">
+        <div class="class-details">
+          <div class="detail-item">
+            <div class="detail-icon">📋</div>
+            <div class="detail-info">
+              <span class="label">Classe</span>
+              <span class="value">{{ classInfo.class.name }}</span>
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-icon">📊</div>
+            <div class="detail-info">
+              <span class="label">Niveau</span>
+              <span class="value">{{ classInfo.class.grade }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subjects Section -->
+    <div class="subjects-section" *ngIf="classInfo && classInfo.subjects">
+      <h2 class="section-title">
+        <span class="title-icon">📚</span>
+        Mes Matières
+      </h2>
+      <div class="subjects-grid">
+        <div class="subject-card" *ngFor="let subject of classInfo.subjects">
+          <div class="subject-content">
+            <div class="subject-icon">
+              <img *ngIf="subject.imagePath" [src]="subject.imagePath" [alt]="subject.name">
+              <div *ngIf="!subject.imagePath" class="default-icon">
+                <span>{{ getSubjectInitials(subject.name) }}</span>
+              </div>
+            </div>
+            <div class="subject-info">
+              <h3>{{ subject.name }}</h3>
+              <p class="subject-description">{{ subject.description }}</p>
+              <div class="teacher-info" *ngIf="subject.teacher">
+                <div class="teacher-icon">👨‍🏫</div>
+                <span class="teacher-name">{{ getTeacherName(subject.teacher) }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="subject-actions">
+            <button class="exercises-btn" (click)="selectSubject(subject)">
+              <span class="btn-icon">📖</span>
+              Voir les exercices
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Summary -->
+    <div class="statistics-section" *ngIf="statistics">
+      <h2 class="section-title">
+        <span class="title-icon">📈</span>
+        Mes Statistiques
+      </h2>
+      <div class="statistics-grid">
+        <div class="stat-card overall-average">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-content">
+            <h4>Moyenne Générale</h4>
+            <p class="stat-value">{{ statistics.moyenneGenerale?.toFixed(2) || 'N/A' }}<span class="unit">/20</span></p>
+          </div>
+        </div>
+        <div class="stat-card total-grades">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <h4>Total des Notes</h4>
+            <p class="stat-value">{{ grades?.length || 0 }}<span class="unit"> notes</span></p>
+          </div>
+        </div>
+        <div class="stat-card best-grade">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-content">
+            <h4>Meilleure Note</h4>
+            <p class="stat-value">{{ statistics.meilleureNote || 'N/A' }}<span class="unit">/20</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="quick-actions-section">
+      <h2 class="section-title">
+        <span class="title-icon">⚡</span>
+        Actions Rapides
+      </h2>
+      <div class="actions-grid">
+        <a routerLink="/student/grades" class="action-card grades-action">
+          <div class="action-icon">📋</div>
+          <div class="action-content">
+            <h4>Voir toutes mes notes</h4>
+            <p>Consultez l'historique complet de vos notes avec filtres avancés</p>
+          </div>
+          <div class="action-arrow">→</div>
+        </a>
+        
+       
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="loading">
+      <div class="loader"></div>
+      <p>Chargement des données...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-container" *ngIf="error">
+      <div class="error-icon">⚠️</div>
+      <h3>Oops! Une erreur s'est produite</h3>
+      <p>{{ error }}</p>
+      <button class="retry-button" (click)="loadData()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23,4 23,10 17,10"></polyline>
+          <path d="M20.49,15A9,9 0 1,1 5.64,5.64L1,10"></path>
+        </svg>
+        Réessayer
+      </button>
+    </div>
+  </div>
+</div>

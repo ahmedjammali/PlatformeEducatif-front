@@ -1,0 +1,530 @@
+<section class="grades-section">
+  <div class="section-header">
+    <h2 class="section-title">Gestion des Notes</h2>
+    <button 
+      class="btn btn-primary"
+      (click)="openCreateGradeForm()"
+      [disabled]="!filters.selectedClass || !filters.selectedSubject">
+      <i class="icon-plus"></i>
+      Ajouter une Note
+    </button>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters-container">
+    <div class="filters-header">
+      <h3 class="filters-title">
+        <i class="icon-filter"></i>
+        Filtres
+      </h3>
+      <button 
+        class="btn btn-outline reset-filters-btn"
+        (click)="resetFilters()"
+        title="Réinitialiser les filtres">
+        <i class="icon-refresh"></i>
+        Réinitialiser
+      </button>
+    </div>
+    
+    <div class="filters-grid">
+      <div class="filter-group primary">
+        <label for="class-select">
+          <i class="icon-school"></i>
+          Classe *
+        </label>
+        <select 
+          id="class-select"
+          class="form-select"
+          [(ngModel)]="filters.selectedClass"
+          (change)="onFilterChange()">
+          <option value="">Sélectionner une classe</option>
+          <option *ngFor="let class of classes" [value]="class._id">
+            {{ class.name }} - {{ class.grade }}
+          </option>
+        </select>
+        <small class="filter-help" *ngIf="!filters.selectedClass">
+          Sélectionnez une classe pour commencer
+        </small>
+      </div>
+
+      <div class="filter-group" [class.disabled]="!filters.selectedClass">
+        <label for="subject-select">
+          <i class="icon-book"></i>
+          Matière
+        </label>
+        <select 
+          id="subject-select"
+          class="form-select"
+          [(ngModel)]="filters.selectedSubject"
+          (change)="onFilterChange()"
+          [disabled]="!filters.selectedClass">
+          <option value="">
+            {{ !filters.selectedClass ? 'Sélectionnez d\'abord une classe' : 'Toutes les matières' }}
+          </option>
+          <option *ngFor="let subject of getAvailableSubjects()" [value]="subject._id">
+            {{ subject.name }}
+          </option>
+        </select>
+        <small class="filter-help" *ngIf="filters.selectedClass && getAvailableSubjects().length === 0">
+          Aucune matière assignée dans cette classe
+        </small>
+      </div>
+
+      <div class="filter-group">
+        <label for="trimester-select">
+          <i class="icon-calendar"></i>
+          Trimestre
+        </label>
+        <select 
+          id="trimester-select"
+          class="form-select"
+          [(ngModel)]="filters.selectedTrimester"
+          (change)="onFilterChange()">
+          <option value="">Tous les trimestres</option>
+          <option *ngFor="let trimester of trimesters" [value]="trimester">
+            {{ trimester }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="exam-type-select">
+          <i class="icon-clipboard"></i>
+          Type d'examen
+        </label>
+        <select 
+          id="exam-type-select"
+          class="form-select"
+          [(ngModel)]="filters.selectedExamType"
+          (change)="onFilterChange()">
+          <option value="">Tous les types</option>
+          <option *ngFor="let examType of examTypes" [value]="examType.value">
+            {{ examType.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="academic-year">
+          <i class="icon-graduation-cap"></i>
+          Année scolaire
+        </label>
+        <input 
+          id="academic-year"
+          type="number"
+          class="form-input"
+          [(ngModel)]="filters.academicYear"
+          (change)="onFilterChange()"
+          min="2020"
+          max="2030">
+      </div>
+    </div>
+    
+    <!-- Résumé des filtres actifs -->
+    <div class="active-filters" *ngIf="hasActiveFilters()">
+      <span class="active-filters-label">Filtres actifs:</span>
+      <div class="filter-tags">
+        <span class="filter-tag" *ngIf="filters.selectedClass">
+          <i class="icon-school"></i>
+          {{ getClassName(filters.selectedClass) }}
+          <button (click)="clearFilter('class')" class="tag-remove">×</button>
+        </span>
+        <span class="filter-tag" *ngIf="filters.selectedSubject">
+          <i class="icon-book"></i>
+          {{ getSubjectName(filters.selectedSubject) }}
+          <button (click)="clearFilter('subject')" class="tag-remove">×</button>
+        </span>
+        <span class="filter-tag" *ngIf="filters.selectedTrimester">
+          <i class="icon-calendar"></i>
+          {{ filters.selectedTrimester }}
+          <button (click)="clearFilter('trimester')" class="tag-remove">×</button>
+        </span>
+        <span class="filter-tag" *ngIf="filters.selectedExamType">
+          <i class="icon-clipboard"></i>
+          {{ getExamTypeLabel(filters.selectedExamType) }}
+          <button (click)="clearFilter('examType')" class="tag-remove">×</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Basculement du mode d'affichage -->
+  <div class="view-toggle" *ngIf="filteredGrades.length > 0">
+    <button 
+      class="toggle-btn"
+      [class.active]="viewMode === 'table'"
+      (click)="onViewModeChange('table')">
+      <i class="icon-table"></i>
+      Vue Tableau
+    </button>
+    <button 
+      class="toggle-btn"
+      [class.active]="viewMode === 'students'"
+      (click)="onViewModeChange('students')">
+      <i class="icon-users"></i>
+      Vue Étudiants
+    </button>
+  </div>
+
+  <!-- État de chargement -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Chargement des notes...</p>
+  </div>
+
+  <!-- Message aucune classe sélectionnée -->
+  <div class="empty-state" *ngIf="!filters.selectedClass && !isLoading">
+    <i class="icon-alert-circle"></i>
+    <h3>Sélectionnez une classe</h3>
+    <p>Veuillez sélectionner une classe pour voir les notes.</p>
+  </div>
+
+  <!-- Message aucune note -->
+  <div class="empty-state" *ngIf="filters.selectedClass && filteredGrades.length === 0 && !isLoading">
+    <i class="icon-clipboard"></i>
+    <h3>Aucune note trouvée</h3>
+    <p>Aucune note ne correspond aux critères sélectionnés.</p>
+    <button class="btn btn-primary" (click)="openCreateGradeForm()">
+      Ajouter la première note
+    </button>
+  </div>
+
+  <!-- Vue Tableau -->
+  <div class="grades-table-container" *ngIf="viewMode === 'table' && filteredGrades.length > 0 && !isLoading">
+    <div class="table-responsive">
+      <table class="grades-table">
+        <thead>
+          <tr>
+            <th>Étudiant</th>
+            <th>Matière</th>
+            <th>Examen</th>
+            <th>Type</th>
+            <th>Note</th>
+            <th>Coefficient</th>
+            <th>Date</th>
+            <th>Trimestre</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let grade of filteredGrades" class="grade-row">
+            <td class="student-cell">
+              <div class="student-info">
+                <div class="student-avatar">
+                  {{ getStudentName(grade.student).charAt(0) }}
+                </div>
+                <span>{{ getStudentName(grade.student) }}</span>
+              </div>
+            </td>
+            <td>{{ getSubjectName(grade.subject) }}</td>
+            <td class="exam-name">{{ grade.examName }}</td>
+            <td>
+              <span class="exam-type-badge" [attr.data-type]="grade.examType">
+                {{ getExamTypeLabel(grade.examType) }}
+              </span>
+            </td>
+            <td>
+              <span class="grade-value" [ngClass]="getGradeClass(grade.grade)">
+                {{ grade.grade }}/20
+              </span>
+            </td>
+            <td>{{ grade.coefficient }}</td>
+            <td>{{ grade.examDate | date:'dd/MM/yyyy' }}</td>
+            <td>{{ grade.trimester }}</td>
+            <td class="actions-cell">
+              <button 
+                class="btn-icon btn-edit"
+                (click)="editGrade(grade)"
+                title="Modifier">
+                <i class="icon-edit"></i>
+              </button>
+              <button 
+                class="btn-icon btn-delete"
+                (click)="openDeleteConfirmation(grade)"
+                title="Supprimer">
+                <i class="icon-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Vue Étudiants -->
+  <div class="students-view" *ngIf="viewMode === 'students' && studentGradeSummaries.length > 0 && !isLoading">
+    <div class="students-grid">
+      <div class="student-card" *ngFor="let summary of studentGradeSummaries">
+        <div class="student-header">
+          <div class="student-avatar large">
+            {{ getStudentName(summary.student).charAt(0) }}
+          </div>
+          <div class="student-details">
+            <h3>{{ getStudentName(summary.student) }}</h3>
+            <p class="student-email">{{ summary.student.email }}</p>
+          </div>
+          <div class="student-stats">
+            <div class="stat">
+              <span class="stat-value" [ngClass]="getGradeClass(summary.average)">
+                {{ summary.average | number:'1.2-2' }}
+              </span>
+              <span class="stat-label">Moyenne</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">{{ summary.totalGrades }}</span>
+              <span class="stat-label">Notes</span>
+            </div>
+          </div>
+        </div>
+        <div class="student-grades">
+          <div class="grade-item" *ngFor="let grade of summary.grades">
+            <div class="grade-info">
+              <span class="grade-exam">{{ grade.examName }}</span>
+              <span class="grade-type">{{ getExamTypeLabel(grade.examType) }}</span>
+            </div>
+            <div class="grade-score">
+              <span class="grade-value" [ngClass]="getGradeClass(grade.grade)">
+                {{ grade.grade }}/20
+              </span>
+              <span class="grade-coeff">Coeff. {{ grade.coefficient }}</span>
+            </div>
+            <div class="grade-actions">
+              <button class="btn-icon btn-edit" (click)="editGrade(grade)">
+                <i class="icon-edit"></i>
+              </button>
+              <button class="btn-icon btn-delete" (click)="openDeleteConfirmation(grade)">
+                <i class="icon-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal du formulaire de création/modification de note -->
+  <div class="modal-overlay" *ngIf="showCreateForm" (click)="cancelForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ editingGrade ? 'Modifier la Note' : 'Ajouter une Note' }}</h3>
+        <button class="btn-close" (click)="cancelForm()">
+          <i class="icon-x"></i>
+        </button>
+      </div>
+
+      <form class="grade-form" (ngSubmit)="saveGrade()">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="student-select">Étudiant *</label>
+            <select 
+              id="student-select"
+              class="form-select"
+              [(ngModel)]="gradeForm.studentId"
+              name="studentId"
+              required
+              [disabled]="!!editingGrade">
+              <option value="">Sélectionner un étudiant</option>
+              <option *ngFor="let student of getStudentsForSelectedClass()" [value]="student._id">
+                {{ getStudentName(student) }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="subject-form-select">Matière *</label>
+            <select 
+              id="subject-form-select"
+              class="form-select"
+              [(ngModel)]="gradeForm.subjectId"
+              name="subjectId"
+              required
+              [disabled]="!!editingGrade || !filters.selectedClass">
+              <option value="">
+                {{ !filters.selectedClass ? 'Sélectionnez d\'abord une classe' : 'Sélectionner une matière' }}
+              </option>
+              <option *ngFor="let subject of getAvailableSubjects()" [value]="subject._id">
+                {{ subject.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="exam-name">Nom de l'examen *</label>
+            <input 
+              id="exam-name"
+              type="text"
+              class="form-input"
+              [(ngModel)]="gradeForm.examName"
+              name="examName"
+              placeholder="Ex: Contrôle de Mathématiques"
+              required
+              [disabled]="!!editingGrade">
+          </div>
+
+          <div class="form-group">
+            <label for="exam-type-form">Type d'examen *</label>
+            <select 
+              id="exam-type-form"
+              class="form-select"
+              [(ngModel)]="gradeForm.examType"
+              name="examType"
+              required
+              [disabled]="!!editingGrade">
+              <option *ngFor="let examType of examTypes" [value]="examType.value">
+                {{ examType.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="grade-value">Note */20 *</label>
+            <input 
+              id="grade-value"
+              type="number"
+              class="form-input"
+              [(ngModel)]="gradeForm.grade"
+              name="grade"
+              min="0"
+              max="20"
+              step="0.5"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label for="coefficient">Coefficient *</label>
+            <input 
+              id="coefficient"
+              type="number"
+              class="form-input"
+              [(ngModel)]="gradeForm.coefficient"
+              name="coefficient"
+              min="1"
+              max="10"
+              required
+              [disabled]="!!editingGrade">
+          </div>
+
+          <div class="form-group">
+            <label for="exam-date">Date de l'examen</label>
+            <input 
+              id="exam-date"
+              type="date"
+              class="form-input"
+              [(ngModel)]="gradeForm.examDate"
+              name="examDate"
+              [disabled]="!!editingGrade">
+          </div>
+
+          <div class="form-group">
+            <label for="trimester-form">Trimestre *</label>
+            <select 
+              id="trimester-form"
+              class="form-select"
+              [(ngModel)]="gradeForm.trimester"
+              name="trimester"
+              required
+              [disabled]="!!editingGrade">
+              <option *ngFor="let trimester of trimesters" [value]="trimester">
+                {{ trimester }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="comments">Commentaires</label>
+          <textarea 
+            id="comments"
+            class="form-textarea"
+            [(ngModel)]="gradeForm.comments"
+            name="comments"
+            placeholder="Commentaires sur la note..."
+            rows="3"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelForm()">
+            Annuler
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-primary"
+            [disabled]="!isFormValid() || isLoading">
+            {{ editingGrade ? 'Mettre à jour' : 'Créer la Note' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de confirmation de suppression -->
+  <div class="modal-overlay delete-modal-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDeleteConfirmation()">
+    <div class="modal-content delete-modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header delete-modal-header">
+        <div class="delete-icon-container">
+          <i class="icon-alert-triangle"></i>
+        </div>
+        <h3>Confirmer la suppression</h3>
+        <button class="btn-close" (click)="cancelDeleteConfirmation()">
+          <i class="icon-x"></i>
+        </button>
+      </div>
+
+      <div class="delete-modal-body">
+        <div class="delete-warning-message">
+          <p>Êtes-vous sûr de vouloir supprimer cette note ?</p>
+          <p class="warning-text">Cette action est irréversible.</p>
+        </div>
+
+        <!-- Détails de la note pour confirmation -->
+        <div class="grade-details-card" *ngIf="gradeToDelete">
+          <div class="grade-detail-row">
+            <span class="detail-label">Étudiant:</span>
+            <span class="detail-value">{{ getStudentName(gradeToDelete.student) }}</span>
+          </div>
+          <div class="grade-detail-row">
+            <span class="detail-label">Matière:</span>
+            <span class="detail-value">{{ getSubjectName(gradeToDelete.subject) }}</span>
+          </div>
+          <div class="grade-detail-row">
+            <span class="detail-label">Examen:</span>
+            <span class="detail-value">{{ gradeToDelete.examName }}</span>
+          </div>
+          <div class="grade-detail-row">
+            <span class="detail-label">Type:</span>
+            <span class="detail-value">{{ getExamTypeLabel(gradeToDelete.examType) }}</span>
+          </div>
+          <div class="grade-detail-row">
+            <span class="detail-label">Note:</span>
+            <span class="detail-value grade-highlight" [ngClass]="getGradeClass(gradeToDelete.grade)">
+              {{ gradeToDelete.grade }}/20
+            </span>
+          </div>
+          <div class="grade-detail-row">
+            <span class="detail-label">Trimestre:</span>
+            <span class="detail-value">{{ gradeToDelete.trimester }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="delete-modal-actions">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="cancelDeleteConfirmation()"
+          [disabled]="isDeleting">
+          Annuler
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-danger" 
+          (click)="confirmDeleteGrade()"
+          [disabled]="isDeleting">
+          <span *ngIf="isDeleting" class="delete-spinner"></span>
+          <i *ngIf="!isDeleting" class="icon-trash"></i>
+          {{ isDeleting ? 'Suppression...' : 'Supprimer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

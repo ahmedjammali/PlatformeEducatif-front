@@ -1,13 +1,13 @@
 <!-- dashboard-overview.component.html -->
 <section class="content-section overview-section">
-  <h2 class="section-title">Dashboard Overview</h2>
+  <h2 class="section-title">Aperçu du tableau de bord</h2>
   
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-icon subjects-icon">📚</div>
       <div class="stat-content">
         <h3 class="stat-value">{{ stats.totalSubjects }}</h3>
-        <p class="stat-label">Subjects Teaching</p>
+        <p class="stat-label">Matières enseignées</p>
       </div>
     </div>
     
@@ -15,7 +15,7 @@
       <div class="stat-icon classes-icon">👥</div>
       <div class="stat-content">
         <h3 class="stat-value">{{ stats.totalClasses }}</h3>
-        <p class="stat-label">Total Classes</p>
+        <p class="stat-label">Classes totales</p>
       </div>
     </div>
     
@@ -23,7 +23,7 @@
       <div class="stat-icon exercises-icon">📝</div>
       <div class="stat-content">
         <h3 class="stat-value">{{ stats.totalExercises }}</h3>
-        <p class="stat-label">Created Exercises</p>
+        <p class="stat-label">Exercices créés</p>
       </div>
     </div>
     
@@ -31,26 +31,26 @@
       <div class="stat-icon students-icon">🎓</div>
       <div class="stat-content">
         <h3 class="stat-value">{{ stats.totalStudents }}</h3>
-        <p class="stat-label">Total Students</p>
+        <p class="stat-label">Élèves totaux</p>
       </div>
     </div>
   </div>
 
-  <!-- Quick Actions -->
+  <!-- Actions rapides -->
   <div class="quick-actions">
-    <h3 class="subsection-title">Quick Actions</h3>
+    <h3 class="subsection-title">Actions rapides</h3>
     <div class="action-buttons">
       <button class="action-btn primary-btn" (click)="onCreateExercise()">
         <span class="btn-icon">➕</span>
-        Create New Exercise
+        Créer un nouvel exercice
       </button>
       <button class="action-btn secondary-btn" (click)="onEnterGrades()">
         <span class="btn-icon">📊</span>
-        Enter Grades
+        Saisir les notes
       </button>
       <button class="action-btn accent-btn" (click)="onViewProgress()">
         <span class="btn-icon">📈</span>
-        View Progress
+        Voir les progrès
       </button>
     </div>
   </div>

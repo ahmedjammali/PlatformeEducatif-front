@@ -5,6 +5,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { ClassService } from '../../../services/class.service';
 import { UserService } from '../../../services/user.service';
 import { SubjectService } from '../../../services/subject.service';
+import { ToasterService } from '../../../services/toaster.service'; // Add this import
 import { Class, TeacherSubject } from '../../../models/class.model';
 import { User } from '../../../models/user.model';
 import { Subject as SubjectModel } from '../../../models/subject.model';
@@ -35,8 +36,10 @@ export class ClassesComponent implements OnInit, OnDestroy {
   showStudentsModal = false;
   showTeachersModal = false;
   showDetailsModal = false;
+  showDeleteModal = false; // Add this
   editingClass: Class | null = null;
   selectedClass: Class | null = null;
+  classToDelete: Class | null = null; // Add this
   
   // Filters
   searchTerm = '';
@@ -60,7 +63,8 @@ export class ClassesComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private classService: ClassService,
     private userService: UserService,
-    private subjectService: SubjectService
+    private subjectService: SubjectService,
+    private toasterService: ToasterService // Add this
   ) {
     this.initializeForm();
   }
@@ -101,7 +105,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error loading classes:', error);
           this.isLoading = false;
-          alert('Erreur lors du chargement des classes');
+          this.toasterService.error('Erreur lors du chargement des classes');
         }
       });
   }
@@ -115,6 +119,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading subjects:', error);
+          this.toasterService.error('Erreur lors du chargement des matières');
         }
       });
   }
@@ -128,6 +133,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading students:', error);
+          this.toasterService.error('Erreur lors du chargement des étudiants');
         }
       });
   }
@@ -141,6 +147,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading teachers:', error);
+          this.toasterService.error('Erreur lors du chargement des enseignants');
         }
       });
   }
@@ -223,6 +230,8 @@ export class ClassesComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
     const formValue = this.classForm.value;
+    console.log('Saving class with form value:', formValue);
+    const isEditing = this.editingClass !== null; // Store the editing state before the API call
     
     const saveObservable = this.editingClass
       ? this.classService.updateClass(this.editingClass._id!, formValue)
@@ -231,33 +240,46 @@ export class ClassesComponent implements OnInit, OnDestroy {
     saveObservable.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.isSaving = false;
+        const message = isEditing ? 'Classe mise à jour avec succès!' : 'Classe créée avec succès!';
+        this.toasterService.success(message);
         this.closeModal();
         this.loadClasses();
-        alert(this.editingClass ? 'Classe mise à jour avec succès!' : 'Classe créée avec succès!');
       },
       error: (error) => {
         console.error('Error saving class:', error);
         this.isSaving = false;
-        alert('Erreur lors de l\'enregistrement. Veuillez réessayer.');
+        this.toasterService.error('Erreur lors de l\'enregistrement. Veuillez réessayer.');
       }
     });
   }
 
-  deleteClass(classItem: Class): void {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer la classe "${classItem.name}"? Cette action est irréversible.`)) {
-      this.classService.deleteClass(classItem._id!)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.loadClasses();
-            alert('Classe supprimée avec succès!');
-          },
-          error: (error) => {
-            console.error('Error deleting class:', error);
-            alert('Erreur lors de la suppression. Veuillez réessayer.');
-          }
-        });
-    }
+  // Delete Methods - Updated
+  openDeleteModal(classItem: Class): void {
+    this.classToDelete = classItem;
+    this.showDeleteModal = true;
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.classToDelete = null;
+  }
+
+  confirmDeleteClass(): void {
+    if (!this.classToDelete) return;
+
+    this.classService.deleteClass(this.classToDelete._id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loadClasses();
+          this.toasterService.success(`Classe "${this.classToDelete!.name}" supprimée avec succès!`);
+          this.closeDeleteModal();
+        },
+        error: (error) => {
+          console.error('Error deleting class:', error);
+          this.toasterService.error('Erreur lors de la suppression. Veuillez réessayer.');
+        }
+      });
   }
 
   // Class Details
@@ -266,12 +288,13 @@ export class ClassesComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
+          console.log('Class details loaded:', response);
           this.classDetails = response;
           this.showDetailsModal = true;
         },
         error: (error) => {
           console.error('Error loading class details:', error);
-          alert('Erreur lors du chargement des détails de la classe');
+          this.toasterService.error('Erreur lors du chargement des détails de la classe');
         }
       });
   }
@@ -298,6 +321,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading class students:', error);
+          this.toasterService.error('Erreur lors du chargement des étudiants de la classe');
         }
       });
   }
@@ -340,11 +364,11 @@ export class ClassesComponent implements OnInit, OnDestroy {
             (this.classes[classIndex].students as string[]).push(student._id!);
             this.applyFilters();
           }
-          alert(`${student.name} ajouté à la classe avec succès!`);
+          this.toasterService.success(`${student.name} ajouté à la classe avec succès!`);
         },
         error: (error) => {
           console.error('Error adding student:', error);
-          alert('Erreur lors de l\'ajout de l\'étudiant.');
+          this.toasterService.error('Erreur lors de l\'ajout de l\'étudiant.');
         }
       });
   }
@@ -352,28 +376,26 @@ export class ClassesComponent implements OnInit, OnDestroy {
   removeStudentFromClass(student: User): void {
     if (!this.selectedClass) return;
     
-    if (confirm(`Retirer ${student.name} de la classe?`)) {
-      this.classService.removeStudent(this.selectedClass._id!, student._id!)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.classStudents = this.classStudents.filter(s => s._id !== student._id);
-            this.updateAvailableStudents();
-            // Update the student count in the main view
-            const classIndex = this.classes.findIndex(c => c._id === this.selectedClass!._id);
-            if (classIndex > -1 && this.classes[classIndex].students) {
-              this.classes[classIndex].students = (this.classes[classIndex].students as string[])
-                .filter(id => id !== student._id);
-              this.applyFilters();
-            }
-            alert(`${student.name} retiré de la classe avec succès!`);
-          },
-          error: (error) => {
-            console.error('Error removing student:', error);
-            alert('Erreur lors du retrait de l\'étudiant.');
+    this.classService.removeStudent(this.selectedClass._id!, student._id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.classStudents = this.classStudents.filter(s => s._id !== student._id);
+          this.updateAvailableStudents();
+          // Update the student count in the main view
+          const classIndex = this.classes.findIndex(c => c._id === this.selectedClass!._id);
+          if (classIndex > -1 && this.classes[classIndex].students) {
+            this.classes[classIndex].students = (this.classes[classIndex].students as string[])
+              .filter(id => id !== student._id);
+            this.applyFilters();
           }
-        });
-    }
+          this.toasterService.success(`${student.name} retiré de la classe avec succès!`);
+        },
+        error: (error) => {
+          console.error('Error removing student:', error);
+          this.toasterService.error('Erreur lors du retrait de l\'étudiant.');
+        }
+      });
   }
 
   closeStudentsModal(): void {
@@ -405,6 +427,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading class teachers:', error);
+          this.toasterService.error('Erreur lors du chargement des enseignants de la classe');
         }
       });
   }
@@ -446,12 +469,11 @@ export class ClassesComponent implements OnInit, OnDestroy {
           this.loadClasses();
         }
         
-        const teacherName = this.allTeachers.find(t => t._id === this.selectedTeacherId)?.name;
-        alert(`Enseignant assigné avec succès!`);
+        this.toasterService.success('Enseignant assigné avec succès!');
       },
       error: (error) => {
         console.error('Error assigning teacher:', error);
-        alert('Erreur lors de l\'assignation de l\'enseignant.');
+        this.toasterService.error('Erreur lors de l\'assignation de l\'enseignant.');
       }
     });
   }
@@ -462,27 +484,25 @@ export class ClassesComponent implements OnInit, OnDestroy {
     const teacher = this.classTeachers.find(t => t.teacher._id === teacherId);
     const teacherName = teacher ? teacher.teacher.name : 'cet enseignant';
     
-    if (confirm(`Retirer ${teacherName} de la classe?`)) {
-      this.classService.removeTeacher(this.selectedClass._id!, teacherId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.loadClassTeachers(this.selectedClass!._id!);
-            
-            // Update the teacher count in the main view
-            const classIndex = this.classes.findIndex(c => c._id === this.selectedClass!._id);
-            if (classIndex > -1) {
-              this.loadClasses();
-            }
-            
-            alert(`${teacherName} retiré de la classe avec succès!`);
-          },
-          error: (error) => {
-            console.error('Error removing teacher:', error);
-            alert('Erreur lors du retrait de l\'enseignant.');
+    this.classService.removeTeacher(this.selectedClass._id!, teacherId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loadClassTeachers(this.selectedClass!._id!);
+          
+          // Update the teacher count in the main view
+          const classIndex = this.classes.findIndex(c => c._id === this.selectedClass!._id);
+          if (classIndex > -1) {
+            this.loadClasses();
           }
-        });
-    }
+          
+          this.toasterService.success(`${teacherName} retiré de la classe avec succès!`);
+        },
+        error: (error) => {
+          console.error('Error removing teacher:', error);
+          this.toasterService.error('Erreur lors du retrait de l\'enseignant.');
+        }
+      });
   }
 
   closeTeachersModal(): void {
