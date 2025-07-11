@@ -4,6 +4,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil, filter } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
 import { SchoolService } from '../../../services/school.service';
+import { NotificationService } from '../../../services/notification.service'; // Add this import
 import { User } from '../../../models/user.model';
 import { School } from '../../../models/school.model';
 
@@ -28,11 +29,15 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
   showLogoutModal = false;
   isLoggingOut = false;
 
+  // Notification count
+  unreadNotificationCount = 0;
+
   private destroy$ = new Subject<void>();
 
   constructor(
     private authService: AuthService,
     private schoolService: SchoolService,
+    private notificationService: NotificationService, // Add this
     private router: Router
   ) {}
 
@@ -41,6 +46,7 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
     
     if (this.currentUser && this.currentUser.role === 'teacher') {
       this.loadSchoolInfo();
+      this.loadNotificationCount(); // Add this
     } else {
       this.router.navigate(['/login']);
     }
@@ -63,6 +69,13 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
     
     // Check for mobile sidebar state
     this.checkMobileView();
+
+    // Listen for notification updates
+    this.notificationService.getNotificationUpdates()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.loadNotificationCount();
+      });
   }
 
   ngOnDestroy(): void {
@@ -80,6 +93,13 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
     this.activeSection = section;
     this.activeSectionChange.emit(section);
     
+    // Mark notifications as read when visiting notifications section
+    if (section === 'notifications' && this.unreadNotificationCount > 0) {
+      setTimeout(() => {
+        this.markNotificationsAsRead();
+      }, 1000); // Small delay to allow user to see notifications first
+    }
+    
     // Optional: Navigate to corresponding route if you have different routes
     // For now, we'll just update the section without navigation
     // since you're using a single route with conditional rendering
@@ -93,6 +113,7 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
       'exercises': 'Exercices',
       'grades': 'Notes',
       'progress': 'Progrès Étudiants',
+      'notifications': 'Notifications', // Add this
       'contact': 'Contact'
     };
     
@@ -138,6 +159,47 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
       });
   }
 
+  private loadNotificationCount(): void {
+    if (!this.currentUser) return;
+    
+    this.notificationService.getUnreadNotificationsCount()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (count) => {
+          this.unreadNotificationCount = count;
+        },
+        error: (error) => {
+          console.error('Error loading notification count:', error);
+          this.unreadNotificationCount = 0;
+        }
+      });
+  }
+
+  private markNotificationsAsRead(): void {
+    this.notificationService.getNotifications({ unreadOnly: true, limit: 100 })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.notifications && response.notifications.length > 0) {
+            const unreadIds = response.notifications.map(n => n._id);
+            this.notificationService.markMultipleAsRead(unreadIds)
+              .pipe(takeUntil(this.destroy$))
+              .subscribe({
+                next: () => {
+                  this.unreadNotificationCount = 0;
+                },
+                error: (error) => {
+                  console.error('Error marking notifications as read:', error);
+                }
+              });
+          }
+        },
+        error: (error) => {
+          console.error('Error fetching unread notifications:', error);
+        }
+      });
+  }
+
   private setActiveSectionFromRoute(): void {
     // Since you're using conditional rendering instead of separate routes,
     // we don't need to update activeSection from route changes
@@ -157,6 +219,8 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
       this.activeSection = 'grades';
     } else if (currentUrl.includes('/progress')) {
       this.activeSection = 'progress';
+    } else if (currentUrl.includes('/notifications')) {
+      this.activeSection = 'notifications';
     } else if (currentUrl.includes('/contact')) {
       this.activeSection = 'contact';
     } else {

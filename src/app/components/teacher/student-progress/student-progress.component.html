@@ -1,6 +1,8 @@
-<section class="content-section">
-  <h2 class="section-title">Progrès des élèves</h2>
-  
+<section class="content-section progress-section">
+  <div class="section-header">
+    <h2 class="section-title">Progrès des élèves</h2>
+  </div>
+
   <!-- État de chargement -->
   <div *ngIf="isLoading" class="loading-container">
     <div class="spinner"></div>
@@ -10,67 +12,121 @@
   <!-- Contenu principal -->
   <div *ngIf="!isLoading" class="progress-container">
     
-    <!-- Section des filtres -->
-    <div class="filters-section">
-      <h3>Filtres</h3>
-      <div class="filters-grid">
-        <div class="filter-group">
-          <label for="classFilter">Classe</label>
-          <select id="classFilter" [(ngModel)]="selectedClass" (change)="onClassFilterChange()" class="filter-select">
-            <option value="">Toutes les classes</option>
-            <option *ngFor="let class of myClasses" [value]="class._id">{{class?.name}} - {{class?.grade}}</option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label for="subjectFilter">Matière</label>
-          <select id="subjectFilter" [(ngModel)]="selectedSubject" (change)="applyFilters()" class="filter-select">
-            <option value="">Toutes les matières</option>
-            <option *ngFor="let subject of teachingSubjects" [value]="subject._id">{{subject?.name}}</option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label for="exerciseFilter">Exercice</label>
-          <select id="exerciseFilter" [(ngModel)]="selectedExercise" (change)="applyFilters()" class="filter-select">
-            <option value="">Tous les exercices</option>
-            <option *ngFor="let exercise of getFilteredExercises()" [value]="exercise._id">{{exercise?.title}}</option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label for="studentFilter">Élève</label>
-          <select id="studentFilter" [(ngModel)]="selectedStudent" (change)="onStudentFilterChange()" class="filter-select">
-            <option value="">Tous les élèves</option>
-            <option *ngFor="let student of getFilteredStudents()" [value]="student._id">{{student?.name}}</option>
-          </select>
-        </div>
+    <!-- Barre de filtres -->
+    <div class="filters-bar">
+      <div class="filters-header">
+        <h3 class="filters-title">
+          Filtres
+        </h3>
+        <button 
+          class="reset-filters-btn"
+          (click)="clearFilters()"
+          title="Réinitialiser tous les filtres">
+          <span class="reset-icon">🔄</span>
+          Effacer les filtres
+        </button>
       </div>
       
-      <div class="filter-actions">
-        <button class="btn btn-secondary" (click)="clearFilters()">Effacer les filtres</button>
-        <button class="btn btn-primary" (click)="applyFilters()">Appliquer les filtres</button>
+      <div class="filters-container">
+        <div class="filter-group primary">
+          <label for="classFilter">
+            Classe
+          </label>
+          <div class="filter-input-wrapper">
+            <span class="filter-icon">🏫</span>
+            <select 
+              id="classFilter" 
+              class="filter-select"
+              [(ngModel)]="selectedClass" 
+              (change)="onClassFilterChange()">
+              <option value="">Toutes les classes</option>
+              <option *ngFor="let class of myClasses" [value]="class._id">
+                {{ class?.name }} - {{ class?.grade }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label for="subjectFilter">
+            Matière
+          </label>
+          <div class="filter-input-wrapper">
+            <span class="filter-icon">📚</span>
+            <select 
+              id="subjectFilter" 
+              class="filter-select"
+              [(ngModel)]="selectedSubject" 
+              (change)="applyFilters()">
+              <option value="">Toutes les matières</option>
+              <option *ngFor="let subject of teachingSubjects" [value]="subject._id">
+                {{ subject?.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label for="exerciseFilter">
+            Exercice
+          </label>
+          <div class="filter-input-wrapper">
+            <span class="filter-icon">📝</span>
+            <select 
+              id="exerciseFilter" 
+              class="filter-select"
+              [(ngModel)]="selectedExercise" 
+              (change)="applyFilters()">
+              <option value="">Tous les exercices</option>
+              <option *ngFor="let exercise of getFilteredExercises()" [value]="exercise._id">
+                {{ exercise?.title }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label for="studentFilter">
+            Élève
+          </label>
+          <div class="filter-input-wrapper">
+            <span class="filter-icon">👤</span>
+            <select 
+              id="studentFilter" 
+              class="filter-select"
+              [(ngModel)]="selectedStudent" 
+              (change)="onStudentFilterChange()">
+              <option value="">Tous les élèves</option>
+              <option *ngFor="let student of getFilteredStudents()" [value]="student._id">
+                {{ student?.name }}
+              </option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Navigation des onglets -->
-    <div class="tabs-navigation">
+    <div class="view-toggle">
       <button 
-        class="tab-button" 
+        class="toggle-btn"
         [class.active]="activeTab === 'overview'"
         (click)="activeTab = 'overview'">
+        <span class="btn-icon">📈</span>
         Aperçu
       </button>
       <button 
-        class="tab-button" 
+        class="toggle-btn"
         [class.active]="activeTab === 'students'"
         (click)="activeTab = 'students'">
+        <span class="btn-icon">👥</span>
         Progrès des élèves
       </button>
       <button 
-        class="tab-button" 
+        class="toggle-btn"
         [class.active]="activeTab === 'exercises'"
         (click)="activeTab = 'exercises'">
+        <span class="btn-icon">📊</span>
         Analyses d'exercices
       </button>
     </div>
@@ -79,44 +135,52 @@
     <div *ngIf="activeTab === 'overview'" class="tab-content">
       <div class="overview-stats">
         <div class="stat-card">
-          <div class="stat-icon">👥</div>
+          <div class="stat-header">
+            <span class="stat-icon">👥</span>
+            <h4 class="stat-title">Total élèves</h4>
+          </div>
           <div class="stat-content">
-            <h4>Total élèves</h4>
-            <p class="stat-number">{{filteredStudentsProgressData.length}}</p>
+            <span class="stat-number">{{ filteredStudentsProgressData.length }}</span>
+            <span class="stat-label">élèves actifs</span>
           </div>
         </div>
 
         <div class="stat-card">
-          <div class="stat-icon">📚</div>
+          <div class="stat-header">
+            <span class="stat-icon">📚</span>
+            <h4 class="stat-title">Mes exercices</h4>
+          </div>
           <div class="stat-content">
-            <h4>Mes exercices</h4>
-            <p class="stat-number">{{teacherExercises.length}}</p>
+            <span class="stat-number">{{ teacherExercises.length }}</span>
+            <span class="stat-label">exercices créés</span>
           </div>
         </div>
 
         <div class="stat-card">
-          <div class="stat-icon">🎯</div>
+          <div class="stat-header">
+            <span class="stat-icon">🎯</span>
+            <h4 class="stat-title">Score moyen</h4>
+          </div>
           <div class="stat-content">
-            <h4>Score moyen</h4>
-            <p class="stat-number">{{averageScore.toFixed(1)}}%</p>
+            <span class="stat-number" [ngClass]="getScoreColor(averageScore)">{{ averageScore.toFixed(1) }}%</span>
+            <span class="stat-label">performance globale</span>
           </div>
         </div>
       </div>
 
       <!-- Aperçu rapide des classes -->
       <div class="class-overview">
-        <h3>Aperçu des performances par classe</h3>
+        <h3 class="section-subtitle">Aperçu des performances par classe</h3>
         <div class="class-cards">
           <div *ngFor="let class of myClasses" class="class-card">
-            <h4>{{class.name}} - {{class.grade}}</h4>
+            <div class="class-header">
+              <h4 class="class-title">{{ class.name }} - {{ class.grade }}</h4>
+              <span class="class-badge">{{ class.students?.length || 0 }} élèves</span>
+            </div>
             <div class="class-stats">
               <div class="class-stat">
-                <span class="label">Élèves:</span>
-                <span class="value">{{class.students?.length || 0}}</span>
-              </div>
-              <div class="class-stat">
-                <span class="label">Mes exercices:</span>
-                <span class="value">{{getExerciseCountForClass(class._id!)}}</span>
+                <span class="stat-value">{{ getExerciseCountForClass(class._id!) }}</span>
+                <span class="stat-label">Mes exercices</span>
               </div>
             </div>
           </div>
@@ -127,50 +191,54 @@
     <!-- Onglet Progrès des élèves -->
     <div *ngIf="activeTab === 'students'" class="tab-content">
       <div class="students-header">
-        <h3>Progrès des élèves ({{filteredStudentsProgressData.length}} {{filteredStudentsProgressData.length === 1 ? 'élève' : 'élèves'}})</h3>
+        <h3 class="section-subtitle">
+          Progrès des élèves ({{ filteredStudentsProgressData.length }} 
+          {{ filteredStudentsProgressData.length === 1 ? 'élève' : 'élèves' }})
+        </h3>
         <div class="sort-controls">
-          <label>Trier par:</label>
-          <select [(ngModel)]="sortBy" (change)="sortStudentsData()" class="sort-select">
-            <option value="name">Nom</option>
-            <option value="score">Score moyen</option>
-            <option value="completedExercises">Exercices terminés</option>
-            <option value="timeSpent">Temps passé</option>
-          </select>
-          <button class="sort-direction-btn" (click)="setSortBy(sortBy)">
-            {{sortDirection === 'asc' ? '↑' : '↓'}}
-          </button>
+          <label class="sort-label">Trier par:</label>
+          <div class="sort-input-wrapper">
+            <select [(ngModel)]="sortBy" (change)="sortStudentsData()" class="sort-select">
+              <option value="name">Nom</option>
+              <option value="score">Score moyen</option>
+              <option value="completedExercises">Exercices terminés</option>
+              <option value="timeSpent">Temps passé</option>
+            </select>
+            <button class="sort-direction-btn" (click)="setSortBy(sortBy)">
+              {{ sortDirection === 'asc' ? '↑' : '↓' }}
+            </button>
+          </div>
         </div>
       </div>
 
-      <div class="students-grid">
+      <div class="students-list">
         <div *ngFor="let studentData of filteredStudentsProgressData" class="student-card">
           <div class="student-header">
+            <div class="student-avatar">
+              {{ studentData.student.name.charAt(0) }}
+            </div>
             <div class="student-info">
-              <h4>{{studentData.student.name}}</h4>
-              <p>{{studentData.student.email}}</p>
+              <h4 class="student-name">{{ studentData.student.name }}</h4>
+              <p class="student-email">{{ studentData.student.email }}</p>
             </div>
             <div class="student-score" [ngClass]="getScoreColor(studentData.overallStats.averageScore)">
-              {{studentData.overallStats.averageScore.toFixed(1)}}%
+              {{ studentData.overallStats.averageScore.toFixed(1) }}%
             </div>
           </div>
 
-          <div class="student-stats">
-            <div class="stat">
-              <span class="stat-label">Terminés:</span>
-              <span class="stat-value">
-                {{studentData.overallStats.completedExercises}}/{{studentData.overallStats.totalExercises}}
-              </span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">Taux de réussite:</span>
-              <span class="stat-value">
-                {{getCompletionRate(studentData.overallStats.completedExercises, studentData.overallStats.totalExercises).toFixed(1)}}%
-              </span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">Temps total:</span>
-              <span class="stat-value">{{formatTime(studentData.overallStats.totalTimeSpent)}}</span>
-            </div>
+          <div class="student-meta">
+            <span class="meta-item">
+              <span class="meta-icon">✅</span>
+              {{ studentData.overallStats.completedExercises }}/{{ studentData.overallStats.totalExercises }} terminés
+            </span>
+            <span class="meta-item">
+              <span class="meta-icon">📊</span>
+              {{ getCompletionRate(studentData.overallStats.completedExercises, studentData.overallStats.totalExercises).toFixed(1) }}% de réussite
+            </span>
+            <span class="meta-item">
+              <span class="meta-icon">⏱️</span>
+              {{ formatTime(studentData.overallStats.totalTimeSpent) }} total
+            </span>
           </div>
 
           <div class="progress-bar">
@@ -181,57 +249,62 @@
 
           <!-- Détails des exercices -->
           <div class="student-exercises">
-            <h5>Progrès par exercice</h5>
-            <div class="exercises-list">
-              <div *ngFor="let exercise of studentData.exercises" class="exercise-item">
-                <div class="exercise-info" (click)="exercise._id && toggleExerciseDetails(exercise._id)" style="cursor: pointer;">
-                  <div class="exercise-header">
-                    <span class="exercise-title">{{getExerciseTitle(exercise)}}</span>
-                    <span class="exercise-type">{{toTitleCase(getExerciseType(exercise))}}</span>
-                    <span class="expand-icon" *ngIf="exercise._id">{{isExerciseExpanded(exercise._id) ? '▼' : '▶'}}</span>
+            <h5 class="exercises-title">Progrès par exercice</h5>
+            <div class="exercises-grid">
+              <div *ngFor="let exercise of studentData.exercises" class="exercise-item" 
+                   (click)="exercise._id && toggleExerciseDetails(exercise._id)">
+                <div class="exercise-header">
+                  <div class="exercise-info">
+                    <span class="exercise-title">{{ getExerciseTitle(exercise) }}</span>
+                    <span class="exercise-type" [class]="getExerciseType(exercise)">
+                      {{ toTitleCase(getExerciseType(exercise)) }}
+                    </span>
                   </div>
                   <div class="exercise-progress">
-                    <span class="score" [ngClass]="getScoreColor(exercise.accuracyPercentage)">
-                      {{exercise.accuracyPercentage?.toFixed(1) || 0}}%
+                    <span class="exercise-score" [ngClass]="getScoreColor(exercise.accuracyPercentage)">
+                      {{ exercise.accuracyPercentage?.toFixed(1) || 0 }}%
                     </span>
-                    <span class="attempts">Tentative {{exercise.attemptNumber || 1}}</span>
+                    <span class="exercise-attempts">Tentative {{ exercise.attemptNumber || 1 }}</span>
                   </div>
+                  <span class="expand-icon" *ngIf="exercise._id">
+                    {{ isExerciseExpanded(exercise._id) ? '▼' : '▶' }}
+                  </span>
                 </div>
                 
-                <!-- Résultats détaillés de l'exercice - extensible -->
+                <!-- Résultats détaillés de l'exercice -->
                 <div class="exercise-details" *ngIf="exercise._id && isExerciseExpanded(exercise._id)">
                   
                   <!-- Résultats QCM -->
-                  <div *ngIf="exercise.qcmAnswers && exercise.qcmAnswers.length > 0">
-                    <h6>Résultats QCM:</h6>
+                  <div *ngIf="exercise.qcmAnswers && exercise.qcmAnswers.length > 0" class="results-section">
+                    <h6 class="results-title">Résultats QCM:</h6>
                     <div class="qcm-results">
                       <div *ngFor="let answer of exercise.qcmAnswers" class="qcm-answer">
-                        <span class="question-number">Q{{answer.questionIndex + 1}}:</span>
-                        <span class="answer-status" [ngClass]="answer.isCorrect ? 'correct' : 'incorrect'">
-                          {{answer.isCorrect ? '✓' : '✗'}}
+                        <span class="question-number">Q{{ answer.questionIndex + 1 }}</span>
+                        <span class="answer-status" [class.correct]="answer.isCorrect" [class.incorrect]="!answer.isCorrect">
+                          {{ answer.isCorrect ? '✓' : '✗' }}
                         </span>
-                        <span class="points">{{answer.pointsEarned}} pts</span>
+                        <span class="points">{{ answer.pointsEarned }} pts</span>
                       </div>
                     </div>
                   </div>
 
                   <!-- Résultats Texte à trous -->
-                  <div *ngIf="exercise.fillBlankAnswers && exercise.fillBlankAnswers.length > 0">
-                    <h6>Résultats Texte à trous:</h6>
+                  <div *ngIf="exercise.fillBlankAnswers && exercise.fillBlankAnswers.length > 0" class="results-section">
+                    <h6 class="results-title">Résultats Texte à trous:</h6>
                     <div class="fill-blanks-results">
                       <div *ngFor="let questionAnswer of exercise.fillBlankAnswers; let i = index" class="fill-blank-question">
                         <div class="question-header">
-                          <span class="question-number">Question {{questionAnswer.questionIndex + 1}}:</span>
-                          <span class="question-points">{{questionAnswer.pointsEarned}} pts</span>
+                          <span class="question-number">Question {{ questionAnswer.questionIndex + 1 }}</span>
+                          <span class="question-points">{{ questionAnswer.pointsEarned }} pts</span>
                         </div>
                         <div class="blank-answers">
                           <div *ngFor="let blankAnswer of questionAnswer.blankAnswers" class="blank-answer">
-                            <span class="blank-label">Trou {{blankAnswer.blankIndex + 1}}:</span>
-                            <span class="student-answer" [ngClass]="blankAnswer.isCorrect ? 'correct' : 'incorrect'">
-                              "{{blankAnswer.studentAnswer}}"
+                            <span class="blank-label">Trou {{ blankAnswer.blankIndex + 1 }}:</span>
+                            <span class="student-answer" [class.correct]="blankAnswer.isCorrect" [class.incorrect]="!blankAnswer.isCorrect">
+                              "{{ blankAnswer.studentAnswer }}"
                             </span>
-                            <span class="answer-status" [ngClass]="blankAnswer.isCorrect ? 'correct' : 'incorrect'">
-                              {{blankAnswer.isCorrect ? '✓' : '✗'}}
+                            <span class="answer-status" [class.correct]="blankAnswer.isCorrect" [class.incorrect]="!blankAnswer.isCorrect">
+                              {{ blankAnswer.isCorrect ? '✓' : '✗' }}
                             </span>
                           </div>
                         </div>
@@ -241,9 +314,18 @@
 
                   <!-- Résumé de l'exercice -->
                   <div class="exercise-summary">
-                    <span>Total: {{exercise.totalPointsEarned}}/{{exercise.maxPossiblePoints}} points</span>
-                    <span>Temps: {{formatTime(exercise.timeSpent)}}</span>
-                    <span>Terminé: {{exercise.completedAt | date:'short'}}</span>
+                    <span class="summary-item">
+                      <span class="summary-icon">🎯</span>
+                      {{ exercise.totalPointsEarned }}/{{ exercise.maxPossiblePoints }} points
+                    </span>
+                    <span class="summary-item">
+                      <span class="summary-icon">⏱️</span>
+                      {{ formatTime(exercise.timeSpent) }}
+                    </span>
+                    <span class="summary-item">
+                      <span class="summary-icon">📅</span>
+                      {{ exercise.completedAt | date:'short' }}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -255,51 +337,63 @@
       <!-- État vide pour l'onglet Élèves -->
       <div *ngIf="filteredStudentsProgressData.length === 0 && !isLoading" class="empty-state">
         <div class="empty-icon">👥</div>
-        <h3>Aucun élève trouvé</h3>
-        <p *ngIf="selectedStudent">Aucune donnée de progrès trouvée pour l'élève sélectionné. Essayez de sélectionner un autre élève ou d'effacer les filtres.</p>
-        <p *ngIf="!selectedStudent">Aucune donnée de progrès d'élève disponible pour les filtres sélectionnés. Essayez d'ajuster vos filtres ou assurez-vous que les élèves ont soumis des exercices.</p>
+        <h3 class="empty-title">Aucun élève trouvé</h3>
+        <p class="empty-text" *ngIf="selectedStudent">
+          Aucune donnée de progrès trouvée pour l'élève sélectionné. 
+          Essayez de sélectionner un autre élève ou d'effacer les filtres.
+        </p>
+        <p class="empty-text" *ngIf="!selectedStudent">
+          Aucune donnée de progrès d'élève disponible pour les filtres sélectionnés. 
+          Essayez d'ajuster vos filtres ou assurez-vous que les élèves ont soumis des exercices.
+        </p>
+        <button class="create-btn" (click)="clearFilters()">
+          <span class="btn-icon">🔄</span>
+          Effacer les filtres
+        </button>
       </div>
     </div>
 
     <!-- Onglet Analyses d'exercices -->
     <div *ngIf="activeTab === 'exercises'" class="tab-content">
-      <h3>Analyses de mes exercices</h3>
+      <div class="exercises-header">
+        <h3 class="section-subtitle">Analyses de mes exercices</h3>
+      </div>
       
       <div class="exercises-analytics">
-        <div *ngFor="let analyticsData of exerciseAnalytics" class="exercise-analytics-card">
-          <div class="exercise-header">
-            <h4>{{analyticsData.exercise?.title || 'Exercice inconnu'}}</h4>
-            <div class="exercise-meta">
-              <span class="exercise-type">{{toTitleCase(analyticsData.exercise?.type || 'inconnu')}}</span>
-              <span class="exercise-difficulty">Exercice</span>
+        <div *ngFor="let analyticsData of exerciseAnalytics" class="analytics-card">
+          <div class="analytics-header">
+            <div class="analytics-info">
+              <h4 class="analytics-title">{{ analyticsData.exercise?.title || 'Exercice inconnu' }}</h4>
+              <div class="analytics-meta">
+                <span class="exercise-type" [class]="analyticsData.exercise?.type">
+                  {{ toTitleCase(analyticsData.exercise?.type || 'inconnu') }}
+                </span>
+                <span class="exercise-difficulty">
+                  Exercice
+                </span>
+              </div>
+            </div>
+            <div class="analytics-score" [ngClass]="getScoreColor(analyticsData.analytics?.overall?.averageScore || 0)">
+              {{ (analyticsData.analytics?.overall?.averageScore || 0).toFixed(1) }}%
             </div>
           </div>
 
-          <div class="analytics-grid">
-            <div class="analytic-item">
-              <span class="analytic-label">Total soumissions:</span>
-              <span class="analytic-value">{{analyticsData.analytics?.overall?.totalSubmissions || 0}}</span>
+          <div class="analytics-stats">
+            <div class="stat">
+              <span class="stat-label">Soumissions:</span>
+              <span class="stat-value">{{ analyticsData.analytics?.overall?.totalSubmissions || 0 }}</span>
             </div>
-            <div class="analytic-item">
-              <span class="analytic-label">Score moyen:</span>
-              <span class="analytic-value" [ngClass]="getScoreColor(analyticsData.analytics?.overall?.averageScore || 0)">
-                {{(analyticsData.analytics?.overall?.averageScore || 0).toFixed(1)}}%
-              </span>
+            <div class="stat">
+              <span class="stat-label">Élèves uniques:</span>
+              <span class="stat-value">{{ analyticsData.analytics?.overall?.uniqueStudents || 0 }}</span>
             </div>
-            <div class="analytic-item">
-              <span class="analytic-label">Élèves uniques:</span>
-              <span class="analytic-value">{{analyticsData.analytics?.overall?.uniqueStudents || 0}}</span>
+            <div class="stat">
+              <span class="stat-label">Temps moyen:</span>
+              <span class="stat-value">{{ formatTime(analyticsData.analytics?.overall?.averageTimeSpent || 0) }}</span>
             </div>
-            <div class="analytic-item">
-              <span class="analytic-label">Temps moyen passé:</span>
-              <span class="analytic-value">{{formatTime(analyticsData.analytics?.overall?.averageTimeSpent || 0)}}</span>
-            </div>
-          </div>
-
-          <div class="exercise-details">
-            <div class="detail-item">
-              <span class="detail-label">Points totaux:</span>
-              <span class="detail-value">{{analyticsData.exercise?.totalPoints || 0}}</span>
+            <div class="stat">
+              <span class="stat-label">Points totaux:</span>
+              <span class="stat-value">{{ analyticsData.exercise?.totalPoints || 0 }}</span>
             </div>
           </div>
         </div>
@@ -308,17 +402,17 @@
       <!-- État vide pour l'onglet Exercices -->
       <div *ngIf="exerciseAnalytics.length === 0 && !isLoading" class="empty-state">
         <div class="empty-icon">📊</div>
-        <h3>Aucune analyse d'exercice</h3>
-        <p>Vous n'avez pas encore créé d'exercices ou aucun élève ne les a soumis.</p>
+        <h3 class="empty-title">Aucune analyse d'exercice</h3>
+        <p class="empty-text">Vous n'avez pas encore créé d'exercices ou aucun élève ne les a soumis.</p>
       </div>
     </div>
 
     <!-- État vide général -->
     <div *ngIf="!isLoading && studentsProgressData.length === 0 && activeTab === 'overview'" class="empty-state">
       <div class="empty-icon">📊</div>
-      <h3>Aucune donnée de progrès trouvée</h3>
-      <p>Aucune donnée de progrès d'élève disponible. Cela pourrait signifier:</p>
-      <ul style="text-align: left; max-width: 400px; margin: 1rem auto;">
+      <h3 class="empty-title">Aucune donnée de progrès trouvée</h3>
+      <p class="empty-text">Aucune donnée de progrès d'élève disponible. Cela pourrait signifier:</p>
+      <ul class="empty-list">
         <li>Vous n'avez pas encore créé d'exercices</li>
         <li>Les élèves n'ont soumis aucun de vos exercices</li>
         <li>Il n'y a pas d'élèves dans vos classes</li>
@@ -326,3 +420,4 @@
     </div>
   </div>
 </section>
+          

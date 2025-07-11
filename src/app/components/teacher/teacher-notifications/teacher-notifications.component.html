@@ -1,0 +1,624 @@
+<!-- teacher-notifications.component.html -->
+<div class="notifications-container">
+  <!-- Header Section -->
+  <div class="notifications-header">
+    <div class="header-top">
+      <div class="header-left">
+        <h1 class="page-title">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Notifications
+        </h1>
+        <p class="page-subtitle" *ngIf="totalNotifications > 0">
+          {{ totalNotifications }} notification{{ totalNotifications > 1 ? 's' : '' }} au total
+        </p>
+      </div>
+      
+      <div class="header-actions">
+        <!-- View Mode Toggle -->
+        <button class="btn-toggle" (click)="toggleViewMode()" [title]="viewMode === 'cards' ? 'Vue liste' : 'Vue cartes'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="viewMode === 'cards'">
+            <line x1="8" y1="6" x2="21" y2="6"/>
+            <line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/>
+            <line x1="3" y1="12" x2="3.01" y2="12"/>
+            <line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="viewMode === 'list'">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+          </svg>
+        </button>
+
+        <!-- Filters Toggle -->
+        <button class="btn-toggle" (click)="toggleFilters()" [class.active]="showFilters">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+          </svg>
+          Filtres
+        </button>
+
+        <!-- Mark All as Read -->
+        <button class="btn-primary" (click)="markAllAsRead()" *ngIf="hasUnreadNotifications()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Tout marquer comme lu
+        </button>
+
+        <!-- Create Notification -->
+        <button class="btn-success" (click)="openCreateModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Créer une notification
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+      <div class="search-input-wrapper">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input 
+          type="text" 
+          placeholder="Rechercher dans les notifications..." 
+          class="search-input"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchInput($event)"
+          (keydown.enter)="onSearch(searchTerm)">
+        <button class="clear-search" *ngIf="searchTerm" (click)="onSearch('')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters Panel -->
+    <div class="filters-panel" [class.expanded]="showFilters">
+      <div class="filters-content">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>Type</label>
+            <select [(ngModel)]="filterType" (change)="onFilterChange()" class="filter-select">
+              <option value="all">Tous les types</option>
+              <option value="general">Général</option>
+              <option value="class">Classe</option>
+              <option value="exam">Examen</option>
+              <option value="schedule">Horaire</option>
+              <option value="announcement">Annonce</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Priorité</label>
+            <select [(ngModel)]="filterPriority" (change)="onFilterChange()" class="filter-select">
+              <option value="all">Toutes les priorités</option>
+              <option value="urgent">Urgent</option>
+              <option value="high">Élevé</option>
+              <option value="medium">Moyen</option>
+              <option value="low">Faible</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="showUnreadOnly" 
+                (change)="onFilterChange()"
+                class="checkbox-input">
+              <span class="checkbox-custom"></span>
+              Non lues uniquement
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selection Actions -->
+    <div class="selection-bar" *ngIf="selectedNotifications.size > 0">
+      <div class="selection-info">
+        <span>{{ selectedNotifications.size }} notification{{ selectedNotifications.size > 1 ? 's' : '' }} sélectionnée{{ selectedNotifications.size > 1 ? 's' : '' }}</span>
+      </div>
+      <div class="selection-actions">
+        <button class="btn-text" (click)="markSelectedAsRead()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Marquer comme lu
+        </button>
+        <button class="btn-text" (click)="selectAllVisible()">
+          Tout sélectionner
+        </button>
+        <button class="btn-text" (click)="clearSelection()">
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Area -->
+  <div class="notifications-content">
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Chargement des notifications...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoading && notifications.length === 0">
+      <div class="empty-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </div>
+      <h3>Aucune notification</h3>
+      <p *ngIf="searchTerm">Aucune notification ne correspond à votre recherche "{{ searchTerm }}"</p>
+      <p *ngIf="!searchTerm">Vous n'avez aucune notification pour le moment.</p>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="notifications-list" *ngIf="!isLoading && notifications.length > 0">
+      <div class="notification-group" *ngFor="let group of groupedNotifications">
+        <div class="group-header">
+          <h3 class="group-title">{{ group.date }}</h3>
+          <span class="group-count">{{ group.notifications.length }}</span>
+        </div>
+
+        <!-- Cards View -->
+        <div class="notifications-grid" *ngIf="viewMode === 'cards'">
+          <div 
+            class="notification-card" 
+            *ngFor="let notification of group.notifications"
+            [class.unread]="!notification.isRead"
+            [class.expired]="isExpired(notification)"
+            [class.selected]="selectedNotifications.has(notification._id)"
+            (click)="onNotificationClick(notification)">
+            
+            <div class="card-header">
+              <div class="notification-meta">
+                <div class="notification-icon" [ngClass]="getTypeColor(notification.type)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  </svg>
+                </div>
+                <span class="notification-time">{{ formatTime(notification.createdAt) }}</span>
+              </div>
+              
+              <div class="card-actions">
+                <div class="priority-badge" [ngClass]="getPriorityColor(notification.priority)">
+                  {{ notification.priority }}
+                </div>
+                <button 
+                  class="selection-checkbox"
+                  (click)="$event.stopPropagation(); toggleNotificationSelection(notification._id)"
+                  [class.checked]="selectedNotifications.has(notification._id)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+                
+                <!-- Edit/Delete Actions for own notifications -->
+                <div class="notification-actions" *ngIf="canEditNotification(notification)">
+                  <button class="action-btn edit-btn" (click)="$event.stopPropagation(); openEditModal(notification)" title="Modifier">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </button>
+                  <button class="action-btn delete-btn" (click)="$event.stopPropagation(); deleteNotification(notification)" title="Supprimer">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-content">
+              <h4 class="notification-title">{{ notification.title }}</h4>
+              <p class="notification-content">{{ notification.content }}</p>
+              
+              <div class="notification-footer">
+                <div class="notification-info">
+                  <span class="created-by">Par {{ notification.createdBy.name }}</span>
+                  <span class="target-audience" *ngIf="notification.targetClass">
+                    • {{ notification.targetClass.name }}
+                  </span>
+                </div>
+                
+                <div class="attachments" *ngIf="notification.attachments.length > 0">
+                  <span class="attachments-count">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                    </svg>
+                    {{ notification.attachments.length }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="unread-indicator" *ngIf="!notification.isRead"></div>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div class="notifications-list-view" *ngIf="viewMode === 'list'">
+          <div 
+            class="notification-item" 
+            *ngFor="let notification of group.notifications"
+            [class.unread]="!notification.isRead"
+            [class.expired]="isExpired(notification)"
+            [class.selected]="selectedNotifications.has(notification._id)"
+            (click)="onNotificationClick(notification)">
+            
+            <div class="item-left">
+              <button 
+                class="selection-checkbox"
+                (click)="$event.stopPropagation(); toggleNotificationSelection(notification._id)"
+                [class.checked]="selectedNotifications.has(notification._id)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </button>
+              
+              <div class="notification-icon" [ngClass]="getTypeColor(notification.type)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="item-content">
+              <div class="content-header">
+                <h4 class="notification-title">{{ notification.title }}</h4>
+                <div class="notification-badges">
+                  <span class="priority-badge" [ngClass]="getPriorityColor(notification.priority)">
+                    {{ notification.priority }}
+                  </span>
+                  <span class="type-badge" [ngClass]="getTypeColor(notification.type)">
+                    {{ notification.type }}
+                  </span>
+                </div>
+              </div>
+              
+              <p class="notification-content">{{ notification.content }}</p>
+              
+              <div class="notification-meta-row">
+                <span class="created-by">{{ notification.createdBy.name }}</span>
+                <span class="target-audience" *ngIf="notification.targetClass">
+                  • {{ notification.targetClass.name }}
+                </span>
+                <span class="attachments" *ngIf="notification.attachments.length > 0">
+                  • {{ notification.attachments.length }} pièce{{ notification.attachments.length > 1 ? 's' : '' }} jointe{{ notification.attachments.length > 1 ? 's' : '' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="item-right">
+              <span class="notification-time">{{ formatTime(notification.createdAt) }}</span>
+              <div class="notification-actions" *ngIf="canEditNotification(notification)">
+                <button class="action-btn edit-btn" (click)="$event.stopPropagation(); openEditModal(notification)" title="Modifier">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button class="action-btn delete-btn" (click)="$event.stopPropagation(); deleteNotification(notification)" title="Supprimer">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="unread-indicator" *ngIf="!notification.isRead"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load More Button -->
+    <div class="load-more-container" *ngIf="hasMoreToLoad() && !isLoading">
+      <button class="btn-load-more" (click)="loadMore()" [disabled]="isLoadingMore">
+        <span *ngIf="!isLoadingMore">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12l7 7 7-7"/>
+          </svg>
+          Charger plus
+        </span>
+        <span *ngIf="isLoadingMore" class="loading-text">
+          <div class="spinner-small"></div>
+          Chargement...
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Notification Detail Modal -->
+  <div class="modal-overlay" *ngIf="selectedNotification" (click)="closeNotificationModal()">
+    <div class="modal-content notification-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-section">
+          <div class="notification-icon" [ngClass]="getTypeColor(selectedNotification.type)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            </svg>
+          </div>
+          <div>
+            <h2>{{ selectedNotification.title }}</h2>
+            <div class="modal-meta">
+              <span class="priority-badge" [ngClass]="getPriorityColor(selectedNotification.priority)">
+                {{ selectedNotification.priority }}
+              </span>
+              <span>{{ formatRelativeTime(selectedNotification.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <button class="close-btn" (click)="closeNotificationModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="notification-details">
+          <div class="detail-content">
+            <p>{{ selectedNotification.content }}</p>
+          </div>
+          
+          <div class="detail-info">
+            <div class="info-row">
+              <span class="label">Créé par:</span>
+              <span class="value">{{ selectedNotification.createdBy.name }}</span>
+            </div>
+            <div class="info-row" *ngIf="selectedNotification.targetClass">
+              <span class="label">Classe:</span>
+              <span class="value">{{ selectedNotification.targetClass.name }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Date de création:</span>
+              <span class="value">{{ selectedNotification.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
+            </div>
+            <div class="info-row" *ngIf="selectedNotification.expiryDate">
+              <span class="label">Expire le:</span>
+              <span class="value">{{ selectedNotification.expiryDate | date:'dd/MM/yyyy à HH:mm' }}</span>
+            </div>
+          </div>
+
+          <div class="attachments-section" *ngIf="selectedNotification.attachments && selectedNotification.attachments.length > 0">
+            <h4>Pièces jointes</h4>
+            <div class="attachment-list">
+              <div 
+                class="attachment-item" 
+                *ngFor="let attachment of selectedNotification.attachments">
+                <div class="attachment-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                  </svg>
+                </div>
+                <div class="attachment-info">
+                  <span class="attachment-name">{{ attachment.originalName }}</span>
+                  <span class="attachment-size">{{ formatFileSize(attachment.size) }}</span>
+                </div>
+                <div class="attachment-actions">
+                  <button class="btn-icon" (click)="viewAttachment(selectedNotification._id, attachment.filename)" title="Voir">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                  <button class="btn-icon" (click)="downloadAttachment(selectedNotification, attachment.filename)" title="Télécharger">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create/Edit Notification Modal -->
+  <div class="modal-overlay" *ngIf="showCreateModal || showEditModal" (click)="showCreateModal ? closeCreateModal() : closeEditModal()">
+    <div class="modal-content create-notification-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ showCreateModal ? 'Créer une notification' : 'Modifier la notification' }}</h2>
+        <button class="close-btn" (click)="showCreateModal ? closeCreateModal() : closeEditModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form class="notification-form" (ngSubmit)="showCreateModal ? createNotification() : updateNotification()">
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="title">Titre *</label>
+              <input 
+                type="text" 
+                id="title" 
+                [(ngModel)]="createForm.title" 
+                name="title"
+                placeholder="Titre de la notification"
+                class="form-input"
+                required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="content">Contenu *</label>
+              <textarea 
+                id="content" 
+                [(ngModel)]="createForm.content" 
+                name="content"
+                placeholder="Contenu détaillé de la notification"
+                class="form-textarea"
+                rows="4"
+                required></textarea>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="type">Type</label>
+              <select id="type" [(ngModel)]="createForm.type" name="type" class="form-select">
+                <option [value]="NotificationType.GENERAL">Général</option>
+                <option [value]="NotificationType.CLASS">Classe</option>
+                <option [value]="NotificationType.EXAM">Examen</option>
+                <option [value]="NotificationType.SCHEDULE">Horaire</option>
+                <option [value]="NotificationType.ANNOUNCEMENT">Annonce</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="priority">Priorité</label>
+              <select id="priority" [(ngModel)]="createForm.priority" name="priority" class="form-select">
+                <option [value]="NotificationPriority.LOW">Faible</option>
+                <option [value]="NotificationPriority.MEDIUM">Moyen</option>
+                <option [value]="NotificationPriority.HIGH">Élevé</option>
+                <option [value]="NotificationPriority.URGENT">Urgent</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="targetAudience">Destinataires</label>
+              <select id="targetAudience" [(ngModel)]="createForm.targetAudience" name="targetAudience" class="form-select" (change)="onTargetAudienceChange()">
+                <option [value]="TargetAudience.ALL">Tous</option>
+                <option [value]="TargetAudience.STUDENTS">Étudiants</option>
+                <option [value]="TargetAudience.TEACHERS">Enseignants</option>
+
+                <option [value]="TargetAudience.SPECIFIC_CLASS">Classe spécifique</option>
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="createForm.targetAudience === TargetAudience.SPECIFIC_CLASS">
+              <label for="targetClass">Classe</label>
+              <select id="targetClass" [(ngModel)]="createForm.targetClass" name="targetClass" class="form-select">
+                <option value="">Sélectionner une classe</option>
+                <option *ngFor="let class of teacherClasses" [value]="class._id">
+                  {{ class.name }} - {{ class.grade }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="publishDate">Date de publication</label>
+              <input 
+                type="datetime-local" 
+                id="publishDate" 
+                [(ngModel)]="createForm.publishDate" 
+                name="publishDate"
+                class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label for="expiryDate">Date d'expiration</label>
+              <input 
+                type="datetime-local" 
+                id="expiryDate" 
+                [(ngModel)]="createForm.expiryDate" 
+                name="expiryDate"
+                class="form-input">
+            </div>
+          </div>
+
+          <!-- File Attachments -->
+          <div class="form-section" *ngIf="showCreateModal">
+            <h4>Pièces jointes</h4>
+            
+            <div class="file-upload-area">
+              <input type="file" #fileInput multiple (change)="onFileSelect($event)" 
+                     accept=".pdf,.xls,.xlsx,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp" 
+                     style="display: none;">
+              <div class="upload-content" (click)="fileInput.click()">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <p>Cliquez pour sélectionner des fichiers</p>
+                <span>PDF, Word, Excel, Images (Max 10MB, 5 fichiers)</span>
+              </div>
+            </div>
+
+            <div class="selected-files" *ngIf="selectedFiles.length > 0">
+              <div class="file-item" *ngFor="let file of selectedFiles; let i = index">
+                <div class="file-info">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  <span>{{ file.name }}</span>
+                  <span class="file-size">({{ formatFileSize(file.size) }})</span>
+                </div>
+                <button type="button" class="remove-file" (click)="removeFile(i)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upload Progress -->
+          <div class="upload-progress" *ngIf="uploadProgress > 0 && uploadProgress < 100">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+            </div>
+            <span class="progress-text">Téléchargement: {{ uploadProgress }}%</span>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="showCreateModal ? closeCreateModal() : closeEditModal()">
+              Annuler
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="!createForm.title.trim() || !createForm.content.trim() || isUploading">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!isUploading">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span *ngIf="!isUploading">
+                {{ showCreateModal ? 'Créer' : 'Mettre à jour' }}
+              </span>
+              <span *ngIf="isUploading" class="uploading">
+                <span class="spinner-small"></span>
+                {{ selectedFiles.length > 0 ? 'Téléchargement...' : 'Création...' }}
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

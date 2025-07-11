@@ -130,38 +130,43 @@ export class TeacherGradesComponent implements OnInit, OnDestroy {
   }
 
   loadGrades(): void {
-    if (!this.filters.selectedClass) {
-      this.allGrades = [];
-      this.applyFilters();
-      return;
-    }
+  // Réinitialiser les données avant de charger
+  this.allGrades = [];
+  this.filteredGrades = [];
+  this.studentGradeSummaries = [];
 
-    this.isLoading = true;
-    
-    const gradeFilters = {
-      academicYear: this.filters.academicYear,
-      ...(this.filters.selectedTrimester && { trimester: this.filters.selectedTrimester }),
-      ...(this.filters.selectedSubject && { subject: this.filters.selectedSubject }),
-      ...(this.filters.selectedExamType && { examType: this.filters.selectedExamType })
-    };
-
-    this.gradeService.getGradesByClass(this.filters.selectedClass, gradeFilters)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          console.log('Grades loaded:', response);
-          this.allGrades = response.grades;
-          this.applyFilters();
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('Error loading grades:', error);
-          this.showSnackBar('Erreur lors du chargement des notes', 'error');
-          this.isLoading = false;
-        }
-      });
+  if (!this.filters.selectedClass) {
+    this.applyFilters();
+    return;
   }
 
+  this.isLoading = true;
+  
+  const gradeFilters = {
+    academicYear: this.filters.academicYear,
+    ...(this.filters.selectedTrimester && { trimester: this.filters.selectedTrimester }),
+    ...(this.filters.selectedSubject && { subject: this.filters.selectedSubject }),
+    ...(this.filters.selectedExamType && { examType: this.filters.selectedExamType })
+  };
+
+  this.gradeService.getGradesByClass(this.filters.selectedClass, gradeFilters)
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (response) => {
+        console.log('Grades loaded:', response);
+        this.allGrades = response.grades || []; // Assurez-vous d'avoir un tableau
+        this.applyFilters();
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading grades:', error);
+        this.showSnackBar('Erreur lors du chargement des notes', 'error');
+        this.allGrades = []; // Réinitialiser en cas d'erreur
+        this.applyFilters();
+        this.isLoading = false;
+      }
+      });
+  }
   applyFilters(): void {
     this.filteredGrades = this.allGrades.filter(grade => {
       return (!this.filters.selectedSubject || this.getSubjectId(grade.subject) === this.filters.selectedSubject) &&
@@ -263,19 +268,21 @@ export class TeacherGradesComponent implements OnInit, OnDestroy {
   private findClassById(classId: string): Class | null {
     return this.classes.find(c => c._id === classId) || null;
   }
-
+  
   onFilterChange(): void {
-    this.loadGrades();
-    // Load students and update subjects when class changes
+    // Charger les étudiants et mettre à jour les matières quand la classe change
     if (this.filters.selectedClass) {
       this.loadClassStudents(this.filters.selectedClass);
       this.updateAvailableSubjects();
     } else {
       this.classStudents = [];
       this.availableSubjects = [];
-      // Reset subject filter when no class is selected
+      // Réinitialiser le filtre de matière quand aucune classe n'est sélectionnée
       this.filters.selectedSubject = '';
     }
+    
+    // Toujours recharger les notes après le changement de filtre
+    this.loadGrades();
   }
 
   onViewModeChange(mode: 'table' | 'students'): void {

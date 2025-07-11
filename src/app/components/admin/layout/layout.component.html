@@ -1,13 +1,28 @@
 <!-- admin-layout.component.html -->
 <div class="dashboard-container">
+  <!-- Mobile Menu Button -->
+  <button class="mobile-menu-btn" (click)="toggleMobileSidebar()" *ngIf="!sidebarCollapsed">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 12h18M3 6h18M3 18h18"/>
+    </svg>
+  </button>
+
+  <!-- Mobile Overlay -->
+  <div class="mobile-overlay" 
+       [class.active]="mobileMenuOpen" 
+       (click)="closeMobileSidebar()"></div>
+
   <!-- Sidebar Navigation -->
-  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
+  <aside class="sidebar" 
+         [class.collapsed]="sidebarCollapsed"
+         [class.mobile-open]="mobileMenuOpen">
     <div class="sidebar-header">
       <div class="logo-section">
         <div class="logo-full" *ngIf="!sidebarCollapsed">
-          <span class="logo-text" *ngIf="!schoolInfo" >school </span> 
-          <span class="logo-accent"  *ngIf="schoolInfo">{{ schoolInfo.name }}</span>
+          <span class="logo-text" *ngIf="!schoolInfo">school</span>           
+          <span class="logo-accent" *ngIf="schoolInfo">{{ schoolInfo.name }}</span>
         </div>
+        <div class="logo-mini" *ngIf="sidebarCollapsed">S</div>
       </div>
       <button class="toggle-btn" (click)="toggleSidebar()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -66,6 +81,20 @@
             <span *ngIf="!sidebarCollapsed">Matières</span>
           </a>
         </li>
+
+        <!-- Notifications -->
+        <!-- <li class="nav-item" [class.active]="activeRoute === 'notifications'">
+          <a (click)="navigateTo('notifications')" class="nav-link">
+            <div class="nav-link-content">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+              <span *ngIf="!sidebarCollapsed">Notifications</span>
+              <span class="nav-badge" *ngIf="unreadNotificationCount > 0 && !sidebarCollapsed">{{ unreadNotificationCount }}</span>
+            </div>
+          </a>
+        </li> -->
 
         <!-- Student Grades -->
         <li class="nav-item" [class.active]="activeRoute === 'grades'">
@@ -133,26 +162,33 @@
     <!-- Top Header -->
     <header class="top-header">
       <div class="header-left">
-        <h1 class="page-title">{{ getPageTitle() }}</h1>
-        <p class="breadcrumb">
-          <span>Accueil</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"/>
+        <button class="mobile-menu-btn" (click)="toggleMobileSidebar()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18"/>
           </svg>
-          <span>{{ getPageTitle() }}</span>
-        </p>
+        </button>
+        <div class="header-content">
+          <h1 class="page-title">{{ getPageTitle() }}</h1>
+          <p class="breadcrumb">
+            <span>Accueil</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+            <span>{{ getPageTitle() }}</span>
+          </p>
+        </div>
       </div>
-
+      
       <div class="header-right">
         <!-- Quick Actions -->
-        <!-- <button class="action-btn" (click)="showNotifications()" [class.has-notifications]="notificationCount > 0">
+        <!-- <button class="action-btn" (click)="showNotifications()" [class.has-notifications]="unreadNotificationCount > 0">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
-          <span class="notification-badge" *ngIf="notificationCount > 0">{{ notificationCount }}</span>
+          <span class="notification-badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount }}</span>
         </button> -->
-
+        
         <div class="school-info" *ngIf="schoolInfo">
           <span class="school-name">{{ schoolInfo.name }}</span>
           <span class="school-status" [class.active]="schoolInfo.isActive" [class.blocked]="!schoolInfo.isActive">
@@ -180,7 +216,7 @@
           </svg>
         </button>
       </div>
-
+      
       <div class="logout-content">
         <div class="logout-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -189,9 +225,11 @@
             <line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
         </div>
+        
         <div class="logout-message">
           <h3>Êtes-vous sûr de vouloir vous déconnecter ?</h3>
           <p>Vous devrez vous reconnecter pour accéder à nouveau à votre compte.</p>
+          
           <div class="user-info-box">
             <div class="user-avatar">
               {{ currentUser?.name?.charAt(0) || 'A' }}
@@ -203,7 +241,7 @@
           </div>
         </div>
       </div>
-
+      
       <div class="modal-footer">
         <button type="button" class="btn-secondary" (click)="closeLogoutModal()">Annuler</button>
         <button type="button" class="btn-danger" (click)="confirmLogout()" [disabled]="isLoggingOut">

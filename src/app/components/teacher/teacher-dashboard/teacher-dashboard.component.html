@@ -50,6 +50,13 @@
     [teachingSubjects]="teachingSubjects" 
     [allExercises]="allExercises">
   </app-student-progress>
+
+  <!-- Section Notifications -->
+  <app-teacher-notifications
+    *ngIf="activeSection === 'notifications'"
+    [teacherClasses]="myClasses"
+    [teachingSubjects]="teachingSubjects">
+  </app-teacher-notifications>
 </app-teacher-layout>
 
 <!-- État de chargement -->

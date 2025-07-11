@@ -1,0 +1,603 @@
+// notification.component.ts - Updated with date grouping
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { NotificationService } from '../../../services/notification.service';
+import { ClassService } from '../../../services/class.service';
+import { AuthService } from '../../../services/auth.service';
+import {
+  Notification,
+  NotificationType,
+  NotificationPriority,
+  TargetAudience,
+  NotificationFilters,
+  CreateNotificationDTO,
+  UpdateNotificationDTO,
+  NotificationStats
+} from '../../../models/notification.model';
+import { Class } from '../../../models/class.model';
+import { HttpEventType } from '@angular/common/http';
+
+// Interface for grouped notifications
+interface NotificationGroup {
+  title: string;
+  notifications: Notification[];
+  count: number;
+}
+
+@Component({
+  selector: 'app-notification',
+  templateUrl: './notification.component.html',
+  styleUrls: ['./notification.component.css']
+})
+export class NotificationComponent implements OnInit, OnDestroy {
+  // Data
+  notifications: Notification[] = [];
+  groupedNotifications: NotificationGroup[] = [];
+  classes: Class[] = [];
+  stats: NotificationStats | null = null;
+  
+  // Form
+  notificationForm!: FormGroup;
+  selectedFiles: File[] = [];
+  
+  // UI States
+  loading = false;
+  isSubmitting = false;
+  isDeleting = false;
+  showModal = false;
+  showViewModal = false;
+  showDeleteModal = false;
+  uploadProgress = 0;
+  
+  // View options
+  viewMode: 'grouped' | 'list' = 'grouped'; // New property for view mode
+  
+  // Filters
+  filters: NotificationFilters = {
+    page: 1,
+    limit: 10
+  };
+  filterStatus: 'all' | 'active' | 'expired' = 'all';
+  searchTerm = '';
+  
+  // Pagination
+  pagination: any = null;
+  
+  // Current items
+  editingNotification: Notification | null = null;
+  viewingNotification: Notification | null = null;
+  notificationToDelete: Notification | null = null;
+  
+  // Unread count for layout
+  unreadNotificationCount = 0;
+  
+  private destroy$ = new Subject<void>();
+  private searchSubject$ = new Subject<string>();
+
+  constructor(
+    private fb: FormBuilder,
+    private notificationService: NotificationService,
+    private classService: ClassService,
+    private authService: AuthService
+  ) {
+    this.initializeForm();
+  }
+
+  ngOnInit(): void {
+    this.loadNotifications();
+    this.loadClasses();
+    this.loadStats();
+    this.setupSearch();
+    this.subscribeToNotificationUpdates();
+    this.updateUnreadCount();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private initializeForm(): void {
+    this.notificationForm = this.fb.group({
+      title: ['', [Validators.required]],
+      content: ['', [Validators.required]],
+      type: [NotificationType.GENERAL],
+      priority: [NotificationPriority.MEDIUM],
+      targetAudience: [TargetAudience.ALL, [Validators.required]],
+      targetClass: [''],
+      publishDate: [''],
+      expiryDate: ['']
+    });
+  }
+
+  private setupSearch(): void {
+    this.searchSubject$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(searchTerm => {
+        this.searchTerm = searchTerm;
+        this.filters.page = 1;
+        this.loadNotifications();
+      });
+  }
+
+  private subscribeToNotificationUpdates(): void {
+    this.notificationService.getNotificationUpdates()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(notification => {
+        // Update notification in list if it exists
+        const index = this.notifications.findIndex(n => n._id === notification._id);
+        if (index !== -1) {
+          this.notifications[index] = notification;
+          this.groupNotificationsByDate(); // Regroup after update
+        }
+      });
+  }
+
+  private updateUnreadCount(): void {
+    this.notificationService.getUnreadCount()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(count => {
+        this.unreadNotificationCount = count;
+        // Update parent layout if needed
+        if (window.parent) {
+          window.parent.postMessage({ type: 'unreadCount', count }, '*');
+        }
+      });
+  }
+
+  loadNotifications(): void {
+    this.loading = true;
+    
+    const filters = { ...this.filters };
+    
+    this.notificationService.getNotifications(filters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          console.log('Notifications loaded:', response);
+          this.notifications = response.notifications || [];
+          this.pagination = response.pagination;
+          
+          // Apply client-side filters
+          if (this.filterStatus !== 'all') {
+            this.notifications = this.notifications.filter(n => {
+              if (this.filterStatus === 'active') {
+                return n.isActive && !n.isExpired;
+              } else {
+                return n.isExpired;
+              }
+            });
+          }
+
+          // Apply search filter
+          if (this.searchTerm) {
+            this.notifications = this.notifications.filter(n => 
+              n.title.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+              n.content.toLowerCase().includes(this.searchTerm.toLowerCase())
+            );
+          }
+          
+          // Group notifications by date
+          this.groupNotificationsByDate();
+          
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error loading notifications:', error);
+          this.loading = false;
+        }
+      });
+  }
+
+  // New method to group notifications by date
+  private groupNotificationsByDate(): void {
+    if (!this.notifications || this.notifications.length === 0) {
+      this.groupedNotifications = [];
+      return;
+    }
+
+    // Sort notifications by creation date (newest first)
+    const sortedNotifications = [...this.notifications].sort((a, b) => 
+      new Date(b.createdAt || b.publishDate).getTime() - new Date(a.createdAt || a.publishDate).getTime()
+    );
+
+    const groups: { [key: string]: Notification[] } = {};
+    const now = new Date();
+    
+    sortedNotifications.forEach(notification => {
+      const notificationDate = new Date(notification.createdAt || notification.publishDate);
+      const groupKey = this.getDateGroupKey(notificationDate, now);
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
+      }
+      groups[groupKey].push(notification);
+    });
+
+    // Convert to array with proper ordering
+    this.groupedNotifications = this.getOrderedDateGroups().map(groupKey => ({
+      title: groupKey,
+      notifications: groups[groupKey] || [],
+      count: (groups[groupKey] || []).length
+    })).filter(group => group.count > 0);
+  }
+
+  // Helper method to determine date group key
+  private getDateGroupKey(date: Date, now: Date): string {
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    
+    const notificationDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
+    if (notificationDate.getTime() === today.getTime()) {
+      return "Aujourd'hui";
+    } else if (notificationDate.getTime() === yesterday.getTime()) {
+      return "Hier";
+    } else if (notificationDate >= weekAgo) {
+      return "Cette semaine";
+    } else if (notificationDate >= monthAgo) {
+      return "Ce mois-ci";
+    } else {
+      return "Plus ancien";
+    }
+  }
+
+  // Helper method to get ordered date groups
+  private getOrderedDateGroups(): string[] {
+    return ["Aujourd'hui", "Hier", "Cette semaine", "Ce mois-ci", "Plus ancien"];
+  }
+
+  // New method to toggle view mode
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'grouped' ? 'list' : 'grouped';
+  }
+
+  // Get all notifications for list view
+  getAllNotifications(): Notification[] {
+    return this.notifications.sort((a, b) => 
+      new Date(b.createdAt || b.publishDate).getTime() - new Date(a.createdAt || a.publishDate).getTime()
+    );
+  }
+
+  loadClasses(): void {
+    this.classService.getClasses({ limit: 100 })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.classes = response.classes;
+        },
+        error: (error) => {
+          console.error('Error loading classes:', error);
+        }
+      });
+  }
+
+  loadStats(): void {
+    this.notificationService.getNotificationStats()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.stats = response.stats;
+        },
+        error: (error) => {
+          console.error('Error loading stats:', error);
+        }
+      });
+  }
+
+  // UI Methods
+  openCreateModal(): void {
+    this.editingNotification = null;
+    this.notificationForm.reset({
+      type: NotificationType.GENERAL,
+      priority: NotificationPriority.MEDIUM,
+      targetAudience: TargetAudience.ALL
+    });
+    this.selectedFiles = [];
+    this.showModal = true;
+  }
+
+  editNotification(notification: Notification): void {
+    this.editingNotification = notification;
+    this.notificationForm.patchValue({
+      title: notification.title,
+      content: notification.content,
+      type: notification.type,
+      priority: notification.priority,
+      targetAudience: notification.targetAudience,
+      targetClass: notification.targetClass?._id || '',
+      publishDate: this.formatDateForInput(notification.publishDate),
+      expiryDate: notification.expiryDate ? this.formatDateForInput(notification.expiryDate) : ''
+    });
+    this.showModal = true;
+  }
+
+  viewNotification(notification: Notification): void {
+    this.viewingNotification = notification;
+    this.showViewModal = true;
+    
+    // Mark as read
+    if (!notification.isRead) {
+      this.notificationService.markAsRead(notification._id!)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe();
+    }
+  }
+
+  deleteNotification(notification: Notification): void {
+    this.notificationToDelete = notification;
+    this.showDeleteModal = true;
+  }
+
+  confirmDelete(): void {
+    if (!this.notificationToDelete) return;
+    
+    this.isDeleting = true;
+    this.notificationService.deleteNotification(this.notificationToDelete._id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.notifications = this.notifications.filter(n => n._id !== this.notificationToDelete!._id);
+          this.groupNotificationsByDate(); // Regroup after deletion
+          this.closeDeleteModal();
+          this.loadStats(); // Reload stats
+        },
+        error: (error) => {
+          console.error('Error deleting notification:', error);
+          this.isDeleting = false;
+        }
+      });
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.editingNotification = null;
+    this.selectedFiles = [];
+    this.uploadProgress = 0;
+  }
+
+  closeViewModal(): void {
+    this.showViewModal = false;
+    this.viewingNotification = null;
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.notificationToDelete = null;
+    this.isDeleting = false;
+  }
+
+  // Form Methods
+  onAudienceChange(): void {
+    const targetAudience = this.notificationForm.get('targetAudience')?.value;
+    const targetClassControl = this.notificationForm.get('targetClass');
+    
+    if (targetAudience === TargetAudience.SPECIFIC_CLASS) {
+      targetClassControl?.setValidators([Validators.required]);
+    } else {
+      targetClassControl?.clearValidators();
+      targetClassControl?.setValue('');
+    }
+    targetClassControl?.updateValueAndValidity();
+  }
+
+  onFileSelect(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      const newFiles = Array.from(input.files);
+      
+      // Validate file count
+      if (this.selectedFiles.length + newFiles.length > 5) {
+        alert('Maximum 5 fichiers autorisés');
+        return;
+      }
+      
+      // Validate file size (10MB max)
+      const invalidFiles = newFiles.filter(file => file.size > 10 * 1024 * 1024);
+      if (invalidFiles.length > 0) {
+        alert('Certains fichiers dépassent la limite de 10MB');
+        return;
+      }
+      
+      this.selectedFiles = [...this.selectedFiles, ...newFiles];
+    }
+  }
+
+  removeFile(index: number): void {
+    this.selectedFiles.splice(index, 1);
+  }
+
+  onSubmit(): void {
+    if (this.notificationForm.invalid) {
+      Object.keys(this.notificationForm.controls).forEach(key => {
+        this.notificationForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+    
+    this.isSubmitting = true;
+    const formValue = this.notificationForm.value;
+    
+    if (this.editingNotification) {
+      // Update notification
+      const updateData: UpdateNotificationDTO = {
+        title: formValue.title,
+        content: formValue.content,
+        type: formValue.type,
+        priority: formValue.priority,
+        expiryDate: formValue.expiryDate || undefined
+      };
+      
+      this.notificationService.updateNotification(this.editingNotification._id!, updateData)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.loadNotifications();
+            this.closeModal();
+            this.isSubmitting = false;
+          },
+          error: (error) => {
+            console.error('Error updating notification:', error);
+            this.isSubmitting = false;
+          }
+        });
+    } else {
+      // Create notification
+      const createData: CreateNotificationDTO = {
+        ...formValue,
+        attachments: this.selectedFiles
+      };
+      
+      if (this.selectedFiles.length > 0) {
+        // Use upload with progress
+        this.notificationService.uploadNotificationWithProgress(createData)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (event) => {
+              console.log('Upload event:', event);
+              if (event.type === HttpEventType.UploadProgress) {
+                this.uploadProgress = Math.round(100 * event.loaded / event.total!);
+              } else if (event.type === HttpEventType.Response) {
+                this.loadNotifications();
+                this.loadStats();
+                this.closeModal();
+                this.isSubmitting = false;
+              }
+            },
+            error: (error) => {
+              console.error('Error creating notification:', error);
+              this.isSubmitting = false;
+            }
+          });
+      } else {
+        // Create without files
+        this.notificationService.createNotification(createData)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.loadNotifications();
+              this.loadStats();
+              this.closeModal();
+              this.isSubmitting = false;
+            },
+            error: (error) => {
+              console.error('Error creating notification:', error);
+              this.isSubmitting = false;
+            }
+          });
+      }
+    }
+  }
+
+  // Filter Methods
+  applyFilters(): void {
+    this.filters.page = 1;
+    this.loadNotifications();
+  }
+
+  onSearch(): void {
+    this.searchSubject$.next(this.searchTerm);
+  }
+
+  changePage(page: number): void {
+    this.filters.page = page;
+    this.loadNotifications();
+  }
+
+  // Attachment Methods
+  viewAttachment(notificationId: string, filename: string): void {
+    const url = this.notificationService.getAttachmentUrl(notificationId, filename);
+    window.open(url, '_blank');
+  }
+
+  downloadAttachment(notificationId: string, filename: string): void {
+    this.notificationService.downloadAttachment(notificationId, filename)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
+  }
+
+  // Helper Methods
+  getTypeLabel(type: string): string {
+    const labels: { [key: string]: string } = {
+      'general': 'Général',
+      'class': 'Classe',
+      'exam': 'Examen',
+      'schedule': 'Emploi du temps',
+      'announcement': 'Annonce'
+    };
+    return labels[type] || type;
+  }
+
+  getPriorityLabel(priority: string): string {
+    const labels: { [key: string]: string } = {
+      'low': 'Faible',
+      'medium': 'Moyenne',
+      'high': 'Haute',
+      'urgent': 'Urgente'
+    };
+    return labels[priority] || priority;
+  }
+
+  getAudienceLabel(notification: Notification): string {
+    switch (notification.targetAudience) {
+      case 'all':
+        return 'Tous';
+      case 'students':
+        return 'Étudiants';
+      case 'teachers':
+        return 'Enseignants';
+      case 'specific_class':
+        return notification.targetClass ? 
+          `${notification.targetClass.name} - ${notification.targetClass.grade}` : 
+          'Classe spécifique';
+      default:
+        return notification.targetAudience;
+    }
+  }
+
+  getUrgentCount(): number {
+    return this.stats?.byPriority.find(p => p._id === 'urgent')?.count || 0;
+  }
+
+  getActiveCount(): number {
+    return this.notifications.filter(n => n.isActive && !n.isExpired).length;
+  }
+
+  formatDate(date: Date | string): string {
+    const d = new Date(date);
+    return d.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  formatDateForInput(date: Date | string): string {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  
+}

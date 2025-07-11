@@ -67,6 +67,11 @@ import { StudentExerciseExecutionComponent } from './components/student/student-
 import { StudentExerciseResultsComponent } from './components/student/student-exercise-results/student-exercise-results.component';
 import { StudentNavbarComponent } from './components/student/student-navbar/student-navbar.component';
 import { StudentGradesPageComponent } from './components/student/student-grades-page/student-grades-page.component';
+import { StudentTeachersComponent } from './components/student/student-teachers/student-teachers.component';
+import { NotificationComponent } from './components/admin/notification/notification.component';
+
+import { TeacherNotificationsComponent } from './components/teacher/teacher-notifications/teacher-notifications.component';
+import { AdminDashboardComponent } from './components/admin/admin-dashboard/admin-dashboard.component';
 
 
 
@@ -117,6 +122,10 @@ const MaterialModules = [
     StudentExerciseResultsComponent,
     StudentNavbarComponent,
     StudentGradesPageComponent,
+    StudentTeachersComponent,
+    NotificationComponent,
+    TeacherNotificationsComponent,
+    AdminDashboardComponent,
 
 
   ],

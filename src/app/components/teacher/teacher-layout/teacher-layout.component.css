@@ -143,6 +143,54 @@
   display: none;
 }
 
+/* Navigation Link Content for Notifications */
+.nav-link-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.nav-badge {
+  background-color: var(--color-error);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  animation: pulse 2s infinite;
+}
+
+/* Notification Badge Animation */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(244, 67, 54, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}
+
+/* Hide badge when sidebar is collapsed */
+.sidebar.collapsed .nav-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  font-size: 0.7rem;
+  padding: 0;
+}
+
 /* Sidebar Footer */
 .sidebar-footer {
   padding: 20px;
@@ -652,6 +700,20 @@
     width: 100%;
     justify-content: center;
   }
+
+  /* Mobile notification badge adjustments */
+  .nav-badge {
+    font-size: 0.7rem;
+    min-width: 16px;
+    height: 16px;
+    padding: 1px 4px;
+  }
+  
+  .sidebar.collapsed .nav-badge {
+    min-width: 14px;
+    height: 14px;
+    font-size: 0.65rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -722,6 +784,10 @@
   .user-info-box {
     border-width: 2px;
   }
+  
+  .nav-badge {
+    border: 1px solid white;
+  }
 }
 
 /* Reduced motion support */
@@ -742,6 +808,10 @@
   }
   
   .spinner-small {
+    animation: none;
+  }
+  
+  .nav-badge {
     animation: none;
   }
 }
