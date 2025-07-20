@@ -83,7 +83,7 @@
         </li>
 
         <!-- Notifications -->
-        <!-- <li class="nav-item" [class.active]="activeRoute === 'notifications'">
+        <li class="nav-item" [class.active]="activeRoute === 'notifications'">
           <a (click)="navigateTo('notifications')" class="nav-link">
             <div class="nav-link-content">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -94,7 +94,7 @@
               <span class="nav-badge" *ngIf="unreadNotificationCount > 0 && !sidebarCollapsed">{{ unreadNotificationCount }}</span>
             </div>
           </a>
-        </li> -->
+        </li>
 
         <!-- Student Grades -->
         <li class="nav-item" [class.active]="activeRoute === 'grades'">
@@ -181,13 +181,13 @@
       
       <div class="header-right">
         <!-- Quick Actions -->
-        <!-- <button class="action-btn" (click)="showNotifications()" [class.has-notifications]="unreadNotificationCount > 0">
+        <button class="action-btn" (click)="showNotifications()" [class.has-notifications]="unreadNotificationCount > 0">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
           <span class="notification-badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount }}</span>
-        </button> -->
+        </button>
         
         <div class="school-info" *ngIf="schoolInfo">
           <span class="school-name">{{ schoolInfo.name }}</span>

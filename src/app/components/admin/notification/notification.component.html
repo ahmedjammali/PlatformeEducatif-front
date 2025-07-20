@@ -74,14 +74,7 @@
           </select>
         </div>
 
-        <div class="filter-item">
-          <label>Statut</label>
-          <select [(ngModel)]="filterStatus" (change)="applyFilters()">
-            <option value="all">Toutes</option>
-            <option value="active">Actives</option>
-            <option value="expired">Expirées</option>
-          </select>
-        </div>
+
 
         <div class="filter-item">
           <label>Rechercher</label>
@@ -431,51 +424,77 @@
         </div>
 
         <!-- Target Audience -->
-        <div class="form-section">
-          <h3 class="section-title">Audience cible</h3>
-          
-          <div class="form-group">
-            <label class="required">Destinataires</label>
-            <select formControlName="targetAudience" (change)="onAudienceChange()">
-              <option value="all">Tous</option>
-              <option value="students">Étudiants seulement</option>
-              <option value="teachers">Enseignants seulement</option>
-              <option value="specific_class">Classe spécifique</option>
-            </select>
-          </div>
+<div class="form-section">
+  <h3 class="section-title">
+    Audience cible
+    <span class="disabled-notice" *ngIf="editingNotification">
+      (Non modifiable)
+    </span>
+  </h3>
+  
+  <div class="form-group">
+    <label class="required">Destinataires</label>
+    <select formControlName="targetAudience" 
+            (change)="onAudienceChange()"
+            [class.disabled-field]="editingNotification">
+      <option value="all">Tous</option>
+      <option value="students">Étudiants seulement</option>
+      <option value="teachers">Enseignants seulement</option>
+      <option value="specific_class">Classe spécifique</option>
+    </select>
+    <span class="helper-text" *ngIf="editingNotification">
+      L'audience ne peut pas être modifiée après la création
+    </span>
+  </div>
 
-          <div class="form-group" *ngIf="notificationForm.get('targetAudience')?.value === 'specific_class'">
-            <label class="required">Sélectionner la classe</label>
-            <select formControlName="targetClass">
-              <option value="">Choisir une classe</option>
-              <option *ngFor="let class of classes" [value]="class._id">
-                {{ class.name }} - {{ class.grade }}
-              </option>
-            </select>
-            <span class="error-message" *ngIf="notificationForm.get('targetClass')?.invalid && notificationForm.get('targetClass')?.touched">
-              Veuillez sélectionner une classe
-            </span>
-          </div>
-        </div>
+  <div class="form-group" *ngIf="notificationForm.get('targetAudience')?.value === 'specific_class'">
+    <label class="required">Sélectionner la classe</label>
+    <select formControlName="targetClass"
+            [class.disabled-field]="editingNotification">
+      <option value="">Choisir une classe</option>
+      <option *ngFor="let class of classes" [value]="class._id">
+        {{ class.name }} - {{ class.grade }}
+      </option>
+    </select>
+    <span class="error-message" *ngIf="notificationForm.get('targetClass')?.invalid && notificationForm.get('targetClass')?.touched">
+      Veuillez sélectionner une classe
+    </span>
+    <span class="helper-text" *ngIf="editingNotification">
+      La classe ne peut pas être modifiée après la création
+    </span>
+  </div>
+</div>
 
         <!-- Schedule -->
-        <div class="form-section">
-          <h3 class="section-title">Planification</h3>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label>Date de publication</label>
-              <input type="datetime-local" formControlName="publishDate">
-              <span class="helper-text">Laisser vide pour publier immédiatement</span>
-            </div>
+ <div class="form-section">
+  <h3 class="section-title">
+    Planification
+    <span class="disabled-notice" *ngIf="editingNotification">
+      (Date de publication non modifiable)
+    </span>
+  </h3>
+  
+  <div class="form-row">
+    <div class="form-group">
+      <label>Date de publication</label>
+      <input type="datetime-local" 
+             formControlName="publishDate"
+             [class.disabled-field]="editingNotification">
+      <span class="helper-text" *ngIf="!editingNotification">
+        Laisser vide pour publier immédiatement
+      </span>
+      <span class="helper-text" *ngIf="editingNotification">
+        La date de publication ne peut pas être modifiée
+      </span>
+    </div>
 
-            <div class="form-group">
-              <label>Date d'expiration</label>
-              <input type="datetime-local" formControlName="expiryDate">
-              <span class="helper-text">Laisser vide pour aucune expiration</span>
-            </div>
-          </div>
-        </div>
+    <div class="form-group">
+      <label>Date d'expiration</label>
+      <input type="datetime-local" formControlName="expiryDate">
+      <span class="helper-text">Laisser vide pour aucune expiration</span>
+    </div>
+  </div>
+</div>
 
         <!-- Attachments -->
         <div class="form-section" *ngIf="!editingNotification">
@@ -585,7 +604,7 @@
           </div>
           <div class="info-row">
             <span class="info-label">Nombre de lectures:</span>
-            <span class="info-value">{{ viewingNotification.readCount || 0 }}</span>
+            <span class="info-value">{{ viewingNotification.readBy.length || 0 }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">Statut:</span>
@@ -612,12 +631,7 @@
                 <p class="attachment-meta">{{ formatFileSize(attachment.size) }}</p>
               </div>
               <div class="attachment-actions">
-                <button class="btn-icon" (click)="viewAttachment(viewingNotification._id!, attachment.filename)" title="Voir">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </svg>
-                </button>
+
                 <button class="btn-icon" (click)="downloadAttachment(viewingNotification._id!, attachment.filename)" title="Télécharger">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>

@@ -1,12 +1,12 @@
 <!-- student-navbar.component.html -->
 <nav class="student-navbar" *ngIf="shouldShowNavbar()">
   <div class="navbar-container">
-    <!-- Logo/Brand with School Name -->
+    <!-- Compact Logo/Brand with School Name -->
     <div class="navbar-brand">
       <div class="brand-content">
-        <div class="school-info" *ngIf="schoolData">
+        <div class="school-info" *ngIf="schoolData" [title]="schoolData?.name || 'École Moderne'">
           <span class="school-icon">🏫</span>
-          <span class="school-name">{{ schoolData?.name || 'School'  }}</span>
+          <span class="school-name">{{ schoolData?.name || 'École Moderne' }}</span>
         </div>
       </div>
     </div>
@@ -21,49 +21,198 @@
       <span class="hamburger-line"></span>
     </button>
 
-    <!-- Desktop Navigation Links -->
+    <!-- Compact Desktop Navigation Links -->
     <div class="navbar-nav desktop-nav">
       <a routerLink="/student/dashboard" 
          routerLinkActive="active" 
-         class="nav-link">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+         class="nav-link"
+         title="Tableau de Bord">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="7" height="9"></rect>
           <rect x="14" y="3" width="7" height="5"></rect>
           <rect x="14" y="12" width="7" height="9"></rect>
           <rect x="3" y="16" width="7" height="5"></rect>
         </svg>
-        <span>Tableau de Bord</span>
+        <span class="nav-text">Tableau de Bord</span>
       </a>
       
       <a routerLink="/student/grades" 
          routerLinkActive="active" 
-         class="nav-link">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+         class="nav-link"
+         title="Mes Notes">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14,2 14,8 20,8"></polyline>
           <line x1="16" y1="13" x2="8" y2="13"></line>
           <line x1="16" y1="17" x2="8" y2="17"></line>
           <polyline points="10,9 9,9 8,9"></polyline>
         </svg>
-        <span>Mes Notes</span>
+        <span class="nav-text">Notes</span>
       </a>
 
       <a routerLink="/student/teachers" 
          routerLinkActive="active" 
-         class="nav-link">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
-        <span>Mes enseignants</span>
+         class="nav-link"
+         title="Mes Enseignants">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span class="nav-text">Enseignants</span>
       </a>
+
+      <!-- New AI Chat Navigation -->
+      <a routerLink="/student/chat" 
+         routerLinkActive="active" 
+         class="nav-link ai-chat-link"
+         title="Assistant IA - Votre professeur virtuel">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 3.04 1.05 4.4L1 22l5.6-2.05C8.96 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"></path>
+          <circle cx="8.5" cy="12" r="1.5"></circle>
+          <circle cx="15.5" cy="12" r="1.5"></circle>
+          <path d="M12 8v8"></path>
+        </svg>
+        <span class="nav-text">IA Prof</span>
+        <span class="ai-indicator">✨</span>
+      </a>
+    </div>
+
+    <!-- Compact Desktop User Info and Actions -->
+    <div class="navbar-user desktop-only">
+      <!-- Notification Bell -->
+      <div class="notification-dropdown">
+        <button class="notification-bell" 
+                (click)="toggleNotificationDropdown()"
+                [class.has-notifications]="unreadCount > 0"
+                title="Notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-badge" *ngIf="unreadCount > 0">
+            {{ unreadCount > 99 ? '99+' : unreadCount }}
+          </span>
+        </button>
+
+        <!-- Notification Dropdown -->
+        <div class="notification-dropdown-menu" 
+             [class.open]="isNotificationDropdownOpen"
+             (click)="$event.stopPropagation()">
+          <div class="notification-header">
+            <h3>Notifications</h3>
+            <div class="notification-actions">
+              <button class="refresh-btn" 
+                      (click)="loadNotifications()" 
+                      [disabled]="isLoadingNotifications"
+                      title="Actualiser">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36 9 9 0 0 1 2.12 9.36z"></path>
+                </svg>
+              </button>
+              <button class="mark-all-read-btn" 
+                      *ngIf="unreadCount > 0" 
+                      (click)="markAllAsRead()"
+                      title="Marquer tout comme lu">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9,11 12,14 22,4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="notification-list" *ngIf="!isLoadingNotifications; else loadingTemplate">
+            <div class="notification-item" 
+                 *ngFor="let notification of notifications; trackBy: trackNotification"
+                 [class.unread]="!notification.isRead"
+                 [class]="getPriorityClass(notification.priority)"
+                 (click)="viewNotificationDetails(notification)">
+              
+              <div class="notification-icon">
+                {{ getNotificationIcon(notification.type) }}
+              </div>
+              
+              <div class="notification-content">
+                <div class="notification-header-item">
+                  <div class="notification-title">{{ notification.title }}</div>
+                  <div class="notification-priority" 
+                       *ngIf="notification.priority === 'urgent' || notification.priority === 'high'">
+                    {{ getPriorityLabel(notification.priority) }}
+                  </div>
+                </div>
+                
+                <div class="notification-message">{{ notification.content }}</div>
+                
+                <div class="notification-footer">
+                  <div class="notification-time">
+                    {{ formatNotificationTime(notification.createdAt) }}
+                  </div>
+                  <div class="notification-meta" *ngIf="notification.createdBy">
+                    <span>par {{ notification.createdBy.name }}</span>
+                  </div>
+                </div>
+                
+                <div class="notification-attachments" *ngIf="notification.attachments && notification.attachments.length > 0">
+                  <span class="attachment-icon">📎</span>
+                  <span>{{ notification.attachments.length }} pièce(s) jointe(s)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="no-notifications" *ngIf="notifications.length === 0">
+              <div class="no-notifications-icon">🔔</div>
+              <div class="no-notifications-text">Aucune notification</div>
+            </div>
+
+            <div class="view-all-notifications" *ngIf="notifications.length > 0">
+              <button class="view-all-btn" (click)="viewAllNotifications()">
+                Voir toutes les notifications
+              </button>
+            </div>
+          </div>
+
+          <ng-template #loadingTemplate>
+            <div class="notification-loading">
+              <div class="loading-spinner"></div>
+              <div class="loading-text">Chargement...</div>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- Compact User Info -->
+      <div class="user-info-compact">
+        <div class="user-avatar" [title]="'Bonjour, ' + (currentUser?.name || 'Étudiant')">
+          <div class="avatar-circle">
+            <span>{{ getUserInitials() }}</span>
+          </div>
+        </div>
+        
+        <div class="user-details">
+          <div class="user-name">{{ currentUser?.name || 'Étudiant' }}</div>
+        </div>
+      </div>
+
+      <button class="logout-btn" (click)="logout()" title="Se déconnecter">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16,17 21,12 16,7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="logout-text">Sortir</span>
+      </button>
     </div>
 
     <!-- Mobile Navigation Menu -->
     <div class="mobile-nav" [class.mobile-open]="isMobileMenuOpen">
       <div class="mobile-nav-content">
+        <div class="school-info" *ngIf="schoolData" [title]="schoolData?.name || 'École Moderne'">
+          <span class="school-icon">🏫</span>
+          <span class="school-name">{{ schoolData?.name || 'École Moderne' }}</span>
+        </div>
         <div class="mobile-nav-links">
           <a routerLink="/student/dashboard" 
              routerLinkActive="active" 
@@ -92,7 +241,6 @@
             <span>Mes Notes</span>
           </a>
 
-
           <a routerLink="/student/teachers" 
              routerLinkActive="active" 
              class="mobile-nav-link"
@@ -103,8 +251,62 @@
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
-            <span>Mes enseignants</span>
+            <span>Mes Enseignants</span>
           </a>
+
+          <!-- Mobile AI Chat Navigation -->
+          <a routerLink="/student/chat" 
+             routerLinkActive="active" 
+             class="mobile-nav-link ai-chat-link"
+             (click)="closeMobileMenu()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 3.04 1.05 4.4L1 22l5.6-2.05C8.96 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"></path>
+              <circle cx="8.5" cy="12" r="1.5"></circle>
+              <circle cx="15.5" cy="12" r="1.5"></circle>
+              <path d="M12 8v8"></path>
+            </svg>
+            <span>Assistant IA</span>
+            <span class="ai-indicator">✨</span>
+          </a>
+
+          <!-- Mobile Notifications Section -->
+          <div class="mobile-notifications-section">
+            <div class="mobile-notifications-header">
+              <h3>Notifications</h3>
+              <span class="notification-count" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+            </div>
+            
+            <div class="mobile-notifications-list" *ngIf="notifications.length > 0; else noNotificationsMobile">
+              <div class="mobile-notification-item" 
+                   *ngFor="let notification of notifications.slice(0, 3)"
+                   [class.unread]="!notification.isRead"
+                   (click)="markAsRead(notification)">
+                <div class="notification-icon">{{ getNotificationIcon(notification.type) }}</div>
+                <div class="notification-content">
+                  <div class="notification-title">{{ notification.title }}</div>
+                  <div class="notification-message">{{ notification.content }}</div>
+                  <div class="notification-time">{{ formatNotificationTime(notification.createdAt) }}</div>
+                </div>
+              </div>
+              
+              <div class="mobile-notifications-actions" *ngIf="notifications.length > 3 || unreadCount > 0">
+                          <a routerLink="/student/notifications" 
+                            routerLinkActive="active" 
+                            class="mobile-nav-link ai-chat-link"
+                            (click)="closeMobileMenu()">Voir tout</a>
+                <button class="mark-all-read-btn" *ngIf="unreadCount > 0" (click)="markAllAsRead()">
+                  Tout marquer comme lu
+                </button>
+              </div>
+            </div>
+            
+            <ng-template #noNotificationsMobile>
+              <div class="no-notifications">
+                <div class="no-notifications-icon">🔔</div>
+                <div class="no-notifications-text">Aucune notification</div>
+              </div>
+            </ng-template>
+          </div>
         </div>
 
         <!-- User Info and Actions in Mobile Menu -->
@@ -131,29 +333,6 @@
           </button>
         </div>
       </div>
-    </div>
-
-    <!-- Desktop User Info and Actions -->
-    <div class="navbar-user desktop-only">
-      <div class="user-greeting">
-        <span class="greeting-text">Bonjour,</span>
-        <span class="user-name">{{ currentUser?.name || 'Étudiant' }}</span>
-      </div>
-      
-      <div class="user-avatar">
-        <div class="avatar-circle">
-          <span>{{ getUserInitials() }}</span>
-        </div>
-      </div>
-
-      <button class="logout-btn" (click)="logout()" title="Se déconnecter">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-          <polyline points="16,17 21,12 16,7"></polyline>
-          <line x1="21" y1="12" x2="9" y2="12"></line>
-        </svg>
-        <span>Déconnexion</span>
-      </button>
     </div>
   </div>
 

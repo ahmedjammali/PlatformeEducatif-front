@@ -19,7 +19,6 @@ import { ContactComponent } from './components/admin/contact/contact.component';
 import { GradesComponent } from './components/admin/grades/grades.component';
 import { NotificationComponent } from './components/admin/notification/notification.component';
 
-
 // Other components
 import { SchoolsComponent } from './components/superadmin/schools/schools.component';
 import { TeacherDashboardComponent } from './components/teacher/teacher-dashboard/teacher-dashboard.component';
@@ -30,6 +29,11 @@ import { StudentExerciseResultsComponent } from './components/student/student-ex
 import { StudentGradesPageComponent } from './components/student/student-grades-page/student-grades-page.component';
 import { StudentTeachersComponent } from './components/student/student-teachers/student-teachers.component';
 import { AdminDashboardComponent } from './components/admin/admin-dashboard/admin-dashboard.component';
+
+// Student Layout Component
+import { StudentLayoutComponent } from './components/student/student-layout/student-layout.component';
+import { StudentNotificationsComponent } from './components/student/student-notifications/student-notifications.component';
+import { StudentChatComponent } from './components/student/student-chat/student-chat.component';
 
 const routes: Routes = [
   { path: '', component: LandingPageComponent },
@@ -68,36 +72,22 @@ const routes: Routes = [
     canActivate: [AuthGuard, TeacherGuard]
   },
 
-  // STUDENT ROUTES
+  // STUDENT ROUTES WITH LAYOUT
   {
-    path: 'student/dashboard',
-    component: StudentDashboardComponent,
-    canActivate: [AuthGuard, StudentGuard]
-  },
-  {
-    path: 'student/exercises/:subjectId',
-    component: StudentSubjectExercisesComponent,
-    canActivate: [AuthGuard, StudentGuard]
-  },
-  {
-    path: 'student/exercise/:id',
-    component: StudentExerciseExecutionComponent,
-    canActivate: [AuthGuard, StudentGuard]
-  },
-  {
-    path: 'student/exercise/:id/attempt/:attemptId',
-    component: StudentExerciseResultsComponent,
-    canActivate: [AuthGuard, StudentGuard]
-  },
-  {
-    path: 'student/grades',
-    component: StudentGradesPageComponent,
-    canActivate: [AuthGuard, StudentGuard]
-  },
-  {
-    path: 'student/teachers',
-    component: StudentTeachersComponent,
-    canActivate: [AuthGuard, StudentGuard]
+    path: 'student',
+    component: StudentLayoutComponent,
+    canActivate: [AuthGuard, StudentGuard],
+    children: [
+      { path: 'dashboard', component: StudentDashboardComponent },
+      { path: 'chat', component: StudentChatComponent },
+      { path: 'exercises/:subjectId', component: StudentSubjectExercisesComponent },
+      { path: 'exercise/:id', component: StudentExerciseExecutionComponent },
+      { path: 'exercise/:id/attempt/:attemptId', component: StudentExerciseResultsComponent },
+      { path: 'grades', component: StudentGradesPageComponent },
+      { path: 'teachers', component: StudentTeachersComponent },
+      { path: 'notifications', component: StudentNotificationsComponent },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+    ]
   }
 ];
 

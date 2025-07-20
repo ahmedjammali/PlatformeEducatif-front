@@ -69,9 +69,11 @@ import { StudentNavbarComponent } from './components/student/student-navbar/stud
 import { StudentGradesPageComponent } from './components/student/student-grades-page/student-grades-page.component';
 import { StudentTeachersComponent } from './components/student/student-teachers/student-teachers.component';
 import { NotificationComponent } from './components/admin/notification/notification.component';
-
 import { TeacherNotificationsComponent } from './components/teacher/teacher-notifications/teacher-notifications.component';
 import { AdminDashboardComponent } from './components/admin/admin-dashboard/admin-dashboard.component';
+import { StudentLayoutComponent } from './components/student/student-layout/student-layout.component';
+import { StudentNotificationsComponent } from './components/student/student-notifications/student-notifications.component';
+import { StudentChatComponent } from './components/student/student-chat/student-chat.component';
 
 
 
@@ -126,6 +128,9 @@ const MaterialModules = [
     NotificationComponent,
     TeacherNotificationsComponent,
     AdminDashboardComponent,
+    StudentLayoutComponent,
+    StudentNotificationsComponent,
+    StudentChatComponent,
 
 
   ],

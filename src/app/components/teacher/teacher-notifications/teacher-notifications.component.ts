@@ -9,8 +9,8 @@ import {
   NotificationFilters, 
   NotificationType, 
   NotificationPriority,
-  TargetAudience,
-  CreateNotificationDTO,
+  TargetAudience , 
+  CreateNotificationDTO, 
   UpdateNotificationDTO
 } from '../../../models/notification.model';
 import { Class } from '../../../models/class.model';
@@ -21,11 +21,14 @@ interface NotificationGroup {
   notifications: Notification[];
 }
 
+
 @Component({
   selector: 'app-teacher-notifications',
   templateUrl: './teacher-notifications.component.html',
   styleUrls: ['./teacher-notifications.component.css']
 })
+
+
 export class TeacherNotificationsComponent implements OnInit, OnDestroy {
   @Input() teacherClasses: Class[] = [];
   @Input() teachingSubjects: SubjectModel[] = [];
@@ -75,12 +78,16 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
   showCreateModal = false;
   showEditModal = false;
   editingNotification: Notification | null = null;
+  // Delete confirmation modal
+  showDeleteModal = false;
+  notificationToDelete: Notification | null = null;
+  isDeleting = false;
   
   // Create notification form
   createForm: CreateNotificationDTO = {
     title: '',
     content: '',
-    targetAudience: TargetAudience.STUDENTS,
+    targetAudience: TargetAudience.SPECIFIC_CLASS,
     type: NotificationType.GENERAL,
     priority: NotificationPriority.MEDIUM
   };
@@ -115,9 +122,18 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
     this.notificationService.getNotificationUpdates()
       .pipe(takeUntil(this.destroy$))
       .subscribe((notification) => {
-        // Add new notification to the beginning of the list
-        this.notifications.unshift(notification);
-        this.groupNotificationsByDate();
+        // Check if notification already exists to avoid duplicates
+        const existingIndex = this.notifications.findIndex(n => n._id === notification._id);
+        
+        if (existingIndex === -1) {
+          // Only add if it doesn't exist
+          this.notifications.unshift(notification);
+          this.groupNotificationsByDate();
+        } else {
+          // Update existing notification
+          this.notifications[existingIndex] = notification;
+          this.groupNotificationsByDate();
+        }
       });
   }
 
@@ -215,9 +231,10 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
     this.createForm = {
       title: '',
       content: '',
-      targetAudience: TargetAudience.STUDENTS,
+      targetAudience: TargetAudience.SPECIFIC_CLASS,
       type: NotificationType.GENERAL,
-      priority: NotificationPriority.MEDIUM
+      priority: NotificationPriority.MEDIUM,
+      targetClass: undefined
     };
     this.selectedFiles = [];
     this.uploadProgress = 0;
@@ -226,6 +243,12 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
 
   createNotification(): void {
     if (!this.createForm.title.trim() || !this.createForm.content.trim()) {
+      alert('Le titre et le contenu sont obligatoires');
+      return;
+    }
+
+    if (!this.createForm.targetClass) {
+      alert('Vous devez sélectionner une classe');
       return;
     }
 
@@ -236,22 +259,23 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
     };
 
     if (this.selectedFiles.length > 0) {
-      // Use upload with progress for files
       this.notificationService.uploadNotificationWithProgress(createData)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (event) => {
             if (event.type === HttpEventType.UploadProgress) {
-              // Calculate upload progress
               if (event.total) {
                 this.uploadProgress = Math.round(100 * event.loaded / event.total);
               }
             } else if (event.type === HttpEventType.Response) {
-              // Upload complete
               const response = event.body;
               if (response && response.success && response.notification) {
-                this.notifications.unshift(response.notification);
-                this.groupNotificationsByDate();
+                // Check if notification already exists (from real-time update)
+                const existingIndex = this.notifications.findIndex(n => n._id === response.notification!._id);
+                if (existingIndex === -1) {
+                  this.notifications.unshift(response.notification);
+                  this.groupNotificationsByDate();
+                }
                 this.closeCreateModal();
               }
               this.isUploading = false;
@@ -263,14 +287,17 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
           }
         });
     } else {
-      // Create without files
       this.notificationService.createNotification(createData)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response) => {
             if (response.success && response.notification) {
-              this.notifications.unshift(response.notification);
-              this.groupNotificationsByDate();
+              // Check if notification already exists (from real-time update)
+              const existingIndex = this.notifications.findIndex(n => n._id === response.notification!._id);
+              if (existingIndex === -1) {
+                this.notifications.unshift(response.notification);
+                this.groupNotificationsByDate();
+              }
               this.closeCreateModal();
             }
             this.isUploading = false;
@@ -289,7 +316,6 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
       notification.createdBy : notification.createdBy._id;
     const currentUserId = this.currentUser?._id || this.currentUser?.id;
 
-    // Only allow editing own notifications
     if (createdById !== currentUserId) {
       return;
     }
@@ -331,7 +357,7 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success && response.notification) {
-            // Update the notification in the list
+            // Update the notification in the list (avoid duplicates from real-time updates)
             const index = this.notifications.findIndex(n => n._id === response.notification!._id);
             if (index !== -1) {
               this.notifications[index] = response.notification;
@@ -346,32 +372,9 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
       });
   }
 
-  // Delete notification
+  // Update this method to use the confirmation modal
   deleteNotification(notification: Notification): void {
-    const createdById = typeof notification.createdBy === 'string' ? 
-      notification.createdBy : notification.createdBy._id;
-    const currentUserId = this.currentUser?._id || this.currentUser?.id;
-
-    // Only allow deleting own notifications
-    if (createdById !== currentUserId) {
-      return;
-    }
-
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
-      this.notificationService.deleteNotification(notification._id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (response) => {
-            if (response.success) {
-              this.notifications = this.notifications.filter(n => n._id !== notification._id);
-              this.groupNotificationsByDate();
-            }
-          },
-          error: (error) => {
-            console.error('Error deleting notification:', error);
-          }
-        });
-    }
+    this.openDeleteModal(notification);
   }
 
   // Check if user can edit/delete notification
@@ -380,13 +383,6 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
       notification.createdBy : notification.createdBy._id;
     const currentUserId = this.currentUser?._id || this.currentUser?.id;
     return createdById === currentUserId;
-  }
-
-  // Handle target audience change
-  onTargetAudienceChange(): void {
-    if (this.createForm.targetAudience !== TargetAudience.SPECIFIC_CLASS) {
-      this.createForm.targetClass = undefined;
-    }
   }
 
   private groupNotificationsByDate(): void {
@@ -692,4 +688,50 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
     const url = this.notificationService.getAttachmentUrl(notificationId, filename);
     window.open(url, '_blank');
   }
+
+  // Delete confirmation methods
+openDeleteModal(notification: Notification): void {
+  const createdById = typeof notification.createdBy === 'string' ? 
+    notification.createdBy : notification.createdBy._id;
+  const currentUserId = this.currentUser?._id || this.currentUser?.id;
+
+  if (createdById !== currentUserId) {
+    return;
+  }
+
+  this.notificationToDelete = notification;
+  this.showDeleteModal = true;
+}
+
+closeDeleteModal(): void {
+  this.showDeleteModal = false;
+  this.notificationToDelete = null;
+  this.isDeleting = false;
+}
+
+confirmDeleteNotification(): void {
+  if (!this.notificationToDelete) {
+    return;
+  }
+
+  this.isDeleting = true;
+
+  this.notificationService.deleteNotification(this.notificationToDelete._id)
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.notifications = this.notifications.filter(n => n._id !== this.notificationToDelete!._id);
+          this.groupNotificationsByDate();
+          this.closeDeleteModal();
+        }
+        this.isDeleting = false;
+      },
+      error: (error) => {
+        console.error('Error deleting notification:', error);
+        this.isDeleting = false;
+      }
+    });
+}
+
 }

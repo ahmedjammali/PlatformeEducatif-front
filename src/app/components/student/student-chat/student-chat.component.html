@@ -1,0 +1,254 @@
+<!-- student-chat.component.html -->
+<div class="student-chat">
+  <div class="chat-container">
+    
+    <!-- Main Chat Layout -->
+    <div class="chat-layout">
+      
+      <!-- Chat Sidebar -->
+      <div class="chat-sidebar" [class.sidebar-collapsed]="sidebarCollapsed">
+        <div class="sidebar-header">
+          <button class="new-chat-btn" (click)="createNewChat()" [disabled]="loading">
+            <span class="btn-icon">➕</span>
+            <span class="btn-text">Nouvelle Discussion</span>
+          </button>
+          <button class="sidebar-toggle" (click)="toggleSidebar()">
+            <span>{{ sidebarCollapsed ? '→' : '←' }}</span>
+          </button>
+        </div>
+
+        <div class="chat-list" *ngIf="!sidebarCollapsed">
+          <div class="section-title">
+            <span class="title-icon">💬</span>
+            Mes Conversations
+          </div>
+          
+          <!-- Loading State for Chat List -->
+          <div class="loading-container" *ngIf="chatListLoading">
+            <div class="mini-loader"></div>
+            <p>Chargement...</p>
+          </div>
+
+          <!-- Chat List Items -->
+          <div class="chat-list-items" *ngIf="!chatListLoading">
+            <div 
+              class="chat-item" 
+              *ngFor="let chat of chatList; trackBy: trackByChatId"
+              [class.active]="activeChat?._id === chat._id"
+              (click)="selectChat(chat._id)"
+            >
+              <div class="chat-item-content">
+                <h4 class="chat-title">{{ chat.title }}</h4>
+                <p class="chat-preview" *ngIf="chat.lastMessage">
+                  {{ getMessagePreview(chat.lastMessage.content) }}
+                </p>
+                <span class="chat-time">{{ formatTime(chat.lastMessageAt) }}</span>
+              </div>
+              <div class="chat-item-actions">
+                <button class="edit-btn" (click)="editChatTitle(chat._id, chat.title, $event)">
+                  <span>✏️</span>
+                </button>
+                <button class="delete-btn" (click)="deleteChat(chat._id, $event)">
+                  <span>🗑️</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" *ngIf="chatList.length === 0">
+              <div class="empty-icon">💭</div>
+              <h4>Aucune conversation</h4>
+              <p>Créez votre première discussion avec l'IA</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Chat Area -->
+      <div class="chat-main">
+        
+        <!-- Welcome Screen -->
+        <div class="welcome-screen" *ngIf="!activeChat">
+          <div class="welcome-content">
+            <div class="welcome-icon">🎓</div>
+            <h2>Bonjour {{ currentUser?.name }}!</h2>
+            <p>Je suis votre assistant IA éducatif. Comment puis-je vous aider aujourd'hui?</p>
+            
+            <div class="suggestion-cards">
+              <div class="suggestion-card" (click)="sendSuggestion('Peux-tu m\'expliquer les mathématiques?')">
+                <div class="suggestion-icon">📐</div>
+                <span>Aide en Mathématiques</span>
+              </div>
+              <div class="suggestion-card" (click)="sendSuggestion('J\'ai besoin d\'aide pour mes devoirs')">
+                <div class="suggestion-icon">📝</div>
+                <span>Aide aux Devoirs</span>
+              </div>
+              <div class="suggestion-card" (click)="sendSuggestion('Explique-moi un concept scientifique')">
+                <div class="suggestion-icon">🔬</div>
+                <span>Sciences</span>
+              </div>
+            </div>
+
+            <button class="start-chat-btn" (click)="createNewChat()">
+              <span class="btn-icon">🚀</span>
+              Commencer une nouvelle conversation
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Chat -->
+        <div class="active-chat" *ngIf="activeChat">
+          
+          <!-- Chat Header -->
+          <div class="active-chat-header">
+            <div class="chat-info">
+              <h3>{{ activeChat.title }}</h3>
+              <span class="message-count">{{ activeChat.messages?.length || 0 }} messages</span>
+            </div>
+            <div class="chat-actions">
+              <button class="action-btn" (click)="editChatTitle(activeChat._id!, activeChat.title, $event)">
+                <span>✏️</span>
+              </button>
+              <button class="action-btn danger" (click)="deleteChat(activeChat._id!, $event)">
+                <span>🗑️</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Messages Container -->
+          <div class="messages-container" #messagesContainer>
+            <div class="messages-list">
+              
+              <!-- System Welcome Message -->
+              <div class="message system-message" *ngIf="activeChat.messages?.length === 0">
+                <div class="message-avatar system-avatar">
+                  <span>🤖</span>
+                </div>
+                <div class="message-content">
+                  <div class="message-bubble system-bubble">
+                    <p>Bonjour {{ currentUser?.name }}! Je suis votre assistant IA éducatif. Posez-moi toutes vos questions scolaires!</p>
+                  </div>
+                  <span class="message-time">Maintenant</span>
+                </div>
+              </div>
+
+              <!-- Chat Messages -->
+              <div 
+                class="message" 
+                *ngFor="let message of activeChat.messages; trackBy: trackByMessageId"
+                [class.user-message]="message.role === 'user'"
+                [class.assistant-message]="message.role === 'assistant'"
+              >
+                <div class="message-avatar" [class.user-avatar]="message.role === 'user'" [class.assistant-avatar]="message.role === 'assistant'">
+                  <span>{{ message.role === 'user' ? '👤' : '🤖' }}</span>
+                </div>
+                <div class="message-content">
+                  <div class="message-bubble" [class.user-bubble]="message.role === 'user'" [class.assistant-bubble]="message.role === 'assistant'">
+                    <div class="message-text" [innerHTML]="formatMessage(message.content)"></div>
+                  </div>
+                  <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+                </div>
+              </div>
+
+              <!-- Typing Indicator -->
+              <div class="message assistant-message typing-message" *ngIf="isTyping">
+                <div class="message-avatar assistant-avatar">
+                  <span>🤖</span>
+                </div>
+                <div class="message-content">
+                  <div class="message-bubble assistant-bubble">
+                    <div class="typing-indicator">
+                      <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                      <span class="typing-text">L'IA réfléchit...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Message Input -->
+          <div class="message-input-container">
+            <form class="message-form" (ngSubmit)="sendMessage()" #messageForm="ngForm">
+              <div class="input-wrapper">
+                <textarea 
+                  class="message-input"
+                  [(ngModel)]="newMessage"
+                  name="message"
+                  placeholder="Tapez votre question ici... (Appuyez sur Entrée pour envoyer, Shift+Entrée pour nouvelle ligne)"
+                  [disabled]="sendingMessage"
+                  (keydown)="onKeyDown($event)"
+                  #messageTextarea
+                  rows="1"
+                ></textarea>
+                <button 
+                  type="submit" 
+                  class="send-btn"
+                  [disabled]="!newMessage.trim() || sendingMessage"
+                >
+                  <span class="send-icon" *ngIf="!sendingMessage">🚀</span>
+                  <div class="mini-loader" *ngIf="sendingMessage"></div>
+                </button>
+              </div>
+              <div class="input-hints" *ngIf="!sendingMessage">
+                <span class="hint">💡 Posez des questions sur vos cours, devoirs, ou demandez des explications!</span>
+              </div>
+              <div class="sending-status" *ngIf="sendingMessage">
+                <span class="status-text">⏳ Envoi en cours...</span>
+                <div class="progress-bar">
+                  <div class="progress-fill"></div>
+                </div>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" *ngIf="loading">
+      <div class="loading-content">
+        <div class="loader"></div>
+        <p>{{ loadingMessage || 'Chargement...' }}</p>
+      </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div class="error-toast" *ngIf="error" [class.show]="error">
+      <div class="toast-content">
+        <span class="toast-icon">⚠️</span>
+        <span class="toast-message">{{ error }}</span>
+        <button class="toast-close" (click)="clearError()">✕</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Edit Title Modal -->
+<div class="modal-overlay" *ngIf="showTitleModal" (click)="cancelTitleEdit()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h3>Modifier le titre</h3>
+    <div class="modal-form">
+      <input 
+        type="text" 
+        [(ngModel)]="editingTitle" 
+        class="title-input"
+        placeholder="Nouveau titre"
+        #titleInput
+        (keydown.enter)="saveTitleEdit()"
+        (keydown.escape)="cancelTitleEdit()"
+      >
+      <div class="modal-actions">
+        <button class="cancel-btn" (click)="cancelTitleEdit()">Annuler</button>
+        <button class="save-btn" (click)="saveTitleEdit()" [disabled]="!editingTitle?.trim()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>

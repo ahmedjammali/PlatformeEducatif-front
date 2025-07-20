@@ -293,16 +293,23 @@ export class NotificationComponent implements OnInit, OnDestroy {
   }
 
   // UI Methods
-  openCreateModal(): void {
-    this.editingNotification = null;
-    this.notificationForm.reset({
-      type: NotificationType.GENERAL,
-      priority: NotificationPriority.MEDIUM,
-      targetAudience: TargetAudience.ALL
-    });
-    this.selectedFiles = [];
-    this.showModal = true;
-  }
+openCreateModal(): void {
+  this.editingNotification = null;
+  this.notificationForm.reset({
+    type: NotificationType.GENERAL,
+    priority: NotificationPriority.MEDIUM,
+    targetAudience: TargetAudience.ALL
+  });
+  
+  // Enable all fields for new notifications
+  this.notificationForm.get('targetAudience')?.enable();
+  this.notificationForm.get('targetClass')?.enable();
+  this.notificationForm.get('publishDate')?.enable();
+  this.notificationForm.get('expiryDate')?.enable();
+  
+  this.selectedFiles = [];
+  this.showModal = true;
+}
 
   editNotification(notification: Notification): void {
     this.editingNotification = notification;
@@ -316,6 +323,12 @@ export class NotificationComponent implements OnInit, OnDestroy {
       publishDate: this.formatDateForInput(notification.publishDate),
       expiryDate: notification.expiryDate ? this.formatDateForInput(notification.expiryDate) : ''
     });
+
+    // Disable fields that should not be editable during modification
+    this.notificationForm.get('targetAudience')?.disable();
+    this.notificationForm.get('targetClass')?.disable();
+    this.notificationForm.get('publishDate')?.disable();
+    
     this.showModal = true;
   }
 
@@ -413,12 +426,30 @@ export class NotificationComponent implements OnInit, OnDestroy {
   removeFile(index: number): void {
     this.selectedFiles.splice(index, 1);
   }
-
+  
   onSubmit(): void {
+    // Temporarily enable disabled fields to get their values
+    const wasTargetAudienceDisabled = this.notificationForm.get('targetAudience')?.disabled;
+    const wasTargetClassDisabled = this.notificationForm.get('targetClass')?.disabled;
+    const wasPublishDateDisabled = this.notificationForm.get('publishDate')?.disabled;
+    
+    if (this.editingNotification) {
+      this.notificationForm.get('targetAudience')?.enable();
+      this.notificationForm.get('targetClass')?.enable();
+      this.notificationForm.get('publishDate')?.enable();
+    }
+
     if (this.notificationForm.invalid) {
       Object.keys(this.notificationForm.controls).forEach(key => {
         this.notificationForm.get(key)?.markAsTouched();
       });
+      
+      // Re-disable fields if they were disabled
+      if (this.editingNotification) {
+        if (wasTargetAudienceDisabled) this.notificationForm.get('targetAudience')?.disable();
+        if (wasTargetClassDisabled) this.notificationForm.get('targetClass')?.disable();
+        if (wasPublishDateDisabled) this.notificationForm.get('publishDate')?.disable();
+      }
       return;
     }
     
@@ -426,13 +457,14 @@ export class NotificationComponent implements OnInit, OnDestroy {
     const formValue = this.notificationForm.value;
     
     if (this.editingNotification) {
-      // Update notification
+      // Update notification - only include editable fields
       const updateData: UpdateNotificationDTO = {
         title: formValue.title,
         content: formValue.content,
         type: formValue.type,
         priority: formValue.priority,
         expiryDate: formValue.expiryDate || undefined
+        // Note: Don't include targetAudience, targetClass, or publishDate in updates
       };
       
       this.notificationService.updateNotification(this.editingNotification._id!, updateData)
@@ -446,10 +478,15 @@ export class NotificationComponent implements OnInit, OnDestroy {
           error: (error) => {
             console.error('Error updating notification:', error);
             this.isSubmitting = false;
+            
+            // Re-disable fields on error
+            if (wasTargetAudienceDisabled) this.notificationForm.get('targetAudience')?.disable();
+            if (wasTargetClassDisabled) this.notificationForm.get('targetClass')?.disable();
+            if (wasPublishDateDisabled) this.notificationForm.get('publishDate')?.disable();
           }
         });
     } else {
-      // Create notification
+      // Create notification - include all fields
       const createData: CreateNotificationDTO = {
         ...formValue,
         attachments: this.selectedFiles

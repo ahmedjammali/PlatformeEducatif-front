@@ -1,5 +1,3 @@
-/* notification.component.css - Updated with date grouping styles */
-
 /* Container */
 .notification-container {
   padding: 0;
@@ -1725,4 +1723,59 @@
     background: white;
     border: 1px solid #ddd;
   }
+}
+/* Add these styles to your notification.component.css */
+
+/* Disabled field styling */
+.disabled-field {
+  background-color: #f5f5f5 !important;
+  color: #6b7280 !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
+
+.disabled-field:hover {
+  background-color: #f5f5f5 !important;
+}
+
+/* Disabled notice styling */
+.disabled-notice {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: normal;
+  font-style: italic;
+}
+
+/* Section title with disabled notice */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #1f2937;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Helper text for disabled fields */
+.helper-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Form group with disabled field */
+.form-group:has(.disabled-field) {
+  position: relative;
+}
+
+.form-group:has(.disabled-field)::after {
+  content: '🔒';
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.875rem;
+  opacity: 0.5;
+  pointer-events: none;
 }

@@ -1,4 +1,6 @@
-
+<!-- dashboard.component.html -->
+<div class="dashboard-container">
+  <!-- Stats Grid -->
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-icon students">
@@ -93,3 +95,38 @@
     </div>
   </div>
 
+  <!-- Charts Section -->
+  <div class="charts-section">
+    <h2 class="section-title">Statistiques de l'École</h2>
+    
+    <div class="charts-grid">
+      <!-- Students per Class Chart -->
+      <div class="chart-card">
+        <h3>Distribution des Étudiants par Classe</h3>
+        <div class="chart-container">
+          <canvas #studentsPerClassChart></canvas>
+        </div>
+      </div>
+
+      <!-- Teachers per Subject Chart -->
+      <div class="chart-card">
+        <h3>Enseignants par Matière</h3>
+        <div class="chart-container">
+          <canvas #teachersPerSubjectChart></canvas>
+        </div>
+      </div>
+
+      <!-- Class Distribution by Grade -->
+      <div class="chart-card full-width">
+        <h3>Répartition des Classes par Niveau</h3>
+        <div class="chart-container small">
+          <canvas #classDistributionChart></canvas>
+        </div>
+      </div>
+
+ 
+    </div>
+  </div>
+
+
+</div>

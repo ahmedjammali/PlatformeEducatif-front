@@ -1,0 +1,302 @@
+<!-- student-notifications.component.html -->
+<div class="notifications-page">
+  <!-- Main Content -->
+  <div class="page-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-left">
+          <h1>Mes Notifications</h1>
+          <p class="page-description">Restez informé de toutes les annonces et mises à jour importantes</p>
+        </div>
+        <div class="header-decoration">
+          <div class="floating-icon">🔔</div>
+          <div class="floating-icon">📢</div>
+          <div class="floating-icon">📬</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Statistics -->
+    <div class="quick-stats">
+      <div class="stats-grid">
+        <div class="quick-stat-card unread-count">
+          <div class="stat-icon">📬</div>
+          <div class="stat-content">
+            <h4>Non lues</h4>
+            <p class="stat-value">{{ unreadCount }}<span class="unit"> notifications</span></p>
+          </div>
+        </div>
+        <div class="quick-stat-card total-notifications">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <h4>Total</h4>
+            <p class="stat-value">{{ notifications.length }}<span class="unit"> notifications</span></p>
+          </div>
+        </div>
+        <div class="quick-stat-card recent-notifications">
+          <div class="stat-icon">🕐</div>
+          <div class="stat-content">
+            <h4>Aujourd'hui</h4>
+            <p class="stat-value">{{ getTodayNotificationsCount() }}<span class="unit"> nouvelles</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications Section -->
+    <div class="notifications-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="title-icon">📋</span>
+          Toutes mes Notifications
+        </h2>
+        
+        <!-- Filters -->
+        <div class="filters-container">
+          <div class="filters">
+            <select [(ngModel)]="selectedTypeFilter" (change)="applyFilters()" class="filter-select">
+              <option value="">Tous les types</option>
+              <option *ngFor="let type of notificationTypes" [value]="type.value">
+                {{ type.label }}
+              </option>
+            </select>
+            <select [(ngModel)]="selectedStatusFilter" (change)="applyFilters()" class="filter-select">
+              <option value="">Tous les statuts</option>
+              <option value="unread">Non lues</option>
+              <option value="read">Lues</option>
+            </select>
+            <select [(ngModel)]="selectedPriorityFilter" (change)="applyFilters()" class="filter-select">
+              <option value="">Toutes les priorités</option>
+              <option value="urgent">Urgent</option>
+              <option value="high">Important</option>
+              <option value="medium">Normal</option>
+              <option value="low">Faible</option>
+            </select>
+          </div>
+          <button class="reset-filters-btn" (click)="resetFilters()" [disabled]="!hasActiveFilters()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18l-2 13H5L3 6z"></path>
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Réinitialiser
+          </button>
+        </div>
+      </div>
+
+      <!-- Notifications Cards -->
+      <div class="notifications-container" *ngIf="filteredNotifications && filteredNotifications.length > 0">
+        <div class="notifications-grid">
+          <div class="notification-card" 
+               *ngFor="let notification of filteredNotifications" 
+               [class.unread]="!notification.isRead"
+               [class.urgent]="notification.priority === 'urgent'"
+               [class.high-priority]="notification.priority === 'high'"
+               (click)="openNotificationModal(notification)">
+            
+            <div class="notification-header">
+              <div class="notification-info">
+                <h4 class="notification-title">{{ notification.title }}</h4>
+                <div class="notification-meta">
+                  <span class="notification-type">{{ getTypeLabel(notification.type) }}</span>
+                  <span class="notification-date">{{ formatNotificationTime(notification.createdAt) }}</span>
+                </div>
+              </div>
+              <div class="notification-status">
+                <div class="status-indicator" *ngIf="!notification.isRead"></div>
+                <span class="notification-icon">{{ getNotificationIcon(notification.type) }}</span>
+              </div>
+            </div>
+
+            <div class="notification-details">
+              <p class="notification-preview">{{ notification.content }}</p>
+              
+              <div class="detail-row">
+
+                <span class="attachment-indicator" *ngIf="notification.attachments && notification.attachments.length > 0">
+                  📎 {{ notification.attachments.length }}
+                </span>
+              </div>
+              
+              <div class="sender-info" *ngIf="notification.createdBy">
+                <div class="sender-avatar">{{ getSenderInitials(notification.createdBy.name) }}</div>
+                <span class="sender-name">{{ notification.createdBy.name }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="!filteredNotifications || filteredNotifications.length === 0">
+        <div class="empty-icon">🔔</div>
+        <h3>Aucune notification trouvée</h3>
+        <p *ngIf="hasActiveFilters()">Essayez de modifier vos filtres pour voir plus de résultats</p>
+        <p *ngIf="!hasActiveFilters()">Aucune notification n'est disponible pour le moment</p>
+        <button *ngIf="hasActiveFilters()" class="reset-btn" (click)="resetFilters()">
+          Réinitialiser les filtres
+        </button>
+      </div>
+
+      <!-- Load More Button -->
+      <div class="load-more-container" *ngIf="hasMoreNotifications && filteredNotifications.length > 0 && !loading">
+        <button class="load-more-btn" (click)="loadMoreNotifications()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6,9 12,15 18,9"></polyline>
+          </svg>
+          Charger plus de notifications
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="loading">
+      <div class="loader"></div>
+      <p>Chargement de vos notifications...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-container" *ngIf="error && !loading">
+      <div class="error-icon">⚠️</div>
+      <h3>Oops! Une erreur s'est produite</h3>
+      <p>{{ error }}</p>
+      <button class="retry-button" (click)="loadNotifications()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23,4 23,10 17,10"></polyline>
+          <path d="M20.49,15A9,9 0 1,1 5.64,5.64L1,10"></path>
+        </svg>
+        Réessayer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Detail Modal -->
+<div class="modal-overlay" *ngIf="selectedNotification" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title-section">
+        <div class="modal-icon">{{ getNotificationIcon(selectedNotification.type) }}</div>
+        <div>
+          <h2 class="modal-title">{{ selectedNotification.title }}</h2>
+          <div class="modal-meta">
+            <span class="modal-date">{{ formatDetailTime(selectedNotification.createdAt) }}</span>
+            <span class="modal-type">{{ getTypeLabel(selectedNotification.type) }}</span>
+
+          </div>
+        </div>
+      </div>
+      <button class="close-modal-btn" (click)="closeModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Notification Content -->
+      <div class="modal-section">
+        <h3 class="section-subtitle">Message</h3>
+        <div class="message-content" [innerHTML]="formatDetailMessage(selectedNotification.content)"></div>
+      </div>
+
+      
+
+      <!-- Attachments -->
+      <div class="modal-section" *ngIf="selectedNotification.attachments && selectedNotification.attachments.length > 0">
+        <h3 class="section-subtitle">Pièces jointes ({{ selectedNotification.attachments.length }})</h3>
+        <div class="attachments-list">
+          <div class="attachment-item" *ngFor="let attachment of selectedNotification.attachments">
+            <div class="attachment-icon">{{ getFileIcon(attachment.mimetype) }}</div>
+            <div class="attachment-details">
+              <p class="attachment-name">{{ attachment.originalName }}</p>
+              <p class="attachment-size">{{ formatFileSize(attachment.size) }}</p>
+            </div>
+            <div class="attachment-actions">
+              <button class="download-btn" (click)="downloadAttachment(attachment)" title="Télécharger">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7,10 12,15 17,10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </button>
+                
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sender Information -->
+      <div class="modal-section" *ngIf="selectedNotification.createdBy">
+        <h3 class="section-subtitle">Expéditeur</h3>
+        <div class="sender-card">
+          <div class="sender-avatar-large">{{ getSenderInitials(selectedNotification.createdBy.name) }}</div>
+          <div class="sender-details">
+            <h4>{{ selectedNotification.createdBy.name }}</h4>
+            <p>{{ selectedNotification.createdBy.role }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Information -->
+      <div class="modal-section dates-section">
+        <h3 class="section-subtitle">Informations supplémentaires</h3>
+        <div class="dates-grid">
+          <div class="date-item">
+            <span class="date-label">Date de publication</span>
+            <span class="date-value">{{ formatDetailTime(selectedNotification.publishDate) }}</span>
+          </div>
+          <div class="date-item" *ngIf="selectedNotification.expiryDate">
+            <span class="date-label">Date d'expiration</span>
+            <span class="date-value">{{ formatDetailTime(selectedNotification.expiryDate) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="action-btn delete-btn" (click)="deleteNotification(selectedNotification)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3,6 5,6 21,6"></polyline>
+          <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"></path>
+        </svg>
+        Supprimer
+      </button>
+      <button class="action-btn close-btn" (click)="closeModal()">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- File Preview Modal -->
+<div class="file-preview-modal" *ngIf="previewFile" (click)="closePreview()">
+  <div class="preview-modal-content" (click)="$event.stopPropagation()">
+    <div class="preview-header">
+      <h3>{{ previewFile.originalName }}</h3>
+      <button class="close-preview-btn" (click)="closePreview()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="preview-body">
+      <img *ngIf="previewFile.mimetype.includes('image')" 
+           [src]="previewFile.url" 
+           [alt]="previewFile.originalName">
+      <iframe *ngIf="previewFile.mimetype === 'application/pdf'" 
+              [src]="previewFile.url"
+              frameborder="0"></iframe>
+      <div *ngIf="!previewFile.mimetype.includes('image') && previewFile.mimetype !== 'application/pdf'" 
+           class="preview-placeholder">
+        <div class="placeholder-icon">{{ getFileIcon(previewFile.mimetype) }}</div>
+        <p>Aperçu non disponible pour ce type de fichier</p>
+        <button class="download-btn" (click)="downloadAttachment(previewFile)">
+          Télécharger le fichier
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

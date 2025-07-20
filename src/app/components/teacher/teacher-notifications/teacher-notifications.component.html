@@ -52,7 +52,7 @@
         </button>
 
         <!-- Create Notification -->
-        <button class="btn-success" (click)="openCreateModal()">
+        <button class="create-btn" (click)="openCreateModal()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/>
@@ -202,14 +202,7 @@
                 <div class="priority-badge" [ngClass]="getPriorityColor(notification.priority)">
                   {{ notification.priority }}
                 </div>
-                <button 
-                  class="selection-checkbox"
-                  (click)="$event.stopPropagation(); toggleNotificationSelection(notification._id)"
-                  [class.checked]="selectedNotifications.has(notification._id)">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                </button>
+
                 
                 <!-- Edit/Delete Actions for own notifications -->
                 <div class="notification-actions" *ngIf="canEditNotification(notification)">
@@ -219,7 +212,7 @@
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                     </svg>
                   </button>
-                  <button class="action-btn delete-btn" (click)="$event.stopPropagation(); deleteNotification(notification)" title="Supprimer">
+                  <button class="action-btn delete-btn" (click)="$event.stopPropagation(); openDeleteModal(notification)" title="Supprimer">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="3 6 5 6 21 6"/>
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -267,15 +260,6 @@
             (click)="onNotificationClick(notification)">
             
             <div class="item-left">
-              <button 
-                class="selection-checkbox"
-                (click)="$event.stopPropagation(); toggleNotificationSelection(notification._id)"
-                [class.checked]="selectedNotifications.has(notification._id)">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              </button>
-              
               <div class="notification-icon" [ngClass]="getTypeColor(notification.type)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -318,7 +302,7 @@
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                   </svg>
                 </button>
-                <button class="action-btn delete-btn" (click)="$event.stopPropagation(); deleteNotification(notification)" title="Supprimer">
+                <button class="action-btn delete-btn" (click)="$event.stopPropagation(); openDeleteModal(notification)" title="Supprimer">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"/>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"/>
@@ -384,24 +368,7 @@
             <p>{{ selectedNotification.content }}</p>
           </div>
           
-          <div class="detail-info">
-            <div class="info-row">
-              <span class="label">Créé par:</span>
-              <span class="value">{{ selectedNotification.createdBy.name }}</span>
-            </div>
-            <div class="info-row" *ngIf="selectedNotification.targetClass">
-              <span class="label">Classe:</span>
-              <span class="value">{{ selectedNotification.targetClass.name }}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Date de création:</span>
-              <span class="value">{{ selectedNotification.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
-            </div>
-            <div class="info-row" *ngIf="selectedNotification.expiryDate">
-              <span class="label">Expire le:</span>
-              <span class="value">{{ selectedNotification.expiryDate | date:'dd/MM/yyyy à HH:mm' }}</span>
-            </div>
-          </div>
+
 
           <div class="attachments-section" *ngIf="selectedNotification.attachments && selectedNotification.attachments.length > 0">
             <h4>Pièces jointes</h4>
@@ -419,22 +386,40 @@
                   <span class="attachment-name">{{ attachment.originalName }}</span>
                   <span class="attachment-size">{{ formatFileSize(attachment.size) }}</span>
                 </div>
-                <div class="attachment-actions">
-                  <button class="btn-icon" (click)="viewAttachment(selectedNotification._id, attachment.filename)" title="Voir">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
-                  <button class="btn-icon" (click)="downloadAttachment(selectedNotification, attachment.filename)" title="Télécharger">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                      <polyline points="7 10 12 15 17 10"/>
-                      <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                  </button>
-                </div>
+            <div class="attachment-actions">
+              <button 
+                class="btn-icon" 
+                (click)="downloadAttachment(selectedNotification, attachment.filename)" 
+                title="Télécharger"
+                style="width: 48px; height: 48px; padding: 8px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </button>
+            </div>
+
+
               </div>
+            </div>
+          </div>
+                    <div class="detail-info">
+            <div class="info-row">
+              <span class="label">Créé par:</span>
+              <span class="value">{{ selectedNotification.createdBy.name }}</span>
+            </div>
+            <div class="info-row" *ngIf="selectedNotification.targetClass">
+              <span class="label">Classe:</span>
+              <span class="value">{{ selectedNotification.targetClass.name }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Date de création:</span>
+              <span class="value">{{ selectedNotification.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
+            </div>
+            <div class="info-row" *ngIf="selectedNotification.expiryDate">
+              <span class="label">Expire le:</span>
+              <span class="value">{{ selectedNotification.expiryDate | date:'dd/MM/yyyy à HH:mm' }}</span>
             </div>
           </div>
         </div>
@@ -456,169 +441,274 @@
       </div>
 
       <div class="modal-body">
-        <form class="notification-form" (ngSubmit)="showCreateModal ? createNotification() : updateNotification()">
-          <div class="form-row">
-            <div class="form-group full-width">
-              <label for="title">Titre *</label>
-              <input 
-                type="text" 
-                id="title" 
-                [(ngModel)]="createForm.title" 
-                name="title"
-                placeholder="Titre de la notification"
-                class="form-input"
-                required>
-            </div>
-          </div>
+        <!-- Updated Create/Edit Notification Modal Form -->
 
-          <div class="form-row">
-            <div class="form-group full-width">
-              <label for="content">Contenu *</label>
-              <textarea 
-                id="content" 
-                [(ngModel)]="createForm.content" 
-                name="content"
-                placeholder="Contenu détaillé de la notification"
-                class="form-textarea"
-                rows="4"
-                required></textarea>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="type">Type</label>
-              <select id="type" [(ngModel)]="createForm.type" name="type" class="form-select">
-                <option [value]="NotificationType.GENERAL">Général</option>
-                <option [value]="NotificationType.CLASS">Classe</option>
-                <option [value]="NotificationType.EXAM">Examen</option>
-                <option [value]="NotificationType.SCHEDULE">Horaire</option>
-                <option [value]="NotificationType.ANNOUNCEMENT">Annonce</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="priority">Priorité</label>
-              <select id="priority" [(ngModel)]="createForm.priority" name="priority" class="form-select">
-                <option [value]="NotificationPriority.LOW">Faible</option>
-                <option [value]="NotificationPriority.MEDIUM">Moyen</option>
-                <option [value]="NotificationPriority.HIGH">Élevé</option>
-                <option [value]="NotificationPriority.URGENT">Urgent</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="targetAudience">Destinataires</label>
-              <select id="targetAudience" [(ngModel)]="createForm.targetAudience" name="targetAudience" class="form-select" (change)="onTargetAudienceChange()">
-                <option [value]="TargetAudience.ALL">Tous</option>
-                <option [value]="TargetAudience.STUDENTS">Étudiants</option>
-                <option [value]="TargetAudience.TEACHERS">Enseignants</option>
-
-                <option [value]="TargetAudience.SPECIFIC_CLASS">Classe spécifique</option>
-              </select>
-            </div>
-
-            <div class="form-group" *ngIf="createForm.targetAudience === TargetAudience.SPECIFIC_CLASS">
-              <label for="targetClass">Classe</label>
-              <select id="targetClass" [(ngModel)]="createForm.targetClass" name="targetClass" class="form-select">
-                <option value="">Sélectionner une classe</option>
-                <option *ngFor="let class of teacherClasses" [value]="class._id">
-                  {{ class.name }} - {{ class.grade }}
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="publishDate">Date de publication</label>
-              <input 
-                type="datetime-local" 
-                id="publishDate" 
-                [(ngModel)]="createForm.publishDate" 
-                name="publishDate"
-                class="form-input">
-            </div>
-
-            <div class="form-group">
-              <label for="expiryDate">Date d'expiration</label>
-              <input 
-                type="datetime-local" 
-                id="expiryDate" 
-                [(ngModel)]="createForm.expiryDate" 
-                name="expiryDate"
-                class="form-input">
-            </div>
-          </div>
-
-          <!-- File Attachments -->
-          <div class="form-section" *ngIf="showCreateModal">
-            <h4>Pièces jointes</h4>
-            
-            <div class="file-upload-area">
-              <input type="file" #fileInput multiple (change)="onFileSelect($event)" 
-                     accept=".pdf,.xls,.xlsx,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp" 
-                     style="display: none;">
-              <div class="upload-content" (click)="fileInput.click()">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17 8 12 3 7 8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                <p>Cliquez pour sélectionner des fichiers</p>
-                <span>PDF, Word, Excel, Images (Max 10MB, 5 fichiers)</span>
+          <form class="notification-form" (ngSubmit)="showCreateModal ? createNotification() : updateNotification()">
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="title">Titre *</label>
+                <input 
+                  type="text" 
+                  id="title" 
+                  [(ngModel)]="createForm.title" 
+                  name="title"
+                  placeholder="Titre de la notification"
+                  class="form-input"
+                  required>
               </div>
             </div>
 
-            <div class="selected-files" *ngIf="selectedFiles.length > 0">
-              <div class="file-item" *ngFor="let file of selectedFiles; let i = index">
-                <div class="file-info">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                  </svg>
-                  <span>{{ file.name }}</span>
-                  <span class="file-size">({{ formatFileSize(file.size) }})</span>
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="content">Contenu *</label>
+                <textarea 
+                  id="content" 
+                  [(ngModel)]="createForm.content" 
+                  name="content"
+                  placeholder="Contenu détaillé de la notification"
+                  class="form-textarea"
+                  rows="4"
+                  required></textarea>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="type">Type</label>
+                <select id="type" [(ngModel)]="createForm.type" name="type" class="form-select">
+                  <option [value]="NotificationType.GENERAL">Général</option>
+                  <option [value]="NotificationType.CLASS">Classe</option>
+                  <option [value]="NotificationType.EXAM">Examen</option>
+                  <option [value]="NotificationType.SCHEDULE">Horaire</option>
+                  <option [value]="NotificationType.ANNOUNCEMENT">Annonce</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="priority">Priorité</label>
+                <select id="priority" [(ngModel)]="createForm.priority" name="priority" class="form-select">
+                  <option [value]="NotificationPriority.LOW">Faible</option>
+                  <option [value]="NotificationPriority.MEDIUM">Moyen</option>
+                  <option [value]="NotificationPriority.HIGH">Élevé</option>
+                  <option [value]="NotificationPriority.URGENT">Urgent</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Class Selection - Only show when creating -->
+            <div class="form-row" *ngIf="showCreateModal">
+              <div class="form-group full-width">
+                <label for="targetClass">Classe *</label>
+                <select 
+                  id="targetClass" 
+                  [(ngModel)]="createForm.targetClass" 
+                  name="targetClass" 
+                  class="form-select"
+                  required>
+                  <option value="" disabled>Sélectionner une classe</option>
+                  <option *ngFor="let class of teacherClasses" [value]="class._id">
+                    {{ class.name }} - {{ class.grade }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Class Display - Only show when editing (read-only) -->
+            <div class="form-row" *ngIf="showEditModal && editingNotification">
+              <div class="form-group full-width">
+                <label>Classe</label>
+                <div class="form-display-field">
+                  {{ editingNotification.targetClass?.name }} - {{ editingNotification.targetClass?.grade }}
                 </div>
-                <button type="button" class="remove-file" (click)="removeFile(i)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
-                </button>
+                <small class="form-help-text">La classe ne peut pas être modifiée après création</small>
               </div>
             </div>
-          </div>
 
-          <!-- Upload Progress -->
-          <div class="upload-progress" *ngIf="uploadProgress > 0 && uploadProgress < 100">
-            <div class="progress-bar">
-              <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+            <!-- Date Fields - Only show when creating -->
+            <div class="form-row" *ngIf="showCreateModal">
+              <div class="form-group">
+                <label for="publishDate">Date de publication</label>
+                <input 
+                  type="datetime-local" 
+                  id="publishDate" 
+                  [(ngModel)]="createForm.publishDate" 
+                  name="publishDate"
+                  class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label for="expiryDate">Date d'expiration</label>
+                <input 
+                  type="datetime-local" 
+                  id="expiryDate" 
+                  [(ngModel)]="createForm.expiryDate" 
+                  name="expiryDate"
+                  class="form-input">
+              </div>
             </div>
-            <span class="progress-text">Téléchargement: {{ uploadProgress }}%</span>
-          </div>
 
-          <div class="form-actions">
-            <button type="button" class="btn-secondary" (click)="showCreateModal ? closeCreateModal() : closeEditModal()">
-              Annuler
-            </button>
-            <button type="submit" class="btn-primary" [disabled]="!createForm.title.trim() || !createForm.content.trim() || isUploading">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!isUploading">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              <span *ngIf="!isUploading">
-                {{ showCreateModal ? 'Créer' : 'Mettre à jour' }}
-              </span>
-              <span *ngIf="isUploading" class="uploading">
-                <span class="spinner-small"></span>
-                {{ selectedFiles.length > 0 ? 'Téléchargement...' : 'Création...' }}
-              </span>
-            </button>
-          </div>
-        </form>
+            <!-- Date Display - Only show when editing (read-only) -->
+            <div class="form-row" *ngIf="showEditModal && editingNotification">
+              <div class="form-group">
+                <label>Date de création</label>
+                <div class="form-display-field">
+                  {{ editingNotification.createdAt | date:'dd/MM/yyyy à HH:mm' }}
+                </div>
+              </div>
+
+              <div class="form-group" *ngIf="editingNotification.expiryDate">
+                <label>Date d'expiration</label>
+                <div class="form-display-field">
+                  {{ editingNotification.expiryDate | date:'dd/MM/yyyy à HH:mm' }}
+                </div>
+                <small class="form-help-text">Les dates ne peuvent pas être modifiées après création</small>
+              </div>
+            </div>
+
+            <!-- File Attachments - Only show when creating -->
+            <div class="form-section" *ngIf="showCreateModal">
+              <h4>Pièces jointes</h4>
+              
+              <div class="file-upload-area">
+                <input type="file" #fileInput multiple (change)="onFileSelect($event)" 
+                      accept=".pdf,.xls,.xlsx,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp" 
+                      style="display: none;">
+                <div class="upload-content" (click)="fileInput.click()">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <p>Cliquez pour sélectionner des fichiers</p>
+                  <span>PDF, Word, Excel, Images (Max 10MB, 5 fichiers)</span>
+                </div>
+              </div>
+
+              <div class="selected-files" *ngIf="selectedFiles.length > 0">
+                <div class="file-item" *ngFor="let file of selectedFiles; let i = index">
+                  <div class="file-info">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <span>{{ file.name }}</span>
+                    <span class="file-size">({{ formatFileSize(file.size) }})</span>
+                  </div>
+                  <button type="button" class="remove-file" (click)="removeFile(i)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Existing Attachments Display - Only show when editing -->
+            <div class="form-section" *ngIf="showEditModal && editingNotification && editingNotification.attachments && editingNotification.attachments.length > 0">
+              <h4>Pièces jointes existantes</h4>
+              <div class="existing-attachments">
+                <div class="attachment-item" *ngFor="let attachment of editingNotification.attachments">
+                  <div class="attachment-info">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14,2 14,8 20,8"/>
+                    </svg>
+                    <span class="attachment-name">{{ attachment.originalName }}</span>
+                  </div>
+                </div>
+                <small class="form-help-text">Les pièces jointes ne peuvent pas être modifiées après création</small>
+              </div>
+            </div>
+
+            <!-- Upload Progress -->
+            <div class="upload-progress" *ngIf="uploadProgress > 0 && uploadProgress < 100">
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+              </div>
+              <span class="progress-text">Téléchargement: {{ uploadProgress }}%</span>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" (click)="showCreateModal ? closeCreateModal() : closeEditModal()">
+                Annuler
+              </button>
+              <button 
+                type="submit" 
+                class="btn-primary" 
+                [disabled]="!createForm.title.trim() || !createForm.content.trim() || (showCreateModal && !createForm.targetClass) || isUploading">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!isUploading">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span *ngIf="!isUploading">
+                  {{ showCreateModal ? 'Créer' : 'Mettre à jour' }}
+                </span>
+                <span *ngIf="isUploading" class="uploading">
+                  <span class="spinner-small"></span>
+                  {{ selectedFiles.length > 0 ? 'Téléchargement...' : (showCreateModal ? 'Création...' : 'Mise à jour...') }}
+                </span>
+              </button>
+            </div>
+          </form>
       </div>
     </div>
   </div>
+  <!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-content confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="warning-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <h2 class="modal-title">Confirmer la suppression</h2>
+    </div>
+
+    <div class="modal-body">
+      <div class="notification-preview" *ngIf="notificationToDelete">
+        <h4 class="preview-title">{{ notificationToDelete.title }}</h4>
+        <p class="preview-content">{{ notificationToDelete.content | slice:0:100 }}{{ notificationToDelete.content.length > 100 ? '...' : '' }}</p>
+        <div class="preview-meta">
+          <span class="preview-class" *ngIf="notificationToDelete.targetClass">
+            Classe: {{ notificationToDelete.targetClass.name }}
+          </span>
+          <span class="preview-date">
+            Créé le {{ notificationToDelete.createdAt | date:'dd/MM/yyyy à HH:mm' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="warning-message">
+        <p><strong>Cette action est irréversible.</strong></p>
+        <p>La notification sera définitivement supprimée et ne pourra pas être récupérée. Tous les étudiants de la classe concernée n'y auront plus accès.</p>
+      </div>
+
+      <div class="confirmation-actions">
+        <button class="btn-cancel" (click)="closeDeleteModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          Annuler
+        </button>
+        <button class="btn-delete" (click)="confirmDeleteNotification()" [disabled]="isDeleting">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!isDeleting">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          <span *ngIf="!isDeleting">Supprimer définitivement</span>
+          <span *ngIf="isDeleting" class="deleting">
+            <span class="spinner-small"></span>
+            Suppression...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 </div>
