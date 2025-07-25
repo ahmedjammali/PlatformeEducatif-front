@@ -1,4 +1,4 @@
-<footer class="footer"  *ngIf="!isAdmin">
+<footer class="footer" *ngIf="!isAdmin">
   <div class="footer-wave">
     <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
       <path d="M0,20 C150,60 350,60 600,40 C850,20 1050,50 1250,50 C1350,50 1400,40 1440,30 L1440,120 L0,120 Z" 
@@ -37,7 +37,7 @@
       <h4 class="section-title">Liens Rapides</h4>
       <ul class="quick-links">
         <li *ngFor="let link of quickLinks">
-          <a [routerLink]="link.path" class="footer-link">
+          <a (click)="handleQuickLinkClick(link)" class="footer-link" style="cursor: pointer;">
             <span class="link-arrow">→</span>
             {{ link.name }}
           </a>
@@ -74,11 +74,7 @@
         © {{ currentYear }} {{schoolName}}. Tous droits réservés.
       </p>
       <div class="footer-bottom-links">
-        <a href="#">Politique de confidentialité</a>
-        <span class="separator">•</span>
-        <a href="#">Conditions d'utilisation</a>
-        <span class="separator">•</span>
-        <a href="#">Plan du site</a>
+        <span class="">Developed By AtTechnologie</span>
       </div>
     </div>
   </div>

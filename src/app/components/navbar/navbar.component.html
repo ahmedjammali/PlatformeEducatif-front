@@ -1,4 +1,4 @@
-<nav class="navbar" [class.scrolled]="isScrolled" *ngIf="!isLoggedIn" >
+<nav class="navbar" [class.scrolled]="isScrolled" *ngIf="!isLoggedIn">
   <div class="navbar-container">
     <!-- Logo Section -->
     <div class="navbar-logo" routerLink="/">
@@ -14,15 +14,22 @@
 
     <!-- Desktop Navigation -->
     <div class="navbar-menu desktop-menu">
-      <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+      <a class="nav-link" 
+         routerLink="/" 
+         [class.active]="isActiveSection('home')"
+         (click)="scrollToSection('home')">
         <span class="nav-icon">🏠</span>
         Accueil
       </a>
-      <a class="nav-link" (click)="scrollToSection('about')">
+      <a class="nav-link" 
+         [class.active]="isActiveSection('about')"
+         (click)="scrollToSection('about')">
         <span class="nav-icon">📚</span>
         À Propos
       </a>
-      <a class="nav-link" (click)="scrollToSection('contact')">
+      <a class="nav-link" 
+         [class.active]="isActiveSection('contact')"
+         (click)="scrollToSection('contact')">
         <span class="nav-icon">📧</span>
         Contact
       </a>
@@ -58,15 +65,22 @@
 
   <!-- Mobile Navigation -->
   <div class="mobile-menu" [class.open]="isMobileMenuOpen">
-    <a class="mobile-nav-link" routerLink="/" (click)="closeMobileMenu()">
+    <a class="mobile-nav-link" 
+       routerLink="/" 
+       [class.active]="isActiveSection('home')"
+       (click)="scrollToSection('home'); closeMobileMenu()">
       <span class="nav-icon">🏠</span>
       Accueil
     </a>
-    <a class="mobile-nav-link" (click)="scrollToSection('about')">
+    <a class="mobile-nav-link" 
+       [class.active]="isActiveSection('about')"
+       (click)="scrollToSection('about'); closeMobileMenu()">
       <span class="nav-icon">📚</span>
       À Propos
     </a>
-    <a class="mobile-nav-link" (click)="scrollToSection('contact')">
+    <a class="mobile-nav-link" 
+       [class.active]="isActiveSection('contact')"
+       (click)="scrollToSection('contact'); closeMobileMenu()">
       <span class="nav-icon">📧</span>
       Contact
     </a>

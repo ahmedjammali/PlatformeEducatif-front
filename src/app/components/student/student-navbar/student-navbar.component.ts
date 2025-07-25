@@ -33,7 +33,8 @@ export class StudentNavbarComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private schoolService: SchoolService,
-    private notificationService: NotificationService , private router : Router
+    private notificationService: NotificationService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -271,6 +272,7 @@ export class StudentNavbarComponent implements OnInit, OnDestroy {
         return 'Normal';
     }
   }
+
   /**
    * Format notification time
    */
@@ -322,6 +324,8 @@ export class StudentNavbarComponent implements OnInit, OnDestroy {
     // Prevent body scroll when menu is open
     if (this.isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
+      // Also close notification dropdown when opening mobile menu
+      this.closeNotificationDropdown();
     } else {
       document.body.style.overflow = '';
     }
@@ -347,6 +351,32 @@ export class StudentNavbarComponent implements OnInit, OnDestroy {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  }
+
+  /**
+   * Get school abbreviation for responsive display
+   */
+  getSchoolAbbreviation(): string {
+    if (!this.schoolData?.name) return 'EM';
+    
+    // If the school name is short enough, return it as is
+    if (this.schoolData.name.length <= 15) {
+      return this.schoolData.name;
+    }
+    
+    // Otherwise, create an abbreviation from the first letters of each word
+    const words = this.schoolData.name.split(' ');
+    if (words.length > 1) {
+      // For multi-word names, take first letter of each word
+      return words
+        .map(word => word[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 3);
+    }
+    
+    // If it's a single long word, take the first 10 characters
+    return this.schoolData.name.slice(0, 10) + '...';
   }
 
   /**
@@ -394,17 +424,20 @@ export class StudentNavbarComponent implements OnInit, OnDestroy {
     this.authService.logout();
   }
 
-  // Dans la navbar, au clic sur "Voir tout"
+  /**
+   * Navigate to all notifications page
+   */
   viewAllNotifications(): void {
     this.router.navigate(['/student/notifications']);
     this.closeNotificationDropdown();
   }
+
+  /**
+   * View notification details
+   */
   viewNotificationDetails(notification: Notification): void {
-    this.markAsRead(notification)
+    this.markAsRead(notification);
     this.router.navigate(['/student/notifications']);
     this.closeNotificationDropdown();
   }
-
-
-
 }

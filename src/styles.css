@@ -273,3 +273,19 @@ button {
     --font-2xl: 1.125rem;
   }
 }
+/* In your main app styles */
+.app-container {
+  display: flex;
+}
+
+.app-main-content {
+  flex: 1;
+  overflow-x: hidden;
+}
+
+/* Ensure the student chat component takes full width of its container */
+app-student-chat {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

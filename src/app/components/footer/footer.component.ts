@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AuthService } from 'src/app/services/auth.service';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SchoolService } from 'src/app/services/school.service';
 
@@ -12,9 +13,7 @@ export class FooterComponent implements OnInit, OnDestroy {
   currentYear = new Date().getFullYear();
   isAdmin = false;
   private subscriptions: Subscription = new Subscription();
-    schoolName  : string  = ""  ;
-
-
+  schoolName: string = "";
 
   socialLinks = [
     { icon: '📘', name: 'Facebook', url: 'https://facebook.com/hibaschool' },
@@ -24,10 +23,10 @@ export class FooterComponent implements OnInit, OnDestroy {
   ];
 
   quickLinks = [
-    { name: 'Accueil', path: '/' },
-    { name: 'À Propos', path: '/about' },
-    { name: 'Contact', path: '/contact' },
-    { name: 'Connexion', path: '/login' }
+    { name: 'Accueil', section: 'home' },
+    { name: 'À Propos', section: 'about' },
+    { name: 'Contact', section: 'contact' },
+    { name: 'Connexion', path: '/login' } // Keep login as router navigation
   ];
 
   contactInfo = {
@@ -37,11 +36,14 @@ export class FooterComponent implements OnInit, OnDestroy {
     hours: 'Lun - Ven: 8h00 - 17h00'
   };
 
-  constructor(private authService: AuthService , private schoolService: SchoolService) {}
+  constructor(
+    private authService: AuthService, 
+    private schoolService: SchoolService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-
-     // Fetch school name from service
+    // Fetch school name from service
     this.schoolService.getSchool().subscribe({
       next: (response) => {
         console.log('School data fetched:', response);
@@ -79,5 +81,44 @@ export class FooterComponent implements OnInit, OnDestroy {
 
   scrollToTop(): void {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Handle quick link clicks
+  handleQuickLinkClick(link: any): void {
+    if (link.path) {
+      // Handle router navigation (like login)
+      this.router.navigate([link.path]);
+    } else if (link.section) {
+      // Handle section scrolling
+      this.scrollToSection(link.section);
+    }
+  }
+
+  // Same scrolling logic as navbar
+  scrollToSection(sectionId: string): void {
+    if (this.router.url !== '/') {
+      this.router.navigate(['/']);
+      setTimeout(() => {
+        if (sectionId === 'home') {
+          // Scroll to top of the page for home section
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          const element = document.getElementById(sectionId);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      }, 500);
+    } else {
+      if (sectionId === 'home') {
+        // Scroll to top of the page for home section
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }
   }
 }

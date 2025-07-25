@@ -1,6 +1,6 @@
 <div class="landing-page">
   <!-- Hero Section -->
-  <section class="hero-section">
+  <section class="hero-section" id="home">
     <div class="hero-background">
       <div class="shape shape-1"></div>
       <div class="shape shape-2"></div>
@@ -25,44 +25,56 @@
             <span>En savoir plus</span>
           </button>
         </div>
-        <div class="hero-stats">
-          <div class="stat-item" *ngFor="let stat of statistics.slice(0, 3)">
-            <span class="stat-icon">{{ stat.icon }}</span>
-            <span class="stat-number">{{ stat.number }}</span>
-            <span class="stat-label">{{ stat.label }}</span>
-          </div>
-        </div>
+
       </div>
       
       <div class="hero-visual">
-        <div class="floating-card card-1">
-          <span class="card-icon">📚</span>
-          <span class="card-text">Cours Interactifs</span>
-        </div>
-        <div class="floating-card card-2">
-          <span class="card-icon">🎯</span>
-          <span class="card-text">Objectifs Clairs</span>
-        </div>
-        <div class="floating-card card-3">
-          <span class="card-icon">📈</span>
-          <span class="card-text">Progrès Visible</span>
-        </div>
-        <div class="main-visual">
-          <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#626F47;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#A4B465;stop-opacity:1" />
-              </linearGradient>
-            </defs>
-            <circle cx="200" cy="200" r="150" fill="url(#gradient1)" opacity="0.1"/>
-            <circle cx="200" cy="200" r="120" fill="url(#gradient1)" opacity="0.2"/>
-            <circle cx="200" cy="200" r="90" fill="url(#gradient1)" opacity="0.3"/>
-            <circle cx="200" cy="200" r="60" fill="#A4B465"/>
-            <text x="200" y="210" text-anchor="middle" fill="#F5ECD5" font-size="48" font-weight="bold">HS</text>
-          </svg>
-        </div>
-      </div>
+  <!-- AI Tutor Card -->
+  <div class="floating-card card-1">
+    <span class="card-icon">🤖</span>
+    <span class="card-text">IA PROF</span>
+  </div>
+  
+  <!-- Notifications Card -->
+  <div class="floating-card card-2">
+    <span class="card-icon">🔔</span>
+    <span class="card-text">Notifications</span>
+  </div>
+  
+  <!-- Progress Tracking Card -->
+  <div class="floating-card card-3">
+    <span class="card-icon">📊</span>
+    <span class="card-text">Suivi Progrès</span>
+  </div>
+  
+  <!-- Grades & Exercises Card -->
+  <div class="floating-card card-4">
+    <span class="card-icon">📝</span>
+    <span class="card-text">Notes & Exercices</span>
+  </div>
+  
+  <!-- Parent Dashboard Card -->
+  <div class="floating-card card-5">
+    <span class="card-icon">👨‍👩‍👧‍👦</span>
+    <span class="card-text">Tableau Parent</span>
+  </div>
+
+  <div class="main-visual">
+    <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" class="hero-svg">
+      <defs>
+        <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" class="gradient-start" />
+          <stop offset="100%" class="gradient-end" />
+        </linearGradient>
+      </defs>
+      <circle cx="200" cy="200" r="150" fill="url(#heroGradient)" opacity="0.1"/>
+      <circle cx="200" cy="200" r="120" fill="url(#heroGradient)" opacity="0.2"/>
+      <circle cx="200" cy="200" r="90" fill="url(#heroGradient)" opacity="0.3"/>
+      <circle cx="200" cy="200" r="60" class="main-circle"/>
+      <text x="200" y="210" text-anchor="middle" class="logo-text" font-size="48" font-weight="bold">HS</text>
+    </svg>
+  </div>
+  </div>
     </div>
   </section>
 
@@ -77,12 +89,12 @@
       <div class="features-grid">
         <div class="feature-card" *ngFor="let feature of features; let i = index" 
              [style.animation-delay]="i * 0.1 + 's'">
-          <div class="feature-icon" [style.background-color]="feature.color + '20'">
+          <div class="feature-icon" [ngClass]="'feature-icon-' + i">
             <span>{{ feature.icon }}</span>
           </div>
           <h3 class="feature-title">{{ feature.title }}</h3>
           <p class="feature-description">{{ feature.description }}</p>
-          <div class="feature-decoration" [style.background-color]="feature.color"></div>
+          <div class="feature-decoration" [ngClass]="'feature-decoration-' + i"></div>
         </div>
       </div>
     </div>
@@ -122,7 +134,7 @@
              *ngFor="let testimonial of testimonials; let i = index"
              [class.active]="i === currentTestimonialIndex">
           <div class="testimonial-header">
-            <div class="testimonial-avatar" [style.background]="'linear-gradient(135deg, #626F47, #A4B465)'">
+            <div class="testimonial-avatar">
               {{ testimonial.avatar }}
             </div>
             <div class="testimonial-info">
@@ -198,68 +210,68 @@
         </div>
         
         <div class="contact-form">
-  <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
-    <div class="form-group">
-      <input 
-        type="text" 
-        placeholder="Votre nom" 
-        class="form-control"
-        formControlName="name"
-        [class.is-invalid]="name?.invalid && (name?.dirty || name?.touched)">
-      <div *ngIf="name?.invalid && (name?.dirty || name?.touched)" class="invalid-feedback">
-        <div *ngIf="name?.errors?.['required']">Name is required</div>
-        <div *ngIf="name?.errors?.['minlength']">Name must be at least 2 characters</div>
-      </div>
-    </div>
-    
-    <div class="form-group">
-      <input 
-        type="email" 
-        placeholder="Votre email" 
-        class="form-control"
-        formControlName="email"
-        [class.is-invalid]="email?.invalid && (email?.dirty || email?.touched)">
-      <div *ngIf="email?.invalid && (email?.dirty || email?.touched)" class="invalid-feedback">
-        <div *ngIf="email?.errors?.['required']">Email is required</div>
-        <div *ngIf="email?.errors?.['email']">Please enter a valid email</div>
-      </div>
-    </div>
-    
-    <div class="form-group">
-      <input 
-        type="tel" 
-        placeholder="Votre téléphone" 
-        class="form-control"
-        formControlName="phone"
-        [class.is-invalid]="phone?.invalid && (phone?.dirty || phone?.touched)">
-      <div *ngIf="phone?.invalid && (phone?.dirty || phone?.touched)" class="invalid-feedback">
-        <div *ngIf="phone?.errors?.['required']">Phone number is required</div>
-        <div *ngIf="phone?.errors?.['pattern']">Please enter a valid 8-digit phone number</div>
-      </div>
-    </div>
-    
-    <div class="form-group">
-      <textarea 
-        placeholder="Votre message" 
-        rows="4" 
-        class="form-control"
-        formControlName="message"
-        [class.is-invalid]="message?.invalid && (message?.dirty || message?.touched)"></textarea>
-      <div *ngIf="message?.invalid && (message?.dirty || message?.touched)" class="invalid-feedback">
-        <div *ngIf="message?.errors?.['required']">Message is required</div>
-        <div *ngIf="message?.errors?.['minlength']">Message must be at least 10 characters</div>
-      </div>
-    </div>
-    
-    <button 
-      type="submit" 
-      class="submit-button"
-      [disabled]="contactForm.invalid || isLoading">
-      <span>{{ isLoading ? 'Sending...' : 'Envoyer' }}</span>
-      <span class="send-icon">📤</span>
-    </button>
-  </form>
-</div>
+          <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+            <div class="form-group">
+              <input 
+                type="text" 
+                placeholder="Votre nom" 
+                class="form-control"
+                formControlName="name"
+                [class.is-invalid]="name?.invalid && (name?.dirty || name?.touched)">
+              <div *ngIf="name?.invalid && (name?.dirty || name?.touched)" class="invalid-feedback">
+                <div *ngIf="name?.errors?.['required']">Name is required</div>
+                <div *ngIf="name?.errors?.['minlength']">Name must be at least 2 characters</div>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <input 
+                type="email" 
+                placeholder="Votre email" 
+                class="form-control"
+                formControlName="email"
+                [class.is-invalid]="email?.invalid && (email?.dirty || email?.touched)">
+              <div *ngIf="email?.invalid && (email?.dirty || email?.touched)" class="invalid-feedback">
+                <div *ngIf="email?.errors?.['required']">Email is required</div>
+                <div *ngIf="email?.errors?.['email']">Please enter a valid email</div>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <input 
+                type="tel" 
+                placeholder="Votre téléphone" 
+                class="form-control"
+                formControlName="phone"
+                [class.is-invalid]="phone?.invalid && (phone?.dirty || phone?.touched)">
+              <div *ngIf="phone?.invalid && (phone?.dirty || phone?.touched)" class="invalid-feedback">
+                <div *ngIf="phone?.errors?.['required']">Phone number is required</div>
+                <div *ngIf="phone?.errors?.['pattern']">Please enter a valid 8-digit phone number</div>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <textarea 
+                placeholder="Votre message" 
+                rows="4" 
+                class="form-control"
+                formControlName="message"
+                [class.is-invalid]="message?.invalid && (message?.dirty || message?.touched)"></textarea>
+              <div *ngIf="message?.invalid && (message?.dirty || message?.touched)" class="invalid-feedback">
+                <div *ngIf="message?.errors?.['required']">Message is required</div>
+                <div *ngIf="message?.errors?.['minlength']">Message must be at least 10 characters</div>
+              </div>
+            </div>
+            
+            <button 
+              type="submit" 
+              class="submit-button"
+              [disabled]="contactForm.invalid || isLoading">
+              <span>{{ isLoading ? 'Sending...' : 'Envoyer' }}</span>
+              <span class="send-icon">📤</span>
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   </section>

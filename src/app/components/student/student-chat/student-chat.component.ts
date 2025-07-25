@@ -37,6 +37,16 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
   // Subscriptions
   private destroy$ = new Subject<void>();
   private shouldScrollToBottom = false;
+   showConfirmModal = false;
+  confirmModalData: {
+    title: string;
+    message: string;
+    confirmText: string;
+    cancelText: string;
+    chatId?: string;
+    chatTitle?: string;
+  } | null = null;
+
 
   constructor(
     private chatService: ChatService,
@@ -136,6 +146,9 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
   createNewChat(): void {
     if (this.loading) return;
 
+    // Close mobile sidebar when creating new chat
+    this.mobileSidebarOpen = false;
+
     this.loading = true;
     this.loadingMessage = 'Création d\'une nouvelle conversation...';
 
@@ -149,7 +162,6 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
         next: (chat) => {
           this.loading = false;
           this.loadingMessage = '';
-          // Chat is automatically set as active by the service
         },
         error: (error) => {
           this.loading = false;
@@ -162,6 +174,9 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
 
   selectChat(chatId: string): void {
     if (this.activeChat?._id === chatId || this.loading) return;
+
+    // Close mobile sidebar when selecting a chat
+    this.mobileSidebarOpen = false;
 
     this.loading = true;
     this.loadingMessage = 'Chargement de la conversation...';
@@ -183,25 +198,66 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
       });
   }
 
+
   deleteChat(chatId: string, event: Event): void {
     event.stopPropagation();
     
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette conversation ?')) {
-      return;
-    }
-
-    this.chatService.deleteChat(chatId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          // Service handles state updates automatically
-        },
-        error: (error) => {
-          this.showError('Erreur lors de la suppression de la conversation');
-          console.error('Error deleting chat:', error);
-        }
-      });
+    // Find the chat title for better UX
+    const chat = this.chatList.find(c => c._id === chatId);
+    const chatTitle = chat ? chat.title : 'cette conversation';
+    
+    // Show confirmation modal instead of browser alert
+    this.showDeleteConfirmation(chatId, chatTitle);
   }
+
+  // New method to show delete confirmation
+  showDeleteConfirmation(chatId: string, chatTitle: string): void {
+    this.confirmModalData = {
+      title: 'Confirmer la suppression',
+      message: `Êtes-vous sûr de vouloir supprimer "${chatTitle}" ? Cette action est irréversible.`,
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      chatId: chatId,
+      chatTitle: chatTitle
+    };
+    this.showConfirmModal = true;
+    
+    // Prevent body scroll on mobile
+    document.body.classList.add('modal-open');
+  }
+
+  // New method to handle confirmation
+  confirmDeletion(): void {
+    if (this.confirmModalData?.chatId) {
+      const chatId = this.confirmModalData.chatId;
+      
+      this.chatService.deleteChat(chatId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            // Service handles state updates automatically
+            this.closeConfirmModal();
+          },
+          error: (error) => {
+            this.showError('Erreur lors de la suppression de la conversation');
+            console.error('Error deleting chat:', error);
+            this.closeConfirmModal();
+          }
+        });
+    }
+  }
+
+  // New method to close confirmation modal
+  closeConfirmModal(): void {
+    this.showConfirmModal = false;
+    this.confirmModalData = null;
+    
+    // Re-enable body scroll
+    document.body.classList.remove('modal-open');
+  }
+
+  
+
 
   // Message Methods
   sendMessage(): void {
@@ -263,11 +319,14 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   // Title Management
-  editChatTitle(chatId: string, currentTitle: string, event: Event): void {
+ editChatTitle(chatId: string, currentTitle: string, event: Event): void {
     event.stopPropagation();
     this.editingChatId = chatId;
     this.editingTitle = currentTitle;
     this.showTitleModal = true;
+    
+    // Prevent body scroll on mobile
+    document.body.classList.add('modal-open');
     
     // Focus input after modal opens
     setTimeout(() => {
@@ -303,7 +362,11 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
     this.showTitleModal = false;
     this.editingChatId = null;
     this.editingTitle = '';
+    
+    // Re-enable body scroll
+    document.body.classList.remove('modal-open');
   }
+
 
   private autoUpdateChatTitle(firstMessage: string): void {
     if (!this.activeChat?._id) return;
@@ -326,7 +389,9 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
 
   // UI Helper Methods
   toggleSidebar(): void {
+    console.log('Toggling sidebar');
     this.sidebarCollapsed = !this.sidebarCollapsed;
+    console.log('Sidebar collapsed:', this.sidebarCollapsed);
   }
 
   private scrollToBottom(): void {
@@ -405,4 +470,19 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
   trackByMessageId(index: number, message: ChatMessage): string {
     return message._id || `${message.role}-${message.timestamp}-${index}`;
   }
+
+  mobileSidebarOpen = false;
+
+    toggleMobileSidebar(): void {
+  this.mobileSidebarOpen = !this.mobileSidebarOpen;
+  
+  // Reset collapsed state when opening mobile sidebar
+  if (this.mobileSidebarOpen) {
+    this.sidebarCollapsed = false;
+  }
+}
+
+    closeMobileSidebar(): void {
+      this.mobileSidebarOpen = false;
+    }
 }

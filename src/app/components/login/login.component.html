@@ -9,46 +9,44 @@
 
   <div class="login-wrapper">
     <div class="login-content">
-      <!-- Left Side - Welcome Section -->
+      <!-- Côté Gauche - Section de Bienvenue -->
       <div class="welcome-section">
         <div class="welcome-content">
           <div class="logo-container">
             <div class="logo">
               <span class="logo-accent" *ngIf = "schoolName" >{{schoolName}}</span>
-              <!-- <span class="logo-accent" *ngIf = "!schoolName" >School</span> -->
+              <!-- <span class="logo-accent" *ngIf = "!schoolName" >École</span> -->
             </div>
-            <div class="logo-tagline">Excellence in Education</div>
+            <div class="logo-tagline">Excellence dans l'Éducation</div>
           </div>
           
-          <h1 class="welcome-title">Welcome Back!</h1>
-          <p class="welcome-subtitle">Sign in to continue your learning journey</p>
+          <h1 class="welcome-title">Bon Retour !</h1>
+          <p class="welcome-subtitle">Connectez-vous pour continuer votre parcours d'apprentissage</p>
           
-
-
           <div class="footer-info">
-            <p class="footer-text">Empowering education through technology</p>
-            <p class="copyright">© 2024 HibaSchool. All rights reserved.</p>
+            <p class="footer-text">Renforcer l'éducation grâce à la technologie</p>
+            <p class="copyright">© 2024 HibaSchool. Tous droits réservés.</p>
           </div>
         </div>
       </div>
 
-      <!-- Right Side - Login Form -->
+      <!-- Côté Droit - Formulaire de Connexion -->
       <div class="form-section">
         <div class="form-card">
-          <h2 class="form-title">Sign In</h2>
+          <h2 class="form-title">Se Connecter</h2>
           
-          <!-- Login Form -->
+          <!-- Formulaire de Connexion -->
           <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-            <!-- Email Field -->
+            <!-- Champ Email -->
             <div class="form-group">
-              <label for="email" class="form-label">Email Address</label>
+              <label for="email" class="form-label">Adresse Email</label>
               <div class="input-wrapper">
                 <input
                   type="email"
                   id="email"
                   formControlName="email"
                   class="form-input"
-                  placeholder="Enter your email"
+                  placeholder="Saisissez votre email"
                   [class.error]="isFieldInvalid('email')"
                   (focus)="onInputFocus('email')"
                   (blur)="onInputBlur('email')"
@@ -61,21 +59,21 @@
                 </div>
               </div>
               <div *ngIf="isFieldInvalid('email')" class="error-message">
-                <span *ngIf="loginForm.get('email')?.errors?.['required']">Email is required</span>
-                <span *ngIf="loginForm.get('email')?.errors?.['email']">Please enter a valid email</span>
+                <span *ngIf="loginForm.get('email')?.errors?.['required']">L'email est requis</span>
+                <span *ngIf="loginForm.get('email')?.errors?.['email']">Veuillez saisir un email valide</span>
               </div>
             </div>
 
-            <!-- Password Field -->
+            <!-- Champ Mot de Passe -->
             <div class="form-group">
-              <label for="password" class="form-label">Password</label>
+              <label for="password" class="form-label">Mot de Passe</label>
               <div class="input-wrapper">
                 <input
                   [type]="showPassword ? 'text' : 'password'"
                   id="password"
                   formControlName="password"
                   class="form-input"
-                  placeholder="Enter your password"
+                  placeholder="Saisissez votre mot de passe"
                   [class.error]="isFieldInvalid('password')"
                   (focus)="onInputFocus('password')"
                   (blur)="onInputBlur('password')"
@@ -90,7 +88,7 @@
                   type="button"
                   class="password-toggle"
                   (click)="togglePasswordVisibility()"
-                  [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+                  [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
                 >
                   <svg *ngIf="!showPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -103,20 +101,20 @@
                 </button>
               </div>
               <div *ngIf="isFieldInvalid('password')" class="error-message">
-                <span *ngIf="loginForm.get('password')?.errors?.['required']">Password is required</span>
+                <span *ngIf="loginForm.get('password')?.errors?.['required']">Le mot de passe est requis</span>
               </div>
             </div>
 
-            <!-- Remember Me -->
+            <!-- Se Souvenir de Moi -->
             <div class="form-options">
               <label class="checkbox-container">
                 <input type="checkbox" formControlName="rememberMe" />
                 <span class="checkmark"></span>
-                <span class="checkbox-label">Remember me</span>
+                <span class="checkbox-label">Se souvenir de moi</span>
               </label>
             </div>
 
-            <!-- Error Message -->
+            <!-- Message d'Erreur -->
             <div *ngIf="errorMessage" class="alert-error">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/>
@@ -126,17 +124,17 @@
               <span>{{ errorMessage }}</span>
             </div>
 
-            <!-- Submit Button -->
+            <!-- Bouton de Soumission -->
             <button
               type="submit"
               class="submit-button"
               [disabled]="loginForm.invalid || isLoading"
               [class.loading]="isLoading"
             >
-              <span *ngIf="!isLoading">Sign In</span>
+              <span *ngIf="!isLoading">Se Connecter</span>
               <span *ngIf="isLoading" class="loading-spinner">
                 <span class="spinner"></span>
-                Signing in...
+                Connexion en cours...
               </span>
             </button>
           </form>

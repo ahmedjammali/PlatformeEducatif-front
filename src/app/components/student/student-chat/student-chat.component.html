@@ -1,13 +1,33 @@
 <!-- student-chat.component.html -->
 <div class="student-chat">
   <div class="chat-container">
+
+<button class="mobile-menu-toggle" 
+        [class.sidebar-active]="mobileSidebarOpen"
+        (click)="toggleMobileSidebar()" 
+        *ngIf="!loading">
+            <span>{{ mobileSidebarOpen ? '←' : '→' }}</span>
+    </button>
+
+
+<div class="mobile-overlay" 
+     [class.show]="mobileSidebarOpen" 
+     (click)="closeMobileSidebar()"></div>
     
     <!-- Main Chat Layout -->
     <div class="chat-layout">
       
       <!-- Chat Sidebar -->
-      <div class="chat-sidebar" [class.sidebar-collapsed]="sidebarCollapsed">
+<!-- Update your chat-sidebar div -->
+      <div class="chat-sidebar" 
+          [class.sidebar-collapsed]="sidebarCollapsed" 
+          [class.sidebar-open]="mobileSidebarOpen">
         <div class="sidebar-header">
+          <button class="mobile-sidebar-close" 
+                  (click)="closeMobileSidebar()"
+                  *ngIf="mobileSidebarOpen">
+            <span>✕</span>
+          </button>
           <button class="new-chat-btn" (click)="createNewChat()" [disabled]="loading">
             <span class="btn-icon">➕</span>
             <span class="btn-text">Nouvelle Discussion</span>
@@ -231,6 +251,30 @@
   </div>
 </div>
 
+
+
+<div class="modal-overlay" *ngIf="showConfirmModal" (click)="closeConfirmModal()">
+  <div class="modal-content confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="confirmation-header">
+      <div class="confirmation-icon">⚠️</div>
+      <h3>{{ confirmModalData?.title }}</h3>
+    </div>
+    
+    <div class="confirmation-body">
+      <p class="confirmation-message">{{ confirmModalData?.message }}</p>
+    </div>
+    
+    <div class="confirmation-actions">
+      <button class="cancel-btn" (click)="closeConfirmModal()">
+        {{ confirmModalData?.cancelText || 'Annuler' }}
+      </button>
+      <button class="delete-btn" (click)="confirmDeletion()">
+        <span class="delete-icon">🗑️</span>
+        {{ confirmModalData?.confirmText || 'Supprimer' }}
+      </button>
+    </div>
+  </div>
+</div>
 <!-- Edit Title Modal -->
 <div class="modal-overlay" *ngIf="showTitleModal" (click)="cancelTitleEdit()">
   <div class="modal-content" (click)="$event.stopPropagation()">

@@ -39,33 +39,46 @@ export class LandingPageComponent implements OnInit {
     schoolName  : string  = ""  ; // Replace with actual school name
   contactForm: FormGroup;
   isLoading = false;
-  features: Feature[] = [
-    {
-      icon: '🎓',
-      title: 'Excellence Académique',
-      description: 'Un programme éducatif complet adapté à chaque niveau',
-      color: '#A4B465'
-    },
-    {
-      icon: '💻',
-      title: 'Plateforme Numérique',
-      description: 'Accès 24/7 aux ressources et exercices interactifs',
-      color: '#F0BB78'
-    },
-    {
-      icon: '👥',
-      title: 'Suivi Personnalisé',
-      description: 'Accompagnement individuel de chaque élève',
-      color: '#626F47'
-    },
-    {
-      icon: '📊',
-      title: 'Rapports Détaillés',
-      description: 'Suivez la progression en temps réel',
-      color: '#A4B465'
-    }
-  ];
+  // Update your features array in the component to match the platform functionalities
 
+features = [
+  {
+    icon: '🤖',
+    title: 'Tuteur IA Intelligent',
+    description: 'Un assistant virtuel disponible 24/7 pour répondre aux questions des étudiants et les guider dans leur apprentissage.',
+
+  },
+  {
+    icon: '🔔',
+    title: 'Notifications en Temps Réel',
+    description: 'Tenez les parents et étudiants informés de tout : devoirs, notes, événements et rappels importants.',
+
+  },
+  {
+    icon: '📊',
+    title: 'Suivi des Progrès',
+    description: 'Tableaux de bord détaillés pour suivre les performances et l\'évolution académique de chaque étudiant.',
+
+  },
+  {
+    icon: '📝',
+    title: 'Gestion Notes & Exercices',
+    description: 'Plateforme complète pour créer, distribuer et corriger les exercices avec suivi automatique des notes.',
+
+  },
+  // {
+  //   icon: '👨‍👩‍👧‍👦',
+  //   title: 'Espace Parents',
+  //   description: 'Interface dédiée permettant aux parents de suivre les résultats de leurs enfants en temps réel.',
+  //   color: '#F0BB78'
+  // },
+  // {
+  //   icon: '📚',
+  //   title: 'Ressources Pédagogiques',
+  //   description: 'Bibliothèque numérique riche avec cours interactifs, vidéos éducatives et supports d\'apprentissage.',
+  //   color: '#626F47'
+  // }
+];
   statistics: Statistic[] = [
     { number: '500+', label: 'Élèves', icon: '👦' },
     { number: '50+', label: 'Enseignants', icon: '👨‍🏫' },

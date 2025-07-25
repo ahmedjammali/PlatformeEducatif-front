@@ -15,18 +15,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   userName: string | null = null;
   isAdmin = false;
-    schoolName  : string  = ""  ; // Replace with actual school name
+  schoolName: string = "";
+  
+  // Track active section
+  activeSection: string = 'home';
 
   private subscriptions: Subscription = new Subscription();
 
   constructor(
     private router: Router,
-    private authService: AuthService , private schoolService: SchoolService
+    private authService: AuthService,
+    private schoolService: SchoolService
   ) {}
 
   ngOnInit(): void {
-
-     // Fetch school name from service
+    // Fetch school name from service
     this.schoolService.getSchool().subscribe({
       next: (response) => {
         console.log('School data fetched:', response);
@@ -35,7 +38,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error fetching school name:', error);
-        this.schoolName = 'Your School'; // Fallback in case of error
+        this.schoolName = 'Your School';
       }
     });
 
@@ -43,7 +46,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.authService.isAuthenticated$.subscribe(isAuth => {
         this.isLoggedIn = isAuth;
-        // Update admin status when authentication changes
         this.updateAdminStatus();
       })
     );
@@ -52,7 +54,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.authService.currentUser$.subscribe(user => {
         this.userName = user?.name || null;
-        // Update admin status when user changes
         this.updateAdminStatus();
       })
     );
@@ -69,6 +70,35 @@ export class NavbarComponent implements OnInit, OnDestroy {
   @HostListener('window:scroll', [])
   onWindowScroll(): void {
     this.isScrolled = window.scrollY > 50;
+    
+    // Only update active section if we're on the home page
+    if (this.router.url === '/') {
+      this.updateActiveSection();
+    }
+  }
+
+  private updateActiveSection(): void {
+    const sections = ['home', 'about', 'contact'];
+    const scrollPosition = window.scrollY + 100; // Offset for navbar height
+
+    for (const section of sections) {
+      const element = document.getElementById(section);
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        const elementTop = window.scrollY + rect.top;
+        const elementBottom = elementTop + element.offsetHeight;
+
+        if (scrollPosition >= elementTop && scrollPosition < elementBottom) {
+          this.activeSection = section;
+          break;
+        }
+      }
+    }
+
+    // Default to home if at the very top
+    if (window.scrollY < 100) {
+      this.activeSection = 'home';
+    }
   }
 
   toggleMobileMenu(): void {
@@ -98,6 +128,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   scrollToSection(sectionId: string): void {
     this.closeMobileMenu();
+    
+    // Set active section immediately for better UX
+    this.activeSection = sectionId;
+    
     if (this.router.url !== '/') {
       this.router.navigate(['/']);
       setTimeout(() => {
@@ -112,5 +146,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
+  }
+
+  // Helper method to check if a section is active
+  isActiveSection(section: string): boolean {
+    if (this.router.url !== '/') {
+      return section === 'home'; // Only home is active when not on home page
+    }
+    return this.activeSection === section;
   }
 }
