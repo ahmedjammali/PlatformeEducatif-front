@@ -223,6 +223,7 @@
   position: relative;
   border-left: 3px solid transparent;
   margin: var(--spacing-xs) 0;
+  cursor: pointer;
 }
 
 .mobile-nav-link:hover {
@@ -451,6 +452,7 @@
   transition: var(--transition-base);
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .nav-link::before {

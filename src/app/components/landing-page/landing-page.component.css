@@ -985,8 +985,50 @@
     justify-content: center;
   }
 
+  /* Redesign floating cards for mobile */
   .hero-visual .floating-card {
-    display: none; /* Hide on mobile for better UX */
+    position: relative; /* Change from absolute */
+    display: inline-flex;
+    margin: var(--spacing-sm);
+    font-size: 0.75rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+    animation: none; /* Remove floating animation on mobile */
+  }
+
+  /* Reset positioning for mobile */
+  .hero-visual .floating-card.card-1,
+  .hero-visual .floating-card.card-2,
+  .hero-visual .floating-card.card-3,
+  .hero-visual .floating-card.card-4,
+  .hero-visual .floating-card.card-5 {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+  }
+
+  /* Create a grid layout for cards on mobile */
+  .hero-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .hero-visual .main-visual {
+    order: 1;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  /* Arrange cards in a flex container */
+  .hero-visual::after {
+    content: '';
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    order: 2;
   }
 
   .features-grid {
@@ -995,7 +1037,15 @@
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+  } 
+
+    .hero-visual .main-visual {
+    display: none;
   }
+  .hero-content{
+    padding-top: 3rem;
+  }
+
 }
 
 /* Fallback for older browsers that don't support color-mix */

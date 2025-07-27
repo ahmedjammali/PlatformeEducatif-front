@@ -35,50 +35,34 @@ interface Testimonial {
 })
 export class LandingPageComponent implements OnInit {
 
-
-    schoolName  : string  = ""  ; // Replace with actual school name
+  schoolName: string = "";
+  schoolAbbreviation: string = "HS"; // Default abbreviation
   contactForm: FormGroup;
   isLoading = false;
-  // Update your features array in the component to match the platform functionalities
 
-features = [
-  {
-    icon: '🤖',
-    title: 'Tuteur IA Intelligent',
-    description: 'Un assistant virtuel disponible 24/7 pour répondre aux questions des étudiants et les guider dans leur apprentissage.',
+  features = [
+    {
+      icon: '🤖',
+      title: 'Tuteur IA Intelligent',
+      description: 'Un assistant virtuel disponible 24/7 pour répondre aux questions des étudiants et les guider dans leur apprentissage.',
+    },
+    {
+      icon: '🔔',
+      title: 'Notifications en Temps Réel',
+      description: 'Tenez les parents et étudiants informés de tout : devoirs, notes, événements et rappels importants.',
+    },
+    {
+      icon: '📊',
+      title: 'Suivi des Progrès',
+      description: 'Tableaux de bord détaillés pour suivre les performances et l\'évolution académique de chaque étudiant.',
+    },
+    {
+      icon: '📝',
+      title: 'Gestion Notes & Exercices',
+      description: 'Plateforme complète pour créer, distribuer et corriger les exercices avec suivi automatique des notes.',
+    }
+  ];
 
-  },
-  {
-    icon: '🔔',
-    title: 'Notifications en Temps Réel',
-    description: 'Tenez les parents et étudiants informés de tout : devoirs, notes, événements et rappels importants.',
-
-  },
-  {
-    icon: '📊',
-    title: 'Suivi des Progrès',
-    description: 'Tableaux de bord détaillés pour suivre les performances et l\'évolution académique de chaque étudiant.',
-
-  },
-  {
-    icon: '📝',
-    title: 'Gestion Notes & Exercices',
-    description: 'Plateforme complète pour créer, distribuer et corriger les exercices avec suivi automatique des notes.',
-
-  },
-  // {
-  //   icon: '👨‍👩‍👧‍👦',
-  //   title: 'Espace Parents',
-  //   description: 'Interface dédiée permettant aux parents de suivre les résultats de leurs enfants en temps réel.',
-  //   color: '#F0BB78'
-  // },
-  // {
-  //   icon: '📚',
-  //   title: 'Ressources Pédagogiques',
-  //   description: 'Bibliothèque numérique riche avec cours interactifs, vidéos éducatives et supports d\'apprentissage.',
-  //   color: '#626F47'
-  // }
-];
   statistics: Statistic[] = [
     { number: '500+', label: 'Élèves', icon: '👦' },
     { number: '50+', label: 'Enseignants', icon: '👨‍🏫' },
@@ -113,29 +97,37 @@ features = [
   currentTestimonialIndex = 0;
   isScrolled = false;
 
-  constructor(private router: Router ,private fb: FormBuilder,
+  constructor(
+    private router: Router,
+    private fb: FormBuilder,
     private contactService: ContactService,
-    private snackBar: MatSnackBar ,  private authService: AuthService  ,private schoolService: SchoolService ) { 
-       this.contactForm = this.fb.group({
+    private snackBar: MatSnackBar,
+    private authService: AuthService,
+    private schoolService: SchoolService
+  ) {
+    this.contactForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       phone: ['', [Validators.required, Validators.pattern(/^[0-9]{8}$/)]],
       message: ['', [Validators.required, Validators.minLength(10)]]
     });
-    }
+  }
 
   ngOnInit(): void {
-
-     // Fetch school name from service
+    // Fetch school name from service
     this.schoolService.getSchool().subscribe({
       next: (response) => {
         console.log('School data fetched:', response);
         this.schoolName = response.school.name || 'Your School';
+        // Generate abbreviation from school name
+        this.schoolAbbreviation = this.generateSchoolAbbreviation(this.schoolName);
         console.log('School Name:', this.schoolName);
+        console.log('School Abbreviation:', this.schoolAbbreviation);
       },
       error: (error) => {
         console.error('Error fetching school name:', error);
         this.schoolName = 'Your School'; // Fallback in case of error
+        this.schoolAbbreviation = 'YS'; // Fallback abbreviation
       }
     });
 
@@ -147,8 +139,73 @@ features = [
     this.startTestimonialCarousel();
   }
 
+  /**
+   * Generates an abbreviation from the school name
+   * Takes the first letter of each significant word (ignoring common words)
+   * @param schoolName - The full school name
+   * @returns A 2-4 character abbreviation
+   */
+  generateSchoolAbbreviation(schoolName: string): string {
+    if (!schoolName || schoolName.trim() === '') {
+      return 'HS'; // Default fallback
+    }
 
-   onSubmit(): void {
+    // Words to ignore when creating abbreviation
+    const ignoreWords = ['de', 'du', 'des', 'le', 'la', 'les', 'et', 'of', 'the', 'and', 'for', 'school', 'école', 'lycée', 'collège'];
+    
+    // Split the name into words and filter out ignore words
+    const words = schoolName
+      .trim()
+      .split(/\s+/)
+      .filter(word => word.length > 0)
+      .filter(word => !ignoreWords.includes(word.toLowerCase()));
+
+    if (words.length === 0) {
+      return 'HS';
+    }
+
+    let abbreviation = '';
+
+    if (words.length === 1) {
+      // If only one word, take first 2-3 characters
+      const word = words[0];
+      abbreviation = word.length >= 3 ? word.substring(0, 3).toUpperCase() : word.toUpperCase();
+    } else if (words.length === 2) {
+      // If two words, take first letter of each
+      abbreviation = words.map(word => word.charAt(0)).join('').toUpperCase();
+    } else {
+      // If more than two words, take first letter of first 2-3 most significant words
+      const significantWords = words.slice(0, 3);
+      abbreviation = significantWords.map(word => word.charAt(0)).join('').toUpperCase();
+    }
+
+    // Ensure abbreviation is between 2-4 characters
+    if (abbreviation.length < 2) {
+      abbreviation = abbreviation + 'S'; // Add 'S' for School
+    } else if (abbreviation.length > 4) {
+      abbreviation = abbreviation.substring(0, 4);
+    }
+
+    return abbreviation;
+  }
+
+  /**
+   * Alternative method: Manual abbreviation mapping for specific schools
+   * You can use this if you want specific abbreviations for certain schools
+   */
+  getCustomAbbreviation(schoolName: string): string {
+    const customMappings: { [key: string]: string } = {
+      'HibaSchool': 'HS',
+      'École Primaire Carthage': 'EPC',
+      'Lycée Pilote Ariana': 'LPA',
+      'Institut Supérieur de Technologie': 'IST',
+      // Add more custom mappings as needed
+    };
+
+    return customMappings[schoolName] || this.generateSchoolAbbreviation(schoolName);
+  }
+
+  onSubmit(): void {
     if (this.contactForm.invalid) {
       this.markFormGroupTouched(this.contactForm);
       return;
@@ -191,6 +248,7 @@ features = [
   get email() { return this.contactForm.get('email'); }
   get phone() { return this.contactForm.get('phone'); }
   get message() { return this.contactForm.get('message'); }
+
   @HostListener('window:scroll', [])
   onWindowScroll(): void {
     this.isScrolled = window.scrollY > 100;
