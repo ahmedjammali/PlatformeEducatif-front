@@ -18,7 +18,7 @@
     <div class="mobile-actions">
       <!-- Mobile Notification Bell -->
       <button class="mobile-notification-bell" 
-              (click)="toggleNotificationDropdown()"
+              (click)="viewAllNotifications()"
               [class.has-notifications]="unreadCount > 0"
               [class.hidden]="isMobileMenuOpen"
               title="Notifications">
@@ -311,18 +311,23 @@
             </div>
             
             <div class="mobile-notifications-list" *ngIf="notifications.length > 0; else noNotificationsMobile">
+        
               <div class="mobile-notification-item" 
                    *ngFor="let notification of notifications.slice(0, 3)"
                    [class.unread]="!notification.isRead"
-                   (click)="markAsRead(notification)">
-                <div class="notification-icon">{{ getNotificationIcon(notification.type) }}</div>
+                   (click)="viewAllNotifications()">
+                <a routerLink="/student/notifications"  (click)="closeMobileMenu()">
+                                    <div class="notification-icon">{{ getNotificationIcon(notification.type) }}</div>
                 <div class="notification-content">
                   <div class="notification-title">{{ notification.title }}</div>
                   <div class="notification-message">{{ notification.content }}</div>
                   <div class="notification-time">{{ formatNotificationTime(notification.createdAt) }}</div>
                 </div>
+
+                </a>   
+
               </div>
-              
+
               <div class="mobile-notifications-actions" *ngIf="notifications.length > 3 || unreadCount > 0">
                 <a routerLink="/student/notifications" 
                    class="see-all-notifications-btn"

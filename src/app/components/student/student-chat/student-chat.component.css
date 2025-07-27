@@ -403,16 +403,6 @@
   animation: bounce 2s infinite;
 }
 
-.welcome-content h2 {
-  color: var(--color-primary-dark);
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
 
 .welcome-content p {
   color: var(--color-gray-dark);
@@ -422,12 +412,17 @@
 }
 /* Suggestion Cards */
 .suggestion-cards {
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: row; /* Row layout for desktop */
+  align-items: stretch;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: nowrap; /* Prevent wrapping on desktop */
+  max-width: 900px; /* Container width for 3 cards */
+  margin-left: auto;
+  margin-right: auto;
 }
-
 /* Suggestion Card */
 .suggestion-card {
   background: var(--color-white);
@@ -441,8 +436,9 @@
   overflow: hidden;
   width: 100%;
   max-width: 280px;
+  flex: 1; /* Allow cards to grow equally */
+  min-width: 250px; /* Minimum width for cards */
 }
-
 
 .suggestion-card::before {
   content: '';
@@ -469,6 +465,8 @@
 .suggestion-icon {
   font-size: 2.5rem;
   margin-bottom: 0.75rem;
+  display: block;
+  text-align: center;
 }
 
 .suggestion-card span {
@@ -476,6 +474,7 @@
   color: var(--color-primary-dark);
   font-weight: 600;
   font-size: 1rem;
+  text-align: center;
 }
 
 .start-chat-btn {
@@ -1197,7 +1196,11 @@
   }
   
   .suggestion-cards {
-    grid-template-columns: 1fr;
+    flex-direction: column; /* Stack vertically on mobile */
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+    max-width: none;
   }
 }
 
@@ -1497,6 +1500,7 @@
   
   .welcome-content h2 {
     font-size: 2rem;
+    color: #1a1a1a;
   }
   
   .welcome-icon {
@@ -1515,22 +1519,27 @@
     left: 1rem;
     max-width: none;
   }
-  .suggestion-cards {
-    flex-direction: column;
-    align-items: center;
+ .suggestion-cards {
+    flex-direction: column; /* Stack vertically on mobile */
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+    max-width: none;
   }
   
   .suggestion-card {
     width: 100%;
-    max-width: 280px;
-    padding: 1.25rem;
+    max-width: none;
+    padding: 1rem;
+    margin: 0;
   }
   
   .suggestion-icon {
-    font-size: 2.25rem;
-    margin-bottom: 0.5rem;
+    font-size: 2rem;
+  }
+  
+  .suggestion-card span {
+    font-size: 0.9rem;
   }
 }
 
@@ -1582,17 +1591,19 @@
   .message-content {
     max-width: 90%;
   }
-  
   .suggestion-cards {
-    gap: 0.75rem;
+    flex-direction: column; /* Stack vertically on mobile */
+    gap: 1rem;
     margin-bottom: 1.5rem;
+    padding: 0 1rem;
+    max-width: none;
   }
   
   .suggestion-card {
     width: 100%;
     max-width: none;
     padding: 1rem;
-    margin: 0.5rem;
+    margin: 0;
   }
   
   .suggestion-icon {
@@ -1607,6 +1618,7 @@
   }
   
   .welcome-content h2 {
+    color: var(--color-primary-dark);
     font-size: 1.75rem;
   }
   
@@ -1787,14 +1799,14 @@
 }
 
 /* Gradient Text Effects */
-.chat-info h3,
-.welcome-content h2 {
+.chat-info h3{
   background: white;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   display: inline-block;
   padding: 1rem;
+
 }
 
 /* Glassmorphism Effects */
