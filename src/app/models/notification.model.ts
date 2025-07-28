@@ -94,6 +94,7 @@ export interface NotificationFilters {
   unreadOnly?: boolean;
   type?: NotificationType;
   priority?: NotificationPriority;
+  targetAudience?: TargetAudience;
 }
 
 export interface NotificationResponse {

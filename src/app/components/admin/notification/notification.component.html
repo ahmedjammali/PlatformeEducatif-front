@@ -1,10 +1,19 @@
-
+<!-- notification.component.html - Admin Version Updated -->
 <div class="notification-container">
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
-      <h1 class="page-title">Gestion des Notifications</h1>
-      <p class="page-description">Créez et gérez les notifications pour votre établissement</p>
+      <h1 class="page-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        Gestion des Notifications
+      </h1>
+      <p class="page-description">
+        Créez et gérez les notifications pour votre établissement
+        <span class="total-count" *ngIf="stats">{{ stats.total }} notification{{ stats.total > 1 ? 's' : '' }} au total</span>
+      </p>
     </div>
     <div class="header-actions">
       <button class="btn-primary" (click)="openCreateModal()">
@@ -14,36 +23,20 @@
         </svg>
         Nouvelle Notification
       </button>
-    </div>
-  </div>
-
-  <!-- Statistics Cards -->
-  <div class="stats-grid" *ngIf="stats">
-    <div class="stat-card">
-      <div class="stat-icon total">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      <button class="btn-secondary" 
+              (click)="markAllAsRead()" 
+              [disabled]="isMarkingAllRead || getUnreadNotificationsCount() === 0"
+              *ngIf="getUnreadNotificationsCount() > 0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 11 12 14 22 4"></polyline>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
         </svg>
-      </div>
-      <div class="stat-content">
-        <h3>Total</h3>
-        <p class="stat-value">{{ stats.total }}</p>
-        <span class="stat-label">Notifications</span>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon active">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <h3>Actives</h3>
-        <p class="stat-value">{{ getActiveCount() }}</p>
-        <span class="stat-label">En cours</span>
-      </div>
+        <span *ngIf="!isMarkingAllRead">Marquer tout comme lu</span>
+        <span *ngIf="isMarkingAllRead" class="marking-all">
+          <span class="spinner-small"></span>
+          Marquage en cours...
+        </span>
+      </button>
     </div>
   </div>
 
@@ -88,28 +81,38 @@
         </div>
       </div>
       
-      <!-- View Toggle -->
-      <div class="view-toggle">
-        <button class="toggle-btn" [class.active]="viewMode === 'grouped'" (click)="toggleViewMode()" title="Vue groupée">
+      <!-- View Toggle and Reset Button -->
+      <div class="filter-actions">
+        <button class="btn-reset" (click)="resetFilters()" title="Réinitialiser les filtres">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7"/>
-            <rect x="14" y="3" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/>
+            <path d="M1 4v6h6"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
           </svg>
-          Groupée
+          Réinitialiser
         </button>
-        <button class="toggle-btn" [class.active]="viewMode === 'list'" (click)="toggleViewMode()" title="Vue liste">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="8" y1="6" x2="21" y2="6"/>
-            <line x1="8" y1="12" x2="21" y2="12"/>
-            <line x1="8" y1="18" x2="21" y2="18"/>
-            <line x1="3" y1="6" x2="3.01" y2="6"/>
-            <line x1="3" y1="12" x2="3.01" y2="12"/>
-            <line x1="3" y1="18" x2="3.01" y2="18"/>
-          </svg>
-          Liste
-        </button>
+        
+        <div class="view-toggle">
+          <button class="toggle-btn" [class.active]="viewMode === 'grouped'" (click)="toggleViewMode()" title="Vue groupée">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+            </svg>
+            Groupée
+          </button>
+          <button class="toggle-btn" [class.active]="viewMode === 'list'" (click)="toggleViewMode()" title="Vue liste">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+            Liste
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -136,7 +139,12 @@
         <div class="group-notifications">
           <div class="notification-card" *ngFor="let notification of group.notifications" 
                [class.urgent]="notification.priority === 'urgent'"
-               [class.expired]="notification.isExpired">
+               [class.expired]="notification.isExpired"
+               [class.unread]="!notification.isRead"
+               (click)="viewNotification(notification)">
+            
+            <!-- Unread Indicator -->
+            <div class="unread-indicator" *ngIf="!notification.isRead"></div>
             
             <div class="notification-header">
               <div class="notification-meta">
@@ -154,13 +162,7 @@
                   {{ getAudienceLabel(notification) }}
                 </span>
               </div>
-              <div class="notification-actions">
-                <button class="action-btn" (click)="viewNotification(notification)" title="Voir">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </svg>
-                </button>
+              <div class="notification-actions" (click)="$event.stopPropagation()">
                 <button class="action-btn" (click)="editNotification(notification)" title="Modifier">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -233,7 +235,12 @@
     <div class="list-notifications" *ngIf="viewMode === 'list'">
       <div class="notification-card" *ngFor="let notification of getAllNotifications()" 
            [class.urgent]="notification.priority === 'urgent'"
-           [class.expired]="notification.isExpired">
+           [class.expired]="notification.isExpired"
+           [class.unread]="!notification.isRead"
+           (click)="viewNotification(notification)">
+        
+        <!-- Unread Indicator -->
+        <div class="unread-indicator" *ngIf="!notification.isRead"></div>
         
         <div class="notification-header">
           <div class="notification-meta">
@@ -251,13 +258,7 @@
               {{ getAudienceLabel(notification) }}
             </span>
           </div>
-          <div class="notification-actions">
-            <button class="action-btn" (click)="viewNotification(notification)" title="Voir">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
+          <div class="notification-actions" (click)="$event.stopPropagation()">
             <button class="action-btn" (click)="editNotification(notification)" title="Modifier">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -333,6 +334,10 @@
       <h3>Aucune notification trouvée</h3>
       <p>Créez votre première notification pour informer votre communauté scolaire</p>
       <button class="btn-primary" (click)="openCreateModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
         Créer une notification
       </button>
     </div>
@@ -424,84 +429,84 @@
         </div>
 
         <!-- Target Audience -->
-<div class="form-section">
-  <h3 class="section-title">
-    Audience cible
-    <span class="disabled-notice" *ngIf="editingNotification">
-      (Non modifiable)
-    </span>
-  </h3>
-  
-  <div class="form-group">
-    <label class="required">Destinataires</label>
-    <select formControlName="targetAudience" 
-            (change)="onAudienceChange()"
-            [class.disabled-field]="editingNotification">
-      <option value="all">Tous</option>
-      <option value="students">Étudiants seulement</option>
-      <option value="teachers">Enseignants seulement</option>
-      <option value="specific_class">Classe spécifique</option>
-    </select>
-    <span class="helper-text" *ngIf="editingNotification">
-      L'audience ne peut pas être modifiée après la création
-    </span>
-  </div>
+        <div class="form-section">
+          <h3 class="section-title">
+            Audience cible
+            <span class="disabled-notice" *ngIf="editingNotification">
+              (Non modifiable)
+            </span>
+          </h3>
+          
+          <div class="form-group">
+            <label class="required">Destinataires</label>
+            <select formControlName="targetAudience" 
+                    (change)="onAudienceChange()"
+                    [class.disabled-field]="editingNotification">
+              <option value="all">Tous</option>
+              <option value="students">Étudiants seulement</option>
+              <option value="teachers">Enseignants seulement</option>
+              <option value="specific_class">Classe spécifique</option>
+            </select>
+            <span class="helper-text" *ngIf="editingNotification">
+              L'audience ne peut pas être modifiée après la création
+            </span>
+          </div>
 
-  <div class="form-group" *ngIf="notificationForm.get('targetAudience')?.value === 'specific_class'">
-    <label class="required">Sélectionner la classe</label>
-    <select formControlName="targetClass"
-            [class.disabled-field]="editingNotification">
-      <option value="">Choisir une classe</option>
-      <option *ngFor="let class of classes" [value]="class._id">
-        {{ class.name }} - {{ class.grade }}
-      </option>
-    </select>
-    <span class="error-message" *ngIf="notificationForm.get('targetClass')?.invalid && notificationForm.get('targetClass')?.touched">
-      Veuillez sélectionner une classe
-    </span>
-    <span class="helper-text" *ngIf="editingNotification">
-      La classe ne peut pas être modifiée après la création
-    </span>
-  </div>
-</div>
+          <div class="form-group" *ngIf="notificationForm.get('targetAudience')?.value === 'specific_class'">
+            <label class="required">Sélectionner la classe</label>
+            <select formControlName="targetClass"
+                    [class.disabled-field]="editingNotification">
+              <option value="">Choisir une classe</option>
+              <option *ngFor="let class of classes" [value]="class._id">
+                {{ class.name }} - {{ class.grade }}
+              </option>
+            </select>
+            <span class="error-message" *ngIf="notificationForm.get('targetClass')?.invalid && notificationForm.get('targetClass')?.touched">
+              Veuillez sélectionner une classe
+            </span>
+            <span class="helper-text" *ngIf="editingNotification">
+              La classe ne peut pas être modifiée après la création
+            </span>
+          </div>
+        </div>
 
         <!-- Schedule -->
- <div class="form-section">
-  <h3 class="section-title">
-    Planification
-    <span class="disabled-notice" *ngIf="editingNotification">
-      (Date de publication non modifiable)
-    </span>
-  </h3>
-  
-  <div class="form-row">
-    <div class="form-group">
-      <label>Date de publication</label>
-      <input type="datetime-local" 
-             formControlName="publishDate"
-             [class.disabled-field]="editingNotification">
-      <span class="helper-text" *ngIf="!editingNotification">
-        Laisser vide pour publier immédiatement
-      </span>
-      <span class="helper-text" *ngIf="editingNotification">
-        La date de publication ne peut pas être modifiée
-      </span>
-    </div>
+        <div class="form-section">
+          <h3 class="section-title">
+            Planification
+            <span class="disabled-notice" *ngIf="editingNotification">
+              (Date de publication non modifiable)
+            </span>
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Date de publication</label>
+              <input type="datetime-local" 
+                     formControlName="publishDate"
+                     [class.disabled-field]="editingNotification">
+              <span class="helper-text" *ngIf="!editingNotification">
+                Laisser vide pour publier immédiatement
+              </span>
+              <span class="helper-text" *ngIf="editingNotification">
+                La date de publication ne peut pas être modifiée
+              </span>
+            </div>
 
-    <div class="form-group">
-      <label>Date d'expiration</label>
-      <input type="datetime-local" formControlName="expiryDate">
-      <span class="helper-text">Laisser vide pour aucune expiration</span>
-    </div>
-  </div>
-</div>
+            <div class="form-group">
+              <label>Date d'expiration</label>
+              <input type="datetime-local" formControlName="expiryDate">
+              <span class="helper-text">Laisser vide pour aucune expiration</span>
+            </div>
+          </div>
+        </div>
 
         <!-- Attachments -->
         <div class="form-section" *ngIf="!editingNotification">
           <h3 class="section-title">Pièces jointes</h3>
           
           <div class="file-upload-area">
-            <input type="file" #fileInput multiple (change)="onFileSelect($event)" accept=".pdf,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp">
+            <input type="file" #fileInput multiple (change)="onFileSelect($event)" accept=".pdf,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp"   style="display: none;">
             <div class="upload-content" (click)="fileInput.click()">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -540,9 +545,11 @@
           </div>
           <span class="progress-text">Téléchargement: {{ uploadProgress }}%</span>
         </div>
+
+        
       </div>
 
-      <div class="modal-footer">
+      <div class="modal-footer">  
         <button type="button" class="btn-secondary" (click)="closeModal()">Annuler</button>
         <button type="submit" class="btn-primary" [disabled]="notificationForm.invalid || isSubmitting">
           <span *ngIf="!isSubmitting">
@@ -576,8 +583,9 @@
         <div class="detail-header">
           <h3>{{ viewingNotification.title }}</h3>
           <div class="detail-badges">
-            <span class="badge" [class]="viewingNotification.type">{{ getTypeLabel(viewingNotification.type) }}</span>
-            <span class="badge" [class]="viewingNotification.priority">{{ getPriorityLabel(viewingNotification.priority) }}</span>
+
+            <span class="notification-type" [class]="viewingNotification.type">{{ getTypeLabel(viewingNotification.type) }}</span>
+            <span class="notification-priority" [class]="viewingNotification.priority">{{ getPriorityLabel(viewingNotification.priority) }}</span>
           </div>
         </div>
 
@@ -631,7 +639,6 @@
                 <p class="attachment-meta">{{ formatFileSize(attachment.size) }}</p>
               </div>
               <div class="attachment-actions">
-
                 <button class="btn-icon" (click)="downloadAttachment(viewingNotification._id!, attachment.filename)" title="Télécharger">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>

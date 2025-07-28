@@ -37,6 +37,7 @@ export class NotificationComponent implements OnInit, OnDestroy {
   classes: Class[] = [];
   stats: NotificationStats | null = null;
   
+    isMarkingAllRead = false;
   // Form
   notificationForm!: FormGroup;
   selectedFiles: File[] = [];
@@ -54,9 +55,12 @@ export class NotificationComponent implements OnInit, OnDestroy {
   viewMode: 'grouped' | 'list' = 'grouped'; // New property for view mode
   
   // Filters
-  filters: NotificationFilters = {
+ filters: NotificationFilters = {
     page: 1,
-    limit: 10
+    limit: 10,
+    type: undefined,
+    priority: undefined,
+    targetAudience: undefined // Add this line
   };
   filterStatus: 'all' | 'active' | 'expired' = 'all';
   searchTerm = '';
@@ -134,6 +138,19 @@ export class NotificationComponent implements OnInit, OnDestroy {
         if (index !== -1) {
           this.notifications[index] = notification;
           this.groupNotificationsByDate(); // Regroup after update
+        }
+      });
+  }
+
+  refreshUnreadCount(): void {
+    this.notificationService.getUnreadCount()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(count => {
+        // Compare with local count
+        const localCount = this.getUnreadNotificationsCount();
+        if (count !== localCount) {
+          // If counts don't match, reload notifications
+          this.loadNotifications();
         }
       });
   }
@@ -332,16 +349,51 @@ openCreateModal(): void {
     this.showModal = true;
   }
 
-  viewNotification(notification: Notification): void {
+viewNotification(notification: Notification): void {
     this.viewingNotification = notification;
     this.showViewModal = true;
     
-    // Mark as read
+    // Mark as read and update the notification immediately
     if (!notification.isRead) {
+      // Update UI immediately for better UX
+      const notificationIndex = this.notifications.findIndex(n => n._id === notification._id);
+      if (notificationIndex !== -1) {
+        // Create a copy and update it
+        this.notifications[notificationIndex] = { ...this.notifications[notificationIndex], isRead: true };
+        // Regroup notifications to reflect the change
+        this.groupNotificationsByDate();
+      }
+      
+      // Update the viewing notification
+      if (this.viewingNotification) {
+        this.viewingNotification.isRead = true;
+      }
+
+      // Make API call in background
       this.notificationService.markAsRead(notification._id!)
         .pipe(takeUntil(this.destroy$))
-        .subscribe();
+        .subscribe({
+          next: (response) => {
+            console.log('Notification marked as read successfully');
+            // The UI is already updated, so no need to do anything else
+          },
+          error: (error) => {
+            console.error('Error marking notification as read:', error);
+            // Revert UI changes if API call fails
+            if (notificationIndex !== -1) {
+              this.notifications[notificationIndex] = { ...this.notifications[notificationIndex], isRead: false };
+              this.groupNotificationsByDate();
+            }
+            if (this.viewingNotification) {
+              this.viewingNotification.isRead = false;
+            }
+          }
+        });
     }
+  }
+
+  getUnreadNotificationsCount(): number {
+    return this.notifications.filter(n => !n.isRead).length;
   }
 
   deleteNotification(notification: Notification): void {
@@ -349,6 +401,54 @@ openCreateModal(): void {
     this.showDeleteModal = true;
   }
 
+  markAllAsRead(): void {
+    const unreadNotifications = this.notifications.filter(n => !n.isRead);
+    
+    if (unreadNotifications.length === 0) {
+      return;
+    }
+
+    this.isMarkingAllRead = true;
+    const unreadIds = unreadNotifications.map(n => n._id!);
+
+    // Update UI immediately for better UX
+    const originalNotifications = [...this.notifications];
+    this.notifications.forEach(notification => {
+      if (!notification.isRead) {
+        notification.isRead = true;
+      }
+    });
+    this.groupNotificationsByDate();
+
+    // Use existing service method
+    this.notificationService.markMultipleAsRead(unreadIds)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.isMarkingAllRead = false;
+          console.log('All notifications marked as read successfully');
+          // UI is already updated, no need to reload
+        },
+        error: (error) => {
+          console.error('Error marking all notifications as read:', error);
+          this.isMarkingAllRead = false;
+          
+          // Revert UI changes if API call fails
+          this.notifications = originalNotifications;
+          this.groupNotificationsByDate();
+          
+          // Optionally show error message to user
+          alert('Erreur lors du marquage des notifications. Veuillez réessayer.');
+        }
+      });
+  }
+
+  private updateNotificationInArray(notificationId: string, updates: Partial<Notification>): void {
+    const index = this.notifications.findIndex(n => n._id === notificationId);
+    if (index !== -1) {
+      this.notifications[index] = { ...this.notifications[index], ...updates };
+    }
+  }
   confirmDelete(): void {
     if (!this.notificationToDelete) return;
     
@@ -634,6 +734,25 @@ openCreateModal(): void {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  resetFilters(): void {
+    // Reset all filter values
+    this.filters = {
+      page: 1,
+      limit: 10,
+      type: undefined,
+      priority: undefined,
+      targetAudience: undefined
+    };
+    this.searchTerm = '';
+    this.filterStatus = 'all';
+    
+    // Clear the search subject
+    this.searchSubject$.next('');
+    
+    // Reload notifications with default filters
+    this.loadNotifications();
   }
 
   
