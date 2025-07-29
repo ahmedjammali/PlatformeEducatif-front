@@ -59,12 +59,18 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   private destroy$ = new Subject<void>();
   private charts: Chart[] = [];
 
-  // Chart color scheme
+  // Chart color scheme using CSS variables
   private colors = {
-    primary: '#a4b465',
-    primaryDark: '#626f47',
-    accent: '#f0bb78',
-    secondary: ['#f0bb78', '#a4b465', '#626f47', '#e8e8e8', '#8b9dc3', '#dda15e', '#bc6c25', '#283618']
+    primary: '',
+    primaryDark: '',
+    accent: '',
+    secondary: '',
+    white: '',
+    success: '',
+    error: '',
+    warning: '',
+    info: '',
+    multiColor: [] as string[]
   };
 
   constructor(
@@ -76,6 +82,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
+    this.initializeColors();
     this.loadDashboardData();
   }
 
@@ -89,6 +96,33 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private initializeColors(): void {
+    // Get CSS variables from root element
+    const rootStyles = getComputedStyle(document.documentElement);
+    
+    this.colors = {
+      primary: rootStyles.getPropertyValue('--color-primary').trim(),
+      primaryDark: rootStyles.getPropertyValue('--color-primary-dark').trim(),
+      accent: rootStyles.getPropertyValue('--color-accent').trim(),
+      secondary: rootStyles.getPropertyValue('--color-secondary').trim(),
+      white: rootStyles.getPropertyValue('--color-white').trim(),
+      success: rootStyles.getPropertyValue('--color-success').trim(),
+      error: rootStyles.getPropertyValue('--color-error').trim(),
+      warning: rootStyles.getPropertyValue('--color-warning').trim(),
+      info: rootStyles.getPropertyValue('--color-info').trim(),
+      multiColor: [
+        rootStyles.getPropertyValue('--color-accent').trim(),
+        rootStyles.getPropertyValue('--color-primary').trim(),
+        rootStyles.getPropertyValue('--color-primary-dark').trim(),
+        rootStyles.getPropertyValue('--color-secondary').trim(),
+        rootStyles.getPropertyValue('--color-success').trim(),
+        rootStyles.getPropertyValue('--color-info').trim(),
+        rootStyles.getPropertyValue('--color-warning').trim(),
+        rootStyles.getPropertyValue('--color-error').trim()
+      ]
+    };
   }
 
   quickAction(action: string): void {
@@ -193,7 +227,9 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
             backgroundColor: this.colors.primary,
             borderColor: this.colors.primaryDark,
             borderWidth: 1,
-            borderRadius: 6
+            borderRadius: 6,
+            hoverBackgroundColor: this.colors.accent,
+            hoverBorderColor: this.colors.primaryDark
           }]
         },
         options: {
@@ -202,18 +238,24 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           plugins: {
             legend: { display: false },
             tooltip: {
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              backgroundColor: this.colors.primaryDark,
+              titleColor: this.colors.white,
+              bodyColor: this.colors.white,
+              borderColor: this.colors.primary,
+              borderWidth: 1,
               padding: 12,
-
+              cornerRadius: 8
             }
           },
           scales: {
             y: {
               beginAtZero: true,
-              grid: { color: 'rgba(0, 0, 0, 0.05)' }
+              grid: { color: 'rgba(98, 111, 71, 0.1)' },
+              ticks: { color: this.colors.primaryDark }
             },
             x: {
-              grid: { display: false }
+              grid: { display: false },
+              ticks: { color: this.colors.primaryDark }
             }
           }
         }
@@ -233,9 +275,11 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           labels: topSubjects.map(s => s.subjectName),
           datasets: [{
             data: topSubjects.map(s => s.teacherCount),
-            backgroundColor: this.colors.secondary.slice(0, topSubjects.length),
+            backgroundColor: this.colors.multiColor.slice(0, topSubjects.length),
             borderWidth: 2,
-            borderColor: '#fff'
+            borderColor: this.colors.white,
+            hoverBorderWidth: 3,
+            hoverBorderColor: this.colors.primaryDark
           }]
         },
         options: {
@@ -246,10 +290,17 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
               position: 'bottom',
               labels: {
                 padding: 15,
-                font: { size: 12 }
+                font: { size: 12 },
+                color: this.colors.primaryDark,
+                usePointStyle: true
               }
             },
             tooltip: {
+              backgroundColor: this.colors.primaryDark,
+              titleColor: this.colors.white,
+              bodyColor: this.colors.white,
+              borderColor: this.colors.primary,
+              borderWidth: 1,
               callbacks: {
                 label: (context) => {
                   return context.label + ': ' + context.parsed + ' enseignants';
@@ -282,26 +333,30 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
             label: 'Nombre de classes',
             data: classCounts,
             borderColor: this.colors.primary,
-            backgroundColor: this.colors.primary + '20',
+            backgroundColor: this.colors.primary + '30',
             tension: 0.4,
             fill: true,
             pointRadius: 6,
             pointHoverRadius: 8,
-            pointBackgroundColor: '#fff',
+            pointBackgroundColor: this.colors.white,
             pointBorderColor: this.colors.primary,
-            pointBorderWidth: 2
+            pointBorderWidth: 2,
+            pointHoverBackgroundColor: this.colors.primary,
+            pointHoverBorderColor: this.colors.white
           }, {
             label: 'Moyenne d\'étudiants par classe',
             data: avgStudentsPerGrade,
             borderColor: this.colors.accent,
-            backgroundColor: this.colors.accent + '20',
+            backgroundColor: this.colors.accent + '30',
             tension: 0.4,
             fill: true,
             pointRadius: 6,
             pointHoverRadius: 8,
-            pointBackgroundColor: '#fff',
+            pointBackgroundColor: this.colors.white,
             pointBorderColor: this.colors.accent,
-            pointBorderWidth: 2
+            pointBorderWidth: 2,
+            pointHoverBackgroundColor: this.colors.accent,
+            pointHoverBorderColor: this.colors.white
           }]
         },
         options: {
@@ -316,17 +371,27 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
               position: 'top',
               labels: {
                 padding: 15,
-                usePointStyle: true
+                usePointStyle: true,
+                color: this.colors.primaryDark
               }
+            },
+            tooltip: {
+              backgroundColor: this.colors.primaryDark,
+              titleColor: this.colors.white,
+              bodyColor: this.colors.white,
+              borderColor: this.colors.primary,
+              borderWidth: 1
             }
           },
           scales: {
             y: {
               beginAtZero: true,
-              grid: { color: 'rgba(0, 0, 0, 0.05)' }
+              grid: { color: 'rgba(98, 111, 71, 0.1)' },
+              ticks: { color: this.colors.primaryDark }
             },
             x: {
-              grid: { display: false }
+              grid: { display: false },
+              ticks: { color: this.colors.primaryDark }
             }
           }
         }
@@ -352,7 +417,9 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
               this.colors.primaryDark + '80'
             ],
             borderWidth: 2,
-            borderColor: '#fff'
+            borderColor: this.colors.white,
+            hoverBorderWidth: 3,
+            hoverBorderColor: this.colors.primaryDark
           }]
         },
         options: {
@@ -361,13 +428,24 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           scales: {
             r: {
               beginAtZero: true,
-              grid: { color: 'rgba(0, 0, 0, 0.05)' }
+              grid: { color: 'rgba(98, 111, 71, 0.1)' },
+              ticks: { color: this.colors.primaryDark }
             }
           },
           plugins: {
             legend: {
               position: 'bottom',
-              labels: { padding: 15 }
+              labels: { 
+                padding: 15,
+                color: this.colors.primaryDark
+              }
+            },
+            tooltip: {
+              backgroundColor: this.colors.primaryDark,
+              titleColor: this.colors.white,
+              bodyColor: this.colors.white,
+              borderColor: this.colors.primary,
+              borderWidth: 1
             }
           }
         }
@@ -389,20 +467,24 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
             label: 'Nombre d\'enseignants',
             data: topSubjects.map(s => s.teacherCount),
             borderColor: this.colors.primary,
-            backgroundColor: this.colors.primary + '20',
+            backgroundColor: this.colors.primary + '30',
             pointBackgroundColor: this.colors.primary,
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: this.colors.primary
+            pointBorderColor: this.colors.white,
+            pointBorderWidth: 2,
+            pointHoverBackgroundColor: this.colors.white,
+            pointHoverBorderColor: this.colors.primary,
+            pointHoverBorderWidth: 3
           }, {
             label: 'Nombre de classes',
             data: topSubjects.map(s => Math.floor(Math.random() * 8) + 1), // Placeholder data
             borderColor: this.colors.accent,
-            backgroundColor: this.colors.accent + '20',
+            backgroundColor: this.colors.accent + '30',
             pointBackgroundColor: this.colors.accent,
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: this.colors.accent
+            pointBorderColor: this.colors.white,
+            pointBorderWidth: 2,
+            pointHoverBackgroundColor: this.colors.white,
+            pointHoverBorderColor: this.colors.accent,
+            pointHoverBorderWidth: 3
           }]
         },
         options: {
@@ -411,7 +493,15 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           scales: {
             r: {
               beginAtZero: true,
-              grid: { color: 'rgba(0, 0, 0, 0.05)' }
+              grid: { color: 'rgba(98, 111, 71, 0.1)' },
+              ticks: { 
+                color: this.colors.primaryDark,
+                backdropColor: 'transparent'
+              },
+              pointLabels: {
+                color: this.colors.primaryDark,
+                font: { size: 12 }
+              }
             }
           },
           plugins: {
@@ -419,8 +509,16 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
               position: 'top',
               labels: {
                 padding: 15,
-                usePointStyle: true
+                usePointStyle: true,
+                color: this.colors.primaryDark
               }
+            },
+            tooltip: {
+              backgroundColor: this.colors.primaryDark,
+              titleColor: this.colors.white,
+              bodyColor: this.colors.white,
+              borderColor: this.colors.primary,
+              borderWidth: 1
             }
           }
         }

@@ -15,7 +15,7 @@
 }
 
 .stat-card {
-  background-color: white;
+  background-color: var(--color-white);
   border-radius: var(--radius-md);
   padding: 24px;
   box-shadow: var(--shadow-sm);
@@ -23,11 +23,13 @@
   align-items: flex-start;
   gap: 20px;
   transition: var(--transition-base);
+  border: 1px solid rgba(164, 180, 101, 0.1);
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
 }
 
 .stat-icon {
@@ -41,23 +43,24 @@
 }
 
 .stat-icon.students {
-  background-color: rgba(240, 187, 120, 0.2);
-  color: #e65100;
+  background: rgba(240, 187, 120, 0.15);
+  color: var(--color-accent);
 }
 
 .stat-icon.teachers {
-  background-color: rgba(164, 180, 101, 0.2);
+  background: rgba(164, 180, 101, 0.15);
   color: var(--color-primary);
 }
 
 .stat-icon.classes {
-  background-color: rgba(98, 111, 71, 0.2);
+  background: rgba(98, 111, 71, 0.15);
   color: var(--color-primary-dark);
 }
 
 .stat-icon.subjects {
-  background-color: rgba(245, 236, 213, 0.5);
+  background: rgba(245, 236, 213, 0.8);
   color: var(--color-primary-dark);
+  border: 1px solid var(--color-secondary);
 }
 
 .stat-content h3 {
@@ -102,7 +105,7 @@
 }
 
 .quick-action-btn {
-  background-color: white;
+  background-color: var(--color-white);
   border: 2px solid var(--color-gray);
   border-radius: var(--radius-md);
   padding: 20px;
@@ -118,7 +121,9 @@
 
 .quick-action-btn:hover {
   border-color: var(--color-primary);
-  background-color: rgba(164, 180, 101, 0.05);
+  background: linear-gradient(135deg, 
+    rgba(164, 180, 101, 0.05) 0%, 
+    rgba(240, 187, 120, 0.03) 100%);
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
 }
@@ -126,6 +131,7 @@
 .quick-action-btn svg {
   width: 32px;
   height: 32px;
+  color: var(--color-primary);
 }
 
 .quick-action-btn span {
@@ -155,15 +161,17 @@
 }
 
 .chart-card {
-  background-color: white;
+  background-color: var(--color-white);
   border-radius: var(--radius-md);
   padding: 24px;
   box-shadow: var(--shadow-sm);
   transition: var(--transition-base);
+  border: 1px solid rgba(164, 180, 101, 0.1);
 }
 
 .chart-card:hover {
   box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
 }
 
 .chart-card h3 {
@@ -196,10 +204,11 @@
 }
 
 .activity-list {
-  background-color: white;
+  background-color: var(--color-white);
   border-radius: var(--radius-md);
   padding: 24px;
   box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(164, 180, 101, 0.1);
 }
 
 .activity-item {
@@ -230,17 +239,17 @@
 }
 
 .activity-icon.user {
-  background-color: rgba(240, 187, 120, 0.2);
-  color: #e65100;
+  background: rgba(240, 187, 120, 0.15);
+  color: var(--color-accent);
 }
 
 .activity-icon.class {
-  background-color: rgba(164, 180, 101, 0.2);
+  background: rgba(164, 180, 101, 0.15);
   color: var(--color-primary);
 }
 
 .activity-icon.grade {
-  background-color: rgba(98, 111, 71, 0.2);
+  background: rgba(98, 111, 71, 0.15);
   color: var(--color-primary-dark);
 }
 

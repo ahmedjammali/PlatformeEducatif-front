@@ -240,26 +240,26 @@
 .newsletter-input {
   flex: 1;
   padding: 0.75rem var(--spacing-md);
-  border: 2px solid rgba(98, 111, 71, 0.2);
+  border: 2px solid var(--color-primary);
   border-radius: 25px;
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--color-white);
   transition: var(--transition-base);
 }
 
 .newsletter-input:focus {
   outline: none;
-  border-color: var(--color-primary);
-  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--color-primary-dark);
+  background: var(--color-white);
 }
 
 .newsletter-input::placeholder {
-  color: rgba(98, 111, 71, 0.6);
+  color: var(--color-gray-dark);
 }
 
 .newsletter-btn {
   padding: 0.75rem var(--spacing-lg);
   background: var(--gradient-primary);
-  color: var(--color-secondary);
+  color: var(--color-white);
   border: none;
   border-radius: 25px;
   cursor: pointer;
@@ -292,10 +292,10 @@
 
 .badge {
   padding: var(--spacing-xs) 0.75rem;
-  background: rgba(164, 180, 101, 0.2);
+  background: var(--color-primary);
   border-radius: var(--radius-sm);
   font-size: var(--font-sm);
-  color: var(--color-primary-dark);
+  color: var(--color-white);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -360,7 +360,7 @@
   width: 50px;
   height: 50px;
   background: var(--gradient-primary);
-  color: var(--color-secondary);
+  color: var(--color-white);
   border: none;
   border-radius: var(--radius-full);
   cursor: pointer;
