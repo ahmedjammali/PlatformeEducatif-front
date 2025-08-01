@@ -484,7 +484,9 @@
               <label>Date de publication</label>
               <input type="datetime-local" 
                      formControlName="publishDate"
-                     [class.disabled-field]="editingNotification">
+                     [class.disabled-field]="editingNotification"
+                     [min]="getMinDateTime()"
+                     (change)="onPublishDateChange()">
               <span class="helper-text" *ngIf="!editingNotification">
                 Laisser vide pour publier immédiatement
               </span>
@@ -495,9 +497,22 @@
 
             <div class="form-group">
               <label>Date d'expiration</label>
-              <input type="datetime-local" formControlName="expiryDate">
+              <input type="datetime-local" 
+                     formControlName="expiryDate"
+                     [min]="getMinExpiryDate()"
+                     (change)="onExpiryDateChange()">
               <span class="helper-text">Laisser vide pour aucune expiration</span>
             </div>
+          </div>
+
+          <!-- Date validation error message -->
+          <div class="date-error-message" *ngIf="hasDateError()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ getDateErrorMessage() }}</span>
           </div>
         </div>
 

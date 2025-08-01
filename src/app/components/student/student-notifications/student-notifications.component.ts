@@ -451,4 +451,93 @@ export class StudentNotificationsComponent implements OnInit, OnDestroy {
     
     return '📎';
   }
+
+  extractCleanFilename(filename: string): string {
+  if (!filename) return '';
+  
+  // Split by hyphens and look for the actual filename part
+  const parts = filename.split('-');
+  
+  // The actual filename usually starts after the last timestamp
+  // Look for the part that contains a file extension or meaningful text
+  let cleanName = '';
+  
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i];
+    
+    // If this part contains a file extension, it's likely the start of the real filename
+    if (part.includes('.') || part.length > 10) {
+      // Take this part and all remaining parts
+      cleanName = parts.slice(i).join('-');
+      break;
+    }
+  }
+  
+  // If we didn't find a good match, try a different approach
+  if (!cleanName) {
+    // Look for parts that don't look like timestamps (not all numbers)
+    const meaningfulParts = parts.filter(part => {
+      // Skip parts that are purely numeric (likely timestamps)
+      return !/^\d+$/.test(part) && part.length > 0;
+    });
+    
+    if (meaningfulParts.length > 0) {
+      cleanName = meaningfulParts.join('-');
+    } else {
+      // Fallback: use the original filename
+      cleanName = filename;
+    }
+  }
+  
+  // Clean up common artifacts
+  cleanName = cleanName
+    .replace(/^-+/, '') // Remove leading hyphens
+    .replace(/-+$/, '') // Remove trailing hyphens
+    .replace(/--+/g, '-') // Replace multiple hyphens with single
+    .trim();
+  
+  return cleanName || filename; // Fallback to original if cleaning failed
+}
+
+/**
+ * Truncates filename for display while preserving the extension
+ * @param filename - The filename to truncate
+ * @param maxLength - Maximum length (default 30)
+ * @returns Truncated filename with extension preserved
+ */
+truncateFilename(filename: string, maxLength: number = 30): string {
+  if (!filename || filename.length <= maxLength) return filename;
+  
+  const lastDotIndex = filename.lastIndexOf('.');
+  
+  if (lastDotIndex === -1) {
+    // No extension, just truncate
+    return filename.substring(0, maxLength - 3) + '...';
+  }
+  
+  const extension = filename.substring(lastDotIndex);
+  const nameWithoutExt = filename.substring(0, lastDotIndex);
+  
+  const availableLength = maxLength - extension.length - 3; // 3 for "..."
+  
+  if (availableLength <= 0) {
+    // Extension is too long, just show truncated name
+    return filename.substring(0, maxLength - 3) + '...';
+  }
+  
+  return nameWithoutExt.substring(0, availableLength) + '...' + extension;
+}
+
+/**
+ * Gets the display name for a file attachment
+ * @param attachment - The attachment object
+ * @returns Clean, truncated filename for display
+ */
+getDisplayFilename(attachment: NotificationAttachment): string {
+  const originalName = attachment.originalName || attachment.filename;
+  const cleanName = this.extractCleanFilename(originalName);
+  return this.truncateFilename(cleanName, 28); // Adjusted for mobile display
+}
+
+
 }

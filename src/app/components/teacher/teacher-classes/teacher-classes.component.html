@@ -115,27 +115,7 @@
         </div>
       </div>
 
-      <!-- Informations de la classe -->
-      <div class="class-details-section">
-        <h3 class="section-subtitle">Informations de la classe</h3>
-        <div class="details-grid">
-          <div class="detail-item">
-            <span class="detail-label">Année scolaire</span>
-            <span class="detail-value">{{ selectedClassDetails.class.academicYear }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">École</span>
-            <span class="detail-value">{{ getSchoolName(selectedClassDetails.class.school) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Statut</span>
-            <span class="detail-value" [class.active]="selectedClassDetails.class.isActive" [class.inactive]="!selectedClassDetails.class.isActive">
-              {{ selectedClassDetails.class.isActive ? 'Active' : 'Inactive' }}
-            </span>
-          </div>
-        </div>
-      </div>
-
+      
       <!-- Section des enseignants et matières -->
       <div class="teachers-section" *ngIf="hasTeacherSubjects()">
         <h3 class="section-subtitle">Enseignants et matières</h3>

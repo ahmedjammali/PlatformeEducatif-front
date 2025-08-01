@@ -97,6 +97,12 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
   uploadProgress = 0;
   isUploading = false;
 
+  // Date validation properties
+  dateValidationErrors = {
+    publishDateInPast: false,
+    expiryBeforePublish: false
+  };
+
   // Enums for template
   readonly NotificationType = NotificationType;
   readonly NotificationPriority = NotificationPriority;
@@ -234,11 +240,17 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
       targetAudience: TargetAudience.SPECIFIC_CLASS,
       type: NotificationType.GENERAL,
       priority: NotificationPriority.MEDIUM,
-      targetClass: undefined
+      targetClass: undefined,
+      publishDate: undefined,
+      expiryDate: undefined
     };
     this.selectedFiles = [];
     this.uploadProgress = 0;
     this.isUploading = false;
+    this.dateValidationErrors = {
+      publishDateInPast: false,
+      expiryBeforePublish: false
+    };
   }
 
   createNotification(): void {
@@ -249,6 +261,11 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
 
     if (!this.createForm.targetClass) {
       alert('Vous devez sélectionner une classe');
+      return;
+    }
+
+    // Check date validation
+    if (this.hasDateError()) {
       return;
     }
 
@@ -328,7 +345,8 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
       priority: notification.priority,
       targetAudience: notification.targetAudience,
       targetClass: notification.targetClass?._id,
-      expiryDate: notification.expiryDate
+      publishDate: notification.publishDate ? this.formatDateForInput(notification.publishDate) : undefined,
+      expiryDate: notification.expiryDate ? this.formatDateForInput(notification.expiryDate) : undefined
     };
     this.showEditModal = true;
   }
@@ -690,48 +708,126 @@ export class TeacherNotificationsComponent implements OnInit, OnDestroy {
   }
 
   // Delete confirmation methods
-openDeleteModal(notification: Notification): void {
-  const createdById = typeof notification.createdBy === 'string' ? 
-    notification.createdBy : notification.createdBy._id;
-  const currentUserId = this.currentUser?._id || this.currentUser?.id;
+  openDeleteModal(notification: Notification): void {
+    const createdById = typeof notification.createdBy === 'string' ? 
+      notification.createdBy : notification.createdBy._id;
+    const currentUserId = this.currentUser?._id || this.currentUser?.id;
 
-  if (createdById !== currentUserId) {
-    return;
+    if (createdById !== currentUserId) {
+      return;
+    }
+
+    this.notificationToDelete = notification;
+    this.showDeleteModal = true;
   }
 
-  this.notificationToDelete = notification;
-  this.showDeleteModal = true;
-}
-
-closeDeleteModal(): void {
-  this.showDeleteModal = false;
-  this.notificationToDelete = null;
-  this.isDeleting = false;
-}
-
-confirmDeleteNotification(): void {
-  if (!this.notificationToDelete) {
-    return;
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.notificationToDelete = null;
+    this.isDeleting = false;
   }
 
-  this.isDeleting = true;
+  confirmDeleteNotification(): void {
+    if (!this.notificationToDelete) {
+      return;
+    }
 
-  this.notificationService.deleteNotification(this.notificationToDelete._id)
-    .pipe(takeUntil(this.destroy$))
-    .subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.notifications = this.notifications.filter(n => n._id !== this.notificationToDelete!._id);
-          this.groupNotificationsByDate();
-          this.closeDeleteModal();
+    this.isDeleting = true;
+
+    this.notificationService.deleteNotification(this.notificationToDelete._id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.notifications = this.notifications.filter(n => n._id !== this.notificationToDelete!._id);
+            this.groupNotificationsByDate();
+            this.closeDeleteModal();
+          }
+          this.isDeleting = false;
+        },
+        error: (error) => {
+          console.error('Error deleting notification:', error);
+          this.isDeleting = false;
         }
-        this.isDeleting = false;
-      },
-      error: (error) => {
-        console.error('Error deleting notification:', error);
-        this.isDeleting = false;
-      }
-    });
-}
+      });
+  }
 
+  // Date validation methods
+  getMinDateTime(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  getMinExpiryDate(): string {
+    if (this.createForm.publishDate) {
+      const publishDateTime = new Date(this.createForm.publishDate);
+      // Add 1 minute to publish date as minimum expiry
+      publishDateTime.setMinutes(publishDateTime.getMinutes() + 1);
+      return this.formatDateForInput(publishDateTime);
+    }
+    return this.getMinDateTime();
+  }
+
+  formatDateForInput(date: Date | string): string {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  onPublishDateChange(): void {
+    this.validateDates();
+  }
+
+  onExpiryDateChange(): void {
+    this.validateDates();
+  }
+
+  private validateDates(): void {
+    const now = new Date();
+    this.dateValidationErrors = {
+      publishDateInPast: false,
+      expiryBeforePublish: false
+    };
+
+    // Check if publish date is in the past
+    if (this.createForm.publishDate) {
+      const publishDateTime = new Date(this.createForm.publishDate);
+      if (publishDateTime < now) {
+        this.dateValidationErrors.publishDateInPast = true;
+      }
+    }
+
+    // Check if expiry date is before publish date
+    if (this.createForm.publishDate && this.createForm.expiryDate) {
+      const publishDateTime = new Date(this.createForm.publishDate);
+      const expiryDateTime = new Date(this.createForm.expiryDate);
+      if (expiryDateTime <= publishDateTime) {
+        this.dateValidationErrors.expiryBeforePublish = true;
+      }
+    }
+  }
+
+  hasDateError(): boolean {
+    return this.dateValidationErrors.publishDateInPast || 
+           this.dateValidationErrors.expiryBeforePublish;
+  }
+
+  getDateErrorMessage(): string {
+    if (this.dateValidationErrors.publishDateInPast) {
+      return 'La date de publication doit être dans le futur';
+    }
+    if (this.dateValidationErrors.expiryBeforePublish) {
+      return "La date d'expiration doit être après la date de publication";
+    }
+    return '';
+  }
 }

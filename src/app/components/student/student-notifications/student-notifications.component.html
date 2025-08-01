@@ -207,21 +207,27 @@
       <div class="modal-section" *ngIf="selectedNotification.attachments && selectedNotification.attachments.length > 0">
         <h3 class="section-subtitle">Pièces jointes ({{ selectedNotification.attachments.length }})</h3>
         <div class="attachments-list">
+          <!-- Updated attachment item in the modal -->
           <div class="attachment-item" *ngFor="let attachment of selectedNotification.attachments">
             <div class="attachment-icon">{{ getFileIcon(attachment.mimetype) }}</div>
             <div class="attachment-details">
-              <p class="attachment-name">{{ attachment.originalName }}</p>
+              <!-- Use the new display function -->
+              <p class="attachment-name" [title]="extractCleanFilename(attachment.originalName || attachment.filename)">
+                {{ getDisplayFilename(attachment) }}
+              </p>
               <p class="attachment-size">{{ formatFileSize(attachment.size) }}</p>
             </div>
             <div class="attachment-actions">
-              <button class="download-btn" (click)="downloadAttachment(attachment)" title="Télécharger">
+              <button class="download-btn" 
+                      (click)="downloadAttachment(attachment)" 
+                      title="Télécharger"
+                      type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                   <polyline points="7,10 12,15 17,10"></polyline>
                   <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
               </button>
-                
             </div>
           </div>
         </div>
@@ -255,18 +261,6 @@
       </div>
     </div>
 
-    <div class="modal-footer">
-      <button class="action-btn delete-btn" (click)="deleteNotification(selectedNotification)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="3,6 5,6 21,6"></polyline>
-          <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2"></path>
-        </svg>
-        Supprimer
-      </button>
-      <button class="action-btn close-btn" (click)="closeModal()">
-        Fermer
-      </button>
-    </div>
   </div>
 </div>
 

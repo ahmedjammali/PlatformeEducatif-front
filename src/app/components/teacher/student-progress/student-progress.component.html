@@ -231,14 +231,6 @@
               <span class="meta-icon">✅</span>
               {{ studentData.overallStats.completedExercises }}/{{ studentData.overallStats.totalExercises }} terminés
             </span>
-            <span class="meta-item">
-              <span class="meta-icon">📊</span>
-              {{ getCompletionRate(studentData.overallStats.completedExercises, studentData.overallStats.totalExercises).toFixed(1) }}% de réussite
-            </span>
-            <span class="meta-item">
-              <span class="meta-icon">⏱️</span>
-              {{ formatTime(studentData.overallStats.totalTimeSpent) }} total
-            </span>
           </div>
 
           <div class="progress-bar">

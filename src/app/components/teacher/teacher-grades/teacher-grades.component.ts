@@ -55,6 +55,10 @@ export class TeacherGradesComponent implements OnInit, OnDestroy {
   showDeleteConfirmation = false;
   gradeToDelete: Grade | null = null;
   isDeleting = false;
+
+  // Form validation state
+  gradeInputTouched = false;
+  gradeValidationError = '';
   
   // Filters
   filters: GradeFilters = {
@@ -130,43 +134,44 @@ export class TeacherGradesComponent implements OnInit, OnDestroy {
   }
 
   loadGrades(): void {
-  // Réinitialiser les données avant de charger
-  this.allGrades = [];
-  this.filteredGrades = [];
-  this.studentGradeSummaries = [];
+    // Réinitialiser les données avant de charger
+    this.allGrades = [];
+    this.filteredGrades = [];
+    this.studentGradeSummaries = [];
 
-  if (!this.filters.selectedClass) {
-    this.applyFilters();
-    return;
-  }
+    if (!this.filters.selectedClass) {
+      this.applyFilters();
+      return;
+    }
 
-  this.isLoading = true;
-  
-  const gradeFilters = {
-    academicYear: this.filters.academicYear,
-    ...(this.filters.selectedTrimester && { trimester: this.filters.selectedTrimester }),
-    ...(this.filters.selectedSubject && { subject: this.filters.selectedSubject }),
-    ...(this.filters.selectedExamType && { examType: this.filters.selectedExamType })
-  };
+    this.isLoading = true;
+    
+    const gradeFilters = {
+      academicYear: this.filters.academicYear,
+      ...(this.filters.selectedTrimester && { trimester: this.filters.selectedTrimester }),
+      ...(this.filters.selectedSubject && { subject: this.filters.selectedSubject }),
+      ...(this.filters.selectedExamType && { examType: this.filters.selectedExamType })
+    };
 
-  this.gradeService.getGradesByClass(this.filters.selectedClass, gradeFilters)
-    .pipe(takeUntil(this.destroy$))
-    .subscribe({
-      next: (response) => {
-        console.log('Grades loaded:', response);
-        this.allGrades = response.grades || []; // Assurez-vous d'avoir un tableau
-        this.applyFilters();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading grades:', error);
-        this.showSnackBar('Erreur lors du chargement des notes', 'error');
-        this.allGrades = []; // Réinitialiser en cas d'erreur
-        this.applyFilters();
-        this.isLoading = false;
-      }
+    this.gradeService.getGradesByClass(this.filters.selectedClass, gradeFilters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          console.log('Grades loaded:', response);
+          this.allGrades = response.grades || []; // Assurez-vous d'avoir un tableau
+          this.applyFilters();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading grades:', error);
+          this.showSnackBar('Erreur lors du chargement des notes', 'error');
+          this.allGrades = []; // Réinitialiser en cas d'erreur
+          this.applyFilters();
+          this.isLoading = false;
+        }
       });
   }
+
   applyFilters(): void {
     this.filteredGrades = this.allGrades.filter(grade => {
       return (!this.filters.selectedSubject || this.getSubjectId(grade.subject) === this.filters.selectedSubject) &&
@@ -291,6 +296,8 @@ export class TeacherGradesComponent implements OnInit, OnDestroy {
 
   openCreateGradeForm(): void {
     this.editingGrade = null;
+    this.gradeInputTouched = false;
+    this.gradeValidationError = '';
     this.gradeForm = {
       studentId: '',
       classId: this.filters.selectedClass,
@@ -309,6 +316,8 @@ export class TeacherGradesComponent implements OnInit, OnDestroy {
 
   editGrade(grade: Grade): void {
     this.editingGrade = grade;
+    this.gradeInputTouched = false;
+    this.gradeValidationError = '';
     this.gradeForm = {
       studentId: typeof grade.student === 'string' ? grade.student : grade.student._id!,
       classId: typeof grade.class === 'string' ? grade.class : grade.class._id!,
@@ -325,9 +334,42 @@ export class TeacherGradesComponent implements OnInit, OnDestroy {
     this.showCreateForm = true;
   }
 
+  // Grade validation methods
+  isGradeRangeValid(): boolean {
+    const grade = this.gradeForm.grade;
+    return grade >= 0 && grade <= 20 && !isNaN(grade);
+  }
+
+  onGradeInput(): void {
+    this.gradeInputTouched = true;
+    this.validateGradeRange();
+  }
+
+  validateGradeRange(): void {
+    const grade = this.gradeForm.grade;
+    
+    if (isNaN(grade)) {
+      this.gradeValidationError = 'Veuillez saisir un nombre valide';
+    } else if (grade < 0) {
+      this.gradeValidationError = 'La note ne peut pas être négative';
+    } else if (grade > 20) {
+      this.gradeValidationError = 'La note ne peut pas dépasser 20';
+    } else {
+      this.gradeValidationError = '';
+    }
+  }
+
   saveGrade(): void {
+    // Mark all fields as touched to show validation errors
+    this.gradeInputTouched = true;
+    this.validateGradeRange();
+
     if (!this.isFormValid()) {
-      this.showSnackBar('Veuillez remplir tous les champs obligatoires', 'warning');
+      if (this.gradeValidationError) {
+        this.showSnackBar(this.gradeValidationError, 'warning');
+      } else {
+        this.showSnackBar('Veuillez remplir tous les champs obligatoires', 'warning');
+      }
       return;
     }
 
@@ -443,19 +485,23 @@ export class TeacherGradesComponent implements OnInit, OnDestroy {
   cancelForm(): void {
     this.showCreateForm = false;
     this.editingGrade = null;
+    this.gradeInputTouched = false;
+    this.gradeValidationError = '';
   }
 
   isFormValid(): boolean {
-    return !!(
+    const isBasicFormValid = !!(
       this.gradeForm.studentId &&
       this.gradeForm.classId &&
       this.gradeForm.subjectId &&
       this.gradeForm.examName &&
-      this.gradeForm.grade >= 0 &&
-      this.gradeForm.grade <= 20 &&
       this.gradeForm.coefficient &&
       this.gradeForm.coefficient > 0
     );
+    
+    const isGradeValid = this.isGradeRangeValid();
+    
+    return isBasicFormValid && isGradeValid;
   }
 
   // Helper methods

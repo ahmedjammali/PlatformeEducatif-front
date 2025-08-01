@@ -116,8 +116,20 @@ export class TeacherExercisesComponent implements OnInit, OnChanges {
   }
 
   onExerciseCreated(exercise: Exercise): void {
+    // Add the new exercise to the local exercises array immediately
+    this.exercises = [...this.exercises, exercise];
+    
+    // Re-filter to show the new exercise
+    this.filterExercises();
+    
+    // Emit to parent component to update its list as well
     this.exerciseCreated.emit(exercise);
+    
+    // Close the modal
     this.closeCreateExerciseModal();
+    
+    // Optional: Also trigger a refresh from parent to ensure data consistency
+    this.refreshExercises.emit();
   }
 
   viewExercise(exercise: Exercise): void {
@@ -164,14 +176,19 @@ export class TeacherExercisesComponent implements OnInit, OnChanges {
   }
 
   onExerciseUpdated(exercise: Exercise): void {
-    // Update the exercise in the local list
+    // Update the exercise in the local list immediately
     const index = this.exercises.findIndex(e => e._id === exercise._id);
     if (index !== -1) {
       this.exercises[index] = exercise;
+      // Create a new array reference to trigger change detection
+      this.exercises = [...this.exercises];
       this.filterExercises();
     }
     
+    // Emit to parent component
     this.exerciseUpdated.emit(exercise);
+    
+    // Close the modal
     this.closeEditExerciseModal();
   }
 
@@ -203,11 +220,15 @@ export class TeacherExercisesComponent implements OnInit, OnChanges {
     if (this.exerciseToDelete) {
       this.exerciseService.deleteExercise(this.exerciseToDelete._id!).subscribe({
         next: () => {
-          this.exerciseDeleted.emit(this.exerciseToDelete!._id!);
-          this.closeDeleteModal();
-          // Remove from local arrays
+          // Remove from local arrays immediately
           this.exercises = this.exercises.filter(e => e._id !== this.exerciseToDelete!._id);
           this.filterExercises();
+          
+          // Emit to parent component
+          this.exerciseDeleted.emit(this.exerciseToDelete!._id!);
+          
+          // Close the modal
+          this.closeDeleteModal();
         },
         error: (error) => {
           console.error('Error deleting exercise:', error);

@@ -222,14 +222,40 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   }
 
   onExerciseCreated(exercise: Exercise): void {
-    this.allExercises.unshift(exercise);
+    // Add the new exercise to the beginning of the array
+    this.allExercises = [exercise, ...this.allExercises];
+    
+    // Recalculate stats and mappings
     this.calculateDashboardStats();
     this.buildMappings();
+    
+    console.log('Exercise created in dashboard:', exercise);
+  }
+
+  onExerciseUpdated(exercise: Exercise): void {
+    // Find and update the exercise in the array
+    const index = this.allExercises.findIndex(e => e._id === exercise._id);
+    if (index !== -1) {
+      this.allExercises[index] = exercise;
+      // Create a new array reference to trigger change detection
+      this.allExercises = [...this.allExercises];
+      
+      // Recalculate stats and mappings in case the exercise changed subjects/classes
+      this.calculateDashboardStats();
+      this.buildMappings();
+      
+      console.log('Exercise updated in dashboard:', exercise);
+    }
   }
 
   onExerciseDeleted(exerciseId: string): void {
+    // Remove the exercise from the array
     this.allExercises = this.allExercises.filter(e => e._id !== exerciseId);
+    
+    // Recalculate stats and mappings
     this.calculateDashboardStats();
     this.buildMappings();
+    
+    console.log('Exercise deleted in dashboard:', exerciseId);
   }
 }

@@ -25,6 +25,7 @@
     [subjects]="teachingSubjects"
     [classes]="myClasses"
     (exerciseCreated)="onExerciseCreated($event)"
+    (exerciseUpdated)="onExerciseUpdated($event)"
     (exerciseDeleted)="onExerciseDeleted($event)"
     (refreshExercises)="loadTeacherData()">
   </app-teacher-exercises>

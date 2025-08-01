@@ -112,8 +112,9 @@ export class NotificationComponent implements OnInit, OnDestroy {
       targetClass: [''],
       publishDate: [''],
       expiryDate: ['']
-    });
+    }, { validators: this.dateRangeValidator.bind(this) });
   }
+
 
   private setupSearch(): void {
     this.searchSubject$
@@ -127,6 +128,32 @@ export class NotificationComponent implements OnInit, OnDestroy {
         this.filters.page = 1;
         this.loadNotifications();
       });
+  }
+
+  private dateRangeValidator(formGroup: FormGroup): { [key: string]: any } | null {
+    const publishDate = formGroup.get('publishDate')?.value;
+    const expiryDate = formGroup.get('expiryDate')?.value;
+    const now = new Date();
+    const errors: any = {};
+
+    // Check if publish date is in the past
+    if (publishDate) {
+      const publishDateTime = new Date(publishDate);
+      if (publishDateTime < now) {
+        errors.publishDateInPast = true;
+      }
+    }
+
+    // Check if expiry date is before publish date
+    if (publishDate && expiryDate) {
+      const publishDateTime = new Date(publishDate);
+      const expiryDateTime = new Date(expiryDate);
+      if (expiryDateTime <= publishDateTime) {
+        errors.expiryBeforePublish = true;
+      }
+    }
+
+    return Object.keys(errors).length > 0 ? errors : null;
   }
 
   private subscribeToNotificationUpdates(): void {
@@ -528,6 +555,11 @@ viewNotification(notification: Notification): void {
   }
   
   onSubmit(): void {
+    // Check for date errors first
+    if (this.hasDateError()) {
+      return;
+    }
+
     // Temporarily enable disabled fields to get their values
     const wasTargetAudienceDisabled = this.notificationForm.get('targetAudience')?.disabled;
     const wasTargetClassDisabled = this.notificationForm.get('targetClass')?.disabled;
@@ -755,5 +787,53 @@ viewNotification(notification: Notification): void {
     this.loadNotifications();
   }
 
+  // Get minimum date for date inputs (current date/time)
+  getMinDateTime(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  // Get minimum expiry date based on publish date
+  getMinExpiryDate(): string {
+    const publishDate = this.notificationForm.get('publishDate')?.value;
+    if (publishDate) {
+      const publishDateTime = new Date(publishDate);
+      // Add 1 minute to publish date as minimum expiry
+      publishDateTime.setMinutes(publishDateTime.getMinutes() + 1);
+      return this.formatDateForInput(publishDateTime);
+    }
+    return this.getMinDateTime();
+  }
+
+  // Check if form has date errors
+  hasDateError(): boolean {
+    return this.notificationForm.hasError('publishDateInPast') || 
+           this.notificationForm.hasError('expiryBeforePublish');
+  }
+
+  // Get specific date error message
+  getDateErrorMessage(): string {
+    if (this.notificationForm.hasError('publishDateInPast')) {
+      return 'La date de publication doit être dans le futur';
+    }
+    if (this.notificationForm.hasError('expiryBeforePublish')) {
+      return "La date d'expiration doit être après la date de publication";
+    }
+    return '';
+  }
+
+  // Listen to date changes to trigger validation
+  onPublishDateChange(): void {
+    this.notificationForm.get('expiryDate')?.updateValueAndValidity();
+  }
+
+  onExpiryDateChange(): void {
+    this.notificationForm.get('publishDate')?.updateValueAndValidity();
+  }
   
 }

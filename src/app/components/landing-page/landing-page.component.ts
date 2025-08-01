@@ -270,4 +270,5 @@ export class LandingPageComponent implements OnInit {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
+  
 }

@@ -392,7 +392,7 @@
                 (click)="downloadAttachment(selectedNotification, attachment.filename)" 
                 title="Télécharger"
                 style="width: 48px; height: 48px; padding: 8px;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="7 10 12 15 17 10"/>
                   <line x1="12" y1="15" x2="12" y2="3"/>
@@ -525,6 +525,7 @@
             </div>
 
             <!-- Date Fields - Only show when creating -->
+               <!-- Date Fields - Only show when creating -->
             <div class="form-row" *ngIf="showCreateModal">
               <div class="form-group">
                 <label for="publishDate">Date de publication</label>
@@ -533,7 +534,10 @@
                   id="publishDate" 
                   [(ngModel)]="createForm.publishDate" 
                   name="publishDate"
-                  class="form-input">
+                  class="form-input"
+                  [min]="getMinDateTime()"
+                  (change)="onPublishDateChange()">
+                <small class="form-help-text">Laisser vide pour publier immédiatement</small>
               </div>
 
               <div class="form-group">
@@ -543,10 +547,22 @@
                   id="expiryDate" 
                   [(ngModel)]="createForm.expiryDate" 
                   name="expiryDate"
-                  class="form-input">
+                  class="form-input"
+                  [min]="getMinExpiryDate()"
+                  (change)="onExpiryDateChange()">
+                <small class="form-help-text">Laisser vide pour aucune expiration</small>
               </div>
             </div>
 
+            <!-- Date validation error message -->
+            <div class="date-error-message" *ngIf="hasDateError() && showCreateModal">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>{{ getDateErrorMessage() }}</span>
+            </div>
             <!-- Date Display - Only show when editing (read-only) -->
             <div class="form-row" *ngIf="showEditModal && editingNotification">
               <div class="form-group">

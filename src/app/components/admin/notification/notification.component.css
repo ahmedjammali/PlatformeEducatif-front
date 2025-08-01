@@ -60,7 +60,38 @@
   align-items: center;
   gap: 1rem;
 }
+/* Date Error Message */
+.date-error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(244, 67, 54, 0.1);
+  color: var(--color-error);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(244, 67, 54, 0.2);
+  animation: slideInUp 0.3s ease;
+}
 
+.date-error-message svg {
+  flex-shrink: 0;
+}
+
+/* Invalid date input styling */
+.form-group input[type="datetime-local"]:invalid,
+.form-group input[type="datetime-local"].ng-invalid.ng-touched {
+  border-color: var(--color-error);
+  background-color: rgba(244, 67, 54, 0.02);
+}
+
+.form-group input[type="datetime-local"]:invalid:focus,
+.form-group input[type="datetime-local"].ng-invalid.ng-touched:focus {
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.2);
+}
+
+/* Modal Footer */
 .total-count {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: white;

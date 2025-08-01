@@ -120,22 +120,22 @@
       <span class="active-filters-label">Filtres actifs:</span>
       <div class="filter-tags">
         <span class="filter-tag" *ngIf="filters.selectedClass">
-          <span class="filter-icon">🏫</span>
+
           {{ getClassName(filters.selectedClass) }}
           <button (click)="clearFilter('class')" class="tag-remove">×</button>
         </span>
         <span class="filter-tag" *ngIf="filters.selectedSubject">
-          <span class="filter-icon">📚</span>
+     
           {{ getSubjectName(filters.selectedSubject) }}
           <button (click)="clearFilter('subject')" class="tag-remove">×</button>
         </span>
         <span class="filter-tag" *ngIf="filters.selectedTrimester">
-          <span class="filter-icon">📅</span>
+
           {{ filters.selectedTrimester }}
           <button (click)="clearFilter('trimester')" class="tag-remove">×</button>
         </span>
         <span class="filter-tag" *ngIf="filters.selectedExamType">
-          <span class="filter-icon">📝</span>
+
           {{ getExamTypeLabel(filters.selectedExamType) }}
           <button (click)="clearFilter('examType')" class="tag-remove">×</button>
         </span>
@@ -367,19 +367,34 @@
               </select>
             </div>
 
-            <div class="form-group">
-              <label for="grade-value">Note */20 *</label>
-              <input 
-                id="grade-value"
-                type="number"
-                class="form-input"
-                [(ngModel)]="gradeForm.grade"
-                name="grade"
-                min="0"
-                max="20"
-                step="0.5"
-                required>
+           <div class="form-group">
+            <label for="grade-value">Note */20 *</label>
+            <input 
+              id="grade-value"
+              type="number"
+              class="form-input"
+              [class.error]="gradeInputTouched && gradeValidationError"
+              [(ngModel)]="gradeForm.grade"
+              name="grade"
+              min="0"
+              max="20"
+              step="0.5"
+              required
+              (input)="onGradeInput()"
+              (blur)="onGradeInput()"
+              placeholder="Saisir une note entre 0 et 20">
+            
+            <!-- Error message display -->
+            <div class="validation-error" *ngIf="gradeInputTouched && gradeValidationError">
+              <span class="error-icon">⚠️</span>
+              <span class="error-message">{{ gradeValidationError }}</span>
             </div>
+            
+            <!-- Helper text when no error -->
+            <small class="input-help" *ngIf="!gradeValidationError">
+              La note doit être comprise entre 0 et 20
+            </small>
+          </div>
 
             <div class="form-group">
               <label for="coefficient">Coefficient *</label>
@@ -440,7 +455,12 @@
             <button 
               type="submit" 
               class="btn btn-primary"
-              [disabled]="!isFormValid() || isLoading">
+              [disabled]="!isFormValid() || isLoading"
+              [class.disabled]="!isFormValid() || isLoading">
+              <span *ngIf="isLoading" class="button-spinner"></span>
+              <span *ngIf="!isLoading" class="btn-icon">
+                {{ editingGrade ? '✏️' : '➕' }}
+              </span>
               {{ editingGrade ? 'Mettre à jour' : 'Créer la Note' }}
             </button>
           </div>

@@ -142,6 +142,11 @@
                   <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                 </svg>
               </button>
+            <div  *ngIf="notifications.length > 0">
+              <button class="view-all-btn" (click)="viewAllNotifications()">
+                Voir toutes les notifications
+              </button>
+            </div>
             </div>
           </div>
 
@@ -188,11 +193,7 @@
               <div class="no-notifications-text">Aucune notification</div>
             </div>
 
-            <div class="view-all-notifications" *ngIf="notifications.length > 0">
-              <button class="view-all-btn" (click)="viewAllNotifications()">
-                Voir toutes les notifications
-              </button>
-            </div>
+
           </div>
 
           <ng-template #loadingTemplate>

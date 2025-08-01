@@ -80,36 +80,7 @@
     </div>
 
     <!-- Statistics Summary -->
-    <div class="statistics-section" *ngIf="statistics">
-      <h2 class="section-title">
-        <span class="title-icon">📈</span>
-        Mes Statistiques
-      </h2>
-      <div class="statistics-grid">
-        <div class="stat-card overall-average">
-          <div class="stat-icon">🎯</div>
-          <div class="stat-content">
-            <h4>Moyenne Générale</h4>
-            <p class="stat-value">{{ statistics.moyenneGenerale?.toFixed(2) || 'N/A' }}<span class="unit">/20</span></p>
-          </div>
-        </div>
-        <div class="stat-card total-grades">
-          <div class="stat-icon">📊</div>
-          <div class="stat-content">
-            <h4>Total des Notes</h4>
-            <p class="stat-value">{{ grades?.length || 0 }}<span class="unit"> notes</span></p>
-          </div>
-        </div>
-        <div class="stat-card best-grade">
-          <div class="stat-icon">⭐</div>
-          <div class="stat-content">
-            <h4>Meilleure Note</h4>
-            <p class="stat-value">{{ statistics.meilleureNote || 'N/A' }}<span class="unit">/20</span></p>
-          </div>
-        </div>
-      </div>
-    </div>
-
+   
     <!-- Quick Actions Section -->
     <div class="quick-actions-section">
       <h2 class="section-title">

@@ -1,6 +1,43 @@
 <!-- exercise-form.component.html -->
 <div class="exercise-form">
   <form [formGroup]="exerciseForm" (ngSubmit)="onSubmit()">
+
+    <!-- Form Progress Indicator -->
+    <div class="form-progress" *ngIf="exerciseForm.get('type')?.value">
+      <div class="progress-item" [class.completed]="exerciseForm.get('title')?.valid && exerciseForm.get('type')?.valid && exerciseForm.get('subject')?.valid && exerciseForm.get('class')?.valid" 
+           [class.error]="(exerciseForm.get('title')?.invalid && exerciseForm.get('title')?.touched) || (exerciseForm.get('type')?.invalid && exerciseForm.get('type')?.touched) || (exerciseForm.get('subject')?.invalid && exerciseForm.get('subject')?.touched) || (exerciseForm.get('class')?.invalid && exerciseForm.get('class')?.touched)"
+           [class.pending]="!exerciseForm.get('title')?.touched && !exerciseForm.get('type')?.touched && !exerciseForm.get('subject')?.touched && !exerciseForm.get('class')?.touched">
+        <span class="progress-icon">
+          <span *ngIf="exerciseForm.get('title')?.valid && exerciseForm.get('type')?.valid && exerciseForm.get('subject')?.valid && exerciseForm.get('class')?.valid">✓</span>
+          <span *ngIf="(exerciseForm.get('title')?.invalid && exerciseForm.get('title')?.touched) || (exerciseForm.get('type')?.invalid && exerciseForm.get('type')?.touched) || (exerciseForm.get('subject')?.invalid && exerciseForm.get('subject')?.touched) || (exerciseForm.get('class')?.invalid && exerciseForm.get('class')?.touched)">✕</span>
+          <span *ngIf="!exerciseForm.get('title')?.touched && !exerciseForm.get('type')?.touched && !exerciseForm.get('subject')?.touched && !exerciseForm.get('class')?.touched">1</span>
+        </span>
+        Informations de base
+      </div>
+      
+      <div class="progress-item" [class.completed]="exerciseForm.get('estimatedTime')?.valid && exerciseForm.get('maxAttempts')?.valid" 
+           [class.error]="(exerciseForm.get('estimatedTime')?.invalid && exerciseForm.get('estimatedTime')?.touched) || (exerciseForm.get('maxAttempts')?.invalid && exerciseForm.get('maxAttempts')?.touched)"
+           [class.pending]="!exerciseForm.get('estimatedTime')?.touched && !exerciseForm.get('maxAttempts')?.touched">
+        <span class="progress-icon">
+          <span *ngIf="exerciseForm.get('estimatedTime')?.valid && exerciseForm.get('maxAttempts')?.valid">✓</span>
+          <span *ngIf="(exerciseForm.get('estimatedTime')?.invalid && exerciseForm.get('estimatedTime')?.touched) || (exerciseForm.get('maxAttempts')?.invalid && exerciseForm.get('maxAttempts')?.touched)">✕</span>
+          <span *ngIf="!exerciseForm.get('estimatedTime')?.touched && !exerciseForm.get('maxAttempts')?.touched">2</span>
+        </span>
+        Paramètres
+      </div>
+      
+      <div class="progress-item" [class.completed]="hasQuestionsValidator()" 
+           [class.error]="!hasQuestionsValidator() && (qcmQuestions.length > 0 || fillBlankQuestions.length > 0 || questionValidationError)"
+           [class.pending]="!hasQuestionsValidator() && qcmQuestions.length === 0 && fillBlankQuestions.length === 0">
+        <span class="progress-icon">
+          <span *ngIf="hasQuestionsValidator()">✓</span>
+          <span *ngIf="!hasQuestionsValidator() && (qcmQuestions.length > 0 || fillBlankQuestions.length > 0 || questionValidationError)">✕</span>
+          <span *ngIf="!hasQuestionsValidator() && qcmQuestions.length === 0 && fillBlankQuestions.length === 0">3</span>
+        </span>
+        Questions
+      </div>
+    </div>
+
     <!-- Informations de base -->
     <div class="form-section">
       <h3 class="form-section-title">Informations de base</h3>
@@ -92,21 +129,35 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Temps estimé (minutes)</label>
+          <label class="form-label">Temps estimé (minutes) *</label>
           <input 
             type="number" 
             class="form-control" 
             formControlName="estimatedTime"
-            placeholder="ex: 30">
+            placeholder="ex: 30"
+            min="1">
+          <div class="error-message" *ngIf="exerciseForm.get('estimatedTime')?.touched && exerciseForm.get('estimatedTime')?.errors?.['required']">
+            Le temps estimé est requis
+          </div>
+          <div class="error-message" *ngIf="exerciseForm.get('estimatedTime')?.touched && exerciseForm.get('estimatedTime')?.errors?.['min']">
+            Le temps estimé doit être supérieur à 0 minute
+          </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Nombre d'essais maximum</label>
+          <label class="form-label">Nombre d'essais maximum *</label>
           <input 
             type="number" 
             class="form-control" 
             formControlName="maxAttempts"
-            placeholder="ex: 2">
+            placeholder="ex: 2"
+            min="1">
+          <div class="error-message" *ngIf="exerciseForm.get('maxAttempts')?.touched && exerciseForm.get('maxAttempts')?.errors?.['required']">
+            Le nombre d'essais maximum est requis
+          </div>
+          <div class="error-message" *ngIf="exerciseForm.get('maxAttempts')?.touched && exerciseForm.get('maxAttempts')?.errors?.['min']">
+            Le nombre d'essais doit être supérieur à 0
+          </div>
         </div>
 
         <div class="form-group">
@@ -122,12 +173,27 @@
     <!-- Section des questions -->
     <div class="form-section">
       <div class="section-header">
-        <h3 class="form-section-title">Questions</h3>
+        <h3 class="form-section-title">Questions *</h3>
         <button type="button" class="add-question-btn" (click)="addQuestion()">
           <span class="btn-icon">➕</span>
           Ajouter une question
         </button>
       </div>
+
+      <!-- Question Counter -->
+      <div class="question-counter" 
+           [class.empty]="(exerciseForm.get('type')?.value === 'qcm' && qcmQuestions.length === 0) || (exerciseForm.get('type')?.value === 'fill_blanks' && fillBlankQuestions.length === 0)">
+        <span class="count">
+          {{ exerciseForm.get('type')?.value === 'qcm' ? qcmQuestions.length : 
+             exerciseForm.get('type')?.value === 'fill_blanks' ? fillBlankQuestions.length : 0 }}
+        </span>
+        <span>question{{ (exerciseForm.get('type')?.value === 'qcm' ? qcmQuestions.length : fillBlankQuestions.length) !== 1 ? 's' : '' }} ajoutée{{ (exerciseForm.get('type')?.value === 'qcm' ? qcmQuestions.length : fillBlankQuestions.length) !== 1 ? 's' : '' }}</span>
+        <span *ngIf="(exerciseForm.get('type')?.value === 'qcm' && qcmQuestions.length === 0) || (exerciseForm.get('type')?.value === 'fill_blanks' && fillBlankQuestions.length === 0)" class="required-indicator">
+          - Au moins 1 requise
+        </span>
+      </div>
+
+
 
       <!-- Questions QCM -->
       <div *ngIf="exerciseForm.get('type')?.value === 'qcm'" formArrayName="qcmQuestions">
@@ -147,6 +213,9 @@
               rows="2"
               placeholder="Saisissez la question">
             </textarea>
+            <div class="error-message" *ngIf="question.get('questionText')?.touched && question.get('questionText')?.errors?.['required']">
+              Le texte de la question est requis
+            </div>
           </div>
 
           <div class="form-group">
@@ -155,7 +224,14 @@
               type="number" 
               class="form-control small-input" 
               formControlName="points"
-              placeholder="ex: 2">
+              placeholder="ex: 2"
+              min="1">
+            <div class="error-message" *ngIf="question.get('points')?.touched && question.get('points')?.errors?.['required']">
+              Les points sont requis
+            </div>
+            <div class="error-message" *ngIf="question.get('points')?.touched && question.get('points')?.errors?.['min']">
+              Les points doivent être supérieurs à 0
+            </div>
           </div>
 
           <div class="options-section">
@@ -207,6 +283,9 @@
               placeholder="Utilisez ___ pour indiquer les trous (ex: La capitale de la France est ___)">
             </textarea>
             <div class="help-text">Utilisez trois tirets bas (___) pour indiquer où les trous doivent apparaître</div>
+            <div class="error-message" *ngIf="question.get('sentence')?.touched && question.get('sentence')?.errors?.['required']">
+              La phrase avec des trous est requise
+            </div>
           </div>
 
           <div class="form-group">
@@ -215,7 +294,14 @@
               type="number" 
               class="form-control small-input" 
               formControlName="points"
-              placeholder="ex: 2">
+              placeholder="ex: 2"
+              min="1">
+            <div class="error-message" *ngIf="question.get('points')?.touched && question.get('points')?.errors?.['required']">
+              Les points sont requis
+            </div>
+            <div class="error-message" *ngIf="question.get('points')?.touched && question.get('points')?.errors?.['min']">
+              Les points doivent être supérieurs à 0
+            </div>
           </div>
 
           <div class="blanks-section" formArrayName="blanks">
@@ -239,7 +325,7 @@
         </div>
       </div>
 
-      <!-- État vide -->
+      <!-- État vide avec validation message -->
       <div class="empty-questions" *ngIf="(exerciseForm.get('type')?.value === 'qcm' && qcmQuestions.length === 0) || (exerciseForm.get('type')?.value === 'fill_blanks' && fillBlankQuestions.length === 0)">
         <div class="empty-icon">❓</div>
         <p class="empty-text">Aucune question ajoutée pour le moment</p>
@@ -255,13 +341,17 @@
       <button type="button" class="cancel-btn" (click)="onCancel()">
         Annuler
       </button>
-      <button type="submit" class="submit-btn" [disabled]="!exerciseForm.valid || isSubmitting">
-        <span *ngIf="!isSubmitting">Créer l'exercice</span>
+      <button type="submit" class="submit-btn" [disabled]="!isFormValid || isSubmitting">
+        <span *ngIf="!isSubmitting">
+          {{ isEditMode ? 'Modifier l\'exercice' : 'Créer l\'exercice' }}
+        </span>
         <span *ngIf="isSubmitting" class="loading">
           <span class="spinner"></span>
-          Création en cours...
+          {{ isEditMode ? 'Modification en cours...' : 'Création en cours...' }}
         </span>
       </button>
     </div>
+
+    
   </form>
 </div>
