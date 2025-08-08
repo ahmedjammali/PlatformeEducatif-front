@@ -492,7 +492,10 @@ export class GradesComponent implements OnInit, OnDestroy {
     }
     return field;
   }
-
+// Add this method to your GradesComponent class
+trackByGradeId(index: number, grade: any): string {
+  return grade._id || index.toString();
+}
   // Utility Methods
   getStudentName(student: User | string): string {
     if (typeof student === 'string') {

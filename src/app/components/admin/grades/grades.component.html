@@ -1,593 +1,673 @@
+<div class="grades-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestion des Notes</h1>
+      <p class="header-subtitle">Consulter et superviser toutes les notes de l'établissement</p>
+    </div>
+    
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="exportGrades()" [disabled]="grades.length === 0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Exporter
+      </button>
+    </div>
+  </div>
 
-  <div class="grades-container">
-    <!-- Header Section -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1>Gestion des Notes</h1>
-        <p class="header-subtitle">Consulter et superviser toutes les notes de l'établissement</p>
+  <!-- Quick Stats Cards -->
+  <div class="stats-section">
+    <div class="stats-row">
+      <div class="stat-card primary">
+        <div class="stat-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 3h20v18H2zM2 9h20M8 3v6"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ totalGrades }}</div>
+          <div class="stat-label">Total Notes</div>
+        </div>
+      </div>
+
+      <div class="stat-card info">
+        <div class="stat-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ studentsWithGrades }}</div>
+          <div class="stat-label">Étudiants Notés</div>
+        </div>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l9 20H3z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ lowGradesCount }}</div>
+          <div class="stat-label">Notes < 10</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Filters Section -->
+  <div class="filters-section">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label>Classe</label>
+        <select [(ngModel)]="selectedClass" (ngModelChange)="onFilterChange()">
+          <option value="">Toutes les classes</option>
+          <option *ngFor="let class of classes" [value]="class._id">{{ class.name }} - {{ class.grade }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Matière</label>
+        <select [(ngModel)]="selectedSubject" (ngModelChange)="onFilterChange()">
+          <option value="">Toutes les matières</option>
+          <option *ngFor="let subject of subjects" [value]="subject._id">{{ subject.name }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Trimestre</label>
+        <select [(ngModel)]="selectedTrimester" (ngModelChange)="onFilterChange()">
+          <option value="">Tous les trimestres</option>
+          <option value="1er Trimestre">1er Trimestre</option>
+          <option value="2ème Trimestre">2ème Trimestre</option>
+          <option value="3ème Trimestre">3ème Trimestre</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Type d'examen</label>
+        <select [(ngModel)]="selectedExamType" (ngModelChange)="onFilterChange()">
+          <option value="">Tous les types</option>
+          <option value="controle">Contrôle</option>
+          <option value="devoir">Devoir</option>
+          <option value="examen">Examen</option>
+          <option value="test">Test</option>
+          <option value="oral">Oral</option>
+          <option value="tp">TP</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Année académique</label>
+        <select [(ngModel)]="selectedAcademicYear" (ngModelChange)="onFilterChange()">
+          <option value="">Toutes les années</option>
+          <option *ngFor="let year of academicYears" [value]="year">{{ year }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Note minimale</label>
+        <input type="number" min="0" max="20" step="0.5" [(ngModel)]="minGrade" (ngModelChange)="onFilterChange()" placeholder="0">
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn-secondary" (click)="resetFilters()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="1 4 1 10 7 10"/>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+        </svg>
+        Réinitialiser
+      </button>
+      
+      <div class="search-input">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input 
+          type="text" 
+          placeholder="Rechercher étudiant..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- View Mode Toggle -->
+  <div class="view-toggle">
+    <div class="toggle-buttons">
+      <button class="toggle-btn desktop-only" [class.active]="viewMode === 'table'" (click)="setViewMode('table')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3h18v18H3zM9 3v18M21 9H3M21 15H3"/>
+        </svg>
+        Tableau
+      </button>
+      <button class="toggle-btn" [class.active]="viewMode === 'cards'" (click)="setViewMode('cards')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Cartes
+      </button>
+      <button class="toggle-btn" [class.active]="viewMode === 'student'" (click)="setViewMode('student')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        Par Étudiant
+      </button>
+    </div>
+    
+    <div class="results-info">
+      <span>{{ filteredGrades.length }} note(s) trouvée(s)</span>
+    </div>
+  </div>
+
+  <!-- Mobile Grade Cards (always visible on mobile) -->
+  <div class="mobile-grades-cards mobile-only" *ngIf="viewMode === 'cards' || viewMode === 'table'">
+    <div *ngFor="let grade of paginatedGrades; trackBy: trackByGradeId" class="mobile-grade-card" [class]="getGradeStatus(grade.grade)">
+      <div class="mobile-card-header">
+        <div class="student-info" (click)="selectStudent(grade.student)">
+          <div class="student-avatar" [style.background-color]="getAvatarColor(getStudentName(grade.student))">
+            {{ getStudentName(grade.student).charAt(0).toUpperCase() }}
+          </div>
+          <div class="student-details">
+            <span class="student-name">{{ getStudentName(grade.student) }}</span>
+            <span class="class-name">{{ getClassName(grade.class) }}</span>
+          </div>
+        </div>
+        <div class="grade-badge" [class]="getGradeStatus(grade.grade)">
+          {{ grade.grade }}/20
+        </div>
       </div>
       
-      <div class="header-actions">
-        <button class="btn-secondary" (click)="exportGrades()" [disabled]="grades.length === 0">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Exporter
-        </button>
-      </div>
-    </div>
-
-    <!-- Quick Stats Cards -->
-    <div class="stats-section">
-      <div class="stats-row">
-        <div class="stat-card primary">
-          <div class="stat-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M2 3h20v18H2zM2 9h20M8 3v6"/>
-            </svg>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ totalGrades }}</div>
-            <div class="stat-label">Total Notes</div>
+      <div class="mobile-card-body">
+        <div class="exam-info">
+          <h4>{{ grade.examName }}</h4>
+          <div class="exam-meta-row">
+            <span class="subject-tag">{{ getSubjectName(grade.subject) }}</span>
+            <span class="exam-type-badge" [class]="grade.examType">{{ getExamTypeLabel(grade.examType) }}</span>
           </div>
         </div>
-
-
-        <div class="stat-card info">
-          <div class="stat-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ studentsWithGrades }}</div>
-            <div class="stat-label">Étudiants Notés</div>
-          </div>
-        </div>
-
-        <div class="stat-card warning">
-          <div class="stat-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2l9 20H3z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ lowGradesCount }}</div>
-            <div class="stat-label">Notes < 10</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Advanced Filters Section -->
-    <div class="filters-section">
-      <div class="filters-grid">
-        <div class="filter-group">
-          <label>Classe</label>
-          <select [(ngModel)]="selectedClass" (ngModelChange)="onFilterChange()">
-            <option value="">Toutes les classes</option>
-            <option *ngFor="let class of classes" [value]="class._id">{{ class.name }} - {{ class.grade }}</option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label>Matière</label>
-          <select [(ngModel)]="selectedSubject" (ngModelChange)="onFilterChange()">
-            <option value="">Toutes les matières</option>
-            <option *ngFor="let subject of subjects" [value]="subject._id">{{ subject.name }}</option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label>Trimestre</label>
-          <select [(ngModel)]="selectedTrimester" (ngModelChange)="onFilterChange()">
-            <option value="">Tous les trimestres</option>
-            <option value="1er Trimestre">1er Trimestre</option>
-            <option value="2ème Trimestre">2ème Trimestre</option>
-            <option value="3ème Trimestre">3ème Trimestre</option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label>Type d'examen</label>
-          <select [(ngModel)]="selectedExamType" (ngModelChange)="onFilterChange()">
-            <option value="">Tous les types</option>
-            <option value="controle">Contrôle</option>
-            <option value="devoir">Devoir</option>
-            <option value="examen">Examen</option>
-            <option value="test">Test</option>
-            <option value="oral">Oral</option>
-            <option value="tp">TP</option>
-            <option value="autre">Autre</option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label>Année académique</label>
-          <select [(ngModel)]="selectedAcademicYear" (ngModelChange)="onFilterChange()">
-            <option value="">Toutes les années</option>
-            <option *ngFor="let year of academicYears" [value]="year">{{ year }}</option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label>Note minimale</label>
-          <input type="number" min="0" max="20" step="0.5" [(ngModel)]="minGrade" (ngModelChange)="onFilterChange()" placeholder="0">
-        </div>
-      </div>
-
-      <div class="filter-actions">
-        <button class="btn-secondary" (click)="resetFilters()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="1 4 1 10 7 10"/>
-            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-          </svg>
-          Réinitialiser
-        </button>
         
-        <div class="search-input">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="m21 21-4.35-4.35"/>
+        <div class="grade-details">
+          <div class="detail-row">
+            <span class="label">Coefficient:</span>
+            <span class="value">{{ grade.coefficient }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Trimestre:</span>
+            <span class="value">{{ grade.trimester }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Date:</span>
+            <span class="value">{{ formatDate(grade.examDate) }}</span>
+          </div>
+        </div>
+        
+        <div class="grade-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="(grade.grade / 20) * 100" [class]="getGradeStatus(grade.grade)"></div>
+          </div>
+          <span class="percentage">{{ ((grade.grade / 20) * 100) | number:'1.0-0' }}%</span>
+        </div>
+      </div>
+      
+      <div class="mobile-card-actions">
+        <button class="btn-icon" (click)="viewGradeDetails(grade)" title="Voir détails">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
           </svg>
-          <input 
-            type="text" 
-            placeholder="Rechercher étudiant..."
-            [(ngModel)]="searchTerm"
-            (ngModelChange)="onSearchChange()"
-          />
+        </button>
+      </div>
+      
+      <div class="mobile-card-footer" *ngIf="grade.comments">
+        <p class="comments">{{ grade.comments }}</p>
+      </div>
+    </div>
+
+    <!-- Mobile Empty State -->
+    <div *ngIf="paginatedGrades.length === 0 && !isLoading" class="mobile-empty-state">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+        <path d="M19 11H15a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+        <path d="M12 2L8 6h8L12 2z"/>
+      </svg>
+      <h3>Aucune note trouvée</h3>
+      <p>Aucune note ne correspond à vos critères de recherche</p>
+    </div>
+
+    <!-- Mobile Loading State -->
+    <div *ngIf="isLoading" class="mobile-loading-state">
+      <div class="spinner"></div>
+      <p>Chargement des notes...</p>
+    </div>
+  </div>
+
+  <!-- Desktop Table View (hidden on mobile) -->
+  <div class="table-container desktop-only" *ngIf="viewMode === 'table'">
+    <div class="table-wrapper">
+      <table class="grades-table">
+        <thead>
+          <tr>
+            <th (click)="sortBy('student')" class="sortable">
+              Étudiant
+              <svg *ngIf="sortField === 'student'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
+              </svg>
+            </th>
+            <th>Classe</th>
+            <th>Matière</th>
+            <th>Examen</th>
+            <th>Type</th>
+            <th (click)="sortBy('grade')" class="sortable">
+              Note
+              <svg *ngIf="sortField === 'grade'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
+              </svg>
+            </th>
+            <th>Coef.</th>
+            <th>Trimestre</th>
+            <th (click)="sortBy('examDate')" class="sortable">
+              Date
+              <svg *ngIf="sortField === 'examDate'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
+              </svg>
+            </th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let grade of paginatedGrades; trackBy: trackByGradeId" [class.highlight]="getGradeStatus(grade.grade) === 'excellent'">
+            <td>
+              <div class="student-info" (click)="selectStudent(grade.student)">
+                <div class="student-avatar" [style.background-color]="getAvatarColor(getStudentName(grade.student))">
+                  {{ getStudentName(grade.student).charAt(0).toUpperCase() }}
+                </div>
+                <span class="student-name">{{ getStudentName(grade.student) }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="class-badge">{{ getClassName(grade.class) }}</span>
+            </td>
+            <td>
+              <span class="subject-name">{{ getSubjectName(grade.subject) }}</span>
+            </td>
+            <td>{{ grade.examName }}</td>
+            <td>
+              <span class="exam-type-badge" [class]="grade.examType">{{ getExamTypeLabel(grade.examType) }}</span>
+            </td>
+            <td>
+              <div class="grade-display" [class]="getGradeStatus(grade.grade)">
+                <span class="grade-value">{{ grade.grade }}/20</span>
+                <div class="grade-bar">
+                  <div class="grade-fill" [style.width.%]="(grade.grade / 20) * 100"></div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="coefficient">{{ grade.coefficient }}</span>
+            </td>
+            <td>
+              <span class="trimester">{{ grade.trimester }}</span>
+            </td>
+            <td>
+              <span class="exam-date">{{ formatDate(grade.examDate) }}</span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-icon" (click)="viewGradeDetails(grade)" title="Voir détails">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div *ngIf="paginatedGrades.length === 0 && !isLoading" class="empty-state">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+          <path d="M19 11H15a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+          <path d="M12 2L8 6h8L12 2z"/>
+        </svg>
+        <h3>Aucune note trouvée</h3>
+        <p>Aucune note ne correspond à vos critères de recherche</p>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des notes...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desktop Cards View (hidden on mobile) -->
+  <div class="cards-container desktop-only" *ngIf="viewMode === 'cards'">
+    <div class="grades-grid">
+      <div *ngFor="let grade of paginatedGrades; trackBy: trackByGradeId" class="grade-card" [class]="getGradeStatus(grade.grade)">
+        <div class="card-header">
+          <div class="student-info">
+            <div class="student-avatar" [style.background-color]="getAvatarColor(getStudentName(grade.student))">
+              {{ getStudentName(grade.student).charAt(0).toUpperCase() }}
+            </div>
+            <div class="student-details">
+              <span class="student-name">{{ getStudentName(grade.student) }}</span>
+              <span class="class-name">{{ getClassName(grade.class) }}</span>
+            </div>
+          </div>
+          <div class="grade-badge" [class]="getGradeStatus(grade.grade)">
+            {{ grade.grade }}/20
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <div class="exam-info">
+            <h4>{{ grade.examName }}</h4>
+            <span class="subject-tag">{{ getSubjectName(grade.subject) }}</span>
+          </div>
+          
+          <div class="exam-meta">
+            <div class="meta-item">
+              <span class="label">Type:</span>
+              <span class="value">{{ getExamTypeLabel(grade.examType) }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="label">Coefficient:</span>
+              <span class="value">{{ grade.coefficient }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="label">Date:</span>
+              <span class="value">{{ formatDate(grade.examDate) }}</span>
+            </div>
+          </div>
+          
+          <div class="grade-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="(grade.grade / 20) * 100" [class]="getGradeStatus(grade.grade)"></div>
+            </div>
+            <span class="percentage">{{ ((grade.grade / 20) * 100) | number:'1.0-0' }}%</span>
+          </div>
+        </div>
+        
+        <div class="card-footer" *ngIf="grade.comments">
+          <p class="comments">{{ grade.comments }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student View -->
+  <div class="student-view" *ngIf="viewMode === 'student'">
+    <div class="student-selector">
+      <select [(ngModel)]="selectedStudentId" (ngModelChange)="onStudentSelect()">
+        <option value="">Sélectionner un étudiant</option>
+        <option *ngFor="let student of students" [value]="student._id">{{ student.name }}</option>
+      </select>
+    </div>
+    
+    <div class="student-grades" *ngIf="selectedStudentId && studentGrades.length > 0">
+      <div class="student-header">
+        <div class="student-info">
+          <div class="student-avatar large" [style.background-color]="getAvatarColor(selectedStudentName)">
+            {{ selectedStudentName.charAt(0).toUpperCase() }}
+          </div>
+          <div class="student-details">
+            <h2>{{ selectedStudentName }}</h2>
+            <p>{{ selectedStudentClass }}</p>
+          </div>
+        </div>
+        <div class="student-stats">
+          <div class="stat-item">
+            <span class="stat-label">Moyenne générale</span>
+            <span class="stat-value">{{ getStudentAverage() | number:'1.1-1' }}/20</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Nombre de notes</span>
+            <span class="stat-value">{{ studentGrades.length }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="subjects-breakdown">
+        <div *ngFor="let subject of getStudentSubjects()" class="subject-group">
+          <div class="subject-header">
+            <h3>{{ subject.name }}</h3>
+            <span class="subject-average">{{ getSubjectAverage(subject._id!) | number:'1.1-1' }}/20</span>
+          </div>
+          <div class="subject-grades">
+            <div *ngFor="let grade of getGradesBySubject(subject._id!)" class="grade-item">
+              <div class="grade-info">
+                <span class="exam-name">{{ grade.examName }}</span>
+                <span class="exam-type">{{ getExamTypeLabel(grade.examType) }}</span>
+              </div>
+              <div class="grade-value" [class]="getGradeStatus(grade.grade)">
+                {{ grade.grade }}/20
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1 && viewMode !== 'student'">
+    <button 
+      class="page-btn" 
+      [disabled]="currentPage === 1"
+      (click)="goToPage(currentPage - 1)"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+    
+    <button 
+      *ngFor="let page of getPageNumbers()" 
+      class="page-btn"
+      [class.active]="page === currentPage"
+      (click)="goToPage(page)"
+    >
+      {{ page }}
+    </button>
+    
+    <button 
+      class="page-btn" 
+      [disabled]="currentPage === totalPages"
+      (click)="goToPage(currentPage + 1)"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- Grade Details Modal -->
+<div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+  <div class="modal-content grade-details-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Détails de la Note</h2>
+      <button class="close-btn" (click)="closeDetailsModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedGrade">
+      <div class="grade-overview">
+        <div class="grade-circle" [class]="getGradeStatus(selectedGrade.grade)">
+          <span class="grade-number">{{ selectedGrade.grade }}</span>
+          <span class="grade-total">/20</span>
+        </div>
+        <div class="grade-status">
+          <h3>{{ getGradeStatusLabel(selectedGrade.grade) }}</h3>
+          <p>{{ getGradePercentage(selectedGrade.grade) }}% de réussite</p>
+        </div>
+      </div>
+
+      <div class="details-grid">
+        <div class="detail-section">
+          <h4>Informations Générales</h4>
+          <div class="detail-list">
+            <div class="detail-item">
+              <span class="label">Étudiant:</span>
+              <span class="value">{{ getStudentName(selectedGrade.student) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Classe:</span>
+              <span class="value">{{ getClassName(selectedGrade.class) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Matière:</span>
+              <span class="value">{{ getSubjectName(selectedGrade.subject) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Enseignant:</span>
+              <span class="value">{{ getTeacherName(selectedGrade.teacher) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>Détails de l'Examen</h4>
+          <div class="detail-list">
+            <div class="detail-item">
+              <span class="label">Nom:</span>
+              <span class="value">{{ selectedGrade.examName }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Type:</span>
+              <span class="value">{{ getExamTypeLabel(selectedGrade.examType) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Coefficient:</span>
+              <span class="value">{{ selectedGrade.coefficient }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Date:</span>
+              <span class="value">{{ formatFullDate(selectedGrade.examDate) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Trimestre:</span>
+              <span class="value">{{ selectedGrade.trimester }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="comments-section" *ngIf="selectedGrade.comments">
+        <h4>Commentaires</h4>
+        <div class="comments-content">
+          {{ selectedGrade.comments }}
         </div>
       </div>
     </div>
 
-    <!-- View Mode Toggle -->
-    <div class="view-toggle">
-      <div class="toggle-buttons">
-        <button class="toggle-btn" [class.active]="viewMode === 'table'" (click)="setViewMode('table')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 3h18v18H3zM9 3v18M21 9H3M21 15H3"/>
-          </svg>
-          Tableau
-        </button>
-        <button class="toggle-btn" [class.active]="viewMode === 'cards'" (click)="setViewMode('cards')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7"/>
-            <rect x="14" y="3" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/>
-          </svg>
-          Cartes
-        </button>
-        <!-- <button class="toggle-btn" [class.active]="viewMode === 'student'" (click)="setViewMode('student')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-          Par Étudiant
-        </button> -->
-      </div>
-      
-      <div class="results-info">
-        <span>{{ filteredGrades.length }} note(s) trouvée(s)</span>
-      </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeDetailsModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Student Report Modal -->
+<div class="modal-overlay" *ngIf="showBulletinModal" (click)="closeBulletinModal()">
+  <div class="modal-content bulletin-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Bulletin de Notes</h2>
+      <button class="close-btn" (click)="closeBulletinModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
     </div>
 
-    <!-- Table View -->
-    <div class="table-container" *ngIf="viewMode === 'table'">
-      <div class="table-wrapper">
-        <table class="grades-table">
+    <div class="modal-body" *ngIf="studentReport && isLoadingReport === false">
+      <div class="bulletin-header">
+        <div class="school-info">
+          <h3>École Excellence</h3>
+          <p>Année académique: {{ studentReport.bulletin.academicYear }}</p>
+          <p>{{ studentReport.bulletin.trimester }}</p>
+        </div>
+        <div class="student-info">
+          <h3>{{ studentReport.student.name }}</h3>
+          <p>Classe: {{ selectedStudentClass }}</p>
+        </div>
+      </div>
+
+      <div class="bulletin-content">
+        <table class="bulletin-table">
           <thead>
             <tr>
-              <th (click)="sortBy('student')" class="sortable">
-                Étudiant
-                <svg *ngIf="sortField === 'student'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
-                </svg>
-              </th>
-              <th>Classe</th>
               <th>Matière</th>
-              <th>Examen</th>
-              <th>Type</th>
-              <th (click)="sortBy('grade')" class="sortable">
-                Note
-                <svg *ngIf="sortField === 'grade'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
-                </svg>
-              </th>
-              <th>Coef.</th>
-              <th>Trimestre</th>
-              <th (click)="sortBy('examDate')" class="sortable">
-                Date
-                <svg *ngIf="sortField === 'examDate'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
-                </svg>
-              </th>
-              <th>Actions</th>
+              <th>Nombre de notes</th>
+              <th>Moyenne</th>
+              <th>Appréciation</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let grade of paginatedGrades" [class.highlight]="getGradeStatus(grade.grade) === 'excellent'">
-              <td>
-                <div class="student-info" (click)="selectStudent(grade.student)">
-                  <div class="student-avatar" [style.background-color]="getAvatarColor(getStudentName(grade.student))">
-                    {{ getStudentName(grade.student).charAt(0).toUpperCase() }}
-                  </div>
-                  <span class="student-name">{{ getStudentName(grade.student) }}</span>
-                </div>
-              </td>
-              <td>
-                <span class="class-badge">{{ getClassName(grade.class) }}</span>
-              </td>
-              <td>
-                <span class="subject-name">{{ getSubjectName(grade.subject) }}</span>
-              </td>
-              <td>{{ grade.examName }}</td>
-              <td>
-                <span class="exam-type-badge" [class]="grade.examType">{{ getExamTypeLabel(grade.examType) }}</span>
-              </td>
-              <td>
-                <div class="grade-display" [class]="getGradeStatus(grade.grade)">
-                  <span class="grade-value">{{ grade.grade }}/20</span>
-                  <div class="grade-bar">
-                    <div class="grade-fill" [style.width.%]="(grade.grade / 20) * 100"></div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span class="coefficient">{{ grade.coefficient }}</span>
-              </td>
-              <td>
-                <span class="trimester">{{ grade.trimester }}</span>
-              </td>
-              <td>
-                <span class="exam-date">{{ formatDate(grade.examDate) }}</span>
-              </td>
-              <td>
-                <div class="action-buttons">
-                  <button class="btn-icon" (click)="viewGradeDetails(grade)" title="Voir détails">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
-                </div>
-              </td>
+            <tr *ngFor="let matiere of studentReport.bulletin.matieres">
+              <td>{{ matiere.subject.name }}</td>
+              <td>{{ matiere.grades.length }}</td>
+              <td class="moyenne" [class]="getGradeStatus(matiere.moyenne)">{{ matiere.moyenne | number:'1.1-1' }}/20</td>
+              <td>{{ matiere.appreciation }}</td>
             </tr>
           </tbody>
+          <tfoot>
+            <tr class="moyenne-generale">
+              <td><strong>Moyenne Générale</strong></td>
+              <td><strong>{{ studentReport.bulletin.totalNotes }} notes</strong></td>
+              <td class="moyenne" [class]="getGradeStatus(studentReport.bulletin.moyenneGenerale)">
+                <strong>{{ studentReport.bulletin.moyenneGenerale | number:'1.1-1' }}/20</strong>
+              </td>
+              <td><strong>{{ studentReport.bulletin.appreciationGenerale }}</strong></td>
+            </tr>
+          </tfoot>
         </table>
-
-        <!-- Empty State -->
-        <div *ngIf="paginatedGrades.length === 0 && !isLoading" class="empty-state">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-            <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
-            <path d="M19 11H15a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
-            <path d="M12 2L8 6h8L12 2z"/>
-          </svg>
-          <h3>Aucune note trouvée</h3>
-          <p>Aucune note ne correspond à vos critères de recherche</p>
-        </div>
-
-        <!-- Loading State -->
-        <div *ngIf="isLoading" class="loading-state">
-          <div class="spinner"></div>
-          <p>Chargement des notes...</p>
-        </div>
       </div>
     </div>
 
-    <!-- Cards View -->
-    <div class="cards-container" *ngIf="viewMode === 'cards'">
-      <div class="grades-grid">
-        <div *ngFor="let grade of paginatedGrades" class="grade-card" [class]="getGradeStatus(grade.grade)">
-          <div class="card-header">
-            <div class="student-info">
-              <div class="student-avatar" [style.background-color]="getAvatarColor(getStudentName(grade.student))">
-                {{ getStudentName(grade.student).charAt(0).toUpperCase() }}
-              </div>
-              <div class="student-details">
-                <span class="student-name">{{ getStudentName(grade.student) }}</span>
-                <span class="class-name">{{ getClassName(grade.class) }}</span>
-              </div>
-            </div>
-            <div class="grade-badge" [class]="getGradeStatus(grade.grade)">
-              {{ grade.grade }}/20
-            </div>
-          </div>
-          
-          <div class="card-body">
-            <div class="exam-info">
-              <h4>{{ grade.examName }}</h4>
-              <span class="subject-tag">{{ getSubjectName(grade.subject) }}</span>
-            </div>
-            
-            <div class="exam-meta">
-              <div class="meta-item">
-                <span class="label">Type:</span>
-                <span class="value">{{ getExamTypeLabel(grade.examType) }}</span>
-              </div>
-              <div class="meta-item">
-                <span class="label">Coefficient:</span>
-                <span class="value">{{ grade.coefficient }}</span>
-              </div>
-              <div class="meta-item">
-                <span class="label">Date:</span>
-                <span class="value">{{ formatDate(grade.examDate) }}</span>
-              </div>
-            </div>
-            
-            <div class="grade-progress">
-              <div class="progress-bar">
-                <div class="progress-fill" [style.width.%]="(grade.grade / 20) * 100" [class]="getGradeStatus(grade.grade)"></div>
-              </div>
-              <span class="percentage">{{ ((grade.grade / 20) * 100) | number:'1.0-0' }}%</span>
-            </div>
-          </div>
-          
-          <div class="card-footer" *ngIf="grade.comments">
-            <p class="comments">{{ grade.comments }}</p>
-          </div>
-        </div>
+    <div class="modal-body" *ngIf="isLoadingReport">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement du bulletin...</p>
       </div>
     </div>
 
-    <!-- Student View -->
-    <div class="student-view" *ngIf="viewMode === 'student'">
-      <div class="student-selector">
-        <select [(ngModel)]="selectedStudentId" (ngModelChange)="onStudentSelect()">
-          <option value="">Sélectionner un étudiant</option>
-          <option *ngFor="let student of students" [value]="student._id">{{ student.name }}</option>
-        </select>
-      </div>
-      
-      <div class="student-grades" *ngIf="selectedStudentId && studentGrades.length > 0">
-        <div class="student-header">
-          <div class="student-info">
-            <div class="student-avatar large" [style.background-color]="getAvatarColor(selectedStudentName)">
-              {{ selectedStudentName.charAt(0).toUpperCase() }}
-            </div>
-            <div class="student-details">
-              <h2>{{ selectedStudentName }}</h2>
-              <p>{{ selectedStudentClass }}</p>
-            </div>
-          </div>
-          <div class="student-stats">
-            <div class="stat-item">
-              <span class="stat-label">Moyenne générale</span>
-              <span class="stat-value">{{ getStudentAverage() | number:'1.1-1' }}/20</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Nombre de notes</span>
-              <span class="stat-value">{{ studentGrades.length }}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="subjects-breakdown">
-          <div *ngFor="let subject of getStudentSubjects()" class="subject-group">
-            <div class="subject-header">
-              <h3>{{ subject.name }}</h3>
-              <span class="subject-average">{{ getSubjectAverage(subject._id!) | number:'1.1-1' }}/20</span>
-            </div>
-            <div class="subject-grades">
-              <div *ngFor="let grade of getGradesBySubject(subject._id!)" class="grade-item">
-                <div class="grade-info">
-                  <span class="exam-name">{{ grade.examName }}</span>
-                  <span class="exam-type">{{ getExamTypeLabel(grade.examType) }}</span>
-                </div>
-                <div class="grade-value" [class]="getGradeStatus(grade.grade)">
-                  {{ grade.grade }}/20
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Pagination -->
-    <div class="pagination" *ngIf="totalPages > 1 && viewMode !== 'student'">
-      <button 
-        class="page-btn" 
-        [disabled]="currentPage === 1"
-        (click)="goToPage(currentPage - 1)"
-      >
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeBulletinModal()">Fermer</button>
+      <button class="btn-primary" (click)="printBulletin()" [disabled]="!studentReport">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="15 18 9 12 15 6"/>
+          <polyline points="6,9 6,2 18,2 18,9"/>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+          <rect x="6" y="14" width="12" height="8"/>
         </svg>
-      </button>
-      
-      <button 
-        *ngFor="let page of getPageNumbers()" 
-        class="page-btn"
-        [class.active]="page === currentPage"
-        (click)="goToPage(page)"
-      >
-        {{ page }}
-      </button>
-      
-      <button 
-        class="page-btn" 
-        [disabled]="currentPage === totalPages"
-        (click)="goToPage(currentPage + 1)"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
+        Imprimer
       </button>
     </div>
   </div>
-
-  <!-- Grade Details Modal -->
-  <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
-    <div class="modal-content grade-details-modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Détails de la Note</h2>
-        <button class="close-btn" (click)="closeDetailsModal()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-body" *ngIf="selectedGrade">
-        <div class="grade-overview">
-          <div class="grade-circle" [class]="getGradeStatus(selectedGrade.grade)">
-            <span class="grade-number">{{ selectedGrade.grade }}</span>
-            <span class="grade-total">/20</span>
-          </div>
-          <div class="grade-status">
-            <h3>{{ getGradeStatusLabel(selectedGrade.grade) }}</h3>
-            <p>{{ getGradePercentage(selectedGrade.grade) }}% de réussite</p>
-          </div>
-        </div>
-
-        <div class="details-grid">
-          <div class="detail-section">
-            <h4>Informations Générales</h4>
-            <div class="detail-list">
-              <div class="detail-item">
-                <span class="label">Étudiant:</span>
-                <span class="value">{{ getStudentName(selectedGrade.student) }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Classe:</span>
-                <span class="value">{{ getClassName(selectedGrade.class) }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Matière:</span>
-                <span class="value">{{ getSubjectName(selectedGrade.subject) }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Enseignant:</span>
-                <span class="value">{{ getTeacherName(selectedGrade.teacher) }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <h4>Détails de l'Examen</h4>
-            <div class="detail-list">
-              <div class="detail-item">
-                <span class="label">Nom:</span>
-                <span class="value">{{ selectedGrade.examName }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Type:</span>
-                <span class="value">{{ getExamTypeLabel(selectedGrade.examType) }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Coefficient:</span>
-                <span class="value">{{ selectedGrade.coefficient }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Date:</span>
-                <span class="value">{{ formatFullDate(selectedGrade.examDate) }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Trimestre:</span>
-                <span class="value">{{ selectedGrade.trimester }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="comments-section" *ngIf="selectedGrade.comments">
-          <h4>Commentaires</h4>
-          <div class="comments-content">
-            {{ selectedGrade.comments }}
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-secondary" (click)="closeDetailsModal()">Fermer</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Student Report Modal -->
-  <div class="modal-overlay" *ngIf="showBulletinModal" (click)="closeBulletinModal()">
-    <div class="modal-content bulletin-modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Bulletin de Notes</h2>
-        <button class="close-btn" (click)="closeBulletinModal()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-body" *ngIf="studentReport && isLoadingReport === false">
-        <div class="bulletin-header">
-          <div class="school-info">
-            <h3>École Excellence</h3>
-            <p>Année académique: {{ studentReport.bulletin.academicYear }}</p>
-            <p>{{ studentReport.bulletin.trimester }}</p>
-          </div>
-          <div class="student-info">
-            <h3>{{ studentReport.student.name }}</h3>
-            <p>Classe: {{ selectedStudentClass }}</p>
-          </div>
-        </div>
-
-        <div class="bulletin-content">
-          <table class="bulletin-table">
-            <thead>
-              <tr>
-                <th>Matière</th>
-                <th>Nombre de notes</th>
-                <th>Moyenne</th>
-                <th>Appréciation</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let matiere of studentReport.bulletin.matieres">
-                <td>{{ matiere.subject.name }}</td>
-                <td>{{ matiere.grades.length }}</td>
-                <td class="moyenne" [class]="getGradeStatus(matiere.moyenne)">{{ matiere.moyenne | number:'1.1-1' }}/20</td>
-                <td>{{ matiere.appreciation }}</td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr class="moyenne-generale">
-                <td><strong>Moyenne Générale</strong></td>
-                <td><strong>{{ studentReport.bulletin.totalNotes }} notes</strong></td>
-                <td class="moyenne" [class]="getGradeStatus(studentReport.bulletin.moyenneGenerale)">
-                  <strong>{{ studentReport.bulletin.moyenneGenerale | number:'1.1-1' }}/20</strong>
-                </td>
-                <td><strong>{{ studentReport.bulletin.appreciationGenerale }}</strong></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-
-      <div class="modal-body" *ngIf="isLoadingReport">
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <p>Chargement du bulletin...</p>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-secondary" (click)="closeBulletinModal()">Fermer</button>
-        <button class="btn-primary" (click)="printBulletin()" [disabled]="!studentReport">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6,9 6,2 18,2 18,9"/>
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-            <rect x="6" y="14" width="12" height="8"/>
-          </svg>
-          Imprimer
-        </button>
-      </div>
-    </div>
-  </div>
+</div>

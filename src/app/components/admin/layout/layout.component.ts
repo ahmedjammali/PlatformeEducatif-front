@@ -1,4 +1,4 @@
-// admin-layout.component.ts
+// admin-layout.component.ts - ENHANCED VERSION
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil, filter } from 'rxjs';
@@ -17,7 +17,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   currentUser: User | null = null;
   schoolInfo: School | null = null;
   sidebarCollapsed = false;
-  mobileMenuOpen = false; // New property for mobile menu state
+  mobileMenuOpen = false;
   activeRoute = 'dashboard';
   isSuperAdmin = false;
   unreadNotificationCount = 0;
@@ -27,6 +27,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   isLoggingOut = false;
   
   private destroy$ = new Subject<void>();
+  private isMobile = false; // Track current mobile state
 
   constructor(
     private authService: AuthService,
@@ -41,6 +42,17 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.handleWindowResize();
   }
 
+  // Handle escape key to close mobile menu
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscapeKey(event: KeyboardEvent): void {
+    if (this.mobileMenuOpen) {
+      this.closeMobileSidebar();
+    }
+    if (this.showLogoutModal) {
+      this.closeLogoutModal();
+    }
+  }
+
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
     this.isSuperAdmin = this.authService.isSuperAdmin();
@@ -49,50 +61,30 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.loadSchoolInfo();
     
     // Subscribe to unread notification count
-    this.notificationService.getUnreadCount()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(count => {
-        this.unreadNotificationCount = count;
-      });
+    this.subscribeToNotifications();
     
-    // Initial unread count load
-    this.notificationService.getUnreadNotificationsCount()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe();
-    
-    // Listen for route changes to update active route
-    this.router.events
-      .pipe(
-        filter(event => event instanceof NavigationEnd),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(() => {
-        this.setActiveRoute();
-        // Close mobile menu on navigation
-        this.closeMobileSidebar();
-      });
+    // Listen for route changes
+    this.subscribeToRouteChanges();
     
     // Set initial active route
     this.setActiveRoute();
     
-    // Check for mobile sidebar state
-    this.checkMobileView();
+    // Initialize responsive state
+    this.initializeResponsiveState();
     
     // Listen for messages from child components
-    window.addEventListener('message', this.handleMessage.bind(this));
+    this.setupMessageListener();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    window.removeEventListener('message', this.handleMessage.bind(this));
+    this.cleanup();
   }
 
-  private handleMessage(event: MessageEvent): void {
-    if (event.data.type === 'unreadCount') {
-      this.unreadNotificationCount = event.data.count;
-    }
-  }
+  // ============================================
+  // SIDEBAR TOGGLE METHODS
+  // ============================================
 
   toggleSidebar(): void {
     if (this.isMobileView()) {
@@ -101,50 +93,50 @@ export class LayoutComponent implements OnInit, OnDestroy {
       this.sidebarCollapsed = !this.sidebarCollapsed;
       // Save preference for desktop
       localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed.toString());
+      
+      // Force a reflow to ensure proper layout calculation
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 50);
+      
+      // Trigger a custom event for other components that might need to know about sidebar state
+      window.dispatchEvent(new CustomEvent('sidebarToggle', { 
+        detail: { collapsed: this.sidebarCollapsed } 
+      }));
     }
   }
 
-  // New method for mobile sidebar toggle
+  // Enhanced mobile sidebar toggle with better UX
   toggleMobileSidebar(): void {
     this.mobileMenuOpen = !this.mobileMenuOpen;
-    
-    // Prevent body scroll when mobile menu is open
-    if (this.mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+    this.updateBodyScrollLock();
+  }
+
+  // New method to specifically open mobile sidebar
+  openMobileSidebar(): void {
+    if (this.isMobileView() && !this.mobileMenuOpen) {
+      this.mobileMenuOpen = true;
+      this.updateBodyScrollLock();
     }
   }
 
-  // New method to close mobile sidebar
+  // Enhanced method to close mobile sidebar with animation callback
   closeMobileSidebar(): void {
     if (this.mobileMenuOpen) {
       this.mobileMenuOpen = false;
-      document.body.style.overflow = '';
-    }
-  }
-
-  // Check if current view is mobile
-  private isMobileView(): boolean {
-    return window.innerWidth < 768;
-  }
-
-  // Handle window resize
-  private handleWindowResize(): void {
-    if (!this.isMobileView()) {
-      // Close mobile menu when switching to desktop
-      this.closeMobileSidebar();
+      this.updateBodyScrollLock();
       
-      // Restore desktop sidebar state
-      const savedState = localStorage.getItem('sidebarCollapsed');
-      if (savedState !== null) {
-        this.sidebarCollapsed = savedState === 'true';
+      // Focus management for accessibility
+      const menuButton = document.querySelector('.mobile-menu-toggle') as HTMLElement;
+      if (menuButton) {
+        setTimeout(() => menuButton.focus(), 150);
       }
-    } else {
-      // On mobile, always show full sidebar when opened
-      this.sidebarCollapsed = false;
     }
   }
+
+  // ============================================
+  // NAVIGATION METHODS
+  // ============================================
 
   navigateTo(route: string): void {
     this.activeRoute = route;
@@ -162,7 +154,16 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
     const targetRoute = routeMap[route];
     if (targetRoute) {
-      this.router.navigate([targetRoute]);
+      // Close mobile menu before navigation for better UX
+      if (this.isMobileView()) {
+        this.closeMobileSidebar();
+        // Add small delay to let animation complete
+        setTimeout(() => {
+          this.router.navigate([targetRoute]);
+        }, 150);
+      } else {
+        this.router.navigate([targetRoute]);
+      }
     }
   }
 
@@ -193,39 +194,147 @@ export class LayoutComponent implements OnInit, OnDestroy {
     return roleLabels[this.currentUser?.role || ''] || 'Utilisateur';
   }
 
+  // ============================================
+  // NOTIFICATION METHODS
+  // ============================================
+
   showNotifications(): void {
+    // Close mobile menu first if open
+    if (this.isMobileView() && this.mobileMenuOpen) {
+      this.closeMobileSidebar();
+    }
+    
     // Navigate to notifications page
-    this.navigateTo('notifications');
+    setTimeout(() => {
+      this.navigateTo('notifications');
+    }, this.mobileMenuOpen ? 150 : 0);
   }
 
-  // Logout Modal Methods
+  // ============================================
+  // LOGOUT MODAL METHODS
+  // ============================================
+
   openLogoutModal(): void {
     this.showLogoutModal = true;
+    // Add focus trap for accessibility
+    setTimeout(() => {
+      const modal = document.querySelector('.modal-content') as HTMLElement;
+      if (modal) {
+        modal.focus();
+      }
+    }, 100);
   }
 
   closeLogoutModal(): void {
     this.showLogoutModal = false;
     this.isLoggingOut = false;
+    
+    // Return focus to logout button
+    const logoutButton = document.querySelector('.logout-btn') as HTMLElement;
+    if (logoutButton) {
+      setTimeout(() => logoutButton.focus(), 100);
+    }
   }
 
   confirmLogout(): void {
     this.isLoggingOut = true;
     
-    // Simulate logout delay for better UX
+    // Enhanced logout with proper cleanup
     setTimeout(() => {
-      this.authService.logout();
-      this.closeLogoutModal();
-      // Clean up mobile menu state
-      this.closeMobileSidebar();
+      try {
+        // Clean up state before logout
+        this.cleanup();
+        
+        // Perform logout
+        this.authService.logout();
+        this.closeLogoutModal();
+        // Redirect will be handled by auth guard or the logout method itself
+      } catch (error) {
+        console.error('Logout error:', error);
+        this.isLoggingOut = false;
+        // Handle logout error if needed
+      }
     }, 500);
   }
 
-  // Keep the old logout method for backward compatibility (but update it to use modal)
+  // Keep backward compatibility
   logout(): void {
     this.openLogoutModal();
   }
 
+  // ============================================
+  // RESPONSIVE METHODS
+  // ============================================
+
+  private isMobileView(): boolean {
+    return window.innerWidth < 768;
+  }
+
+  private handleWindowResize(): void {
+    const wasMobile = this.isMobile;
+    this.isMobile = this.isMobileView();
+    
+    // Handle transition between mobile and desktop
+    if (wasMobile && !this.isMobile) {
+      // Switching from mobile to desktop
+      this.closeMobileSidebar();
+      this.restoreDesktopSidebarState();
+    } else if (!wasMobile && this.isMobile) {
+      // Switching from desktop to mobile
+      this.prepareMobileState();
+    }
+  }
+
+  private restoreDesktopSidebarState(): void {
+    const savedState = localStorage.getItem('sidebarCollapsed');
+    if (savedState !== null) {
+      this.sidebarCollapsed = savedState === 'true';
+    }
+  }
+
+  private prepareMobileState(): void {
+    // On mobile, always show full sidebar when opened
+    this.sidebarCollapsed = false;
+    this.mobileMenuOpen = false;
+  }
+
+  // ============================================
+  // UTILITY METHODS
+  // ============================================
+
+  private updateBodyScrollLock(): void {
+    // Prevent body scroll when mobile menu is open
+    if (this.mobileMenuOpen && this.isMobileView()) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+  }
+
+  private initializeResponsiveState(): void {
+    this.isMobile = this.isMobileView();
+    
+    if (this.isMobile) {
+      this.prepareMobileState();
+    } else {
+      this.restoreDesktopSidebarState();
+    }
+  }
+
+  // ============================================
+  // DATA LOADING METHODS
+  // ============================================
+
   private loadSchoolInfo(): void {
+    if (this.isSuperAdmin) {
+      // Super admin might not have a specific school
+      return;
+    }
+
     this.schoolService.getSchool()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -234,6 +343,45 @@ export class LayoutComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading school info:', error);
+          // Handle error gracefully - maybe show a toast notification
+        }
+      });
+  }
+
+  private subscribeToNotifications(): void {
+    // Subscribe to unread notification count
+    this.notificationService.getUnreadCount()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (count) => {
+          this.unreadNotificationCount = count;
+        },
+        error: (error) => {
+          console.error('Error loading notification count:', error);
+        }
+      });
+    
+    // Initial unread count load
+    this.notificationService.getUnreadNotificationsCount()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        error: (error) => {
+          console.error('Error loading initial notification count:', error);
+        }
+      });
+  }
+
+  private subscribeToRouteChanges(): void {
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.setActiveRoute();
+        // Close mobile menu on navigation for better UX
+        if (this.isMobileView()) {
+          this.closeMobileSidebar();
         }
       });
   }
@@ -241,41 +389,42 @@ export class LayoutComponent implements OnInit, OnDestroy {
   private setActiveRoute(): void {
     const currentUrl = this.router.url;
     
-    if (currentUrl.includes('/users')) {
-      this.activeRoute = 'users';
-    } else if (currentUrl.includes('/classes')) {
-      this.activeRoute = 'classes';
-    } else if (currentUrl.includes('/subjects')) {
-      this.activeRoute = 'subjects';
-    } else if (currentUrl.includes('/notifications')) {
-      this.activeRoute = 'notifications';
-    } else if (currentUrl.includes('/grades')) {
-      this.activeRoute = 'grades';
-    } else if (currentUrl.includes('/contact')) {
-      this.activeRoute = 'contact';
-    } else if (currentUrl.includes('/reports')) {
-      this.activeRoute = 'reports';
-    } else if (currentUrl.includes('/schools')) {
-      this.activeRoute = 'schools';
-    } else {
-      this.activeRoute = 'dashboard';
+    // More robust route detection
+    const routes = [
+      { path: '/users', route: 'users' },
+      { path: '/classes', route: 'classes' },
+      { path: '/subjects', route: 'subjects' },
+      { path: '/notifications', route: 'notifications' },
+      { path: '/grades', route: 'grades' },
+      { path: '/contact', route: 'contact' },
+      { path: '/reports', route: 'reports' },
+      { path: '/schools', route: 'schools' }
+    ];
+
+    const activeRoute = routes.find(r => currentUrl.includes(r.path));
+    this.activeRoute = activeRoute ? activeRoute.route : 'dashboard';
+  }
+
+  private setupMessageListener(): void {
+    window.addEventListener('message', this.handleMessage.bind(this));
+  }
+
+  private handleMessage(event: MessageEvent): void {
+    if (event.data.type === 'unreadCount') {
+      this.unreadNotificationCount = event.data.count;
     }
   }
 
-  private checkMobileView(): void {
-    if (this.isMobileView()) {
-      // On mobile, start with collapsed sidebar
-      this.sidebarCollapsed = false; // But don't collapse the mobile menu itself
-      this.mobileMenuOpen = false;
-    } else {
-      // Restore sidebar state from localStorage for desktop
-      const savedState = localStorage.getItem('sidebarCollapsed');
-      if (savedState !== null) {
-        this.sidebarCollapsed = savedState === 'true';
-      }
-      
-      // Ensure mobile menu is closed on desktop
-      this.mobileMenuOpen = false;
-    }
+  private cleanup(): void {
+    // Clean up mobile menu state
+    this.closeMobileSidebar();
+    
+    // Clean up body styles
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    
+    // Remove event listeners
+    window.removeEventListener('message', this.handleMessage.bind(this));
   }
 }

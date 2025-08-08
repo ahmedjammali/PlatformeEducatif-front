@@ -463,7 +463,10 @@ export class ContactComponent implements OnInit, OnDestroy {
     }
     return field;
   }
-
+  // Add this method to your ContactComponent class
+trackByContactId(index: number, contact: Contact): string {
+  return contact._id || index.toString();
+}
   // Utility Methods
   getAvatarColor(name: string): string {
     const colors = [

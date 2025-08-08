@@ -1,10 +1,10 @@
 // teacher-layout.component.ts
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil, filter } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
 import { SchoolService } from '../../../services/school.service';
-import { NotificationService } from '../../../services/notification.service'; // Add this import
+import { NotificationService } from '../../../services/notification.service';
 import { User } from '../../../models/user.model';
 import { School } from '../../../models/school.model';
 
@@ -25,6 +25,10 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
   school: School | null = null;
   sidebarCollapsed = false;
   
+  // Mobile state
+  mobileMenuOpen = false;
+  isMobile = false;
+  
   // Logout modal state
   showLogoutModal = false;
   isLoggingOut = false;
@@ -37,35 +41,39 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private schoolService: SchoolService,
-    private notificationService: NotificationService, // Add this
+    private notificationService: NotificationService,
     private router: Router
   ) {}
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any): void {
+    this.checkMobileView();
+    
+    // Close mobile menu if switching to desktop
+    if (event.target.innerWidth >= 768 && this.mobileMenuOpen) {
+      this.closeMobileSidebar();
+    }
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscapeKey(event: KeyboardEvent): void {
+    if (this.mobileMenuOpen) {
+      this.closeMobileSidebar();
+    }
+    if (this.showLogoutModal) {
+      this.closeLogoutModal();
+    }
+  }
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser() as ExtendedUser | null;
     
     if (this.currentUser && this.currentUser.role === 'teacher') {
       this.loadSchoolInfo();
-      this.loadNotificationCount(); // Add this
+      this.loadNotificationCount();
     } else {
       this.router.navigate(['/login']);
     }
-    
-    // Listen for route changes to update active section (optional)
-    // Since you're using conditional rendering, this might not be needed
-    /*
-    this.router.events
-      .pipe(
-        filter(event => event instanceof NavigationEnd),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(() => {
-        this.setActiveSectionFromRoute();
-      });
-    
-    // Set initial active section from route
-    this.setActiveSectionFromRoute();
-    */
     
     // Check for mobile sidebar state
     this.checkMobileView();
@@ -79,30 +87,61 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Restore body scroll when component is destroyed
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  // Desktop sidebar toggle
   toggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
     // Save preference
     localStorage.setItem('teacherSidebarCollapsed', this.sidebarCollapsed.toString());
   }
 
+  // Mobile sidebar methods
+  openMobileSidebar(): void {
+    this.mobileMenuOpen = true;
+    // Prevent body scroll when mobile menu is open
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+  }
+
+  closeMobileSidebar(): void {
+    console.log('Closing mobile sidebar - before:', this.mobileMenuOpen);
+    this.mobileMenuOpen = false;
+    console.log('Closing mobile sidebar - after:', this.mobileMenuOpen);
+    // Restore body scroll
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+  }
+
   setActiveSection(section: string): void {
     this.activeSection = section;
     this.activeSectionChange.emit(section);
+    
+    // Close mobile menu when navigation item is selected
+    if (this.isMobile && this.mobileMenuOpen) {
+      this.closeMobileSidebar();
+    }
     
     // Mark notifications as read when visiting notifications section
     if (section === 'notifications' && this.unreadNotificationCount > 0) {
       setTimeout(() => {
         this.markNotificationsAsRead();
-      }, 1000); // Small delay to allow user to see notifications first
+      }, 1000);
     }
-    
-    // Optional: Navigate to corresponding route if you have different routes
-    // For now, we'll just update the section without navigation
-    // since you're using a single route with conditional rendering
+  }
+
+  // Notification methods
+  showNotifications(): void {
+    this.setActiveSection('notifications');
   }
 
   getPageTitle(): string {
@@ -113,7 +152,7 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
       'exercises': 'Exercices',
       'grades': 'Notes',
       'progress': 'Progrès Étudiants',
-      'notifications': 'Notifications', // Add this
+      'notifications': 'Notifications',
       'contact': 'Contact'
     };
     
@@ -123,6 +162,10 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
   // Logout Modal Methods
   openLogoutModal(): void {
     this.showLogoutModal = true;
+    // Close mobile menu if open
+    if (this.mobileMenuOpen) {
+      this.closeMobileSidebar();
+    }
   }
 
   closeLogoutModal(): void {
@@ -141,7 +184,7 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
     }, 500);
   }
 
-  // Keep the old logout method for backward compatibility (but update it to use modal)
+  // Keep the old logout method for backward compatibility
   logout(): void {
     this.openLogoutModal();
   }
@@ -200,48 +243,23 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
       });
   }
 
-  private setActiveSectionFromRoute(): void {
-    // Since you're using conditional rendering instead of separate routes,
-    // we don't need to update activeSection from route changes
-    // The activeSection will be managed by the parent component
-    
-    // If you do want route-based navigation later, uncomment this:
-    /*
-    const currentUrl = this.router.url;
-    
-    if (currentUrl.includes('/subjects')) {
-      this.activeSection = 'subjects';
-    } else if (currentUrl.includes('/classes')) {
-      this.activeSection = 'classes';
-    } else if (currentUrl.includes('/exercises')) {
-      this.activeSection = 'exercises';
-    } else if (currentUrl.includes('/grades')) {
-      this.activeSection = 'grades';
-    } else if (currentUrl.includes('/progress')) {
-      this.activeSection = 'progress';
-    } else if (currentUrl.includes('/notifications')) {
-      this.activeSection = 'notifications';
-    } else if (currentUrl.includes('/contact')) {
-      this.activeSection = 'contact';
-    } else {
-      this.activeSection = 'overview';
-    }
-    
-    // Emit the change
-    this.activeSectionChange.emit(this.activeSection);
-    */
-  }
-
   private checkMobileView(): void {
-    // Restore sidebar state from localStorage
-    const savedState = localStorage.getItem('teacherSidebarCollapsed');
-    if (savedState !== null) {
-      this.sidebarCollapsed = savedState === 'true';
-    }
+    this.isMobile = window.innerWidth < 768;
     
-    // Auto-collapse on mobile
-    if (window.innerWidth < 768) {
-      this.sidebarCollapsed = true;
+    if (!this.isMobile) {
+      // Restore sidebar state from localStorage on desktop
+      const savedState = localStorage.getItem('teacherSidebarCollapsed');
+      if (savedState !== null) {
+        this.sidebarCollapsed = savedState === 'true';
+      }
+      
+      // Close mobile menu if switching to desktop
+      if (this.mobileMenuOpen) {
+        this.closeMobileSidebar();
+      }
+    } else {
+      // On mobile, ensure mobile menu is closed initially
+      this.mobileMenuOpen = false;
     }
   }
 }

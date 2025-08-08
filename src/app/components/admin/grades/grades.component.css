@@ -1,9 +1,49 @@
+/* CSS Variables */
+:root {
+
+  --color-gray: #e0e0e0;
+  --color-gray-dark: #757575;
+  --color-gray-light: #f8f9fa;
+  
+  --gradient-primary: linear-gradient(135deg, #a4b465 0%, #7b8e3d 100%);
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2);
+  
+  --transition-base: all 0.3s ease;
+  --transition-fast: all 0.15s ease;
+  
+  --z-modal: 1000;
+  --z-dropdown: 100;
+  --z-header: 10;
+}
+
+/* Reset and Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--color-gray-light);
+  color: var(--color-primary-dark);
+  line-height: 1.6;
+}
+
 /* Container */
 .grades-container {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
+  min-height: 100vh;
 }
 
 /* Page Header */
@@ -36,7 +76,7 @@
   gap: 12px;
 }
 
-/* Buttons */
+/* Button Styles */
 .btn-primary {
   display: flex;
   align-items: center;
@@ -50,6 +90,7 @@
   cursor: pointer;
   transition: var(--transition-base);
   font-size: 0.875rem;
+  text-decoration: none;
 }
 
 .btn-primary:hover {
@@ -311,7 +352,289 @@
   font-weight: 500;
 }
 
-/* Table Container */
+/* Mobile Grade Cards */
+.mobile-grades-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.mobile-grade-card {
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: var(--transition-base);
+  border-left: 4px solid transparent;
+}
+
+.mobile-grade-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.mobile-grade-card.excellent {
+  border-left-color: var(--color-success);
+}
+
+.mobile-grade-card.good {
+  border-left-color: var(--color-primary);
+}
+
+.mobile-grade-card.average {
+  border-left-color: var(--color-accent);
+}
+
+.mobile-grade-card.poor {
+  border-left-color: var(--color-error);
+}
+
+.mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-gray);
+}
+
+.mobile-card-body {
+  padding: 16px;
+}
+
+.mobile-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px;
+  background-color: var(--color-gray-light);
+  border-top: 1px solid var(--color-gray);
+}
+
+.mobile-card-footer {
+  padding: 16px;
+  border-top: 1px solid var(--color-gray);
+  background-color: var(--color-gray-light);
+}
+
+/* Student Info */
+.student-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.student-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: white;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.student-avatar.large {
+  width: 64px;
+  height: 64px;
+  font-size: 1.5rem;
+}
+
+.student-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.student-name {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  font-size: 0.95rem;
+}
+
+.class-name {
+  font-size: 0.75rem;
+  color: var(--color-gray-dark);
+}
+
+/* Grade Badges */
+.grade-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.grade-badge.excellent {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--color-success);
+}
+
+.grade-badge.good {
+  background-color: rgba(164, 180, 101, 0.1);
+  color: var(--color-primary);
+}
+
+.grade-badge.average {
+  background-color: rgba(240, 187, 120, 0.2);
+  color: var(--color-accent);
+}
+
+.grade-badge.poor {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--color-error);
+}
+
+/* Exam Info in Mobile Cards */
+.exam-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.125rem;
+  color: var(--color-primary-dark);
+}
+
+.exam-meta-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.subject-tag {
+  background-color: var(--color-gray-light);
+  color: var(--color-primary);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.exam-type-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.exam-type-badge.controle {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--color-info);
+}
+
+.exam-type-badge.devoir {
+  background-color: rgba(164, 180, 101, 0.1);
+  color: var(--color-primary);
+}
+
+.exam-type-badge.examen {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--color-error);
+}
+
+.exam-type-badge.test {
+  background-color: rgba(240, 187, 120, 0.2);
+  color: var(--color-accent);
+}
+
+.exam-type-badge.oral {
+  background-color: rgba(156, 39, 176, 0.1);
+  color: #9c27b0;
+}
+
+.exam-type-badge.tp {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--color-success);
+}
+
+.exam-type-badge.autre {
+  background-color: rgba(158, 158, 158, 0.1);
+  color: var(--color-gray-dark);
+}
+
+/* Grade Details in Mobile Cards */
+.grade-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-row .label {
+  font-size: 0.875rem;
+  color: var(--color-gray-dark);
+  font-weight: 500;
+}
+
+.detail-row .value {
+  font-size: 0.875rem;
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+/* Grade Progress */
+.grade-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background-color: var(--color-gray);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: var(--transition-base);
+}
+
+.progress-fill.excellent {
+  background-color: var(--color-success);
+}
+
+.progress-fill.good {
+  background-color: var(--color-primary);
+}
+
+.progress-fill.average {
+  background-color: var(--color-accent);
+}
+
+.progress-fill.poor {
+  background-color: var(--color-error);
+}
+
+.percentage {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  min-width: 40px;
+}
+
+/* Comments */
+.comments {
+  font-size: 0.875rem;
+  color: var(--color-gray-dark);
+  font-style: italic;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Desktop Table Container */
 .table-container {
   background-color: white;
   border-radius: var(--radius-md);
@@ -381,39 +704,12 @@
   background-color: rgba(76, 175, 80, 0.05);
 }
 
-/* Student Info */
-.student-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-}
-
-.student-avatar {
+.grades-table .student-avatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  color: white;
-  font-size: 0.875rem;
-  flex-shrink: 0;
 }
 
-.student-avatar.large {
-  width: 64px;
-  height: 64px;
-  font-size: 1.5rem;
-}
-
-.student-name {
-  font-weight: 600;
-  color: var(--color-primary-dark);
-}
-
-/* Badges */
+/* Desktop Table Elements */
 .class-badge {
   background-color: rgba(164, 180, 101, 0.1);
   color: var(--color-primary-dark);
@@ -428,50 +724,6 @@
   font-weight: 500;
 }
 
-.exam-type-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: capitalize;
-}
-
-.exam-type-badge.controle {
-  background-color: rgba(33, 150, 243, 0.1);
-  color: var(--color-info);
-}
-
-.exam-type-badge.devoir {
-  background-color: rgba(164, 180, 101, 0.1);
-  color: var(--color-primary);
-}
-
-.exam-type-badge.examen {
-  background-color: rgba(244, 67, 54, 0.1);
-  color: var(--color-error);
-}
-
-.exam-type-badge.test {
-  background-color: rgba(240, 187, 120, 0.2);
-  color: var(--color-accent);
-}
-
-.exam-type-badge.oral {
-  background-color: rgba(156, 39, 176, 0.1);
-  color: #9c27b0;
-}
-
-.exam-type-badge.tp {
-  background-color: rgba(76, 175, 80, 0.1);
-  color: var(--color-success);
-}
-
-.exam-type-badge.autre {
-  background-color: rgba(158, 158, 158, 0.1);
-  color: var(--color-gray-dark);
-}
-
-/* Grade Display */
 .grade-display {
   display: flex;
   flex-direction: column;
@@ -569,7 +821,7 @@
   color: var(--color-primary-dark);
 }
 
-/* Cards View */
+/* Desktop Cards View */
 .cards-container {
   margin-bottom: 24px;
 }
@@ -621,61 +873,8 @@
   cursor: default;
 }
 
-.student-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.class-name {
-  font-size: 0.75rem;
-  color: var(--color-gray-dark);
-}
-
-.grade-badge {
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 700;
-  font-size: 1.125rem;
-}
-
-.grade-badge.excellent {
-  background-color: rgba(76, 175, 80, 0.1);
-  color: var(--color-success);
-}
-
-.grade-badge.good {
-  background-color: rgba(164, 180, 101, 0.1);
-  color: var(--color-primary);
-}
-
-.grade-badge.average {
-  background-color: rgba(240, 187, 120, 0.2);
-  color: var(--color-accent);
-}
-
-.grade-badge.poor {
-  background-color: rgba(244, 67, 54, 0.1);
-  color: var(--color-error);
-}
-
 .card-body {
   margin-bottom: 16px;
-}
-
-.exam-info h4 {
-  margin: 0 0 8px 0;
-  font-size: 1.125rem;
-  color: var(--color-primary-dark);
-}
-
-.subject-tag {
-  background-color: var(--color-gray-light);
-  color: var(--color-primary);
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
 }
 
 .exam-meta {
@@ -703,59 +902,9 @@
   font-weight: 600;
 }
 
-.grade-progress {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 8px;
-  background-color: var(--color-gray);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  transition: var(--transition-base);
-}
-
-.progress-fill.excellent {
-  background-color: var(--color-success);
-}
-
-.progress-fill.good {
-  background-color: var(--color-primary);
-}
-
-.progress-fill.average {
-  background-color: var(--color-accent);
-}
-
-.progress-fill.poor {
-  background-color: var(--color-error);
-}
-
-.percentage {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-primary-dark);
-  min-width: 40px;
-}
-
 .card-footer {
   border-top: 1px solid var(--color-gray);
   padding-top: 12px;
-}
-
-.comments {
-  font-size: 0.875rem;
-  color: var(--color-gray-dark);
-  font-style: italic;
-  margin: 0;
-  line-height: 1.4;
 }
 
 /* Student View */
@@ -925,40 +1074,40 @@
 
 /* Empty & Loading States */
 .empty-state,
-.loading-state {
+.loading-state,
+.mobile-empty-state,
+.mobile-loading-state {
   text-align: center;
   padding: 60px 20px;
 }
 
 .empty-state svg,
-.loading-state svg {
+.loading-state svg,
+.mobile-empty-state svg,
+.mobile-loading-state svg {
   margin-bottom: 20px;
   color: var(--color-gray-dark);
   opacity: 0.3;
 }
 
-.empty-state h3 {
+.empty-state h3,
+.mobile-empty-state h3 {
   font-size: 1.25rem;
   color: var(--color-primary-dark);
   margin-bottom: 8px;
   font-weight: 600;
 }
 
-.empty-state p {
-  color: var(--color-gray-dark);
-  margin: 0;
-  font-size: 0.95rem;
-}
-
-.loading-state p {
+.empty-state p,
+.loading-state p,
+.mobile-empty-state p,
+.mobile-loading-state p {
   color: var(--color-gray-dark);
   margin: 0;
   font-size: 0.95rem;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
   border: 4px solid var(--color-gray);
   border-top-color: var(--color-primary);
   border-radius: 50%;
@@ -1014,7 +1163,7 @@
   cursor: not-allowed;
 }
 
-/* Modal */
+/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1308,12 +1457,8 @@
 
 /* Animations */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideInUp {
@@ -1327,7 +1472,24 @@
   }
 }
 
+/* Utility Classes */
+.mobile-only { display: block; }
+.desktop-only { display: none; }
+
 /* Responsive Design */
+@media (min-width: 768px) {
+  .mobile-only { display: none; }
+  .desktop-only { display: block; }
+  
+  .grades-container {
+    padding: 32px;
+  }
+  
+  .stats-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 1024px) {
   .grades-container {
     padding: 16px;
@@ -1339,6 +1501,10 @@
   
   .filters-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .grades-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
 }
 
@@ -1378,18 +1544,6 @@
     justify-content: center;
   }
   
-  .table-wrapper {
-    overflow-x: scroll;
-  }
-  
-  .grades-table {
-    min-width: 900px;
-  }
-  
-  .grades-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .modal-content {
     margin: 10px;
     width: calc(100% - 20px);
@@ -1419,6 +1573,18 @@
   .student-stats {
     justify-content: center;
   }
+  
+  .exam-meta {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .mobile-grade-card {
+    margin: 0 -4px;
+  }
+  
+  .search-input {
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1433,11 +1599,22 @@
   
   .stats-row {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
   
   .stat-card {
     flex-direction: column;
     text-align: center;
+    gap: 12px;
+  }
+  
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
   }
   
   .modal-header,
@@ -1459,19 +1636,93 @@
   .toggle-btn {
     justify-content: center;
   }
+  
+  .mobile-grade-card {
+    margin: 0;
+  }
+  
+  .grade-details {
+    gap: 6px;
+  }
+  
+  .exam-meta-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .mobile-card-header {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+  
+  .grade-circle {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .grade-number {
+    font-size: 2rem;
+  }
+  
+  .bulletin-table {
+    font-size: 0.75rem;
+  }
+  
+  .bulletin-table th,
+  .bulletin-table td {
+    padding: 8px;
+  }
+  
+  .modal-footer {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .detail-item .value {
+    text-align: left;
+  }
+  
+  .student-stats {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .exam-meta {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-actions {
+    align-items: stretch;
+  }
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .grades-table td,
-  .grades-table th {
+  .grades-table th,
+  .bulletin-table td,
+  .bulletin-table th {
     border-bottom-width: 2px;
   }
   
   .grade-badge,
   .exam-type-badge,
-  .class-badge {
+  .class-badge,
+  .subject-tag {
     border: 1px solid currentColor;
+  }
+  
+  .mobile-grade-card,
+  .grade-card,
+  .stat-card {
+    border: 1px solid var(--color-gray);
   }
 }
 
@@ -1481,5 +1732,11 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  
+  .stat-card:hover,
+  .mobile-grade-card:hover,
+  .grade-card:hover {
+    transform: none;
   }
 }

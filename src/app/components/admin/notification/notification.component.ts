@@ -129,32 +129,32 @@ export class NotificationComponent implements OnInit, OnDestroy {
         this.loadNotifications();
       });
   }
+private dateRangeValidator(formGroup: FormGroup): { [key: string]: any } | null {
+  const publishDate = formGroup.get('publishDate')?.value;
+  const expiryDate = formGroup.get('expiryDate')?.value;
+  const now = new Date();
+  const errors: any = {};
 
-  private dateRangeValidator(formGroup: FormGroup): { [key: string]: any } | null {
-    const publishDate = formGroup.get('publishDate')?.value;
-    const expiryDate = formGroup.get('expiryDate')?.value;
-    const now = new Date();
-    const errors: any = {};
-
-    // Check if publish date is in the past
-    if (publishDate) {
-      const publishDateTime = new Date(publishDate);
-      if (publishDateTime < now) {
-        errors.publishDateInPast = true;
-      }
+  // Skip publish date validation when editing an existing notification
+  // because the publish date field is disabled and shouldn't be validated
+  if (publishDate && !this.editingNotification) {
+    const publishDateTime = new Date(publishDate);
+    if (publishDateTime < now) {
+      errors.publishDateInPast = true;
     }
-
-    // Check if expiry date is before publish date
-    if (publishDate && expiryDate) {
-      const publishDateTime = new Date(publishDate);
-      const expiryDateTime = new Date(expiryDate);
-      if (expiryDateTime <= publishDateTime) {
-        errors.expiryBeforePublish = true;
-      }
-    }
-
-    return Object.keys(errors).length > 0 ? errors : null;
   }
+
+  // Check if expiry date is before publish date
+  if (publishDate && expiryDate) {
+    const publishDateTime = new Date(publishDate);
+    const expiryDateTime = new Date(expiryDate);
+    if (expiryDateTime <= publishDateTime) {
+      errors.expiryBeforePublish = true;
+    }
+  }
+
+  return Object.keys(errors).length > 0 ? errors : null;
+}
 
   private subscribeToNotificationUpdates(): void {
     this.notificationService.getNotificationUpdates()

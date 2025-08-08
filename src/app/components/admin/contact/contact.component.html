@@ -1,507 +1,567 @@
-
-  <div class="contacts-container">
-    <!-- Header Section -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1>Gestion des Contacts</h1>
-        <p class="header-subtitle">Gérer les messages de contact reçus via le site web</p>
-      </div>
-      
-      <div class="header-actions">
-        <button class="btn-secondary" (click)="exportContacts()" [disabled]="contacts.length === 0">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Exporter
-        </button>
-        <button class="btn-danger" (click)="deleteSelected()" [disabled]="selectedContacts.length === 0">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
-          </svg>
-          Supprimer Sélectionnés
-        </button>
-      </div>
+<div class="contacts-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestion des Contacts</h1>
+      <p class="header-subtitle">Gérer les messages de contact reçus via le site web</p>
     </div>
-
-    <!-- Filters Section -->
-    <div class="filters-section">
-      <div class="filter-group">
-        <label>Rechercher</label>
-        <div class="search-input">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="m21 21-4.35-4.35"/>
-          </svg>
-          <input 
-            type="text" 
-            placeholder="Nom, email, message..."
-            [(ngModel)]="searchTerm"
-            (ngModelChange)="onSearchChange()"
-          />
-        </div>
-      </div>
-
-      <div class="filter-group">
-        <label>Période</label>
-        <select [(ngModel)]="selectedPeriod" (ngModelChange)="onFilterChange()">
-          <option value="">Toutes les périodes</option>
-          <option value="today">Aujourd'hui</option>
-          <option value="week">Cette semaine</option>
-          <option value="month">Ce mois</option>
-          <option value="year">Cette année</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label>Date personnalisée</label>
-        <div class="date-range">
-          <input 
-            type="date" 
-            [(ngModel)]="startDate"
-            (ngModelChange)="onFilterChange()"
-            placeholder="Date début"
-          />
-          <span>à</span>
-          <input 
-            type="date" 
-            [(ngModel)]="endDate"
-            (ngModelChange)="onFilterChange()"
-            placeholder="Date fin"
-          />
-        </div>
-      </div>
-
-      <button class="btn-secondary" (click)="resetFilters()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="1 4 1 10 7 10"/>
-          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+    
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="exportContacts()" [disabled]="contacts.length === 0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
-        Réinitialiser
+        Exporter
+      </button>
+      <button class="btn-danger" (click)="deleteSelected()" [disabled]="selectedContacts.length === 0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+        </svg>
+        Supprimer Sélectionnés
       </button>
     </div>
+  </div>
 
-    <!-- Stats Cards -->
-    <div class="stats-row">
-      <div class="stat-mini-card">
-        <div class="stat-value">{{ totalContacts }}</div>
-        <div class="stat-label">Total Contacts</div>
-      </div>
-      <div class="stat-mini-card">
-        <div class="stat-value">{{ todayContacts }}</div>
-        <div class="stat-label">Aujourd'hui</div>
-      </div>
-      <div class="stat-mini-card">
-        <div class="stat-value">{{ weekContacts }}</div>
-        <div class="stat-label">Cette Semaine</div>
-      </div>
-      <div class="stat-mini-card">
-        <div class="stat-value">{{ monthContacts }}</div>
-        <div class="stat-label">Ce Mois</div>
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Rechercher</label>
+      <div class="search-input">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input 
+          type="text" 
+          placeholder="Nom, email, message..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+        />
       </div>
     </div>
 
-    <!-- Contacts Table -->
-    <div class="table-container">
-      <div class="table-wrapper">
-        <table class="contacts-table">
-          <thead>
-            <tr>
-              <th>
-                <input 
-                  type="checkbox" 
-                  [checked]="isAllSelected()"
-                  (change)="toggleSelectAll($event)"
-                />
-              </th>
-              <th (click)="sortBy('name')" class="sortable">
-                Nom
-                <svg *ngIf="sortField === 'name'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
-                </svg>
-              </th>
-              <th (click)="sortBy('email')" class="sortable">
-                Email
-                <svg *ngIf="sortField === 'email'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
-                </svg>
-              </th>
-              <th>Téléphone</th>
-              <th  >Message</th>
-              <th (click)="sortBy('createdAt')" class="sortable">
-                Date
-                <svg *ngIf="sortField === 'createdAt'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
-                </svg>
-              </th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let contact of paginatedContacts" [class.selected]="isSelected(contact._id!)">
-              <td>
-                <input 
-                  type="checkbox" 
-                  [checked]="isSelected(contact._id!)"
-                  (change)="toggleSelect(contact._id!)"
-                />
-              </td>
-              <td>
-                <div class="contact-info">
-                  <div class="contact-avatar" [style.background-color]="getAvatarColor(contact.name)">
-                    {{ contact.name.charAt(0).toUpperCase() }}
-                  </div>
-                  <span class="contact-name">{{ contact.name }}</span>
-                </div>
-              </td>
-              <td>
-                <span class="contact-email">{{ contact.email }}</span>
-              </td>
-              <td>
-                <span class="contact-phone">{{ contact.phone || '-' }}</span>
-              </td>
-              <td>
-                <div class="message-preview" [title]="contact.message">
-                  {{ truncateMessage(contact.message, 30) }}
-                </div>
-              </td>
-              <td>
-                <span class="contact-date">{{ formatDate(contact.createdAt) }}</span>
-                <span class="contact-time">{{ formatTime(contact.createdAt) }}</span>
-              </td>
-              <td>
-                <div class="action-buttons">
-                  <button class="btn-icon" (click)="viewContact(contact)" title="Voir détails">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
-                  <button class="btn-icon email" (click)="replyToContact(contact)" title="Répondre par email">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                      <polyline points="22,6 12,13 2,6"/>
-                    </svg>
-                  </button>
-                  <button class="btn-icon danger" (click)="deleteContact(contact)" title="Supprimer">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="3 6 5 6 21 6"/>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                    </svg>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="filter-group">
+      <label>Période</label>
+      <select [(ngModel)]="selectedPeriod" (ngModelChange)="onFilterChange()">
+        <option value="">Toutes les périodes</option>
+        <option value="today">Aujourd'hui</option>
+        <option value="week">Cette semaine</option>
+        <option value="month">Ce mois</option>
+        <option value="year">Cette année</option>
+      </select>
+    </div>
 
-        <!-- Empty State -->
-        <div *ngIf="paginatedContacts.length === 0 && !isLoading" class="empty-state">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+    <div class="filter-group">
+      <label>Date personnalisée</label>
+      <div class="date-range">
+        <input 
+          type="date" 
+          [(ngModel)]="startDate"
+          (ngModelChange)="onFilterChange()"
+          placeholder="Date début"
+        />
+        <span>à</span>
+        <input 
+          type="date" 
+          [(ngModel)]="endDate"
+          (ngModelChange)="onFilterChange()"
+          placeholder="Date fin"
+        />
+      </div>
+    </div>
+
+    <button class="btn-secondary" (click)="resetFilters()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="1 4 1 10 7 10"/>
+        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+      </svg>
+      Réinitialiser
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-row">
+    <div class="stat-mini-card">
+      <div class="stat-value">{{ totalContacts }}</div>
+      <div class="stat-label">Total Contacts</div>
+    </div>
+    <div class="stat-mini-card">
+      <div class="stat-value">{{ todayContacts }}</div>
+      <div class="stat-label">Aujourd'hui</div>
+    </div>
+    <div class="stat-mini-card">
+      <div class="stat-value">{{ weekContacts }}</div>
+      <div class="stat-label">Cette Semaine</div>
+    </div>
+    <div class="stat-mini-card">
+      <div class="stat-value">{{ monthContacts }}</div>
+      <div class="stat-label">Ce Mois</div>
+    </div>
+  </div>
+
+  <!-- Mobile Cards View (hidden on desktop) -->
+  <div class="contacts-cards mobile-only" *ngIf="!isLoading">
+    <div 
+      class="contact-card" 
+      *ngFor="let contact of paginatedContacts; trackBy: trackByContactId"
+      [class.selected]="isSelected(contact._id!)"
+    >
+      <div class="card-header">
+        <div class="contact-info">
+          <div class="contact-avatar" [style.background-color]="getAvatarColor(contact.name)">
+            {{ contact.name.charAt(0).toUpperCase() }}
+          </div>
+          <div class="contact-details">
+            <span class="contact-name">{{ contact.name }}</span>
+            <span class="contact-email">{{ contact.email }}</span>
+          </div>
+        </div>
+        <input 
+          type="checkbox" 
+          class="contact-select"
+          [checked]="isSelected(contact._id!)"
+          (change)="toggleSelect(contact._id!)"
+        />
+      </div>
+      <div class="card-body">
+        <div class="contact-phone" *ngIf="contact.phone">{{ contact.phone }}</div>
+        <div class="contact-phone" *ngIf="!contact.phone">-</div>
+        <div class="message-preview" [title]="contact.message">
+          {{ truncateMessage(contact.message, 80) }}
+        </div>
+        <div class="contact-date">
+          {{ formatDate(contact.createdAt) }} - {{ formatTime(contact.createdAt) }}
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-icon" (click)="viewContact(contact)" title="Voir détails">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+        <button class="btn-icon email" (click)="replyToContact(contact)" title="Répondre par email">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
             <polyline points="22,6 12,13 2,6"/>
           </svg>
-          <h3>Aucun contact trouvé</h3>
-          <p>Aucun message de contact ne correspond à vos critères de recherche</p>
-        </div>
-
-        <!-- Loading State -->
-        <div *ngIf="isLoading" class="loading-state">
-          <div class="spinner"></div>
-          <p>Chargement des contacts...</p>
-        </div>
+        </button>
+        <button class="btn-icon danger" (click)="deleteContact(contact)" title="Supprimer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- Bulk Actions -->
-    <div class="bulk-actions" *ngIf="selectedContacts.length > 0">
-      <span>{{ selectedContacts.length }} contact(s) sélectionné(s)</span>
-      <div class="bulk-buttons">
-        <button class="btn-secondary" (click)="exportSelected()">
+  <!-- Desktop Table View (hidden on mobile) -->
+  <div class="table-container desktop-only">
+    <div class="table-wrapper">
+      <table class="contacts-table">
+        <thead>
+          <tr>
+            <th>
+              <input 
+                type="checkbox" 
+                [checked]="isAllSelected()"
+                (change)="toggleSelectAll($event)"
+              />
+            </th>
+            <th (click)="sortBy('name')" class="sortable">
+              Nom
+              <svg *ngIf="sortField === 'name'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
+              </svg>
+            </th>
+            <th (click)="sortBy('email')" class="sortable">
+              Email
+              <svg *ngIf="sortField === 'email'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
+              </svg>
+            </th>
+            <th>Téléphone</th>
+            <th>Message</th>
+            <th (click)="sortBy('createdAt')" class="sortable">
+              Date
+              <svg *ngIf="sortField === 'createdAt'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
+              </svg>
+            </th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
+            *ngFor="let contact of paginatedContacts; trackBy: trackByContactId" 
+            [class.selected]="isSelected(contact._id!)"
+          >
+            <td>
+              <input 
+                type="checkbox" 
+                [checked]="isSelected(contact._id!)"
+                (change)="toggleSelect(contact._id!)"
+              />
+            </td>
+            <td>
+              <div class="contact-info">
+                <div class="contact-avatar" [style.background-color]="getAvatarColor(contact.name)">
+                  {{ contact.name.charAt(0).toUpperCase() }}
+                </div>
+                <span class="contact-name">{{ contact.name }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="contact-email">{{ contact.email }}</span>
+            </td>
+            <td>
+              <span class="contact-phone">{{ contact.phone || '-' }}</span>
+            </td>
+            <td>
+              <div class="message-preview" [title]="contact.message">
+                {{ truncateMessage(contact.message, 30) }}
+              </div>
+            </td>
+            <td>
+              <span class="contact-date">{{ formatDate(contact.createdAt) }}</span>
+              <span class="contact-time">{{ formatTime(contact.createdAt) }}</span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-icon" (click)="viewContact(contact)" title="Voir détails">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+                <button class="btn-icon email" (click)="replyToContact(contact)" title="Répondre par email">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                </button>
+                <button class="btn-icon danger" (click)="deleteContact(contact)" title="Supprimer">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div *ngIf="paginatedContacts.length === 0 && !isLoading" class="empty-state">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+        <h3>Aucun contact trouvé</h3>
+        <p>Aucun message de contact ne correspond à vos critères de recherche</p>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des contacts...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Actions -->
+  <div class="bulk-actions" *ngIf="selectedContacts.length > 0">
+    <span>{{ selectedContacts.length }} contact(s) sélectionné(s)</span>
+    <div class="bulk-buttons">
+      <button class="btn-secondary" (click)="exportSelected()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Exporter
+      </button>
+      <button class="btn-danger" (click)="deleteSelected()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+        </svg>
+        Supprimer
+      </button>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button 
+      class="page-btn" 
+      [disabled]="currentPage === 1"
+      (click)="goToPage(currentPage - 1)"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+    
+    <button 
+      *ngFor="let page of getPageNumbers()" 
+      class="page-btn"
+      [class.active]="page === currentPage"
+      (click)="goToPage(page)"
+    >
+      {{ page }}
+    </button>
+    
+    <button 
+      class="page-btn" 
+      [disabled]="currentPage === totalPages"
+      (click)="goToPage(currentPage + 1)"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- View Contact Modal -->
+<div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
+  <div class="modal-content view-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Détails du Contact</h2>
+      <button class="close-btn" (click)="closeViewModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedContact">
+      <div class="contact-details">
+        <div class="detail-section">
+          <h3>Informations de Contact</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Nom:</label>
+              <span>{{ selectedContact.name }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Email:</label>
+              <a [href]="'mailto:' + selectedContact.email" class="email-link">{{ selectedContact.email }}</a>
+            </div>
+            <div class="detail-item">
+              <label>Téléphone:</label>
+              <span>{{ selectedContact.phone || 'Non renseigné' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Date d'envoi:</label>
+              <span>{{ formatFullDate(selectedContact.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Message</h3>
+          <div class="message-content">
+            {{ selectedContact.message }}
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeViewModal()">Fermer</button>
+        <button class="btn-primary" (click)="replyToContact(selectedContact)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
           </svg>
-          Exporter
+          Répondre par Email
         </button>
-        <button class="btn-danger" (click)="deleteSelected()">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reply Modal -->
+<div class="modal-overlay" *ngIf="showReplyModal" (click)="closeReplyModal()">
+  <div class="modal-content reply-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Répondre à {{ replyContact?.name }}</h2>
+      <button class="close-btn" (click)="closeReplyModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="replyContact">
+      <div class="original-message">
+        <h4>Message original:</h4>
+        <p>{{ replyContact.message }}</p>
+      </div>
+
+      <form [formGroup]="replyForm" (ngSubmit)="sendReply()" class="reply-form">
+        <div class="form-group">
+          <label>Objet <span class="required">*</span></label>
+          <input 
+            type="text" 
+            formControlName="subject" 
+            placeholder="Objet de votre réponse"
+            [class.error]="isReplyFieldInvalid('subject')"
+          />
+          <span class="error-message" *ngIf="isReplyFieldInvalid('subject')">
+            L'objet est requis
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label>Votre réponse <span class="required">*</span></label>
+          <textarea 
+            formControlName="message" 
+            rows="6"
+            placeholder="Tapez votre réponse ici..."
+            [class.error]="isReplyFieldInvalid('message')"
+          ></textarea>
+          <span class="error-message" *ngIf="isReplyFieldInvalid('message')">
+            Le message est requis
+          </span>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeReplyModal()">Annuler</button>
+          <button type="submit" class="btn-primary" [disabled]="replyForm.invalid || isSending">
+            <span *ngIf="!isSending">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+              </svg>
+              Envoyer
+            </span>
+            <span *ngIf="isSending" class="saving">
+              <span class="spinner-small"></span>
+              Envoi en cours...
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Confirmer la suppression</h2>
+      <button class="close-btn" (click)="closeDeleteModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="contactToDelete">
+      <div class="delete-warning">
+        <div class="warning-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="warning-content">
+          <h3>Êtes-vous sûr de vouloir supprimer ce contact ?</h3>
+          <p>Cette action supprimera définitivement le message de <strong>{{ contactToDelete.name }}</strong> ({{ contactToDelete.email }}). Cette action ne peut pas être annulée.</p>
+        </div>
+      </div>
+
+      <div class="contact-preview">
+        <div class="contact-info">
+          <div class="contact-avatar" [style.background-color]="getAvatarColor(contactToDelete.name)">
+            {{ contactToDelete.name.charAt(0).toUpperCase() }}
+          </div>
+          <div class="contact-details">
+            <span class="contact-name">{{ contactToDelete.name }}</span>
+            <span class="contact-email">{{ contactToDelete.email }}</span>
+          </div>
+        </div>
+        <div class="message-snippet">
+          "{{ truncateMessage(contactToDelete.message, 80) }}"
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeDeleteModal()">Annuler</button>
+        <button class="btn-danger" (click)="confirmDelete()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          Supprimer définitivement
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showBulkDeleteModal" (click)="closeBulkDeleteModal()">
+  <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Confirmer la suppression multiple</h2>
+      <button class="close-btn" (click)="closeBulkDeleteModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="delete-warning">
+        <div class="warning-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="warning-content">
+          <h3>Êtes-vous sûr de vouloir supprimer ces contacts ?</h3>
+          <p>Cette action supprimera définitivement <strong>{{ selectedContacts.length }} contact(s)</strong> sélectionné(s). Cette action ne peut pas être annulée.</p>
+        </div>
+      </div>
+
+      <div class="bulk-preview">
+        <div class="selected-count">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span>{{ selectedContacts.length }} contact(s) à supprimer</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeBulkDeleteModal()">Annuler</button>
+        <button class="btn-danger" (click)="confirmBulkDelete()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="3 6 5 6 21 6"/>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
           </svg>
-          Supprimer
+          Supprimer {{ selectedContacts.length }} contact(s)
         </button>
       </div>
     </div>
-
-    <!-- Pagination -->
-    <div class="pagination" *ngIf="totalPages > 1">
-      <button 
-        class="page-btn" 
-        [disabled]="currentPage === 1"
-        (click)="goToPage(currentPage - 1)"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
-      </button>
-      
-      <button 
-        *ngFor="let page of getPageNumbers()" 
-        class="page-btn"
-        [class.active]="page === currentPage"
-        (click)="goToPage(page)"
-      >
-        {{ page }}
-      </button>
-      
-      <button 
-        class="page-btn" 
-        [disabled]="currentPage === totalPages"
-        (click)="goToPage(currentPage + 1)"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-      </button>
-    </div>
   </div>
-
-  <!-- View Contact Modal -->
-  <div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
-    <div class="modal-content view-modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Détails du Contact</h2>
-        <button class="close-btn" (click)="closeViewModal()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-body" *ngIf="selectedContact">
-        <div class="contact-details">
-          <div class="detail-section">
-            <h3>Informations de Contact</h3>
-            <div class="detail-grid">
-              <div class="detail-item">
-                <label>Nom:</label>
-                <span>{{ selectedContact.name }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Email:</label>
-                <a [href]="'mailto:' + selectedContact.email" class="email-link">{{ selectedContact.email }}</a>
-              </div>
-              <div class="detail-item">
-                <label>Téléphone:</label>
-                <span>{{ selectedContact.phone || 'Non renseigné' }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Date d'envoi:</label>
-                <span>{{ formatFullDate(selectedContact.createdAt) }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <h3>Message</h3>
-            <div class="message-content">
-              {{ selectedContact.message }}
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button class="btn-secondary" (click)="closeViewModal()">Fermer</button>
-          <button class="btn-primary" (click)="replyToContact(selectedContact)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-              <polyline points="22,6 12,13 2,6"/>
-            </svg>
-            Répondre par Email
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Reply Modal -->
-  <div class="modal-overlay" *ngIf="showReplyModal" (click)="closeReplyModal()">
-    <div class="modal-content reply-modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Répondre à {{ replyContact?.name }}</h2>
-        <button class="close-btn" (click)="closeReplyModal()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-body" *ngIf="replyContact">
-        <div class="original-message">
-          <h4>Message original:</h4>
-          <p>{{ replyContact.message }}</p>
-        </div>
-
-        <form [formGroup]="replyForm" (ngSubmit)="sendReply()" class="reply-form">
-          <div class="form-group">
-            <label>Objet <span class="required">*</span></label>
-            <input 
-              type="text" 
-              formControlName="subject" 
-              placeholder="Objet de votre réponse"
-              [class.error]="isReplyFieldInvalid('subject')"
-            />
-            <span class="error-message" *ngIf="isReplyFieldInvalid('subject')">
-              L'objet est requis
-            </span>
-          </div>
-
-          <div class="form-group">
-            <label>Votre réponse <span class="required">*</span></label>
-            <textarea 
-              formControlName="message" 
-              rows="6"
-              placeholder="Tapez votre réponse ici..."
-              [class.error]="isReplyFieldInvalid('message')"
-            ></textarea>
-            <span class="error-message" *ngIf="isReplyFieldInvalid('message')">
-              Le message est requis
-            </span>
-          </div>
-
-          <div class="modal-footer">
-            <button type="button" class="btn-secondary" (click)="closeReplyModal()">Annuler</button>
-            <button type="submit" class="btn-primary" [disabled]="replyForm.invalid || isSending">
-              <span *ngIf="!isSending">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="22" y1="2" x2="11" y2="13"/>
-                  <polygon points="22,2 15,22 11,13 2,9 22,2"/>
-                </svg>
-                Envoyer
-              </span>
-              <span *ngIf="isSending" class="saving">
-                <span class="spinner-small"></span>
-                Envoi en cours...
-              </span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-  <!-- Delete Confirmation Modal -->
-  <div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
-    <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Confirmer la suppression</h2>
-        <button class="close-btn" (click)="closeDeleteModal()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-body" *ngIf="contactToDelete">
-        <div class="delete-warning">
-          <div class="warning-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </div>
-          <div class="warning-content">
-            <h3>Êtes-vous sûr de vouloir supprimer ce contact ?</h3>
-            <p>Cette action supprimera définitivement le message de <strong>{{ contactToDelete.name }}</strong> ({{ contactToDelete.email }}). Cette action ne peut pas être annulée.</p>
-          </div>
-        </div>
-
-        <div class="contact-preview">
-          <div class="contact-info">
-            <div class="contact-avatar" [style.background-color]="getAvatarColor(contactToDelete.name)">
-              {{ contactToDelete.name.charAt(0).toUpperCase() }}
-            </div>
-            <div class="contact-details">
-              <span class="contact-name">{{ contactToDelete.name }}</span>
-              <span class="contact-email">{{ contactToDelete.email }}</span>
-            </div>
-          </div>
-          <div class="message-snippet">
-            "{{ truncateMessage(contactToDelete.message, 80) }}"
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button class="btn-secondary" (click)="closeDeleteModal()">Annuler</button>
-          <button class="btn-danger" (click)="confirmDelete()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-            </svg>
-            Supprimer définitivement
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bulk Delete Confirmation Modal -->
-  <div class="modal-overlay" *ngIf="showBulkDeleteModal" (click)="closeBulkDeleteModal()">
-    <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Confirmer la suppression multiple</h2>
-        <button class="close-btn" (click)="closeBulkDeleteModal()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <div class="delete-warning">
-          <div class="warning-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </div>
-          <div class="warning-content">
-            <h3>Êtes-vous sûr de vouloir supprimer ces contacts ?</h3>
-            <p>Cette action supprimera définitivement <strong>{{ selectedContacts.length }} contact(s)</strong> sélectionné(s). Cette action ne peut pas être annulée.</p>
-          </div>
-        </div>
-
-        <div class="bulk-preview">
-          <div class="selected-count">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            <span>{{ selectedContacts.length }} contact(s) à supprimer</span>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button class="btn-secondary" (click)="closeBulkDeleteModal()">Annuler</button>
-          <button class="btn-danger" (click)="confirmBulkDelete()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
-            </svg>
-            Supprimer {{ selectedContacts.length }} contact(s)
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>

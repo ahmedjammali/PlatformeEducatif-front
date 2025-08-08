@@ -102,6 +102,10 @@ export class UsersComponent implements OnInit, OnDestroy {
         this.filterAndPaginateUsers();
       });
   }
+  // Add this method to your UsersComponent class
+trackByUserId(index: number, user: any): string {
+  return user._id || index.toString();
+}
 
   private loadUsers(): void {
     this.isLoading = true;
