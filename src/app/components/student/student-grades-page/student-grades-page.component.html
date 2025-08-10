@@ -55,40 +55,53 @@
           Toutes mes Notes
         </h2>
         
-        <!-- Filters -->
         <div class="filters-container">
-          <div class="filters">
-            <select [(ngModel)]="selectedTrimester" (change)="filterGrades()" class="filter-select">
-              <option value="">Tous les trimestres</option>
-              <option value="1er Trimestre">1er Trimestre</option>
-              <option value="2ème Trimestre">2ème Trimestre</option>
-              <option value="3ème Trimestre">3ème Trimestre</option>
-            </select>
-            <select [(ngModel)]="selectedSubjectFilter" (change)="filterGrades()" class="filter-select">
-              <option value="">Toutes les matières</option>
-              <option *ngFor="let subject of subjects" [value]="subject._id">
-                {{ subject.name }}
-              </option>
-            </select>
-            <select [(ngModel)]="selectedExamType" (change)="filterGrades()" class="filter-select">
-              <option value="">Tous les types</option>
-              <option value="controle">Contrôle</option>
-              <option value="devoir">Devoir</option>
-              <option value="examen">Examen</option>
-              <option value="test">Test</option>
-              <option value="oral">Oral</option>
-              <option value="tp">TP</option>
-              <option value="autre">Autre</option>
-            </select>
-          </div>
-          <button class="reset-filters-btn" (click)="resetFilters()" [disabled]="!hasActiveFilters()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 6h18l-2 13H5L3 6z"></path>
-              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-            Réinitialiser
-          </button>
-        </div>
+  <div class="filters">
+    <!-- New Class Filter -->
+    <select [(ngModel)]="selectedClassFilter" (change)="onClassFilterChange()" class="filter-select">
+      <option value="">Toutes les classes</option>
+      <option [value]="currentClassId">{{ getClassName(currentClassId) }} (Actuelle)</option>
+      <option *ngFor="let class of allStudentClasses" 
+              [value]="class._id"
+              [hidden]="class._id === currentClassId">
+        {{ getClassName(class._id) }}
+      </option>
+    </select>
+    
+    <select [(ngModel)]="selectedTrimester" (change)="filterGrades()" class="filter-select">
+      <option value="">Tous les trimestres</option>
+      <option value="1er Trimestre">1er Trimestre</option>
+      <option value="2ème Trimestre">2ème Trimestre</option>
+      <option value="3ème Trimestre">3ème Trimestre</option>
+    </select>
+    
+    <select [(ngModel)]="selectedSubjectFilter" (change)="filterGrades()" class="filter-select">
+      <option value="">Toutes les matières</option>
+      <option *ngFor="let subject of subjects" [value]="subject._id">
+        {{ subject.name }}
+      </option>
+    </select>
+    
+    <select [(ngModel)]="selectedExamType" (change)="filterGrades()" class="filter-select">
+      <option value="">Tous les types</option>
+      <option value="controle">Contrôle</option>
+      <option value="devoir">Devoir</option>
+      <option value="examen">Examen</option>
+      <option value="test">Test</option>
+      <option value="oral">Oral</option>
+      <option value="tp">TP</option>
+      <option value="autre">Autre</option>
+    </select>
+  </div>
+  
+  <button class="reset-filters-btn" (click)="resetFilters()" [disabled]="!hasActiveFilters()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 6h18l-2 13H5L3 6z"></path>
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    </svg>
+    Réinitialiser
+  </button>
+</div>
       </div>
 
       <!-- Grades Cards -->

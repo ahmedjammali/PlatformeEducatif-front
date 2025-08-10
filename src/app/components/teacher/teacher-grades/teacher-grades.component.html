@@ -1,20 +1,30 @@
+<!-- teacher-grades.component.html - FIXED VERSION -->
 <section class="content-section grades-section">
   <div class="section-header">
     <h2 class="section-title">Gestion des Notes</h2>
-    <button 
-      class="create-btn"
-      (click)="openCreateGradeForm()"
-      [disabled]="!filters.selectedClass || !filters.selectedSubject">
-      <span class="btn-icon">➕</span>
-      Ajouter une Note
-    </button>
+    <div class="header-actions">
+
+      <button 
+        class="create-btn"
+        (click)="openCreateGradeForm()"
+        [disabled]="!filters.selectedClass || !filters.selectedSubject">
+        <span class="btn-icon">➕</span>
+        Ajouter une Note
+      </button>
+      <button 
+        class="bulk-btn"
+        (click)="openBulkGradeForm()"
+        [disabled]="!filters.selectedClass || !filters.selectedSubject">
+        <span class="btn-icon">📊</span>
+        Saisie Groupée
+      </button>
+    </div>
   </div>
 
   <!-- Barre de filtres -->
   <div class="filters-bar">
     <div class="filters-header">
       <h3 class="filters-title">
-
         Filtres
       </h3>
       <button 
@@ -52,7 +62,6 @@
 
       <div class="filter-group" [class.disabled]="!filters.selectedClass">
         <label for="subject-select">
-
           Matière
         </label>
         <div class="filter-input-wrapper">
@@ -120,22 +129,18 @@
       <span class="active-filters-label">Filtres actifs:</span>
       <div class="filter-tags">
         <span class="filter-tag" *ngIf="filters.selectedClass">
-
           {{ getClassName(filters.selectedClass) }}
           <button (click)="clearFilter('class')" class="tag-remove">×</button>
         </span>
         <span class="filter-tag" *ngIf="filters.selectedSubject">
-     
           {{ getSubjectName(filters.selectedSubject) }}
           <button (click)="clearFilter('subject')" class="tag-remove">×</button>
         </span>
         <span class="filter-tag" *ngIf="filters.selectedTrimester">
-
           {{ filters.selectedTrimester }}
           <button (click)="clearFilter('trimester')" class="tag-remove">×</button>
         </span>
         <span class="filter-tag" *ngIf="filters.selectedExamType">
-
           {{ getExamTypeLabel(filters.selectedExamType) }}
           <button (click)="clearFilter('examType')" class="tag-remove">×</button>
         </span>
@@ -144,7 +149,7 @@
   </div>
 
   <!-- Basculement du mode d'affichage -->
-  <div class="view-toggle" *ngIf="filteredGrades.length > 0">
+  <div class="view-toggle" *ngIf="filteredGrades.length > 0 && filters.selectedSubject">
     <button 
       class="toggle-btn"
       [class.active]="viewMode === 'table'"
@@ -175,67 +180,89 @@
   </div>
 
   <!-- Message aucune note -->
-  <div class="empty-state" *ngIf="filters.selectedClass && filteredGrades.length === 0 && !isLoading">
+  <div class="empty-state" *ngIf="filters.selectedClass && !filters.selectedSubject && !isLoading">
+    <div class="empty-icon">📚</div>
+    <h3 class="empty-title">Sélectionnez une matière</h3>
+    <p class="empty-text">Veuillez sélectionner une matière pour voir les notes.</p>
+  </div>
+
+  <!-- Message aucune note trouvée -->
+  <div class="empty-state" *ngIf="filters.selectedClass && filters.selectedSubject && filteredGrades.length === 0 && !isLoading">
     <div class="empty-icon">📊</div>
     <h3 class="empty-title">Aucune note trouvée</h3>
     <p class="empty-text">Aucune note ne correspond aux critères sélectionnés.</p>
-    <button class="create-btn" (click)="openCreateGradeForm()">
-      <span class="btn-icon">➕</span>
-      Ajouter la première note
-    </button>
+    <div class="empty-actions">
+      <button class="create-btn" (click)="openCreateGradeForm()">
+        <span class="btn-icon">➕</span>
+        Ajouter la première note
+      </button>
+      <button class="bulk-btn" (click)="openBulkGradeForm()" *ngIf="filters.selectedClass && filters.selectedSubject">
+        <span class="btn-icon">📊</span>
+        Saisie groupée pour toute la classe
+      </button>
+    </div>
   </div>
 
-  <!-- Vue Cartes -->
-  <div class="grades-list" *ngIf="viewMode === 'table' && filteredGrades.length > 0 && !isLoading">
-    <div class="grade-card" *ngFor="let grade of filteredGrades">
-      <div class="grade-header">
-        <h3 class="grade-title">{{ grade.examName }}</h3>
-        <span class="exam-type-badge" [attr.data-type]="grade.examType">
-          {{ getExamTypeLabel(grade.examType) }}
-        </span>
-      </div>
-      <div class="grade-meta">
-        <span class="meta-item">
-          <span class="meta-icon">👤</span>
-          {{ getStudentName(grade.student) }}
-        </span>
-        <span class="meta-item">
-          <span class="meta-icon">📚</span>
-          {{ getSubjectName(grade.subject) }}
-        </span>
-        <span class="meta-item">
-          <span class="meta-icon">📅</span>
-          {{ grade.trimester }}
-        </span>
-        <span class="meta-item">
-          <span class="meta-icon">📊</span>
-          Coefficient {{ grade.coefficient }}
-        </span>
-      </div>
-      <div class="grade-stats">
-        <div class="stat">
-          <span class="stat-label">Note obtenue:</span>
-          <span class="stat-value grade-value" [ngClass]="getGradeClass(grade.grade)">
+  <!-- Vue Cartes - IMPROVED LAYOUT -->
+  <div class="grades-list-improved" *ngIf="viewMode === 'table' && filteredGrades.length > 0 && !isLoading && filters.selectedSubject">
+    <div class="grade-card-improved" *ngFor="let grade of filteredGrades">
+      <div class="grade-header-improved">
+        <div class="grade-title-section">
+          <h3 class="grade-title-improved">{{ grade.examName }}</h3>
+          <span class="exam-type-badge-improved" [attr.data-type]="grade.examType">
+            {{ getExamTypeLabel(grade.examType) }}
+          </span>
+        </div>
+        <div class="grade-score-display">
+          <span class="grade-value-large" [ngClass]="getGradeClass(grade.grade)">
             {{ grade.grade }}/20
           </span>
         </div>
-        <div class="stat">
-          <span class="stat-label">Date d'examen:</span>
-          <span class="stat-value">{{ grade.examDate | date:'dd/MM/yyyy' }}</span>
+      </div>
+      
+      <div class="grade-content">
+        <div class="grade-meta-improved">
+          <div class="meta-row">
+            <span class="meta-icon">👤</span>
+            <span class="meta-text">{{ getStudentName(grade.student) }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-icon">📚</span>
+            <span class="meta-text">{{ getSubjectName(grade.subject) }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-icon">📅</span>
+            <span class="meta-text">{{ grade.trimester }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-icon">📊</span>
+            <span class="meta-text">Coefficient {{ grade.coefficient }}</span>
+          </div>
+        </div>
+        
+        <div class="grade-details">
+          <div class="detail-item">
+            <span class="detail-label">Date d'examen:</span>
+            <span class="detail-value">{{ grade.examDate | date:'dd/MM/yyyy' }}</span>
+          </div>
         </div>
       </div>
-      <div class="grade-actions">
+      
+      <!-- FIXED: Action buttons with proper visibility -->
+      <div class="grade-actions-improved">
         <button 
-          class="action-btn edit-btn"
+          class="action-btn-improved edit-btn-improved"
           (click)="editGrade(grade)"
-          title="Modifier">
+          title="Modifier"
+          type="button">
           <span class="btn-icon">✏️</span>
           Modifier
         </button>
         <button 
-          class="action-btn delete-btn"
+          class="action-btn-improved delete-btn-improved"
           (click)="openDeleteConfirmation(grade)"
-          title="Supprimer">
+          title="Supprimer"
+          type="button">
           <span class="btn-icon">🗑️</span>
           Supprimer
         </button>
@@ -244,7 +271,7 @@
   </div>
 
   <!-- Vue Étudiants -->
-  <div class="students-view" *ngIf="viewMode === 'students' && studentGradeSummaries.length > 0 && !isLoading">
+  <div class="students-view" *ngIf="viewMode === 'students' && studentGradeSummaries.length > 0 && !isLoading && filters.selectedSubject">
     <div class="students-grid">
       <div class="student-card" *ngFor="let summary of studentGradeSummaries">
         <div class="student-header">
@@ -281,10 +308,10 @@
               <span class="grade-coeff">Coeff. {{ grade.coefficient }}</span>
             </div>
             <div class="grade-actions">
-              <button class="action-btn edit-btn" (click)="editGrade(grade)">
+              <button class="action-btn edit-btn" (click)="editGrade(grade)" type="button">
                 <span class="btn-icon">✏️</span>
               </button>
-              <button class="action-btn delete-btn" (click)="openDeleteConfirmation(grade)">
+              <button class="action-btn delete-btn" (click)="openDeleteConfirmation(grade)" type="button">
                 <span class="btn-icon">🗑️</span>
               </button>
             </div>
@@ -294,12 +321,220 @@
     </div>
   </div>
 
-  <!-- Modal du formulaire de création/modification de note -->
+  <!-- Modal de saisie groupée des notes -->
+  <div class="modal-overlay bulk-modal-overlay" *ngIf="showBulkGradeForm" (click)="cancelBulkForm()">
+    <div class="modal-content bulk-modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Saisie Groupée des Notes</h2>
+        <button class="close-btn" (click)="cancelBulkForm()" type="button">✕</button>
+      </div>
+
+      <div class="modal-body bulk-modal-body">
+        <!-- Informations communes de l'examen -->
+        <div class="exam-info-section">
+          <h3 class="section-subtitle">Informations de l'Examen</h3>
+          <div class="exam-info-grid">
+            <div class="form-group">
+              <label for="bulk-exam-name">Nom de l'examen *</label>
+              <input 
+                id="bulk-exam-name"
+                type="text"
+                class="form-input"
+                [(ngModel)]="bulkGradeForm.examName"
+                placeholder="Ex: Contrôle de Mathématiques"
+                required>
+            </div>
+
+            <div class="form-group">
+              <label for="bulk-exam-type">Type d'examen *</label>
+              <select 
+                id="bulk-exam-type"
+                class="form-select"
+                [(ngModel)]="bulkGradeForm.examType"
+                required>
+                <option *ngFor="let examType of examTypes" [value]="examType.value">
+                  {{ examType.label }}
+                </option>
+              </select>
+            </div>
+
+            <!-- ENHANCED: Coefficient with validation -->
+            <div class="form-group">
+              <label for="bulk-coefficient">Coefficient *</label>
+              <input 
+                id="bulk-coefficient"
+                type="number"
+                class="form-input"
+                [class.error]="validateBulkCoefficient()"
+                [(ngModel)]="bulkGradeForm.coefficient"
+                (input)="onBulkCoefficientInput()"
+                min="1"
+                max="10"
+                step="1"
+                required>
+              
+              <div class="validation-error" *ngIf="validateBulkCoefficient()">
+                <span class="error-icon">⚠️</span>
+                <span class="error-message">{{ validateBulkCoefficient() }}</span>
+              </div>
+              
+              <small class="input-help" *ngIf="!validateBulkCoefficient()">
+                Le coefficient doit être entre 1 et 10
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label for="bulk-exam-date">Date de l'examen *</label>
+              <input 
+                id="bulk-exam-date"
+                type="date"
+                class="form-input"
+                [(ngModel)]="bulkGradeForm.examDate"
+                required>
+            </div>
+
+            <div class="form-group">
+              <label for="bulk-trimester">Trimestre *</label>
+              <select 
+                id="bulk-trimester"
+                class="form-select"
+                [(ngModel)]="bulkGradeForm.trimester"
+                required>
+                <option *ngFor="let trimester of trimesters" [value]="trimester">
+                  {{ trimester }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section des notes des étudiants -->
+        <div class="students-grades-section">
+          <div class="section-header-bulk">
+            <h3 class="section-subtitle">Notes des Étudiants</h3>
+            <div class="bulk-actions">
+              <button class="quick-action-btn" (click)="fillAllWithValue(14)" title="Remplir avec 14" type="button">
+                14/20
+              </button>
+              <button class="quick-action-btn" (click)="fillAllWithValue(16)" title="Remplir avec 16" type="button">
+                16/20
+              </button>
+              <button class="quick-action-btn" (click)="fillAllWithValue(18)" title="Remplir avec 18" type="button">
+                18/20
+              </button>
+              <button class="quick-action-btn clear-btn" (click)="clearAllGrades()" title="Effacer tout" type="button">
+                <span class="btn-icon">🗑️</span>
+                Effacer
+              </button>
+            </div>
+          </div>
+
+          <div class="students-table-container">
+            <table class="students-table">
+              <thead>
+                <tr>
+                  <th class="student-name-col">Nom de l'étudiant</th>
+                  <th class="grade-col">Note /20</th>
+                  <th class="comment-col">Commentaire (optionnel)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let studentGrade of bulkGradeForm.studentGrades; let i = index" 
+                    [class.has-grade]="studentGrade.grade !== null && studentGrade.grade >= 0">
+                  <td class="student-name-cell">
+                    <div class="student-info">
+                      <div class="student-avatar-small">
+                        {{ getStudentName(studentGrade.student).charAt(0) }}
+                      </div>
+                      <span>{{ getStudentName(studentGrade.student) }}</span>
+                    </div>
+                  </td>
+                  <td class="grade-cell">
+                    <!-- ENHANCED: Grade input with validation -->
+                    <input 
+                      type="number"
+                      class="grade-input"
+                      [class.error]="studentGrade.touched && !isStudentGradeValid(studentGrade.grade)"
+                      [(ngModel)]="studentGrade.grade"
+                      (blur)="onStudentGradeBlur(i)"
+                      min="0"
+                      max="20"
+                      step="0.5"
+                      placeholder="--">
+                    
+                    <!-- ENHANCED: Show validation error for individual grades -->
+                    <div class="grade-validation-error" *ngIf="studentGrade.touched && validateStudentGrade(studentGrade.grade)">
+                      <small class="error-text">{{ validateStudentGrade(studentGrade.grade) }}</small>
+                    </div>
+                    
+                    <span class="grade-indicator" *ngIf="studentGrade.grade !== null && studentGrade.grade >= 0 && isStudentGradeValid(studentGrade.grade)" 
+                          [ngClass]="getGradeClass(studentGrade.grade)">
+                      {{ getGradeAppreciation(studentGrade.grade) }}
+                    </span>
+                  </td>
+                  <td class="comment-cell">
+                    <textarea 
+                      class="comment-input"
+                      [(ngModel)]="studentGrade.comment"
+                      placeholder="Ajouter un commentaire..."
+                      rows="1"></textarea>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Résumé des statistiques -->
+          <div class="bulk-summary">
+            <div class="summary-stats">
+              <div class="summary-stat">
+                <span class="summary-label">Total étudiants:</span>
+                <span class="summary-value">{{ bulkGradeForm.studentGrades.length }}</span>
+              </div>
+              <div class="summary-stat">
+                <span class="summary-label">Notes saisies:</span>
+                <span class="summary-value">{{ getCompletedGradesCount() }}</span>
+              </div>
+              <div class="summary-stat" *ngIf="getCompletedGradesCount() > 0">
+                <span class="summary-label">Moyenne classe:</span>
+                <span class="summary-value" [ngClass]="getGradeClass(getClassAverage())">
+                  {{ getClassAverage() | number:'1.2-2' }}/20
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FIXED: Form actions with proper buttons -->
+        <div class="form-actions">
+          <button 
+            type="button" 
+            class="btn btn-secondary"
+            (click)="cancelBulkForm()"
+            [disabled]="isSavingBulk">
+            <span class="btn-icon">❌</span>
+            Annuler
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            (click)="saveBulkGrades()"
+            [disabled]="!isBulkFormValid() || isSavingBulk">
+            <span *ngIf="isSavingBulk" class="button-spinner"></span>
+            <span *ngIf="!isSavingBulk" class="btn-icon">💾</span>
+            {{ isSavingBulk ? 'Enregistrement...' : 'Enregistrer toutes les notes' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal du formulaire de création/modification de note individuelle -->
   <div class="modal-overlay" *ngIf="showCreateForm" (click)="cancelForm()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2 class="modal-title">{{ editingGrade ? 'Modifier la Note' : 'Ajouter une Note' }}</h2>
-        <button class="close-btn" (click)="cancelForm()">✕</button>
+        <button class="close-btn" (click)="cancelForm()" type="button">✕</button>
       </div>
 
       <div class="modal-body">
@@ -367,47 +602,60 @@
               </select>
             </div>
 
-           <div class="form-group">
-            <label for="grade-value">Note */20 *</label>
-            <input 
-              id="grade-value"
-              type="number"
-              class="form-input"
-              [class.error]="gradeInputTouched && gradeValidationError"
-              [(ngModel)]="gradeForm.grade"
-              name="grade"
-              min="0"
-              max="20"
-              step="0.5"
-              required
-              (input)="onGradeInput()"
-              (blur)="onGradeInput()"
-              placeholder="Saisir une note entre 0 et 20">
-            
-            <!-- Error message display -->
-            <div class="validation-error" *ngIf="gradeInputTouched && gradeValidationError">
-              <span class="error-icon">⚠️</span>
-              <span class="error-message">{{ gradeValidationError }}</span>
+            <!-- ENHANCED: Grade input with validation -->
+            <div class="form-group">
+              <label for="grade-value">Note /20 *</label>
+              <input 
+                id="grade-value"
+                type="number"
+                class="form-input"
+                [class.error]="gradeInputTouched && gradeValidationError"
+                [(ngModel)]="gradeForm.grade"
+                name="grade"
+                min="0"
+                max="20"
+                step="0.5"
+                required
+                (input)="onGradeInput()"
+                (blur)="onGradeInput()"
+                placeholder="Saisir une note entre 0 et 20">
+              
+              <div class="validation-error" *ngIf="gradeInputTouched && gradeValidationError">
+                <span class="error-icon">⚠️</span>
+                <span class="error-message">{{ gradeValidationError }}</span>
+              </div>
+              
+              <small class="input-help" *ngIf="!gradeValidationError">
+                La note doit être comprise entre 0 et 20
+              </small>
             </div>
-            
-            <!-- Helper text when no error -->
-            <small class="input-help" *ngIf="!gradeValidationError">
-              La note doit être comprise entre 0 et 20
-            </small>
-          </div>
 
+            <!-- ENHANCED: Coefficient input with validation -->
             <div class="form-group">
               <label for="coefficient">Coefficient *</label>
               <input 
                 id="coefficient"
                 type="number"
                 class="form-input"
+                [class.error]="coefficientInputTouched && coefficientValidationError"
                 [(ngModel)]="gradeForm.coefficient"
                 name="coefficient"
                 min="1"
                 max="10"
+                step="1"
                 required
+                (input)="onCoefficientInput()"
+                (blur)="onCoefficientInput()"
                 [disabled]="!!editingGrade">
+                
+              <div class="validation-error" *ngIf="coefficientInputTouched && coefficientValidationError">
+                <span class="error-icon">⚠️</span>
+                <span class="error-message">{{ coefficientValidationError }}</span>
+              </div>
+              
+              <small class="input-help" *ngIf="!coefficientValidationError">
+                Le coefficient doit être entre 1 et 10
+              </small>
             </div>
 
             <div class="form-group">
@@ -448,8 +696,14 @@
               rows="3"></textarea>
           </div>
 
+          <!-- FIXED: Form actions with proper buttons -->
           <div class="form-actions">
-            <button type="button" class="btn btn-secondary" (click)="cancelForm()">
+            <button 
+              type="button" 
+              class="btn btn-secondary" 
+              (click)="cancelForm()"
+              [disabled]="isLoading">
+              <span class="btn-icon">❌</span>
               Annuler
             </button>
             <button 
@@ -469,24 +723,23 @@
     </div>
   </div>
 
-  <!-- Modal de confirmation de suppression -->
+  <!-- FIXED: Delete Confirmation Modal with proper buttons -->
   <div class="modal-overlay delete-modal-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDeleteConfirmation()">
     <div class="modal-content delete-modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header delete-modal-header">
         <div class="delete-icon-container">
           <span class="warning-icon">⚠️</span>
         </div>
-        <h3>Confirmer la suppression</h3>
-        <button class="close-btn" (click)="cancelDeleteConfirmation()">✕</button>
+        <h3 class="delete-modal-title">Confirmer la suppression</h3>
+        <button class="close-btn" (click)="cancelDeleteConfirmation()" type="button">✕</button>
       </div>
 
-      <div class="delete-modal-body">
+      <div class="modal-body delete-modal-body">
         <div class="delete-warning-message">
           <p>Êtes-vous sûr de vouloir supprimer cette note ?</p>
           <p class="warning-text">Cette action est irréversible.</p>
         </div>
 
-        <!-- Détails de la note pour confirmation -->
         <div class="grade-details-card" *ngIf="gradeToDelete">
           <div class="grade-detail-row">
             <span class="detail-label">Étudiant:</span>
@@ -517,22 +770,65 @@
         </div>
       </div>
 
+      <!-- FIXED: Delete Modal Actions with explicit button types -->
       <div class="delete-modal-actions">
         <button 
           type="button" 
-          class="btn btn-secondary" 
+          class="btn btn-secondary delete-cancel-btn" 
           (click)="cancelDeleteConfirmation()"
           [disabled]="isDeleting">
+          <span class="btn-icon">❌</span>
           Annuler
         </button>
         <button 
           type="button" 
-          class="btn btn-danger" 
+          class="btn btn-danger delete-confirm-btn" 
           (click)="confirmDeleteGrade()"
           [disabled]="isDeleting">
           <span *ngIf="isDeleting" class="delete-spinner"></span>
           <span *ngIf="!isDeleting" class="btn-icon">🗑️</span>
-          {{ isDeleting ? 'Suppression...' : 'Supprimer' }}
+          {{ isDeleting ? 'Suppression...' : 'Supprimer définitivement' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- General Confirmation Modal -->
+  <div class="modal-overlay confirmation-modal-overlay" *ngIf="showConfirmationModal" (click)="closeConfirmationModal()">
+    <div class="modal-content confirmation-modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header confirmation-modal-header" [attr.data-type]="confirmationModalConfig.type">
+        <div class="confirmation-icon-container" [attr.data-type]="confirmationModalConfig.type">
+          <span class="confirmation-icon">
+            {{ confirmationModalConfig.type === 'danger' ? '⚠️' : 
+               confirmationModalConfig.type === 'info' ? 'ℹ️' : '❓' }}
+          </span>
+        </div>
+        <h3>{{ confirmationModalConfig.title }}</h3>
+        <button class="close-btn" (click)="closeConfirmationModal()" type="button">✕</button>
+      </div>
+
+      <div class="confirmation-modal-body">
+        <p>{{ confirmationModalConfig.message }}</p>
+      </div>
+
+      <div class="confirmation-modal-actions">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="closeConfirmationModal()">
+          {{ confirmationModalConfig.cancelText }}
+        </button>
+        <button 
+          type="button" 
+          class="btn"
+          [ngClass]="{
+            'btn-danger': confirmationModalConfig.type === 'danger',
+            'btn-warning': confirmationModalConfig.type === 'warning',
+            'btn-primary': confirmationModalConfig.type === 'info'
+          }"
+          (click)="confirmAction()">
+          <span class="btn-icon">✓</span>
+          {{ confirmationModalConfig.confirmText }}
         </button>
       </div>
     </div>
