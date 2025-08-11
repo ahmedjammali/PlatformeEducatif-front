@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { ContactService } from 'src/app/services/contact.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -33,69 +33,56 @@ interface Testimonial {
   templateUrl: './landing-page.component.html',
   styleUrls: ['./landing-page.component.css']
 })
-export class LandingPageComponent implements OnInit {
+export class LandingPageComponent implements OnInit, OnDestroy {
 
   schoolName: string = "";
-  schoolAbbreviation: string = "HS"; // Default abbreviation
+  schoolAbbreviation: string = "ES"; // Default abbreviation
   contactForm: FormGroup;
   isLoading = false;
+  formSubmitted = false;
 
-  features = [
-    {
-      icon: '🤖',
-      title: 'Tuteur IA Intelligent',
-      description: 'Un assistant virtuel disponible 24/7 pour répondre aux questions des étudiants et les guider dans leur apprentissage.',
-    },
-    {
-      icon: '🔔',
-      title: 'Notifications en Temps Réel',
-      description: 'Tenez les parents et étudiants informés de tout : devoirs, notes, événements et rappels importants.',
-    },
-    {
-      icon: '📊',
-      title: 'Suivi des Progrès',
-      description: 'Tableaux de bord détaillés pour suivre les performances et l\'évolution académique de chaque étudiant.',
-    },
-    {
-      icon: '📝',
-      title: 'Gestion Notes & Exercices',
-      description: 'Plateforme complète pour créer, distribuer et corriger les exercices avec suivi automatique des notes.',
-    }
-  ];
-
-  statistics: Statistic[] = [
-    { number: '500+', label: 'Élèves', icon: '👦' },
-    { number: '50+', label: 'Enseignants', icon: '👨‍🏫' },
-    { number: '95%', label: 'Taux de Réussite', icon: '🏆' },
-    { number: '10+', label: "Années d'Excellence", icon: '⭐' }
-  ];
-
+  // Updated testimonials for school focus
   testimonials: Testimonial[] = [
     {
-      name: 'Sarah Ben Ali',
-      role: 'Parent d\'élève',
-      message: 'HibaSchool a transformé l\'éducation de mon enfant. La plateforme est intuitive et le suivi est exceptionnel.',
+      name: 'Mme. Leila Benzarti',
+      role: 'Parent d\'élève - Primaire',
+      message: 'Mon fils s\'épanouit pleinement dans cette école. L\'équipe pédagogique est exceptionnelle et l\'environnement est propice à l\'apprentissage. Les résultats parlent d\'eux-mêmes!',
+      avatar: 'L',
+      rating: 5
+    },
+    {
+      name: 'Dr. Mohamed Khaldi',
+      role: 'Parent d\'élève - Lycée',
+      message: 'Ma fille a obtenu son bac avec mention très bien et a été admise dans une grande école française. L\'accompagnement personnalisé et la qualité de l\'enseignement font toute la différence.',
+      avatar: 'M',
+      rating: 5
+    },
+    {
+      name: 'Sarah Mansouri',
+      role: 'Ancienne élève - Promotion 2023',
+      message: 'Cette école m\'a donné les bases solides pour réussir mes études supérieures. Les professeurs sont passionnés et toujours disponibles pour nous aider.',
       avatar: 'S',
       rating: 5
     },
     {
-      name: 'Ahmed Mansouri',
-      role: 'Élève de 3ème année',
-      message: 'J\'adore les exercices interactifs! Apprendre est devenu un plaisir.',
-      avatar: 'A',
+      name: 'M. Karim Ayadi',
+      role: 'Parent de 3 élèves',
+      message: 'Tous mes enfants sont inscrits ici et je suis impressionné par la constance de la qualité. L\'école maintient vraiment ses standards d\'excellence année après année.',
+      avatar: 'K',
       rating: 5
     },
     {
-      name: 'Fatma Trabelsi',
-      role: 'Enseignante',
-      message: 'Un outil pédagogique moderne qui facilite l\'enseignement et le suivi des élèves.',
-      avatar: 'F',
+      name: 'Amira Ben Salah',
+      role: 'Parent d\'élève - Collège',
+      message: 'Le suivi personnalisé, les activités parascolaires enrichissantes et l\'ambiance familiale font de cette école un lieu où les enfants aiment apprendre.',
+      avatar: 'A',
       rating: 5
     }
   ];
 
   currentTestimonialIndex = 0;
   isScrolled = false;
+  testimonialInterval: any;
 
   constructor(
     private router: Router,
@@ -109,7 +96,8 @@ export class LandingPageComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       phone: ['', [Validators.required, Validators.pattern(/^[0-9]{8}$/)]],
-      message: ['', [Validators.required, Validators.minLength(10)]]
+      subject: [''],
+      message: ['', [Validators.minLength(10)]]
     });
   }
 
@@ -118,42 +106,44 @@ export class LandingPageComponent implements OnInit {
     this.schoolService.getSchool().subscribe({
       next: (response) => {
         console.log('School data fetched:', response);
-        this.schoolName = response.school.name || 'Your School';
-        // Generate abbreviation from school name
+        this.schoolName = response.school.name || 'École Privée Excellence';
         this.schoolAbbreviation = this.generateSchoolAbbreviation(this.schoolName);
         console.log('School Name:', this.schoolName);
         console.log('School Abbreviation:', this.schoolAbbreviation);
       },
       error: (error) => {
         console.error('Error fetching school name:', error);
-        this.schoolName = 'Your School'; // Fallback in case of error
-        this.schoolAbbreviation = 'YS'; // Fallback abbreviation
+        this.schoolName = 'École Privée Excellence';
+        this.schoolAbbreviation = 'EPE';
       }
     });
 
-    const isLoggin = this.authService.isLoggedIn();
-    if (isLoggin) {
+    // Check if user is logged in and redirect if needed
+    const isLoggedIn = this.authService.isLoggedIn();
+    if (isLoggedIn) {
       this.router.navigate(['/login']);
       return;
     }
+    
     this.startTestimonialCarousel();
+  }
+
+  ngOnDestroy(): void {
+    if (this.testimonialInterval) {
+      clearInterval(this.testimonialInterval);
+    }
   }
 
   /**
    * Generates an abbreviation from the school name
-   * Takes the first letter of each significant word (ignoring common words)
-   * @param schoolName - The full school name
-   * @returns A 2-4 character abbreviation
    */
   generateSchoolAbbreviation(schoolName: string): string {
     if (!schoolName || schoolName.trim() === '') {
-      return 'HS'; // Default fallback
+      return 'ES';
     }
 
-    // Words to ignore when creating abbreviation
-    const ignoreWords = ['de', 'du', 'des', 'le', 'la', 'les', 'et', 'of', 'the', 'and', 'for', 'school', 'école', 'lycée', 'collège'];
+    const ignoreWords = ['de', 'du', 'des', 'le', 'la', 'les', 'et', 'of', 'the', 'and', 'for', 'école', 'lycée', 'collège', 'privé', 'privée'];
     
-    // Split the name into words and filter out ignore words
     const words = schoolName
       .trim()
       .split(/\s+/)
@@ -161,27 +151,23 @@ export class LandingPageComponent implements OnInit {
       .filter(word => !ignoreWords.includes(word.toLowerCase()));
 
     if (words.length === 0) {
-      return 'HS';
+      return 'ES';
     }
 
     let abbreviation = '';
 
     if (words.length === 1) {
-      // If only one word, take first 2-3 characters
       const word = words[0];
       abbreviation = word.length >= 3 ? word.substring(0, 3).toUpperCase() : word.toUpperCase();
     } else if (words.length === 2) {
-      // If two words, take first letter of each
       abbreviation = words.map(word => word.charAt(0)).join('').toUpperCase();
     } else {
-      // If more than two words, take first letter of first 2-3 most significant words
       const significantWords = words.slice(0, 3);
       abbreviation = significantWords.map(word => word.charAt(0)).join('').toUpperCase();
     }
 
-    // Ensure abbreviation is between 2-4 characters
     if (abbreviation.length < 2) {
-      abbreviation = abbreviation + 'S'; // Add 'S' for School
+      abbreviation = abbreviation + 'S';
     } else if (abbreviation.length > 4) {
       abbreviation = abbreviation.substring(0, 4);
     }
@@ -189,25 +175,15 @@ export class LandingPageComponent implements OnInit {
     return abbreviation;
   }
 
-  /**
-   * Alternative method: Manual abbreviation mapping for specific schools
-   * You can use this if you want specific abbreviations for certain schools
-   */
-  getCustomAbbreviation(schoolName: string): string {
-    const customMappings: { [key: string]: string } = {
-      'HibaSchool': 'HS',
-      'École Primaire Carthage': 'EPC',
-      'Lycée Pilote Ariana': 'LPA',
-      'Institut Supérieur de Technologie': 'IST',
-      // Add more custom mappings as needed
-    };
-
-    return customMappings[schoolName] || this.generateSchoolAbbreviation(schoolName);
-  }
-
   onSubmit(): void {
+    this.formSubmitted = true;
+    
     if (this.contactForm.invalid) {
       this.markFormGroupTouched(this.contactForm);
+      this.snackBar.open('Veuillez corriger les erreurs dans le formulaire', 'Fermer', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
       return;
     }
 
@@ -217,15 +193,19 @@ export class LandingPageComponent implements OnInit {
     this.contactService.createContact(contactData).subscribe({
       next: (response) => {
         this.isLoading = false;
-        this.snackBar.open('Message sent successfully!', 'Close', {
+        this.snackBar.open('Message envoyé avec succès! Nous vous contacterons bientôt.', 'Fermer', {
           duration: 5000,
           panelClass: ['success-snackbar']
         });
         this.contactForm.reset();
+        this.formSubmitted = false;
+        
+        // Scroll to top of form to show success message
+        this.scrollToSection('contact');
       },
       error: (error) => {
         this.isLoading = false;
-        this.snackBar.open('Error sending message. Please try again.', 'Close', {
+        this.snackBar.open('Erreur lors de l\'envoi du message. Veuillez réessayer.', 'Fermer', {
           duration: 5000,
           panelClass: ['error-snackbar']
         });
@@ -244,9 +224,11 @@ export class LandingPageComponent implements OnInit {
     });
   }
 
+  // Form getters for easy access in template
   get name() { return this.contactForm.get('name'); }
   get email() { return this.contactForm.get('email'); }
   get phone() { return this.contactForm.get('phone'); }
+  get subject() { return this.contactForm.get('subject'); }
   get message() { return this.contactForm.get('message'); }
 
   @HostListener('window:scroll', [])
@@ -255,20 +237,90 @@ export class LandingPageComponent implements OnInit {
   }
 
   startTestimonialCarousel(): void {
-    setInterval(() => {
-      this.currentTestimonialIndex = (this.currentTestimonialIndex + 1) % this.testimonials.length;
+    this.testimonialInterval = setInterval(() => {
+      this.nextTestimonial();
     }, 5000);
+  }
+
+  nextTestimonial(): void {
+    this.currentTestimonialIndex = (this.currentTestimonialIndex + 1) % this.testimonials.length;
+  }
+
+  previousTestimonial(): void {
+    this.currentTestimonialIndex = this.currentTestimonialIndex === 0 
+      ? this.testimonials.length - 1 
+      : this.currentTestimonialIndex - 1;
   }
 
   navigateToLogin(): void {
     this.router.navigate(['/login']);
   }
 
+  /**
+   * Scroll to a specific section smoothly
+   * @param sectionId - The ID of the section to scroll to
+   */
   scrollToSection(sectionId: string): void {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+      });
     }
   }
-  
+
+  /**
+   * Get error message for a specific form field
+   * @param fieldName - Name of the form field
+   * @returns Error message string
+   */
+  getFieldErrorMessage(fieldName: string): string {
+    const field = this.contactForm.get(fieldName);
+    if (field && field.errors && (field.dirty || field.touched || this.formSubmitted)) {
+      if (field.errors['required']) {
+        switch (fieldName) {
+          case 'name': return 'Le nom est obligatoire';
+          case 'email': return 'L\'email est obligatoire';
+          case 'phone': return 'Le téléphone est obligatoire';
+          default: return 'Ce champ est obligatoire';
+        }
+      }
+      if (field.errors['minlength']) {
+        switch (fieldName) {
+          case 'name': return 'Le nom doit contenir au moins 2 caractères';
+          case 'message': return 'Le message doit contenir au moins 10 caractères';
+          default: return 'Ce champ est trop court';
+        }
+      }
+      if (field.errors['email']) {
+        return 'Veuillez saisir un email valide (exemple: nom@domaine.com)';
+      }
+      if (field.errors['pattern'] && fieldName === 'phone') {
+        return 'Le numéro doit contenir exactement 8 chiffres';
+      }
+    }
+    return '';
+  }
+
+  /**
+   * Check if a field has errors and should show error styling
+   * @param fieldName - Name of the form field
+   * @returns Boolean indicating if field has errors
+   */
+  hasFieldError(fieldName: string): boolean {
+    const field = this.contactForm.get(fieldName);
+    return !!(field && field.errors && (field.dirty || field.touched || this.formSubmitted));
+  }
+
+  /**
+   * Check if a field is valid and should show success styling
+   * @param fieldName - Name of the form field
+   * @returns Boolean indicating if field is valid
+   */
+  isFieldValid(fieldName: string): boolean {
+    const field = this.contactForm.get(fieldName);
+    return !!(field && field.valid && (field.dirty || field.touched));
+  }
 }

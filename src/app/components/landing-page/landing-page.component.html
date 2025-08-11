@@ -1,278 +1,421 @@
 <div class="landing-page">
-  <!-- Hero Section -->
-  <section class="hero-section" id="home">
+  <!-- Hero Section - Condensed -->
+  <section class="hero-section" id="home" style="padding-top: 85px;">
     <div class="hero-background">
       <div class="shape shape-1"></div>
       <div class="shape shape-2"></div>
-      <div class="shape shape-3"></div>
+      <div class="hero-pattern"></div>
     </div>
     
     <div class="hero-content">
       <div class="hero-text">
+        <div class="hero-badge">
+          <span class="badge-icon">🏆</span>
+          <span>Excellence depuis 2014</span>
+        </div>
         <h1 class="hero-title">
-          <span class="title-line">Bienvenue à</span>
-          <span class="title-highlight">{{schoolName}}</span>
+          <span class="title-line">{{schoolName}}</span>
+          <span class="title-subtitle">L'Excellence Éducative au Service de Votre Réussite</span>
         </h1>
-        <p class="hero-subtitle">
-          L'excellence éducative à portée de main. Une plateforme moderne pour un apprentissage innovant et personnalisé.
+        <p class="hero-description">
+          Un établissement d'enseignement privé de premier plan, offrant une éducation exceptionnelle 
+          de la maternelle au lycée.
         </p>
         <div class="hero-actions">
-          <button class="cta-primary" (click)="navigateToLogin()">
-            <span>Commencer</span>
+          <button class="cta-primary" (click)="scrollToSection('contact')">
+            <span>Contactez-nous</span>
             <span class="arrow">→</span>
           </button>
           <button class="cta-secondary" (click)="scrollToSection('about')">
-            <span>En savoir plus</span>
+            <span>Découvrir</span>
           </button>
         </div>
-
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-value">98%</span>
+            <span class="stat-label">Réussite</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">15</span>
+            <span class="stat-label">Élèves/Classe</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">100%</span>
+            <span class="stat-label">Admis</span>
+          </div>
+        </div>
       </div>
       
       <div class="hero-visual">
-  <!-- AI Tutor Card -->
-  <div class="floating-card card-1">
-    <span class="card-icon">🤖</span>
-    <span class="card-text">IA PROF</span>
-  </div>
-  
-  <!-- Notifications Card -->
-  <div class="floating-card card-2">
-    <span class="card-icon">🔔</span>
-    <span class="card-text">Notifications</span>
-  </div>
-  
-  <!-- Progress Tracking Card -->
-  <div class="floating-card card-3">
-    <span class="card-icon">📊</span>
-    <span class="card-text">Suivi Progrès</span>
-  </div>
-  
-  <!-- Grades & Exercises Card -->
-  <div class="floating-card card-4">
-    <span class="card-icon">📝</span>
-    <span class="card-text">Notes & Exercices</span>
-  </div>
-  
-  <!-- Parent Dashboard Card -->
-  <div class="floating-card card-5">
-    <span class="card-icon">👨‍👩‍👧‍👦</span>
-    <span class="card-text">Tableau Parent</span>
-  </div>
-
-  <div class="main-visual">
-    <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" class="hero-svg">
-      <defs>
-        <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" class="gradient-start" />
-          <stop offset="100%" class="gradient-end" />
-        </linearGradient>
-      </defs>
-      <circle cx="200" cy="200" r="150" fill="url(#heroGradient)" opacity="0.1"/>
-      <circle cx="200" cy="200" r="120" fill="url(#heroGradient)" opacity="0.2"/>
-      <circle cx="200" cy="200" r="90" fill="url(#heroGradient)" opacity="0.3"/>
-      <circle cx="200" cy="200" r="60" class="main-circle"/>
-      <text x="200" y="210" text-anchor="middle" class="logo-text" font-size="48" font-weight="bold"></text>
-    </svg>
-  </div>
-  </div>
+        <div class="school-showcase">
+          <img src="assets/school-building.jpg" alt="École Campus" class="showcase-main">        </div>
+      </div>
     </div>
   </section>
 
-  <!-- Features Section -->
-  <section class="features-section" id="about">
+  <!-- About School Section - Condensed -->
+  <section class="about-section" id="about">
     <div class="section-container">
-      <div class="section-header">
-        <h2 class="section-title">Pourquoi Choisir {{schoolName}}?</h2>
-        <p class="section-subtitle">Découvrez les avantages qui font notre différence</p>
+      <div class="section-header-compact">
+        <h2 class="section-title">Une Tradition d'Excellence</h2>
       </div>
       
-      <div class="features-grid">
-        <div class="feature-card" *ngFor="let feature of features; let i = index" 
-             [style.animation-delay]="i * 0.1 + 's'">
-          <div class="feature-icon" [ngClass]="'feature-icon-' + i">
-            <span>{{ feature.icon }}</span>
-          </div>
-          <h3 class="feature-title">{{ feature.title }}</h3>
-          <p class="feature-description">{{ feature.description }}</p>
-          <div class="feature-decoration" [ngClass]="'feature-decoration-' + i"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Statistics Section -->
-  <section class="statistics-section">
-    <div class="stats-background">
-      <div class="stats-pattern"></div>
-    </div>
-    <div class="section-container">
-      <div class="stats-grid">
-        <div class="stat-card" *ngFor="let stat of statistics; let i = index"
-             [style.animation-delay]="i * 0.15 + 's'">
-          <div class="stat-icon-wrapper">
-            <span class="stat-icon">{{ stat.icon }}</span>
-          </div>
-          <div class="stat-content">
-            <h3 class="stat-number" [attr.data-target]="stat.number">{{ stat.number }}</h3>
-            <p class="stat-label">{{ stat.label }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Testimonials Section -->
-  <section class="testimonials-section">
-    <div class="section-container">
-      <div class="section-header">
-        <h2 class="section-title">Ce que disent nos utilisateurs</h2>
-        <p class="section-subtitle">Témoignages de notre communauté</p>
-      </div>
-      
-      <div class="testimonials-wrapper">
-        <div class="testimonial-card" 
-             *ngFor="let testimonial of testimonials; let i = index"
-             [class.active]="i === currentTestimonialIndex">
-          <div class="testimonial-header">
-            <div class="testimonial-avatar">
-              {{ testimonial.avatar }}
+      <div class="about-grid">
+        <div class="about-content">
+          <p class="about-text">
+            Fondée en 2014, notre école s'est rapidement imposée comme une référence en matière 
+            d'éducation privée en Tunisie. Notre approche pédagogique innovante allie tradition 
+            et modernité.
+          </p>
+          <div class="about-features-grid">
+            <div class="about-feature">
+              <span class="feature-check">✓</span>
+              <span>Programme enrichi conforme</span>
             </div>
-            <div class="testimonial-info">
-              <h4 class="testimonial-name">{{ testimonial.name }}</h4>
-              <p class="testimonial-role">{{ testimonial.role }}</p>
+            <div class="about-feature">
+              <span class="feature-check">✓</span>
+              <span>Enseignement trilingue</span>
             </div>
-            <div class="testimonial-rating">
-              <span class="star" *ngFor="let star of [1,2,3,4,5]">⭐</span>
+            <div class="about-feature">
+              <span class="feature-check">✓</span>
+              <span>Activités parascolaires</span>
             </div>
-          </div>
-          <p class="testimonial-message">"{{ testimonial.message }}"</p>
-        </div>
-      </div>
-      
-      <div class="testimonial-indicators">
-        <span class="indicator" 
-              *ngFor="let testimonial of testimonials; let i = index"
-              [class.active]="i === currentTestimonialIndex"
-              (click)="currentTestimonialIndex = i"></span>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA Section -->
-  <section class="cta-section">
-    <div class="cta-background">
-      <div class="cta-shape cta-shape-1"></div>
-      <div class="cta-shape cta-shape-2"></div>
-    </div>
-    <div class="section-container">
-      <div class="cta-content">
-        <h2 class="cta-title">Prêt à transformer votre éducation?</h2>
-        <p class="cta-subtitle">Rejoignez {{schoolName}} aujourd'hui et découvrez une nouvelle façon d'apprendre</p>
-        <button class="cta-button" (click)="scrollToSection('contact')">
-          <span>Commencer Maintenant</span>
-          <span class="button-arrow">→</span>
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Contact Section -->
-  <section class="contact-section" id="contact">
-    <div class="section-container">
-      <div class="contact-grid">
-        <div class="contact-info">
-          <h2 class="contact-title">Contactez-nous</h2>
-          <p class="contact-subtitle">Nous sommes là pour répondre à toutes vos questions</p>
-          
-          <div class="contact-items">
-            <div class="contact-item">
-              <span class="contact-icon">📍</span>
-              <div>
-                <h4>Adresse</h4>
-                <p>123 Avenue de l'Éducation, Tunis 1000</p>
-              </div>
-            </div>
-            <div class="contact-item">
-              <span class="contact-icon">📞</span>
-              <div>
-                <h4>Téléphone</h4>
-                <p>+216 71 234 567</p>
-              </div>
-            </div>
-            <div class="contact-item">
-              <span class="contact-icon">✉️</span>
-              <div>
-                <h4>Email</h4>
-                <p>contact@{{schoolName}}.tn</p>
-              </div>
+            <div class="about-feature">
+              <span class="feature-check">✓</span>
+              <span>Suivi personnalisé</span>
             </div>
           </div>
         </div>
         
-        <div class="contact-form">
-          <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
-            <div class="form-group">
-              <input 
-                type="text" 
-                placeholder="Votre nom" 
-                class="form-control"
-                formControlName="name"
-                [class.is-invalid]="name?.invalid && (name?.dirty || name?.touched)">
-              <div *ngIf="name?.invalid && (name?.dirty || name?.touched)" class="invalid-feedback">
-                <div *ngIf="name?.errors?.['required']">Name is required</div>
-                <div *ngIf="name?.errors?.['minlength']">Name must be at least 2 characters</div>
+        <div class="about-images">
+          <div class="image-collage">
+            <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=500&h=300&fit=crop" alt="Salle de classe moderne" class="collage-1">
+            <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400&h=250&fit=crop" alt="Étudiants en activité" class="collage-2">
+            <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=350&h=200&fit=crop" alt="Étudiants collaborant" class="collage-3">
+          </div>
+        </div>
+      </div>
+      
+      <div class="about-numbers">
+        <div class="number-card">
+          <h3>50+</h3>
+          <p>Enseignants Qualifiés</p>
+        </div>
+        <div class="number-card">
+          <h3>800+</h3>
+          <p>Élèves Épanouis</p>
+        </div>
+        <div class="number-card">
+          <h3>20+</h3>
+          <p>Clubs & Activités</p>
+        </div>
+        <div class="number-card">
+          <h3>10</h3>
+          <p>Ans d'Excellence</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Academic Programs Section - Compact Cards -->
+  <section class="programs-section">
+    <div class="section-container">
+      <div class="section-header-compact">
+        <h2 class="section-title">Programmes Académiques</h2>
+      </div>
+      
+      <div class="programs-grid">
+        <div class="program-card featured">
+          <div class="program-badge">Plus Populaire</div>
+          <div class="program-icon">📚</div>
+          <h3 class="program-title">Primaire</h3>
+          <p class="program-ages">6-11 ans</p>
+          <ul class="program-features">
+            <li>Programme enrichi</li>
+            <li>Anglais renforcé</li>
+            <li>Informatique</li>
+            <li>Sorties pédagogiques</li>
+          </ul>
+        </div>
+
+        <div class="program-card">
+          <div class="program-icon">🔬</div>
+          <h3 class="program-title">Collège</h3>
+          <p class="program-ages">12-15 ans</p>
+          <ul class="program-features">
+            <li>Options scientifiques</li>
+            <li>Certifications</li>
+            <li>Orientation</li>
+            <li>Projets interdisciplinaires</li>
+          </ul>
+        </div>
+
+        <div class="program-card">
+          <div class="program-icon">🎓</div>
+          <h3 class="program-title">Lycée</h3>
+          <p class="program-ages">16-19 ans</p>
+          <ul class="program-features">
+            <li>Sections Math/Sciences</li>
+            <li>Préparation BAC</li>
+            <li>Coaching universitaire</li>
+            <li>Stages entreprise</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Choose Us Section - Enhanced Big Section -->
+  <section class="why-us-section">
+    <div class="section-container">
+      <div class="section-header">
+        <div class="section-badge">Nos Atouts</div>
+        <h2 class="section-title">Pourquoi Choisir {{schoolName}} ?</h2>
+        <p class="section-subtitle">Découvrez ce qui fait de notre école un environnement unique pour l'épanouissement de votre enfant</p>
+      </div>
+      
+      <div class="advantages-grid-large">
+        <div class="advantage-card-large">
+          <div class="advantage-icon-wrapper">
+            <div class="advantage-icon">👨‍🏫</div>
+          </div>
+          <h3>Corps Enseignant d'Elite</h3>
+          <p>Professeurs diplômés et passionnés avec une formation continue. Méthodes pédagogiques innovantes adaptées à chaque élève.</p>
+        </div>
+
+        <div class="advantage-card-large">
+          <div class="advantage-icon-wrapper">
+            <div class="advantage-icon">🏫</div>
+          </div>
+          <h3>Infrastructure Moderne</h3>
+          <p>Campus spacieux avec laboratoires équipés, bibliothèque riche, terrains de sport et espaces verts pour le bien-être.</p>
+        </div>
+
+        <div class="advantage-card-large">
+          <div class="advantage-icon-wrapper">
+            <div class="advantage-icon">💻</div>
+          </div>
+          <h3>Innovation Technologique</h3>
+          <p>Salles informatiques dernière génération, tableaux interactifs, plateforme numérique pour le suivi scolaire en temps réel.</p>
+        </div>
+
+        <div class="advantage-card-large">
+          <div class="advantage-icon-wrapper">
+            <div class="advantage-icon">🌟</div>
+          </div>
+          <h3>Développement Intégral</h3>
+          <p>Sports variés, arts plastiques, musique, théâtre, clubs scientifiques et développement des compétences personnelles.</p>
+        </div>
+
+        <div class="advantage-card-large">
+          <div class="advantage-icon-wrapper">
+            <div class="advantage-icon">🤝</div>
+          </div>
+          <h3>Accompagnement Personnalisé</h3>
+          <p>Suivi individuel de chaque élève, soutien scolaire adapté, orientation professionnelle et communication continue avec les parents.</p>
+        </div>
+
+        <div class="advantage-card-large">
+          <div class="advantage-icon-wrapper">
+            <div class="advantage-icon">🌍</div>
+          </div>
+          <h3>Ouverture Internationale</h3>
+          <p>Partenariats avec des écoles étrangères, échanges culturels enrichissants et préparation aux études internationales.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Section - Simplified -->
+  <section class="pricing-section" id="admission">
+    <div class="section-container">
+      <div class="section-header-compact">
+        <h2 class="section-title">Frais de Scolarité</h2>
+      </div>
+      
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <h3>Maternelle</h3>
+          <div class="price">
+            <span class="amount">3,500</span>
+            <span class="currency">TND/an</span>
+          </div>
+          <ul class="pricing-features">
+            <li>✓ Repas inclus</li>
+            <li>✓ Activités d'éveil</li>
+            <li>✓ Garderie 17h</li>
+          </ul>
+          <button class="pricing-btn">S'inscrire</button>
+        </div>
+
+        <div class="pricing-card featured">
+          <div class="pricing-badge">Plus Demandé</div>
+          <h3>Primaire</h3>
+          <div class="price">
+            <span class="amount">4,200</span>
+            <span class="currency">TND/an</span>
+          </div>
+          <ul class="pricing-features">
+            <li>✓ Programme enrichi</li>
+            <li>✓ Anglais renforcé</li>
+            <li>✓ Transport inclus</li>
+          </ul>
+          <button class="pricing-btn featured">S'inscrire</button>
+        </div>
+
+        <div class="pricing-card">
+          <h3>Collège/Lycée</h3>
+          <div class="price">
+            <span class="amount">5,800</span>
+            <span class="currency">TND/an</span>
+          </div>
+          <ul class="pricing-features">
+            <li>✓ Préparation BAC</li>
+            <li>✓ Laboratoires</li>
+            <li>✓ Orientation</li>
+          </ul>
+          <button class="pricing-btn">S'inscrire</button>
+        </div>
+      </div>
+
+      <div class="pricing-note">
+        <span>💡 -10% pour le 2ème enfant | 📅 Paiement en 3 tranches</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section - Compact Layout -->
+  <section class="contact-section" id="contact">
+    <div class="section-container">
+      <div class="section-header-compact">
+        <h2 class="section-title">Contactez-nous</h2>
+      </div>
+      
+      <div class="contact-wrapper">
+        <!-- Contact Info Cards -->
+        <div class="contact-info-grid">
+          <div class="contact-card">
+            <span class="contact-icon">📍</span>
+            <div>
+              <h4>Adresse</h4>
+              <p>123 Avenue de l'Éducation<br>Tunis 1000</p>
+            </div>
+          </div>
+          <div class="contact-card">
+            <span class="contact-icon">📞</span>
+            <div>
+              <h4>Téléphone</h4>
+              <p>+216 71 234 567<br>Lun-Sam: 8h-17h</p>
+            </div>
+          </div>
+          <div class="contact-card">
+            <span class="contact-icon">✉️</span>
+            <div>
+              <h4>Email</h4>
+              <p>admission@ecole.tn<br>info@ecole.tn</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Compact Contact Form -->
+        <div class="contact-form-compact">
+          <h3>Formulaire Rapide</h3>
+          
+          <!-- Messages de succès/erreur -->
+          <div class="success-message" *ngIf="formSubmitted && contactForm.valid && !isLoading">
+            Message envoyé avec succès! Nous vous contacterons bientôt.
+          </div>
+          
+          <form class="compact-form" [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+            <div class="form-row">
+              <div class="form-field">
+                <input 
+                  type="text" 
+                  formControlName="name"
+                  placeholder="Nom complet *" 
+                  class="form-control"
+                  [class.invalid]="name?.invalid && (name?.dirty || name?.touched)"
+                  [class.valid]="name?.valid && (name?.dirty || name?.touched)">
+                <span class="validation-message" 
+                      *ngIf="name?.invalid && (name?.dirty || name?.touched)">
+                  <span *ngIf="name?.errors?.['required']">Le nom est obligatoire</span>
+                  <span *ngIf="name?.errors?.['minlength']">Le nom doit contenir au moins 2 caractères</span>
+                </span>
+              </div>
+              <div class="form-field">
+                <input 
+                  type="tel" 
+                  formControlName="phone"
+                  placeholder="Téléphone *" 
+                  class="form-control"
+                  [class.invalid]="phone?.invalid && (phone?.dirty || phone?.touched)"
+                  [class.valid]="phone?.valid && (phone?.dirty || phone?.touched)">
+                <span class="validation-message" 
+                      *ngIf="phone?.invalid && (phone?.dirty || phone?.touched)">
+                  <span *ngIf="phone?.errors?.['required']">Le téléphone est obligatoire</span>
+                  <span *ngIf="phone?.errors?.['pattern']">Le numéro doit contenir exactement 8 chiffres</span>
+                </span>
               </div>
             </div>
-            
-            <div class="form-group">
+            <div class="form-field">
               <input 
                 type="email" 
-                placeholder="Votre email" 
-                class="form-control"
                 formControlName="email"
-                [class.is-invalid]="email?.invalid && (email?.dirty || email?.touched)">
-              <div *ngIf="email?.invalid && (email?.dirty || email?.touched)" class="invalid-feedback">
-                <div *ngIf="email?.errors?.['required']">Email is required</div>
-                <div *ngIf="email?.errors?.['email']">Please enter a valid email</div>
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <input 
-                type="tel" 
-                placeholder="Votre téléphone" 
+                placeholder="Email *" 
                 class="form-control"
-                formControlName="phone"
-                [class.is-invalid]="phone?.invalid && (phone?.dirty || phone?.touched)">
-              <div *ngIf="phone?.invalid && (phone?.dirty || phone?.touched)" class="invalid-feedback">
-                <div *ngIf="phone?.errors?.['required']">Phone number is required</div>
-                <div *ngIf="phone?.errors?.['pattern']">Please enter a valid 8-digit phone number</div>
-              </div>
+                [class.invalid]="email?.invalid && (email?.dirty || email?.touched)"
+                [class.valid]="email?.valid && (email?.dirty || email?.touched)">
+              <span class="validation-message" 
+                    *ngIf="email?.invalid && (email?.dirty || email?.touched)">
+                <span *ngIf="email?.errors?.['required']">L'email est obligatoire</span>
+                <span *ngIf="email?.errors?.['email']">Veuillez saisir un email valide (exemple: nom@domaine.com)</span>
+              </span>
             </div>
-            
-            <div class="form-group">
+            <div class="form-field">
               <textarea 
-                placeholder="Votre message" 
-                rows="4" 
-                class="form-control"
                 formControlName="message"
-                [class.is-invalid]="message?.invalid && (message?.dirty || message?.touched)"></textarea>
-              <div *ngIf="message?.invalid && (message?.dirty || message?.touched)" class="invalid-feedback">
-                <div *ngIf="message?.errors?.['required']">Message is required</div>
-                <div *ngIf="message?.errors?.['minlength']">Message must be at least 10 characters</div>
-              </div>
+                placeholder="Message (optionnel)" 
+                rows="3" 
+                class="form-control"
+                [class.invalid]="message?.invalid && (message?.dirty || message?.touched)"
+                [class.valid]="message?.valid && (message?.dirty || message?.touched)">
+              </textarea>
+              <span class="validation-message" 
+                    *ngIf="message?.invalid && (message?.dirty || message?.touched)">
+                <span *ngIf="message?.errors?.['minlength']">Le message doit contenir au moins 10 caractères</span>
+              </span>
             </div>
-            
             <button 
               type="submit" 
               class="submit-button"
-              [disabled]="contactForm.invalid || isLoading">
-              <span>{{ isLoading ? 'Sending...' : 'Envoyer' }}</span>
-              <span class="send-icon">📤</span>
+              [disabled]="isLoading">
+              <span *ngIf="!isLoading">Envoyer</span>
+              <span *ngIf="isLoading">Envoi en cours...</span>
+              <span class="send-icon" *ngIf="!isLoading">→</span>
             </button>
           </form>
         </div>
       </div>
+      
+      <!-- Simplified Map -->
+      <div class="map-container">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3199.5466603627474!2d10.5806423754945!3d36.68539957228009!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12fd57d5b1743da7%3A0x99cc99b8f7845367!2zTHljw6llIHByaXbDqSBuaXphcg!5e0!3m2!1sen!2stn!4v1754842442774!5m2!1sen!2stn" 
+          width="100%" 
+          height="300" 
+          style="border:0;" 
+          allowfullscreen="" 
+          loading="lazy">
+        </iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- Simple CTA Banner -->
+  <section class="cta-banner">
+    <div class="cta-content">
+      <h2>Rejoignez Notre Communauté</h2>
+      <p>Inscriptions 2025-2026 ouvertes • Visites sur RDV • -15% Early Bird</p>
+      <button class="cta-button" (click)="scrollToSection('contact')">Demander une Visite →</button>
     </div>
   </section>
 </div>

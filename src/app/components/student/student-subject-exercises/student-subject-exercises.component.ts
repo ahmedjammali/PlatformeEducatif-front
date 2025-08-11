@@ -253,6 +253,23 @@ export class StudentSubjectExercisesComponent implements OnInit, OnDestroy {
     return attempt._id === bestAttempt._id;
   }
 
+  
+shouldShowAttemptDetails(exercise: ExerciseWithStatus, attempt: StudentProgress): boolean {
+  // Si l'étudiant a obtenu 100%, toujours afficher le bouton
+  if (attempt.accuracyPercentage === 100) {
+    return true;
+  }
+  
+  // Si l'étudiant n'a plus de tentatives restantes, afficher le bouton
+  if (!exercise.remainingAttempts || exercise.remainingAttempts <= 0) {
+    return true;
+  }
+  
+  // Si l'étudiant a encore des tentatives restantes et n'a pas eu 100%, 
+  // ne pas afficher le bouton
+  return false;
+}
+
   formatDateTime(date: Date | string): string {
     if (!date) return 'N/A';
     const dateObj = new Date(date);

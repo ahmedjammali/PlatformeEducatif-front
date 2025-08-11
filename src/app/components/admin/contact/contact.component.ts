@@ -350,7 +350,6 @@ export class ContactComponent implements OnInit, OnDestroy {
           this.calculateStats();
           this.applyFilters();
           this.closeDeleteModal();
-          this.showSuccessMessage('Contact supprimé avec succès');
         },
         error: (error) => {
           console.error('Error deleting contact:', error);

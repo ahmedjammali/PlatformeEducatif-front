@@ -163,13 +163,7 @@
         </svg>
         Cartes
       </button>
-      <button class="toggle-btn" [class.active]="viewMode === 'student'" (click)="setViewMode('student')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
-        </svg>
-        Par Étudiant
-      </button>
+
     </div>
     
     <div class="results-info">
@@ -419,12 +413,7 @@
 
   <!-- Student View -->
   <div class="student-view" *ngIf="viewMode === 'student'">
-    <div class="student-selector">
-      <select [(ngModel)]="selectedStudentId" (ngModelChange)="onStudentSelect()">
-        <option value="">Sélectionner un étudiant</option>
-        <option *ngFor="let student of students" [value]="student._id">{{ student.name }}</option>
-      </select>
-    </div>
+
     
     <div class="student-grades" *ngIf="selectedStudentId && studentGrades.length > 0">
       <div class="student-header">

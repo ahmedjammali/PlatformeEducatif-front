@@ -112,11 +112,13 @@
               </div>
             </div>
             
-            <div class="attempt-actions">
-              <button class="btn-view-details" (click)="viewAttemptDetails(exercise, attempt)">
-                Voir les détails
-              </button>
-            </div>
+<div class="attempt-actions">
+  <button class="btn-view-details" 
+          (click)="viewAttemptDetails(exercise, attempt)"
+          *ngIf="shouldShowAttemptDetails(exercise, attempt)">
+    Voir les détails
+  </button>
+</div>
           </div>
         </div>
       </div>
