@@ -16,7 +16,7 @@ export class FooterComponent implements OnInit, OnDestroy {
   schoolName: string = "";
 
   socialLinks = [
-    { icon: '📘', name: 'Facebook', url: 'https://facebook.com/hibaschool' },
+    { icon: '📘', name: 'Facebook', url: 'https://www.facebook.com/soutienscolaiire' },
     { icon: '📷', name: 'Instagram', url: 'https://instagram.com/hibaschool' },
     { icon: '🐦', name: 'Twitter', url: 'https://twitter.com/hibaschool' },
     { icon: '💼', name: 'LinkedIn', url: 'https://linkedin.com/company/hibaschool' }
@@ -32,7 +32,7 @@ export class FooterComponent implements OnInit, OnDestroy {
   contactInfo = {
     address: '123 Avenue de l\'Éducation, Tunis 1000',
     phone: '+216 71 234 567',
-    email: 'contact@hibaschool.tn',
+    email: 'contact@lilischool.tn',
     hours: 'Lun - Ven: 8h00 - 17h00'
   };
 

@@ -291,7 +291,7 @@ export class ContactComponent implements OnInit, OnDestroy {
     this.replyContact = contact;
     this.replyForm.patchValue({
       subject: `Re: Message de ${contact.name}`,
-      message: `Bonjour ${contact.name},\n\nMerci pour votre message. \n\nCordialement,\nL'équipe Hiba School`
+      message: `Bonjour ${contact.name},\n\nMerci pour votre message. \n\nCordialement`
     });
     this.showReplyModal = true;
     this.closeViewModal();

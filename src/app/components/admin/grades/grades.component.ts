@@ -461,7 +461,7 @@ export class GradesComponent implements OnInit, OnDestroy {
 
   private generateCSV(grades: Grade[]): string {
     const headers = [
-      'Étudiant', 'Classe', 'Matière', 'Examen', 'Type', 'Note', 
+      'Etudiant', 'Classe', 'Matiere', 'Examen', 'Type', 'Note', 
       'Coefficient', 'Trimestre', 'Année', 'Date', 'Commentaires'
     ];
     const csvRows = [headers.join(',')];
@@ -513,13 +513,13 @@ trackByGradeId(index: number, grade: any): string {
     return `${classObj.name} - ${classObj.grade}`;
   }
 
-  getSubjectName(subject: SubjectModel | string): string {
-    if (typeof subject === 'string') {
-      const subjectObj = this.subjects.find(s => s._id === subject);
-      return subjectObj ? subjectObj.name : 'Matière inconnue';
-    }
-    return subject.name;
+getSubjectName(subject: SubjectModel | string): string {
+  if (typeof subject === 'string') {
+    const subjectObj = this.subjects.find(s => s._id === subject);
+    return subjectObj?.name || 'Matière supprimée'; // Better label for deleted subjects
   }
+  return subject?.name || 'Matière inconnue';
+}
 
   getTeacherName(teacher: User | string): string {
     if (typeof teacher === 'string') {
