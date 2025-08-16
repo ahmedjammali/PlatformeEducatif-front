@@ -74,6 +74,9 @@ import { AdminDashboardComponent } from './components/admin/admin-dashboard/admi
 import { StudentLayoutComponent } from './components/student/student-layout/student-layout.component';
 import { StudentNotificationsComponent } from './components/student/student-notifications/student-notifications.component';
 import { StudentChatComponent } from './components/student/student-chat/student-chat.component';
+// import { PaymentManagementComponent } from './components/admin/payment-management/payment-management.component';
+// import { PaymentDialogComponent } from './components/admin/payment-dialog/payment-dialog.component';
+// import { PaymentConfigComponent } from './components/admin/payment-config/payment-config.component';
 
 
 
@@ -131,6 +134,7 @@ const MaterialModules = [
     StudentLayoutComponent,
     StudentNotificationsComponent,
     StudentChatComponent,
+
 
 
   ],

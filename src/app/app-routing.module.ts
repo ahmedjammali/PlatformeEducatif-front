@@ -54,7 +54,11 @@ const routes: Routes = [
       { path: 'notifications', component: NotificationComponent },
       { path: 'contact', component: ContactComponent },
       { path: 'grades', component: GradesComponent },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' } , 
+      {
+        path: 'payments',
+        loadChildren: () => import('./modules/payment.module').then(m => m.PaymentModule)
+      }
     ]
   },
 

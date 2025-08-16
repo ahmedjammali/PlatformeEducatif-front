@@ -1,0 +1,139 @@
+<div class="payment-dialog">
+  <h2 mat-dialog-title class="dialog-title">
+    <mat-icon class="title-icon">{{ data.type === 'annual' ? 'event_available' : 'calendar_today' }}</mat-icon>
+    {{ data.type === 'annual' ? 'Paiement Annuel' : 'Paiement Mensuel' }}
+  </h2>
+
+  <mat-dialog-content class="dialog-content">
+    <div class="student-info-header">
+      <div class="info-item">
+        <span class="info-label">Étudiant:</span>
+        <span class="info-value">{{ data.student.name }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Classe:</span>
+        <span class="info-value">{{ data.student.studentClass?.name || 'Non assigné' }}</span>
+      </div>
+      <div class="info-item" *ngIf="data.student.paymentRecord">
+        <span class="info-label">Montant restant:</span>
+        <span class="info-value amount">{{ formatCurrency(data.student.paymentRecord.remainingAmount) }}</span>
+      </div>
+    </div>
+
+    <form [formGroup]="paymentForm" class="payment-form">
+      <!-- Month Selection for Monthly Payment -->
+      <div class="month-selection" *ngIf="data.type === 'monthly'">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Sélectionner le mois</mat-label>
+          <mat-select formControlName="monthIndex" (selectionChange)="onMonthSelect($event.value)" required>
+            <mat-option *ngFor="let month of getUnpaidMonths(); let i = index" 
+                        [value]="i">
+            <div class="month-option">
+                <span>{{ month.monthName }}</span>
+                <span class="month-amount">{{ formatCurrency(month.amount - month.paidAmount) }}</span>
+            </div>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="selected-month-info" *ngIf="selectedMonth">
+          <mat-card class="month-details-card">
+            <div class="month-detail">
+              <span class="detail-label">Montant dû:</span>
+              <span class="detail-value">{{ formatCurrency(selectedMonth.amount) }}</span>
+            </div>
+            <div class="month-detail">
+              <span class="detail-label">Déjà payé:</span>
+              <span class="detail-value">{{ formatCurrency(selectedMonth.paidAmount) }}</span>
+            </div>
+            <div class="month-detail">
+              <span class="detail-label">Reste à payer:</span>
+              <span class="detail-value highlight">{{ formatCurrency(selectedMonth.amount - selectedMonth.paidAmount) }}</span>
+            </div>
+          </mat-card>
+        </div>
+      </div>
+
+      <!-- Payment Details -->
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Montant à payer</mat-label>
+          <input matInput type="number" formControlName="amount" min="1">
+          <span matPrefix>TND&nbsp;</span>
+          <mat-error *ngIf="paymentForm.get('amount')?.hasError('required')">
+            Le montant est requis
+          </mat-error>
+          <mat-error *ngIf="paymentForm.get('amount')?.hasError('min')">
+            Le montant doit être supérieur à 0
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Mode de paiement</mat-label>
+          <mat-select formControlName="paymentMethod">
+            <mat-option *ngFor="let method of paymentMethods" [value]="method.value">
+              <mat-icon class="method-icon">{{ method.icon }}</mat-icon>
+              {{ method.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Date de paiement</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="paymentDate">
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Numéro de reçu</mat-label>
+          <input matInput formControlName="receiptNumber">
+          <mat-icon matPrefix>receipt_long</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Discount for Annual Payment -->
+      <div class="form-row" *ngIf="data.type === 'annual'">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Remise</mat-label>
+          <input matInput type="number" formControlName="discount" min="0">
+          <span matPrefix>TND&nbsp;</span>
+          <mat-hint>Montant de la remise pour paiement annuel</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Notes</mat-label>
+        <textarea matInput formControlName="notes" rows="3"></textarea>
+      </mat-form-field>
+
+      <!-- Payment Summary -->
+      <div class="payment-summary">
+        <div class="summary-row">
+          <span class="summary-label">Montant:</span>
+          <span class="summary-value">{{ formatCurrency(paymentForm.get('amount')?.value || 0) }}</span>
+        </div>
+        <div class="summary-row" *ngIf="data.type === 'annual' && paymentForm.get('discount')?.value > 0">
+          <span class="summary-label">Remise:</span>
+          <span class="summary-value discount">-{{ formatCurrency(paymentForm.get('discount')?.value) }}</span>
+        </div>
+        <div class="summary-row total">
+          <span class="summary-label">Total à payer:</span>
+          <span class="summary-value">{{ formatCurrency(calculateTotal()) }}</span>
+        </div>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions">
+    <button mat-button (click)="onCancel()" [disabled]="isLoading">
+      Annuler
+    </button>
+    <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="paymentForm.invalid || isLoading">
+      <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+      <span *ngIf="!isLoading">Enregistrer le paiement</span>
+    </button>
+  </mat-dialog-actions>
+</div>

@@ -1,0 +1,423 @@
+<!-- payment-management.component.html -->
+<div class="payment-management-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">payment</mat-icon>
+        Gestion des Paiements
+      </h1>
+      <div class="header-actions">
+        <button mat-raised-button class="config-btn" [routerLink]="['config']">
+          <mat-icon>settings</mat-icon>
+          Configuration
+        </button>
+        <button mat-raised-button class="generate-btn" (click)="bulkGeneratePayments()" [disabled]="isLoading">
+          <mat-icon>auto_awesome</mat-icon>
+          Générer en masse
+        </button>
+        <button mat-icon-button class="action-btn" (click)="exportToExcel()">
+          <mat-icon>file_download</mat-icon>
+        </button>
+        <button mat-icon-button class="action-btn" (click)="printReport()">
+          <mat-icon>print</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Cards -->
+  <div class="dashboard-section" *ngIf="dashboard">
+    <div class="stats-grid">
+      <div class="stat-card primary-card">
+        <div class="stat-icon">
+          <mat-icon>groups</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ dashboard.overview.totalStudents }}</div>
+          <div class="stat-label">Total Étudiants</div>
+        </div>
+      </div>
+
+      <div class="stat-card success-card">
+        <div class="stat-icon">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ dashboard.statusCounts.completed }}</div>
+          <div class="stat-label">Paiements Complets</div>
+        </div>
+      </div>
+
+      <div class="stat-card warning-card">
+        <div class="stat-icon">
+          <mat-icon>schedule</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ dashboard.statusCounts.partial }}</div>
+          <div class="stat-label">Paiements Partiels</div>
+        </div>
+      </div>
+
+      <div class="stat-card danger-card">
+        <div class="stat-icon">
+          <mat-icon>error</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ dashboard.statusCounts.overdue }}</div>
+          <div class="stat-label">En Retard</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="revenue-cards">
+      <div class="revenue-card collected">
+        <div class="revenue-header">
+          <span class="revenue-label">Montant Collecté</span>
+          <mat-icon class="revenue-icon">account_balance_wallet</mat-icon>
+        </div>
+        <div class="revenue-amount">{{ formatCurrency(dashboard.overview.totalRevenue) }}</div>
+        <div class="revenue-progress">
+          <mat-progress-bar 
+            mode="determinate" 
+            [value]="dashboard.overview.collectionRate">
+          </mat-progress-bar>
+          <span class="progress-label">{{ dashboard.overview.collectionRate }}% collecté</span>
+        </div>
+      </div>
+
+      <div class="revenue-card expected">
+        <div class="revenue-header">
+          <span class="revenue-label">Montant Attendu</span>
+          <mat-icon class="revenue-icon">trending_up</mat-icon>
+        </div>
+        <div class="revenue-amount">{{ formatCurrency(dashboard.overview.expectedRevenue) }}</div>
+      </div>
+
+      <div class="revenue-card outstanding">
+        <div class="revenue-header">
+          <span class="revenue-label">Montant Restant</span>
+          <mat-icon class="revenue-icon">pending</mat-icon>
+        </div>
+        <div class="revenue-amount">{{ formatCurrency(dashboard.overview.outstandingAmount) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <mat-card class="filter-card">
+      <div class="filter-container">
+        <!-- Search Input -->
+        <mat-form-field class="search-field" >
+          <mat-label>Rechercher un étudiant</mat-label>
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput [formControl]="searchControl" placeholder="Nom ou email...">
+          <button mat-icon-button matSuffix *ngIf="searchControl.value" (click)="searchControl.setValue('')">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <!-- Filter Controls -->
+        <div class="filter-controls" [formGroup]="filterForm">
+          <mat-form-field >
+            <mat-label>Année Académique</mat-label>
+            <mat-select formControlName="academicYear">
+              <mat-option *ngFor="let year of academicYears" [value]="year">
+                {{ year }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field >
+            <mat-label>Statut de Paiement</mat-label>
+            <mat-select formControlName="paymentStatus">
+              <mat-option *ngFor="let status of paymentStatuses" [value]="status.value">
+                <mat-icon *ngIf="status.icon" [style.color]="status.color">{{ status.icon }}</mat-icon>
+                <span>{{ status.label }}</span>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field >
+            <mat-label>Niveau</mat-label>
+            <mat-select formControlName="classGroup">
+              <mat-option *ngFor="let group of classGroups" [value]="group.value">
+                {{ group.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field >
+            <mat-label>Classe</mat-label>
+            <mat-select formControlName="classId">
+              <mat-option value="">Toutes les classes</mat-option>
+              <mat-option *ngFor="let class of classes" [value]="class._id">
+                {{ class.name }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Students Table -->
+  <div class="table-section">
+    <mat-card class="table-card">
+      <div class="table-header">
+        <h2 class="section-title">Liste des Étudiants</h2>
+        <div class="table-info">
+          <span class="student-count">{{ students.length }} étudiants</span>
+        </div>
+      </div>
+
+      <div class="table-container" [class.loading]="isLoading">
+        <div class="loading-overlay" *ngIf="isLoading">
+          <mat-spinner diameter="50"></mat-spinner>
+        </div>
+
+        <table mat-table [dataSource]="dataSource" class="payment-table" multiTemplateDataRows>
+          <!-- Expand Column -->
+          <ng-container matColumnDef="expand">
+            <th mat-header-cell *matHeaderCellDef class="expand-cell"></th>
+            <td mat-cell *matCellDef="let student" class="expand-cell">
+              <button mat-icon-button (click)="toggleExpandRow(student)" 
+                      [disabled]="!student.hasPaymentRecord">
+                <mat-icon>
+                  {{ expandedStudentId === student._id ? 'expand_less' : 'expand_more' }}
+                </mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <!-- Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Nom de l'Étudiant</th>
+            <td mat-cell *matCellDef="let student">
+              <div class="student-info">
+                <div class="student-name">{{ student.name }}</div>
+                <div class="student-email">{{ student.email }}</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Class Column -->
+          <ng-container matColumnDef="class">
+            <th mat-header-cell *matHeaderCellDef>Classe</th>
+            <td mat-cell *matCellDef="let student">
+              <div class="class-info">
+                <span class="class-name">{{ getClassName(student) }}</span>
+                <span class="class-group" *ngIf="student.classGroup">
+                  <mat-chip [style.background-color]="student.classGroup === 'college' ? 'var(--color-primary)' : 
+                           student.classGroup === 'moyenne' ? 'var(--color-secondary)' : 'var(--color-accent)'">
+                    {{ student.classGroup }}
+                  </mat-chip>
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Statut</th>
+            <td mat-cell *matCellDef="let student">
+              <div class="status-badge" 
+                   [style.background-color]="getStatusColor(student.paymentRecord?.overallStatus || 'no_record') + '20'"
+                   [style.border-color]="getStatusColor(student.paymentRecord?.overallStatus || 'no_record')">
+                <mat-icon [style.color]="getStatusColor(student.paymentRecord?.overallStatus || 'no_record')">
+                  {{ getStatusIcon(student.paymentRecord?.overallStatus || 'no_record') }}
+                </mat-icon>
+                <span [style.color]="getStatusColor(student.paymentRecord?.overallStatus || 'no_record')">
+                  {{ getStatusLabel(student.paymentRecord?.overallStatus || 'no_record') }}
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Total Amount Column -->
+          <ng-container matColumnDef="totalAmount">
+            <th mat-header-cell *matHeaderCellDef>Montant Total</th>
+            <td mat-cell *matCellDef="let student">
+              <span class="amount-text" *ngIf="student.paymentRecord">
+                {{ formatCurrency(student.paymentRecord.totalAmount) }}
+              </span>
+              <span class="no-record" *ngIf="!student.paymentRecord">—</span>
+            </td>
+          </ng-container>
+
+          <!-- Paid Amount Column -->
+          <ng-container matColumnDef="paidAmount">
+            <th mat-header-cell *matHeaderCellDef>Montant Payé</th>
+            <td mat-cell *matCellDef="let student">
+              <span class="amount-paid" *ngIf="student.paymentRecord">
+                {{ formatCurrency(student.paymentRecord.paidAmount) }}
+              </span>
+              <span class="no-record" *ngIf="!student.paymentRecord">—</span>
+            </td>
+          </ng-container>
+
+          <!-- Remaining Amount Column -->
+          <ng-container matColumnDef="remainingAmount">
+            <th mat-header-cell *matHeaderCellDef>Montant Restant</th>
+            <td mat-cell *matCellDef="let student">
+              <span class="amount-remaining" *ngIf="student.paymentRecord"
+                    [class.overdue]="student.paymentRecord.overallStatus === 'overdue'">
+                {{ formatCurrency(student.paymentRecord.remainingAmount) }}
+              </span>
+              <span class="no-record" *ngIf="!student.paymentRecord">—</span>
+            </td>
+          </ng-container>
+
+          <!-- Progress Column -->
+          <ng-container matColumnDef="progress">
+            <th mat-header-cell *matHeaderCellDef>Progression</th>
+            <td mat-cell *matCellDef="let student">
+              <div class="progress-container" *ngIf="student.paymentRecord">
+                <mat-progress-bar 
+                  mode="determinate" 
+                  [value]="calculateProgress(student)"
+                  [color]="student.paymentRecord.overallStatus === 'completed' ? 'primary' : 'accent'">
+                </mat-progress-bar>
+                <span class="progress-text">{{ calculateProgress(student) }}%</span>
+              </div>
+              <span class="no-record" *ngIf="!student.paymentRecord">—</span>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let student">
+              <div class="action-buttons">
+                <button mat-icon-button 
+                        matTooltip="Générer dossier de paiement"
+                        *ngIf="!student.hasPaymentRecord"
+                        (click)="generatePaymentRecord(student)"
+                        class="generate-btn-icon">
+                  <mat-icon>add_circle</mat-icon>
+                </button>
+
+                <button mat-icon-button 
+                        matTooltip="Enregistrer paiement mensuel"
+                        *ngIf="student.hasPaymentRecord && student.paymentRecord?.paymentType === 'monthly'"
+                        (click)="openPaymentDialog(student, 'monthly')"
+                        class="payment-btn-icon">
+                  <mat-icon>calendar_today</mat-icon>
+                </button>
+
+                <button mat-icon-button 
+                        matTooltip="Enregistrer paiement annuel"
+                        *ngIf="student.hasPaymentRecord && !student.paymentRecord?.annualPayment?.isPaid"
+                        (click)="openPaymentDialog(student, 'annual')"
+                        class="annual-btn-icon">
+                  <mat-icon>event_available</mat-icon>
+                </button>
+
+                <button mat-icon-button 
+                        matTooltip="Voir détails"
+                        *ngIf="student.hasPaymentRecord"
+                        (click)="openPaymentDetails(student)"
+                        class="details-btn-icon">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Expanded Content -->
+          <ng-container matColumnDef="expandedDetail">
+            <td mat-cell *matCellDef="let student" [attr.colspan]="displayedColumns.length">
+              <div class="expanded-content" 
+                   [@detailExpand]="expandedStudentId === student._id ? 'expanded' : 'collapsed'">
+                <div class="payment-details" *ngIf="student.paymentRecord && expandedStudentId === student._id">
+                  <h3 class="details-title">Détails des Paiements Mensuels</h3>
+                  
+                  <div class="monthly-payments-grid">
+                    <div class="month-card" 
+                         *ngFor="let payment of student.paymentRecord.monthlyPayments; let i = index"
+                         [class.paid]="payment.status === 'paid'"
+                         [class.partial]="payment.status === 'partial'"
+                         [class.overdue]="payment.status === 'overdue'">
+                      
+                      <div class="month-header">
+                        <span class="month-name">{{ payment.monthName }}</span>
+                        <mat-icon class="month-status-icon" 
+                                  [style.color]="getStatusColor(payment.status)">
+                          {{ getStatusIcon(payment.status) }}
+                        </mat-icon>
+                      </div>
+                      
+                      <div class="month-details">
+                        <div class="month-amount">
+                          <span class="label">Montant dû:</span>
+                          <span class="value">{{ formatCurrency(payment.amount) }}</span>
+                        </div>
+                        <div class="month-paid">
+                          <span class="label">Payé:</span>
+                          <span class="value">{{ formatCurrency(payment.paidAmount) }}</span>
+                        </div>
+                        <div class="month-date" *ngIf="payment.paymentDate">
+                          <span class="label">Date:</span>
+                          <span class="value">{{ payment.paymentDate | date:'dd/MM/yyyy' }}</span>
+                        </div>
+                      </div>
+
+                      <div class="month-actions" *ngIf="payment.status !== 'paid'">
+                        <button mat-mini-fab color="primary" 
+                                (click)="openPaymentDialog(student, 'monthly')"
+                                matTooltip="Enregistrer paiement">
+                          <mat-icon>add</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="payment-summary">
+                    <div class="summary-item">
+                      <span class="summary-label">Type de paiement:</span>
+                      <span class="summary-value">
+                        {{ student.paymentRecord.paymentType === 'annual' ? 'Annuel' : 'Mensuel' }}
+                      </span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label">Année académique:</span>
+                      <span class="summary-value">{{ student.paymentRecord.academicYear }}</span>
+                    </div>
+                    <div class="summary-item" *ngIf="student.paymentRecord.annualPayment?.isPaid">
+                      <span class="summary-label">Paiement annuel effectué le:</span>
+                      <span class="summary-value">
+                        {{ student.paymentRecord.annualPayment.paymentDate | date:'dd/MM/yyyy' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let student; columns: displayedColumns;"
+              class="student-row"
+              [class.expanded-row]="expandedStudentId === student._id">
+          </tr>
+          <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" 
+              class="expanded-detail-row"></tr>
+        </table>
+
+        <!-- No Data Message -->
+        <div class="no-data" *ngIf="!isLoading && students.length === 0">
+          <mat-icon>school</mat-icon>
+          <p>Aucun étudiant trouvé</p>
+        </div>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator 
+        [pageSizeOptions]="[25, 50, 100]" 
+        [pageSize]="50"
+        showFirstLastButtons>
+      </mat-paginator>
+    </mat-card>
+  </div>
+</div>

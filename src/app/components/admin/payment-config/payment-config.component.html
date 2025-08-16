@@ -1,0 +1,222 @@
+<div class="payment-config-container">
+  <div class="config-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">settings</mat-icon>
+        Configuration des Paiements
+      </h1>
+      <button mat-button class="back-btn" [routerLink]="['admin/payments']">
+        <mat-icon>arrow_back</mat-icon>
+        Retour
+      </button>
+    </div>
+  </div>
+
+  <div class="config-content">
+    <mat-card class="config-card">
+      <form [formGroup]="configForm" (ngSubmit)="onSubmit()">
+        <!-- Academic Year Selection -->
+        <div class="section">
+          <h2 class="section-title">
+            <mat-icon>school</mat-icon>
+            Année Académique
+          </h2>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Sélectionner l'année académique</mat-label>
+            <mat-select formControlName="academicYear" (selectionChange)="onAcademicYearChange()">
+              <mat-option *ngFor="let year of academicYears" [value]="year">
+                {{ year }}
+              </mat-option>
+            </mat-select>
+            <mat-hint>Configuration pour l'année scolaire sélectionnée</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <!-- Payment Amounts Section -->
+        <div class="section">
+          <h2 class="section-title">
+            <mat-icon>payments</mat-icon>
+            Montants des Frais de Scolarité
+          </h2>
+          
+          <div formGroupName="paymentAmounts" class="amounts-grid">
+            <div class="amount-card college-card">
+              <div class="card-header">
+                <mat-icon>school</mat-icon>
+                <span>Collège</span>
+              </div>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Montant annuel</mat-label>
+                <input matInput type="number" formControlName="college" min="0">
+                <span matPrefix>TND&nbsp;</span>
+                <mat-hint>Classes: 6ème, 5ème, 4ème, 3ème, 2nde, 1ère</mat-hint>
+              </mat-form-field>
+              <div class="monthly-info">
+                <span class="monthly-label">Mensualité:</span>
+                <span class="monthly-amount">{{ formatCurrency(calculateMonthlyAmount('college')) }}</span>
+              </div>
+            </div>
+
+            <div class="amount-card moyenne-card">
+              <div class="card-header">
+                <mat-icon>menu_book</mat-icon>
+                <span>Moyenne</span>
+              </div>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Montant annuel</mat-label>
+                <input matInput type="number" formControlName="moyenne" min="0">
+                <span matPrefix>TND&nbsp;</span>
+                <mat-hint>Classes: 9ème, 8ème, 7ème</mat-hint>
+              </mat-form-field>
+              <div class="monthly-info">
+                <span class="monthly-label">Mensualité:</span>
+                <span class="monthly-amount">{{ formatCurrency(calculateMonthlyAmount('moyenne')) }}</span>
+              </div>
+            </div>
+
+            <div class="amount-card lycee-card">
+              <div class="card-header">
+                <mat-icon>science</mat-icon>
+                <span>Lycée</span>
+              </div>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Montant annuel</mat-label>
+                <input matInput type="number" formControlName="lycee" min="0">
+                <span matPrefix>TND&nbsp;</span>
+                <mat-hint>Classes: 4ᵉ, 3ᵉ, 2ᵉ, 1ʳᵉ année S</mat-hint>
+              </mat-form-field>
+              <div class="monthly-info">
+                <span class="monthly-label">Mensualité:</span>
+                <span class="monthly-amount">{{ formatCurrency(calculateMonthlyAmount('lycee')) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Schedule Section -->
+        <div class="section">
+          <h2 class="section-title">
+            <mat-icon>calendar_today</mat-icon>
+            Calendrier de Paiement
+          </h2>
+          
+          <div formGroupName="paymentSchedule" class="schedule-container">
+            <div class="schedule-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Mois de début</mat-label>
+                <mat-select formControlName="startMonth">
+                  <mat-option *ngFor="let month of months" [value]="month.value">
+                    {{ month.label }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>event</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Mois de fin</mat-label>
+                <mat-select formControlName="endMonth">
+                  <mat-option *ngFor="let month of months" [value]="month.value">
+                    {{ month.label }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>event</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="schedule-info">
+              <mat-card class="info-card">
+                <div class="info-item">
+                  <mat-icon>date_range</mat-icon>
+                  <span>Nombre total de mois: <strong>{{ calculateTotalMonths() }}</strong></span>
+                </div>
+              </mat-card>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grace Period Section -->
+        <div class="section">
+          <h2 class="section-title">
+            <mat-icon>schedule</mat-icon>
+            Période de Grâce
+          </h2>
+          
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Délai de grâce (jours)</mat-label>
+            <input matInput type="number" formControlName="gracePeriod" min="0" max="30">
+            <mat-icon matPrefix>hourglass_empty</mat-icon>
+            <mat-hint>Nombre de jours après la date d'échéance avant de marquer comme en retard</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <!-- Annual Payment Discount Section -->
+        <div class="section">
+          <h2 class="section-title">
+            <mat-icon>local_offer</mat-icon>
+            Remise pour Paiement Annuel
+          </h2>
+          
+          <div formGroupName="annualPaymentDiscount" class="discount-container">
+            <mat-checkbox formControlName="enabled" class="discount-checkbox">
+              Activer la remise pour paiement annuel
+            </mat-checkbox>
+
+            <div class="discount-fields" *ngIf="configForm.get('annualPaymentDiscount.enabled')?.value">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Pourcentage de remise</mat-label>
+                <input matInput type="number" formControlName="percentage" min="0" max="100">
+                <span matSuffix>%</span>
+                <mat-icon matPrefix>percent</mat-icon>
+              </mat-form-field>
+
+              <span class="or-text">OU</span>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Montant fixe de remise</mat-label>
+                <input matInput type="number" formControlName="amount" min="0">
+                <span matPrefix>TND&nbsp;</span>
+                <mat-icon matPrefix>attach_money</mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Configuration Summary -->
+        <div class="section" *ngIf="currentConfig">
+          <h2 class="section-title">
+            <mat-icon>info</mat-icon>
+            Configuration Actuelle
+          </h2>
+          
+          <mat-card class="summary-card">
+            <div class="summary-grid">
+              <div class="summary-item">
+                <span class="summary-label">Dernière modification:</span>
+                <span class="summary-value">{{ currentConfig.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Statut:</span>
+                <span class="summary-value">
+                  <mat-chip [color]="currentConfig.isActive ? 'primary' : 'warn'">
+                    {{ currentConfig.isActive ? 'Active' : 'Inactive' }}
+                  </mat-chip>
+                </span>
+              </div>
+            </div>
+          </mat-card>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions-section">
+          <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading">
+            Annuler
+          </button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="configForm.invalid || isLoading">
+            <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+            <span *ngIf="!isLoading">Enregistrer la Configuration</span>
+          </button>
+        </div>
+      </form>
+    </mat-card>
+  </div>
+</div>

@@ -298,3 +298,42 @@ app-student-chat {
   width: 100%;
   height: 100%;
 }
+
+
+
+.payment-dialog-panel .mat-dialog-container {
+  padding: 0 !important;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.cdk-overlay-dark-backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* Snackbar Styles */
+.success-snackbar {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.error-snackbar {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.warning-snackbar {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.info-snackbar {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.mat-snack-bar-container {
+  border-radius: 8px;
+  font-weight: 500;
+} 
