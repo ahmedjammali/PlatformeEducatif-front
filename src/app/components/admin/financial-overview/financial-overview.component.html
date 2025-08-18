@@ -1,0 +1,197 @@
+<!-- financial-overview.component.html -->
+<div class="financial-overview-container">
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Chargement des données financières...</p>
+  </div>
+
+  <!-- Header Section -->
+  <div class="overview-header">
+    <div class="header-title">
+      <button class="btn-back" (click)="goBack()" title="Retour">
+        <span class="back-icon">←</span>
+      </button>
+      <h2>
+        <span class="title-icon">💰</span>
+        Aperçu Financier
+        <span class="academic-year-badge">{{ academicYear }}</span>
+      </h2>
+      <p class="header-subtitle">Suivi des revenus et taux de collecte</p>
+    </div>
+    
+    <div class="header-actions">
+      <button class="btn btn-back-text" (click)="navigateToPaymentManagement()">
+        <span class="btn-icon">📋</span>
+        Gestion des Paiements
+      </button>
+      <button class="btn btn-refresh" (click)="refreshDashboard()" [disabled]="isLoading">
+        <span class="btn-icon">🔄</span>
+        Actualiser
+      </button>
+
+      <button class="btn btn-print" (click)="printFinancialOverview()" [disabled]="isLoading">
+        <span class="btn-icon">🖨️</span>
+        Imprimer
+      </button>
+    </div>
+  </div>
+
+  <!-- Financial Overview Content -->
+  <div class="financial-content" *ngIf="dashboard && !isLoading">
+    <!-- Collection Rate Section -->
+    <div class="collection-rate-section">
+      <div class="rate-display">
+        <span class="rate-label">Taux de collecte global</span>
+        <span 
+          class="rate-value" 
+          [class]="getCollectionRateClass()">
+          {{ dashboard.overview.collectionRate }}%
+        </span>
+      </div>
+      
+      <div class="progress-section">
+        <div class="progress-bar">
+          <div 
+            class="progress-fill" 
+            [style.width.%]="getCollectionRateNumber()">
+          </div>
+        </div>
+        <span class="progress-text">{{ getCollectionRateNumber() }}% collecté</span>
+      </div>
+    </div>
+
+    <!-- Revenue Cards -->
+    <div class="revenue-cards">
+      <div class="revenue-card collected">
+        <div class="revenue-info">
+          <span class="revenue-label">Montant Collecté</span>
+          <span class="revenue-amount">{{ formatCurrency(dashboard.overview.totalRevenue) }}</span>
+          <span class="revenue-subtitle">Revenus encaissés</span>
+        </div>
+        <span class="revenue-icon">💰</span>
+      </div>
+
+      <div class="revenue-card expected">
+        <div class="revenue-info">
+          <span class="revenue-label">Montant Attendu</span>
+          <span class="revenue-amount">{{ formatCurrency(dashboard.overview.expectedRevenue) }}</span>
+          <span class="revenue-subtitle">Revenus prévus</span>
+        </div>
+        <span class="revenue-icon">📊</span>
+      </div>
+
+      <div class="revenue-card outstanding">
+        <div class="revenue-info">
+          <span class="revenue-label">Montant Restant</span>
+          <span class="revenue-amount">{{ formatCurrency(dashboard.overview.outstandingAmount) }}</span>
+          <span class="revenue-subtitle">À collecter</span>
+        </div>
+        <span class="revenue-icon">⏳</span>
+      </div>
+    </div>
+
+    <!-- Financial Summary Stats -->
+    <div class="financial-summary">
+      <div class="summary-grid">
+        <div class="summary-stat">
+          <span class="stat-icon">👥</span>
+          <div class="stat-info">
+            <span class="stat-value">{{ dashboard.overview.totalStudents }}</span>
+            <span class="stat-label">Total Étudiants</span>
+          </div>
+        </div>
+
+        <div class="summary-stat">
+          <span class="stat-icon">✅</span>
+          <div class="stat-info">
+            <span class="stat-value">{{ dashboard.overview.studentsWithPayments }}</span>
+            <span class="stat-label">Avec Dossiers</span>
+          </div>
+        </div>
+
+        <div class="summary-stat">
+          <span class="stat-icon">❓</span>
+          <div class="stat-info">
+            <span class="stat-value">{{ dashboard.overview.studentsWithoutPayments }}</span>
+            <span class="stat-label">Sans Dossiers</span>
+          </div>
+        </div>
+
+        <div class="summary-stat">
+          <span class="stat-icon">📈</span>
+          <div class="stat-info">
+            <span class="stat-value">{{ getCollectionRateNumber() }}%</span>
+            <span class="stat-label">Taux de Réussite</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Class Group Statistics -->
+    <div class="class-group-section" *ngIf="hasClassGroupStats()">
+      <h3>
+        <span class="section-icon">🎓</span>
+        Statistiques par Niveau
+      </h3>
+      
+      <div class="class-stats-grid">
+        <div 
+          class="class-stat-card" 
+          *ngFor="let item of getClassGroupStatsArray()"
+          [class]="'card-' + item.key">
+          
+          <div class="class-stat-header">
+            <span class="class-icon">{{ getClassGroupIcon(item.key) }}</span>
+            <span class="class-label">{{ getClassGroupLabel(item.key) }}</span>
+          </div>
+          
+          <div class="class-stat-content">
+            <div class="stat-row">
+              <span class="stat-label">Étudiants</span>
+              <span class="stat-value">{{ item.value.count }}</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Revenus</span>
+              <span class="stat-value revenue">{{ formatCurrency(item.value.revenue) }}</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Moyenne par étudiant</span>
+              <span class="stat-value average">
+                {{ formatCurrency(item.value.revenue / item.value.count) }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="class-stat-progress">
+            <div class="mini-progress-bar">
+              <div 
+                class="mini-progress-fill"
+                [style.width.%]="(item.value.count / dashboard.overview.totalStudents) * 100">
+              </div>
+            </div>
+            <span class="progress-label">
+              {{ ((item.value.count / dashboard.overview.totalStudents) * 100) | number:'1.0-0' }}% du total
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="!dashboard && !isLoading">
+    <div class="error-content">
+      <span class="error-icon">⚠️</span>
+      <h3>Erreur de chargement</h3>
+      <p>Impossible de charger les données financières. Veuillez réessayer.</p>
+      <div class="error-actions">
+        <button class="btn btn-primary" (click)="refreshDashboard()">
+          <span class="btn-icon">🔄</span>
+          Réessayer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

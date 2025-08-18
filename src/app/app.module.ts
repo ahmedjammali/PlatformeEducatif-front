@@ -7,7 +7,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
+
+// Services
 import { AuthService } from './services/auth.service';
 import { UserService } from './services/user.service';
 import { SchoolService } from './services/school.service';
@@ -16,30 +17,52 @@ import { ClassService } from './services/class.service';
 import { ExerciseService } from './services/exercise.service';
 import { GradeService } from './services/grade.service';
 import { ProgressService } from './services/progress.service';
+import { ContactService } from './services/contact.service';
+import { PaymentService } from './services/payment.service'; // Added PaymentService
+
+// Guards
 import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
 import { SuperAdminGuard } from './guards/superadmin.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { TeacherGuard } from './guards/teacher.guard';
 import { StudentGuard } from './guards/student.guard';
+
+// Interceptors
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { ErrorInterceptor } from './interceptors/error.interceptor';
-import { MatButtonModule } from '@angular/material/button';
 
+// Angular Material Modules
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDialogModule } from '@angular/material/dialog';
-
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
 import { MatMenuModule } from '@angular/material/menu';
+
+// Additional Material Modules for Payment Features
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { MatSelectModule } from '@angular/material/select';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatExpansionModule } from '@angular/material/expansion';
+
+// Existing Components
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { LandingPageComponent } from './components/landing-page/landing-page.component';
-import { ContactService } from './services/contact.service';
 import { LoginComponent } from './components/login/login.component';
 import { DashboardComponent } from './components/admin/dashboard/dashboard.component';
 import { UsersComponent } from './components/admin/users/users.component';
@@ -74,11 +97,12 @@ import { AdminDashboardComponent } from './components/admin/admin-dashboard/admi
 import { StudentLayoutComponent } from './components/student/student-layout/student-layout.component';
 import { StudentNotificationsComponent } from './components/student/student-notifications/student-notifications.component';
 import { StudentChatComponent } from './components/student/student-chat/student-chat.component';
-// import { PaymentManagementComponent } from './components/admin/payment-management/payment-management.component';
-// import { PaymentDialogComponent } from './components/admin/payment-dialog/payment-dialog.component';
-// import { PaymentConfigComponent } from './components/admin/payment-config/payment-config.component';
 
-
+// Payment Components (Added)
+import { PaymentManagementComponent } from './components/admin/payment-management/payment-management.component';
+import { PaymentDialogComponent } from './components/admin/payment-dialog/payment-dialog.component';
+import { PaymentConfigComponent } from './components/admin/payment-config/payment-config.component';
+import { FinancialOverviewComponent } from './components/admin/financial-overview/financial-overview.component';
 
 
 const MaterialModules = [
@@ -91,7 +115,21 @@ const MaterialModules = [
   MatIconModule,
   MatToolbarModule,
   MatCardModule,
-  MatMenuModule
+  MatMenuModule,
+  // Additional Material Modules for Payment Features
+  MatTableModule,
+  MatPaginatorModule,
+  MatSortModule,
+  MatSelectModule,
+  MatProgressBarModule,
+  MatChipsModule,
+  MatTooltipModule,
+  MatDatepickerModule,
+  MatNativeDateModule,
+  MatTabsModule,
+  MatBadgeModule,
+  MatCheckboxModule,
+  MatExpansionModule
 ];
 
 @NgModule({
@@ -134,25 +172,25 @@ const MaterialModules = [
     StudentLayoutComponent,
     StudentNotificationsComponent,
     StudentChatComponent,
-
-
-
+    // Payment Components (Added)
+    PaymentManagementComponent,
+    PaymentDialogComponent,
+    PaymentConfigComponent,
+    FinancialOverviewComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
-    BrowserAnimationsModule , 
+    BrowserAnimationsModule,
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
     RouterModule.forRoot([]),
-
-    
     // Material Modules
     ...MaterialModules
   ],
   providers: [
-        // Services
+    // Services
     AuthService,
     UserService,
     SchoolService,
@@ -162,6 +200,7 @@ const MaterialModules = [
     GradeService,
     ProgressService,
     ContactService,
+    PaymentService, // Added PaymentService
     
     // Guards
     AuthGuard,

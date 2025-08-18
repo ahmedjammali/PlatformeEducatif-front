@@ -34,6 +34,9 @@ import { AdminDashboardComponent } from './components/admin/admin-dashboard/admi
 import { StudentLayoutComponent } from './components/student/student-layout/student-layout.component';
 import { StudentNotificationsComponent } from './components/student/student-notifications/student-notifications.component';
 import { StudentChatComponent } from './components/student/student-chat/student-chat.component';
+import { PaymentManagementComponent } from './components/admin/payment-management/payment-management.component';
+import { PaymentConfigComponent } from './components/admin/payment-config/payment-config.component';
+import { FinancialOverviewComponent } from './components/admin/financial-overview/financial-overview.component';
 
 const routes: Routes = [
   { path: '', component: LandingPageComponent },
@@ -55,9 +58,20 @@ const routes: Routes = [
       { path: 'contact', component: ContactComponent },
       { path: 'grades', component: GradesComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' } , 
+      // Payment Routes (Added)
+      { 
+        path: 'payments', 
+        component: PaymentManagementComponent,
+        data: { title: 'Payment Management' }
+      },
       {
-        path: 'payments',
-        loadChildren: () => import('./modules/payment.module').then(m => m.PaymentModule)
+            path: 'payments/financial-overview',
+            component: FinancialOverviewComponent
+          },
+      { 
+        path: 'payments/config', 
+        component: PaymentConfigComponent,
+        data: { title: 'Payment Configuration' }
       }
     ]
   },

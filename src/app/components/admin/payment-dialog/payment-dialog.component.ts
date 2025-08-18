@@ -1,7 +1,5 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { PaymentService } from '../../../services/payment.service';
 import { StudentWithPayment, MonthlyPayment, RecordPaymentRequest } from '../../../models/payment.model';
 
@@ -18,39 +16,50 @@ export interface PaymentDialogData {
   styleUrls: ['./payment-dialog.component.css']
 })
 export class PaymentDialogComponent implements OnInit {
+  @Input() data!: PaymentDialogData;
+  @Output() dialogClosed = new EventEmitter<any>();
+
   paymentForm: FormGroup;
   isLoading = false;
   selectedMonth: MonthlyPayment | null = null;
+  
   paymentMethods = [
-    { value: 'cash', label: 'Espèces', icon: 'payments' },
-    { value: 'check', label: 'Chèque', icon: 'receipt' },
-    { value: 'bank_transfer', label: 'Virement', icon: 'account_balance' },
-    { value: 'online', label: 'En ligne', icon: 'credit_card' }
+    { value: 'cash', label: 'Espèces', icon: '💵' },
+    { value: 'check', label: 'Chèque', icon: '📝' },
+    { value: 'bank_transfer', label: 'Virement', icon: '🏦' },
+    { value: 'online', label: 'En ligne', icon: '💳' }
   ];
 
+  // Create a mock dialogRef for compatibility
+  dialogRef = {
+    close: (result?: any) => {
+      this.dialogClosed.emit(result);
+    }
+  };
+
   constructor(
-    public dialogRef: MatDialogRef<PaymentDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: PaymentDialogData,
     private fb: FormBuilder,
-    private paymentService: PaymentService,
-    private snackBar: MatSnackBar
+    private paymentService: PaymentService
   ) {
     this.paymentForm = this.createForm();
   }
 
   ngOnInit(): void {
-    if (this.data.type === 'monthly' && this.data.monthIndex !== undefined) {
-      this.selectedMonth = this.data.student.paymentRecord?.monthlyPayments[this.data.monthIndex] || null;
+    if (!this.data) {
+      console.error('PaymentDialogComponent: data input is required');
+      return;
     }
+    
     this.setupFormDefaults();
+    this.setupFormValidation();
   }
 
   private createForm(): FormGroup {
     return this.fb.group({
       monthIndex: [null],
-      amount: [0, [Validators.required, Validators.min(1)]],
+      amount: [0, [Validators.required, Validators.min(0.01)]],
       paymentMethod: ['cash', Validators.required],
-      paymentDate: [new Date(), Validators.required],
+      paymentDate: [this.formatDateForInput(new Date()), Validators.required],
       receiptNumber: [''],
       notes: [''],
       discount: [0, [Validators.min(0)]]
@@ -58,12 +67,16 @@ export class PaymentDialogComponent implements OnInit {
   }
 
   private setupFormDefaults(): void {
-    if (this.data.type === 'monthly' && this.selectedMonth) {
-      const remainingAmount = this.selectedMonth.amount - this.selectedMonth.paidAmount;
-      this.paymentForm.patchValue({
-        monthIndex: this.data.monthIndex,
-        amount: remainingAmount
-      });
+    if (this.data.type === 'monthly' && this.data.monthIndex !== undefined) {
+      const month = this.data.student.paymentRecord?.monthlyPayments[this.data.monthIndex];
+      if (month) {
+        this.selectedMonth = month;
+        const remainingAmount = month.amount - month.paidAmount;
+        this.paymentForm.patchValue({
+          monthIndex: this.data.monthIndex,
+          amount: remainingAmount
+        });
+      }
     } else if (this.data.type === 'annual' && this.data.student.paymentRecord) {
       this.paymentForm.patchValue({
         amount: this.data.student.paymentRecord.remainingAmount
@@ -71,13 +84,41 @@ export class PaymentDialogComponent implements OnInit {
     }
   }
 
-  getUnpaidMonths(): MonthlyPayment[] {
-    if (!this.data.student.paymentRecord) return [];
-    return this.data.student.paymentRecord.monthlyPayments.filter(m => m.status !== 'paid');
+  private setupFormValidation(): void {
+    // Custom validation for amount based on available balance
+    this.paymentForm.get('amount')?.valueChanges.subscribe(amount => {
+      if (this.selectedMonth && amount > (this.selectedMonth.amount - this.selectedMonth.paidAmount)) {
+        this.paymentForm.get('amount')?.setErrors({ 
+          exceedsBalance: { 
+            max: this.selectedMonth.amount - this.selectedMonth.paidAmount,
+            actual: amount 
+          }
+        });
+      }
+    });
   }
 
-  onMonthSelect(monthIndex: number): void {
-    const month = this.data.student.paymentRecord?.monthlyPayments[monthIndex];
+  getUnpaidMonths(): MonthlyPayment[] {
+    if (!this.data.student.paymentRecord) return [];
+    return this.data.student.paymentRecord.monthlyPayments
+      .filter(m => m.status !== 'paid')
+      .sort((a, b) => a.month - b.month);
+  }
+
+  getMonthIndex(month: MonthlyPayment): number {
+    if (!this.data.student.paymentRecord) return -1;
+    return this.data.student.paymentRecord.monthlyPayments.findIndex(m => 
+      m.month === month.month && m.monthName === month.monthName
+    );
+  }
+
+  onMonthSelect(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const monthIndex = parseInt(target.value);
+    
+    if (isNaN(monthIndex) || !this.data.student.paymentRecord) return;
+    
+    const month = this.data.student.paymentRecord.monthlyPayments[monthIndex];
     if (month) {
       this.selectedMonth = month;
       const remainingAmount = month.amount - month.paidAmount;
@@ -88,15 +129,32 @@ export class PaymentDialogComponent implements OnInit {
     }
   }
 
+  selectPaymentMethod(method: string): void {
+    this.paymentForm.patchValue({ paymentMethod: method });
+  }
+
   calculateTotal(): number {
     const amount = this.paymentForm.get('amount')?.value || 0;
-    const discount = this.paymentForm.get('discount')?.value || 0;
+    const discount = this.data.type === 'annual' ? (this.paymentForm.get('discount')?.value || 0) : 0;
     return Math.max(0, amount - discount);
+  }
+
+  calculateNewBalance(): number {
+    if (!this.data.student.paymentRecord) return 0;
+    const currentRemaining = this.data.student.paymentRecord.remainingAmount;
+    const paymentAmount = this.calculateTotal();
+    return Math.max(0, currentRemaining - paymentAmount);
   }
 
   onSubmit(): void {
     if (this.paymentForm.invalid) {
       this.markFormGroupTouched(this.paymentForm);
+      this.showMessage('Veuillez corriger les erreurs dans le formulaire', 'error');
+      return;
+    }
+
+    // Validate payment amount
+    if (!this.validatePaymentAmount()) {
       return;
     }
 
@@ -108,8 +166,8 @@ export class PaymentDialogComponent implements OnInit {
       amount: formValue.amount,
       paymentMethod: formValue.paymentMethod,
       paymentDate: formValue.paymentDate,
-      notes: formValue.notes,
-      receiptNumber: formValue.receiptNumber
+      notes: formValue.notes?.trim() || undefined,
+      receiptNumber: formValue.receiptNumber?.trim() || undefined
     };
 
     if (this.data.type === 'monthly') {
@@ -118,33 +176,86 @@ export class PaymentDialogComponent implements OnInit {
       this.paymentService.recordMonthlyPayment(studentId, paymentRequest, this.data.academicYear)
         .subscribe({
           next: (response) => {
-            this.showSnackBar('Paiement mensuel enregistré avec succès', 'success');
-            this.dialogRef.close(response);
+            this.showMessage('Paiement mensuel enregistré avec succès', 'success');
+            this.dialogRef.close({
+              success: true,
+              paymentRecord: response,
+              type: 'monthly'
+            });
           },
           error: (error) => {
-            this.showSnackBar(error.error?.message || 'Erreur lors de l\'enregistrement', 'error');
+            console.error('Error recording monthly payment:', error);
+            this.showMessage(error.error?.message || 'Erreur lors de l\'enregistrement du paiement', 'error');
             this.isLoading = false;
           }
         });
     } else {
-      paymentRequest.discount = formValue.discount;
+      paymentRequest.discount = formValue.discount || 0;
       
       this.paymentService.recordAnnualPayment(studentId, paymentRequest, this.data.academicYear)
         .subscribe({
           next: (response) => {
-            this.showSnackBar('Paiement annuel enregistré avec succès', 'success');
-            this.dialogRef.close(response);
+            this.showMessage('Paiement annuel enregistré avec succès', 'success');
+            this.dialogRef.close({
+              success: true,
+              paymentRecord: response,
+              type: 'annual'
+            });
           },
           error: (error) => {
-            this.showSnackBar(error.error?.message || 'Erreur lors de l\'enregistrement', 'error');
+            console.error('Error recording annual payment:', error);
+            this.showMessage(error.error?.message || 'Erreur lors de l\'enregistrement du paiement', 'error');
             this.isLoading = false;
           }
         });
     }
   }
 
+  private validatePaymentAmount(): boolean {
+    const amount = this.paymentForm.get('amount')?.value || 0;
+    
+    if (amount <= 0) {
+      this.showMessage('Le montant doit être supérieur à zéro', 'error');
+      return false;
+    }
+
+    if (this.data.type === 'monthly' && this.selectedMonth) {
+      const maxAmount = this.selectedMonth.amount - this.selectedMonth.paidAmount;
+      if (amount > maxAmount) {
+        this.showMessage(`Le montant ne peut pas dépasser ${this.formatCurrency(maxAmount)}`, 'error');
+        return false;
+      }
+    }
+
+    if (this.data.student.paymentRecord && amount > this.data.student.paymentRecord.remainingAmount) {
+      this.showMessage('Le montant dépasse le solde restant de l\'étudiant', 'error');
+      return false;
+    }
+
+    return true;
+  }
+
   onCancel(): void {
-    this.dialogRef.close();
+    this.dialogRef.close({ success: false });
+  }
+
+  // Form validation helpers
+  isFieldInvalid(fieldPath: string): boolean {
+    const field = this.paymentForm.get(fieldPath);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  getFieldError(fieldPath: string): string {
+    const field = this.paymentForm.get(fieldPath);
+    if (field && field.errors && (field.dirty || field.touched)) {
+      if (field.errors['required']) return 'Ce champ est requis';
+      if (field.errors['min']) return `La valeur minimum est ${field.errors['min'].min}`;
+      if (field.errors['exceedsBalance']) {
+        const error = field.errors['exceedsBalance'];
+        return `Le montant ne peut pas dépasser ${this.formatCurrency(error.max)}`;
+      }
+    }
+    return '';
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
@@ -157,16 +268,52 @@ export class PaymentDialogComponent implements OnInit {
     });
   }
 
-  private showSnackBar(message: string, type: 'success' | 'error'): void {
-    this.snackBar.open(message, 'Fermer', {
-      duration: 4000,
-      horizontalPosition: 'end',
-      verticalPosition: 'top',
-      panelClass: [`${type}-snackbar`]
-    });
+  getStatusLabel(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'pending': 'En attente',
+      'partial': 'Partiel',
+      'paid': 'Payé',
+      'overdue': 'En retard'
+    };
+    return statusMap[status] || status;
   }
 
   formatCurrency(amount: number): string {
     return this.paymentService.formatCurrency(amount);
+  }
+
+  private formatDateForInput(date: Date): string {
+    return date.toISOString().split('T')[0];
+  }
+
+  private showMessage(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
+    console.log(`${type.toUpperCase()}: ${message}`);
+    
+    if (type === 'error') {
+      alert(`Erreur: ${message}`);
+    } else if (type === 'success') {
+      // Create a simple success toast
+      const toast = document.createElement('div');
+      toast.textContent = message;
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        z-index: 9999;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      `;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast);
+        }
+      }, 3000);
+    }
   }
 }
