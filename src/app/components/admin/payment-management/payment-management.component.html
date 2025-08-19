@@ -1,34 +1,126 @@
-<!-- payment-management.component.html (Updated) -->
+<!-- payment-management.component.html (Updated with Delete All Button and Fixed Class Filter) -->
 <div class="payment-management-container">
   <!-- Header Section -->
   <header class="header-section">
-    <div class="header-content">
+    <!-- Title and Academic Year Row -->
+    <div class="header-top">
       <div class="title-section">
-        <h1 class="page-title">
+        <div class="title-content">
           <span class="title-icon">💳</span>
-          Gestion des Paiements
-          <span class="academic-year-badge">{{ currentAcademicYear }}</span>
-        </h1>
-        <p class="page-subtitle">Gérez les paiements de tous vos étudiants de manière efficace</p>
+          <div class="title-wrapper">
+            <h1 class="title-text">Gestion des Paiements</h1>
+            <p class="subtitle-text">Gérez les paiements de tous vos étudiants de manière efficace et centralisée</p>
+          </div>
+        </div>
+        <div class="academic-year-badge">
+          <span class="year-label">Année Académique</span>
+          <span class="year-value">{{ currentAcademicYear }}</span>
+        </div>
       </div>
+    </div>
+    
+    <!-- Actions and Quick Stats Row -->
+    <div class="header-bottom">
+     
       
-      <div class="header-actions">
-        <button class="btn btn-financial" (click)="navigateToFinancialOverview()">
-          <span class="btn-icon">💰</span>
-          Aperçu Financier
-        </button>
-        <button class="btn btn-config" (click)="navigateToConfig()">
-          <span class="btn-icon">⚙️</span>
-          Configuration
-        </button>
-        <button class="btn btn-generate" (click)="bulkGeneratePayments()" [disabled]="isLoading">
-          <span class="btn-icon">✨</span>
-          Générer en masse
-        </button>
-        <button class="btn btn-update" (click)="updateExistingPayments()" [disabled]="isLoading" *ngIf="paymentConfig">
-          <span class="btn-icon">🔄</span>
-          Mettre à jour
-        </button>
+      <!-- Enhanced Action Buttons -->
+      <div class="actions-section">
+        <!-- Navigation Buttons -->
+        <div class="nav-actions">
+
+          
+          <button class="btn-action btn-config" (click)="navigateToConfig()" title="Configurer les tarifs et paramètres">
+            <div class="btn-icon-wrapper">
+              <span class="btn-icon">⚙️</span>
+            </div>
+            <div class="btn-content">
+              <span class="btn-title">Configuration</span>
+              <span class="btn-description">Tarifs et paramètres</span>
+            </div>
+          </button>
+
+          <button 
+            class="btn-action btn-generate" 
+            (click)="bulkGeneratePayments()" 
+            [disabled]="isLoading || getStudentsWithoutRecord() === 0" 
+            [class.btn-loading]="isLoading"
+            title="Créer automatiquement des dossiers de paiement pour les étudiants qui n'en ont pas">
+            
+            <div class="btn-icon-wrapper">
+              <div class="loading-spinner" *ngIf="isLoading"></div>
+              <span class="btn-icon" *ngIf="!isLoading">🎯</span>
+            </div>
+            
+            <div class="btn-content">
+              <span class="btn-title">Créer Dossiers</span>
+              <span class="btn-description" *ngIf="getStudentsWithoutRecord() > 0">
+                {{getStudentsWithoutRecord()}} étudiant(s) sans dossier
+              </span>
+              <span class="btn-description" *ngIf="getStudentsWithoutRecord() === 0">
+                ✓ Tous les dossiers créés
+              </span>
+            </div>
+            
+            <div class="btn-tooltip">
+              <strong>Génération automatique</strong><br>
+              Crée un dossier de paiement personnalisé pour chaque étudiant selon sa classe et les tarifs configurés
+            </div>
+          </button>
+
+          <!-- Update Payment Amounts Button -->
+          <button 
+            class="btn-action btn-update" 
+            (click)="updateExistingPayments()" 
+            [disabled]="isLoading || !paymentConfig" 
+            [class.btn-loading]="isLoading" 
+            *ngIf="paymentConfig"
+            title="Mettre à jour les montants selon la nouvelle configuration">
+            
+            <div class="btn-icon-wrapper">
+              <div class="loading-spinner" *ngIf="isLoading"></div>
+              <span class="btn-icon" *ngIf="!isLoading">🔄</span>
+            </div>
+            
+            <div class="btn-content">
+              <span class="btn-title">Actualiser Tarifs</span>
+              <span class="btn-description">Appliquer la nouvelle configuration</span>
+            </div>
+            
+            <div class="btn-tooltip">
+              <strong>Mise à jour des montants</strong><br>
+              Met à jour tous les dossiers existants avec les nouveaux tarifs configurés
+            </div>
+          </button>
+
+          <!-- NEW: Delete All Payment Records Button -->
+          <button 
+            class="btn-action btn-delete-all" 
+            (click)="deleteAllPaymentRecords()" 
+            [disabled]="isLoading || getStudentsWithRecord() === 0" 
+            [class.btn-loading]="isLoading"
+            title="Supprimer tous les dossiers de paiement existants">
+            
+            <div class="btn-icon-wrapper">
+              <div class="loading-spinner" *ngIf="isLoading"></div>
+              <span class="btn-icon" *ngIf="!isLoading">🗑️</span>
+            </div>
+            
+            <div class="btn-content">
+              <span class="btn-title">Supprimer Tous</span>
+              <span class="btn-description" *ngIf="getStudentsWithRecord() > 0">
+                {{getStudentsWithRecord()}} dossier(s) existant(s)
+              </span>
+              <span class="btn-description" *ngIf="getStudentsWithRecord() === 0">
+                Aucun dossier à supprimer
+              </span>
+            </div>
+            
+            <div class="btn-tooltip">
+              <strong>Suppression totale</strong><br>
+              Supprime définitivement tous les dossiers de paiement existants. Cette action est irréversible.
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   </header>
@@ -36,7 +128,6 @@
   <!-- Dashboard Cards -->
   <section class="dashboard-section" *ngIf="dashboard">
     <div class="stats-container">
-      <!-- Overview Stats -->
       <div class="stats-grid">
         <div class="stat-card total-students">
           <div class="stat-header">
@@ -86,7 +177,8 @@
           </div>
         </div>
       </div>
-
+    </div>
+  </section>
 
   <!-- Filters Section -->
   <section class="filters-section">
@@ -159,6 +251,7 @@
             </select>
           </div>
 
+          <!-- FIXED: Class Filter -->
           <div class="form-group">
             <label for="classId">Classe</label>
             <select 
@@ -167,8 +260,8 @@
               (change)="onClassIdChange($event)"
               class="form-select">
               <option value="">Toutes les classes</option>
-              <option *ngFor="let class of classes" [value]="class._id">
-                {{ class.name }} ({{ class.grade }})
+              <option *ngFor="let classItem of getFilteredClasses()" [value]="classItem._id">
+                {{ classItem.name }} ({{ classItem.grade }})
               </option>
             </select>
           </div>
@@ -369,7 +462,7 @@
                         class="action-btn details"
                         title="Voir détails"
                         *ngIf="student.hasPaymentRecord"
-                                              (click)="toggleExpandRow(student)" >
+                        (click)="toggleExpandRow(student)">
                         <span class="btn-icon">👁️</span>
                       </button>
 
@@ -572,6 +665,83 @@
         [data]="currentDialogData"
         (dialogClosed)="closePaymentDialog($event)">
       </app-payment-dialog>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" *ngIf="confirmationState.isOpen" [@fadeIn] (click)="onConfirmationCancel()">
+    <div class="modal-container" (click)="$event.stopPropagation()" [@slideIn]>
+      <div class="modal-header" [class]="'modal-header-' + (confirmationState.config?.type || 'info')">
+        <div class="modal-icon">
+          <span>{{ confirmationState.config?.icon || getDefaultConfirmationIcon() }}</span>
+        </div>
+        <h3 class="modal-title">{{ confirmationState.config?.title || 'Confirmation' }}</h3>
+      </div>
+      
+      <div class="modal-body">
+        <p class="modal-message">{{ confirmationState.config?.message }}</p>
+      </div>
+      
+      <div class="modal-footer">
+        <button 
+          class="btn btn-secondary" 
+          (click)="onConfirmationCancel()"
+          type="button">
+          {{ confirmationState.config?.cancelText || 'Annuler' }}
+        </button>
+        <button 
+          class="btn"
+          [class]="'btn-' + (confirmationState.config?.type || 'primary')"
+          (click)="onConfirmationConfirm()"
+          type="button">
+          {{ confirmationState.config?.confirmText || 'Confirmer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toaster Container -->
+  <div class="toaster-container">
+    <div *ngFor="let toast of toasts" 
+         class="toast" 
+         [class]="'toast-' + toast.type"
+         [@slideInOut]>
+      <div class="toast-content">
+        <div class="toast-icon">
+          <!-- Success Icon -->
+          <svg *ngIf="toast.type === 'success'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <!-- Error Icon -->
+          <svg *ngIf="toast.type === 'error'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <!-- Warning Icon -->
+          <svg *ngIf="toast.type === 'warning'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <!-- Info Icon -->
+          <svg *ngIf="toast.type === 'info'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+        </div>
+        <div class="toast-message">
+          <div class="toast-title" *ngIf="toast.title">{{ toast.title }}</div>
+          <div class="toast-text">{{ toast.message }}</div>
+        </div>
+        <button class="toast-close" (click)="removeToast(toast.id)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </div>

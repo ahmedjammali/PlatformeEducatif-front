@@ -288,28 +288,32 @@ export class PaymentService extends BaseService {
   }
 
   // ===== UTILITY METHODS =====
-  getAcademicYears(): string[] {
-    const currentYear = new Date().getFullYear();
-    const years: string[] = [];
-    for (let i = 0; i < 5; i++) {
-      const year = currentYear - i;
-      years.push(`${year}-${year + 1}`);
-    }
-    return years;
+getAcademicYears(): string[] {
+  const currentYear = new Date().getFullYear();
+  const years: string[] = [];
+  
+  // Include past 2 years, current year, and next 3 years
+  // This ensures we can create configurations for future years
+  for (let i = 0; i <= 3; i++) {
+    const year = currentYear + i;
+    years.push(`${year}-${year + 1}`);
   }
+  return years;
+}
 
-  getCurrentAcademicYear(): string {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth() + 1;
-    
-    // If we're in months 1-8 (Jan-Aug), we're in the second half of the academic year
-    if (currentMonth < 7) {
-      return `${currentYear - 1}-${currentYear}`;
-    }
-    // If we're in months 9-12 (Sep-Dec), we're in the first half of the academic year
-    return `${currentYear}-${currentYear + 1}`;
+getCurrentAcademicYear(): string {
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+  
+  // Academic year typically starts in September
+  // If we're in months 1-7 (Jan-July), we're in the second half of the academic year
+  if (currentMonth < 8) {
+    return `${currentYear - 1}-${currentYear}`;
   }
+  // If we're in months 8-12 (Aug-Dec), we're in the first half of the academic year
+  return `${currentYear}-${currentYear + 1}`;
+}
 
   getPaymentStatusColor(status: string): string {
     const colorMap: { [key: string]: string } = {
@@ -453,4 +457,30 @@ export class PaymentService extends BaseService {
       { value: 'collection', label: 'Collecte', description: 'Analyse des collectes par date et méthode' }
     ];
   }
+  deleteAllPaymentRecords(academicYear?: string): Observable<{
+  message: string;
+  results: {
+    deleted: number;
+    errors: Array<{
+      studentId: string;
+      error: string;
+    }>;
+  };
+}> {
+  return this.http.delete<{
+    message: string;
+    results: {
+      deleted: number;
+      errors: Array<{
+        studentId: string;
+        error: string;
+      }>;
+    };
+  }>(
+    `${this.apiUrl}${this.endpoint}/bulk/delete-all`,
+    { 
+      body: { academicYear }
+    }
+  );
+}
 }

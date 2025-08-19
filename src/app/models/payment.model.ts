@@ -119,11 +119,11 @@ export interface PaymentDashboard {
     };
   };
 }
-
 export interface PaymentFilters {
   search?: string;
   paymentStatus?: 'pending' | 'partial' | 'completed' | 'overdue' | 'no_record';
-  classGroup?: 'école' | 'college' | 'lycée';  // Updated class group values
+  classGroup?: 'école' | 'college' | 'lycée';
+  classId?: string;  // ADD THIS LINE
   academicYear?: string;
   page?: number;
   limit?: number;

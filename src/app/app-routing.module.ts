@@ -67,7 +67,7 @@ const routes: Routes = [
       {
             path: 'payments/financial-overview',
             component: FinancialOverviewComponent
-          },
+      },
       { 
         path: 'payments/config', 
         component: PaymentConfigComponent,

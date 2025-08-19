@@ -149,7 +149,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'notifications': '/admin/notifications',
       'grades': '/admin/grades',
       'contact': '/admin/contact',
-      'schools': '/superadmin/schools'
+      'schools': '/superadmin/schools',
+      'payments': '/admin/payments',
+      'Aperçu Financier' : '/admin/payments/financial-overview',
     };
 
     const targetRoute = routeMap[route];
@@ -177,7 +179,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'grades': 'Notes des Étudiants',
       'contact': 'Contact',
       'reports': 'Rapports et Statistiques',
-      'schools': 'Gestion de l\'École'
+      'schools': 'Gestion de l\'École',
+      'payments': 'Gestion des Paiements',
+      'Aperçu Financier': 'Aperçu Financier',
     };
     
     return titles[this.activeRoute] || 'Tableau de Bord';
@@ -386,25 +390,26 @@ export class LayoutComponent implements OnInit, OnDestroy {
       });
   }
 
-  private setActiveRoute(): void {
-    const currentUrl = this.router.url;
-    
-    // More robust route detection
-    const routes = [
-      { path: '/users', route: 'users' },
-      { path: '/classes', route: 'classes' },
-      { path: '/subjects', route: 'subjects' },
-      { path: '/notifications', route: 'notifications' },
-      { path: '/grades', route: 'grades' },
-      { path: '/contact', route: 'contact' },
-      { path: '/reports', route: 'reports' },
-      { path: '/schools', route: 'schools' }
-    ];
+private setActiveRoute(): void {
+  const currentUrl = this.router.url;
+  
+  // More robust route detection - ADD PAYMENTS ROUTE
+  const routes = [
+    { path: '/users', route: 'users' },
+    { path: '/classes', route: 'classes' },
+    { path: '/subjects', route: 'subjects' },
+    { path: '/notifications', route: 'notifications' },
+    { path: '/grades', route: 'grades' },
+    { path: '/contact', route: 'contact' },
+    { path: '/payments', route: 'payments' }, // ADD THIS LINE
+    { path: '/reports', route: 'reports' },
+    { path: '/schools', route: 'schools' },
+    {path : '/payments/financial-overview', route: 'Aperçu Financier' }, // ADD THIS LINE
+  ];
 
-    const activeRoute = routes.find(r => currentUrl.includes(r.path));
-    this.activeRoute = activeRoute ? activeRoute.route : 'dashboard';
-  }
-
+  const activeRoute = routes.find(r => currentUrl.includes(r.path));
+  this.activeRoute = activeRoute ? activeRoute.route : 'dashboard';
+}
   private setupMessageListener(): void {
     window.addEventListener('message', this.handleMessage.bind(this));
   }

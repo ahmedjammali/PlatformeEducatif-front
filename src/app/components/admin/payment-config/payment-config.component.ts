@@ -17,6 +17,7 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
   currentConfig: PaymentConfiguration | null = null;
   academicYears: string[] = [];
   currentAcademicYear: string;
+  isCreatingNew = false; // New flag to track if creating new config
   private destroy$ = new Subject<void>();
 
   months = [
@@ -41,7 +42,7 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute
   ) {
     this.currentAcademicYear = this.paymentService.getCurrentAcademicYear();
-    this.academicYears = this.paymentService.getAcademicYears();
+    this.academicYears = this.generateAcademicYears();
     this.configForm = this.createForm();
   }
 
@@ -55,6 +56,18 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  private generateAcademicYears(): string[] {
+    const currentYear = new Date().getFullYear();
+    const years: string[] = [];
+    
+    // Include past 2 years, current year, and next 3 years
+    for (let i = 0 ; i <= 3; i++) {
+      const year = currentYear + i;
+      years.push(`${year}-${year + 1}`);
+    }
+    return years;
+  }
+
   private createForm(): FormGroup {
     return this.fb.group({
       academicYear: [this.currentAcademicYear, Validators.required],
@@ -66,7 +79,7 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
       paymentSchedule: this.fb.group({
         startMonth: [9, Validators.required],
         endMonth: [5, Validators.required],
-        totalMonths: [{ value: 9, disabled: true }] // Calculated field
+        totalMonths: [{ value: 9, disabled: true }]
       }),
       gracePeriod: [5, [Validators.required, Validators.min(0), Validators.max(30)]],
       annualPaymentDiscount: this.fb.group({
@@ -78,7 +91,6 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
   }
 
   private setupFormSubscriptions(): void {
-    // Subscribe to schedule changes to auto-calculate total months
     this.configForm.get('paymentSchedule')?.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
@@ -86,7 +98,6 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
         this.configForm.get('paymentSchedule.totalMonths')?.setValue(totalMonths, { emitEvent: false });
       });
 
-    // Subscribe to discount type changes for validation
     this.configForm.get('annualPaymentDiscount.enabled')?.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe((enabled: boolean) => {
@@ -99,11 +110,9 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
     const amountControl = this.configForm.get('annualPaymentDiscount.amount');
 
     if (enabled) {
-      // At least one of percentage or amount should be provided
       percentageControl?.setValidators([Validators.min(0), Validators.max(100)]);
       amountControl?.setValidators([Validators.min(0)]);
     } else {
-      // Clear validators when disabled
       percentageControl?.setValidators([Validators.min(0), Validators.max(100)]);
       amountControl?.setValidators([Validators.min(0)]);
       percentageControl?.setValue(0);
@@ -123,23 +132,53 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (config) => {
           this.currentConfig = config;
+          this.isCreatingNew = false;
           this.patchFormWithConfig(config);
           this.isLoading = false;
+          this.showMessage(`Configuration chargée pour ${academicYear}`, 'info');
         },
         error: (error) => {
-          if (error.status !== 404) {
-            this.showMessage('Erreur lors du chargement de la configuration', 'error');
-          } else {
-            // No configuration found for this year - this is normal
+          if (error.status === 404) {
+            // No configuration found - this is normal for new academic years
             this.currentConfig = null;
+            this.isCreatingNew = true;
+            this.resetFormToDefaults();
+            this.showMessage(`Aucune configuration trouvée pour ${academicYear}. Créez une nouvelle configuration.`, 'info');
+          } else {
+            this.showMessage('Erreur lors du chargement de la configuration', 'error');
+            console.error('Error loading config:', error);
           }
           this.isLoading = false;
         }
       });
   }
 
+  private resetFormToDefaults(): void {
+    // Keep the selected academic year but reset other fields to defaults
+    const selectedYear = this.configForm.get('academicYear')?.value;
+    
+    this.configForm.patchValue({
+      academicYear: selectedYear,
+      paymentAmounts: {
+        école: 0,
+        college: 0,
+        lycée: 0
+      },
+      paymentSchedule: {
+        startMonth: 9,
+        endMonth: 5,
+        totalMonths: 9
+      },
+      gracePeriod: 5,
+      annualPaymentDiscount: {
+        enabled: false,
+        percentage: 0,
+        amount: 0
+      }
+    });
+  }
+
   private patchFormWithConfig(config: PaymentConfiguration): void {
-    // Calculate total months from the schedule
     const totalMonths = this.calculateTotalMonthsFromSchedule(
       config.paymentSchedule.startMonth,
       config.paymentSchedule.endMonth
@@ -180,7 +219,7 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
     
     let months = endMonth - startMonth + 1;
     if (months <= 0) {
-      months += 12; // Handle year transition (e.g., Sep to May = 9 months)
+      months += 12;
     }
     return months;
   }
@@ -223,16 +262,22 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
     const formValue = this.prepareFormData();
+    const selectedYear = formValue.academicYear;
 
     this.paymentService.createOrUpdatePaymentConfig(formValue)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (config) => {
           this.currentConfig = config;
-          this.showMessage('Configuration enregistrée avec succès', 'success');
+          this.isCreatingNew = false;
+          
+          const message = this.isCreatingNew ? 
+            `Configuration créée avec succès pour ${selectedYear}` : 
+            `Configuration mise à jour avec succès pour ${selectedYear}`;
+          
+          this.showMessage(message, 'success');
           this.isLoading = false;
           
-          // Navigate back after a short delay
           setTimeout(() => {
             this.router.navigate(['../'], { relativeTo: this.route });
           }, 1500);
@@ -251,10 +296,8 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
   private prepareFormData(): any {
     const formValue = { ...this.configForm.value };
     
-    // Calculate and add total months to payment schedule
     formValue.paymentSchedule.totalMonths = this.calculateTotalMonths();
     
-    // Clean up discount data if not enabled
     if (!formValue.annualPaymentDiscount.enabled) {
       formValue.annualPaymentDiscount = {
         enabled: false,
@@ -272,8 +315,68 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
 
   onAcademicYearChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
-    this.configForm.patchValue({ academicYear: target.value });
+    const newYear = target.value;
+    
+    // Update the form control
+    this.configForm.patchValue({ academicYear: newYear });
+    
+    // Show a confirmation if user has unsaved changes
+    if (this.configForm.dirty && this.currentConfig) {
+      const confirmChange = confirm(
+        'Vous avez des modifications non sauvegardées. Êtes-vous sûr de vouloir changer d\'année académique ?'
+      );
+      
+      if (!confirmChange) {
+        // Revert to previous selection
+        this.configForm.patchValue({ academicYear: this.currentConfig.academicYear });
+        return;
+      }
+    }
+    
+    // Load configuration for the new year
     this.loadCurrentConfig();
+  }
+
+  // Copy configuration from another year
+  copyFromPreviousYear(): void {
+    if (!this.isCreatingNew) {
+      this.showMessage('Cette fonction n\'est disponible que lors de la création d\'une nouvelle configuration', 'warning');
+      return;
+    }
+
+    const currentYear = parseInt(this.configForm.get('academicYear')?.value.split('-')[0]);
+    const previousYear = `${currentYear - 1}-${currentYear}`;
+
+    this.isLoading = true;
+    this.paymentService.getPaymentConfig(previousYear)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (config) => {
+          // Copy configuration but keep the new academic year
+          const newAcademicYear = this.configForm.get('academicYear')?.value;
+          this.patchFormWithConfig(config);
+          this.configForm.patchValue({ academicYear: newAcademicYear });
+          this.showMessage(`Configuration copiée depuis ${previousYear}`, 'success');
+          this.isLoading = false;
+        },
+        error: (error) => {
+          this.showMessage(`Aucune configuration trouvée pour ${previousYear}`, 'warning');
+          this.isLoading = false;
+        }
+      });
+  }
+
+  // Reset form to default values
+  resetForm(): void {
+    this.configForm.reset();
+    const selectedYear = this.configForm.get('academicYear')?.value || this.currentAcademicYear;
+    this.configForm.patchValue({
+      academicYear: selectedYear,
+      paymentAmounts: { école: 0, college: 0, lycée: 0 },
+      paymentSchedule: { startMonth: 9, endMonth: 5, totalMonths: 9 },
+      gracePeriod: 5,
+      annualPaymentDiscount: { enabled: false, percentage: 0, amount: 0 }
+    });
   }
 
   // Form validation helpers
@@ -303,7 +406,6 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
   }
 
   private showMessage(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
-    // Enhanced notification system
     console.log(`${type.toUpperCase()}: ${message}`);
     
     if (type === 'error') {
@@ -312,10 +414,12 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
       this.showToast(message, 'success');
     } else if (type === 'warning') {
       this.showToast(message, 'warning');
+    } else if (type === 'info') {
+      this.showToast(message, 'info');
     }
   }
 
-  private showToast(message: string, type: 'success' | 'error' | 'warning'): void {
+  private showToast(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
     const toast = document.createElement('div');
     toast.textContent = message;
     
@@ -335,13 +439,13 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
     const typeStyles = {
       success: 'background: #10b981; color: white;',
       error: 'background: #ef4444; color: white;',
-      warning: 'background: #f59e0b; color: white;'
+      warning: 'background: #f59e0b; color: white;',
+      info: 'background: #3b82f6; color: white;'
     };
 
     toast.style.cssText = baseStyles + typeStyles[type];
     document.body.appendChild(toast);
     
-    // Auto remove after 5 seconds
     setTimeout(() => {
       if (document.body.contains(toast)) {
         document.body.removeChild(toast);
@@ -364,7 +468,6 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
     return createdBy.name || 'Système';
   }
 
-  // Utility methods for UI
   getClassGroupInfo(classGroup: string): { label: string; icon: string; color: string } {
     const classGroupMap = {
       'école': { label: 'École', icon: '🏫', color: '#3b82f6' },
@@ -375,123 +478,14 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
            { label: classGroup, icon: '📚', color: '#6b7280' };
   }
 
-  getConfigurationSummary(): string {
-    if (!this.currentConfig) return 'Aucune configuration';
-    
-    const amounts = this.currentConfig.paymentAmounts;
-    const nonZeroAmounts = Object.entries(amounts)
-      .filter(([_, amount]) => amount > 0)
-      .map(([group, amount]) => `${this.getClassGroupInfo(group).label}: ${this.formatCurrency(amount)}`)
-      .join(', ');
-    
-    return nonZeroAmounts || 'Aucun montant configuré';
+  isCreatingNewConfiguration(): boolean {
+    return this.isCreatingNew;
   }
 
-  isConfigurationComplete(): boolean {
-    if (!this.configForm.valid) return false;
-    
-    const amounts = this.configForm.get('paymentAmounts')?.value;
-    return amounts && (amounts.école > 0 || amounts.college > 0 || amounts.lycée > 0);
-  }
-
-  getValidationSummary(): string[] {
-    const errors: string[] = [];
-    
-    if (this.configForm.get('paymentAmounts')?.invalid) {
-      const amounts = this.configForm.get('paymentAmounts')?.value;
-      if (!amounts || (!amounts.école && !amounts.college && !amounts.lycée)) {
-        errors.push('Au moins un montant de paiement doit être défini');
-      }
+  getConfigurationTitle(): string {
+    if (this.isCreatingNew) {
+      return `Créer une nouvelle configuration pour ${this.configForm.get('academicYear')?.value}`;
     }
-    
-    if (this.configForm.get('paymentSchedule')?.invalid) {
-      errors.push('Le calendrier de paiement doit être configuré');
-    }
-    
-    if (this.configForm.get('gracePeriod')?.invalid) {
-      errors.push('La période de grâce doit être entre 0 et 30 jours');
-    }
-    
-    if (this.configForm.get('annualPaymentDiscount.enabled')?.value) {
-      const percentage = this.configForm.get('annualPaymentDiscount.percentage')?.value || 0;
-      const amount = this.configForm.get('annualPaymentDiscount.amount')?.value || 0;
-      
-      if (percentage <= 0 && amount <= 0) {
-        errors.push('Une remise doit être définie si elle est activée');
-      }
-      
-      if (percentage > 0 && amount > 0) {
-        errors.push('Choisissez soit un pourcentage soit un montant fixe pour la remise');
-      }
-    }
-    
-    return errors;
-  }
-
-  // Preview calculation methods
-  getDiscountPreview(classGroup: string): { percentage: number; amount: number; finalAmount: number } {
-    const totalAmount = this.configForm.get(`paymentAmounts.${classGroup}`)?.value || 0;
-    const discountEnabled = this.configForm.get('annualPaymentDiscount.enabled')?.value;
-    
-    if (!discountEnabled || totalAmount <= 0) {
-      return { percentage: 0, amount: 0, finalAmount: totalAmount };
-    }
-    
-    const discountPercentage = this.configForm.get('annualPaymentDiscount.percentage')?.value || 0;
-    const discountAmount = this.configForm.get('annualPaymentDiscount.amount')?.value || 0;
-    
-    let finalDiscount = 0;
-    
-    if (discountPercentage > 0) {
-      finalDiscount = (totalAmount * discountPercentage) / 100;
-    } else if (discountAmount > 0) {
-      finalDiscount = Math.min(discountAmount, totalAmount);
-    }
-    
-    return {
-      percentage: discountPercentage,
-      amount: finalDiscount,
-      finalAmount: totalAmount - finalDiscount
-    };
-  }
-
-  resetForm(): void {
-    this.configForm.reset();
-    this.configForm.patchValue({
-      academicYear: this.currentAcademicYear,
-      paymentAmounts: { école: 0, college: 0, lycée: 0 },
-      paymentSchedule: { startMonth: 9, endMonth: 5, totalMonths: 9 },
-      gracePeriod: 5,
-      annualPaymentDiscount: { enabled: false, percentage: 0, amount: 0 }
-    });
-  }
-
-  // Import/Export functionality
-  exportConfiguration(): void {
-    if (!this.currentConfig) {
-      this.showMessage('Aucune configuration à exporter', 'warning');
-      return;
-    }
-    
-    const configData = {
-      academicYear: this.currentConfig.academicYear,
-      paymentAmounts: this.currentConfig.paymentAmounts,
-      paymentSchedule: this.currentConfig.paymentSchedule,
-      gracePeriod: this.currentConfig.gracePeriod,
-      annualPaymentDiscount: this.currentConfig.annualPaymentDiscount,
-      exportDate: new Date().toISOString()
-    };
-    
-    const blob = new Blob([JSON.stringify(configData, null, 2)], { 
-      type: 'application/json' 
-    });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `payment-config-${this.currentConfig.academicYear}.json`;
-    link.click();
-    window.URL.revokeObjectURL(url);
-    
-    this.showMessage('Configuration exportée avec succès', 'success');
+    return `Modifier la configuration pour ${this.configForm.get('academicYear')?.value}`;
   }
 }

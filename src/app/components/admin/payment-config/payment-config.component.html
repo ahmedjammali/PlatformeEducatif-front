@@ -1,4 +1,4 @@
-<!-- payment-config.component.html -->
+<!-- payment-config.component.html - Complete Version -->
 <div class="payment-config-container">
   <!-- Header Section -->
   <header class="config-header">
@@ -6,16 +6,44 @@
       <div class="title-section">
         <h1 class="page-title">
           <span class="title-icon">⚙️</span>
-          Configuration des Paiements
+          {{ getConfigurationTitle() }}
         </h1>
-        <p class="page-subtitle">Configurez les montants et paramètres de paiement pour votre établissement</p>
+        <p class="page-subtitle">
+          <span *ngIf="isCreatingNew" class="new-config-badge">✨ Nouvelle Configuration</span>
+          <span *ngIf="!isCreatingNew" class="existing-config-badge">📝 Modification</span>
+          Configurez les montants et paramètres de paiement pour votre établissement
+        </p>
       </div>
-      <button class="btn btn-back" (click)="onCancel()">
-        <span class="btn-icon">⬅️</span>
-        Retour
-      </button>
+      <div class="header-actions">
+        <!-- Copy from previous year button -->
+        <button 
+          *ngIf="isCreatingNew" 
+          type="button" 
+          class="btn btn-outline" 
+          (click)="copyFromPreviousYear()"
+          [disabled]="isLoading">
+          <span class="btn-icon">📋</span>
+          Copier de l'année précédente
+        </button>
+        
+        <button class="btn btn-back" (click)="onCancel()">
+          <span class="btn-icon">⬅️</span>
+          Retour
+        </button>
+      </div>
     </div>
   </header>
+
+  <!-- Configuration Status Alert -->
+  <div *ngIf="isCreatingNew" class="alert alert-info">
+    <div class="alert-icon">ℹ️</div>
+    <div class="alert-content">
+      <strong>Création d'une nouvelle configuration</strong>
+      <p>Vous créez une configuration pour l'année académique {{ configForm.get('academicYear')?.value }}. 
+         Vous pouvez copier les paramètres de l'année précédente ou créer une configuration entièrement nouvelle.</p>
+    </div>
+  </div>
+
 
   <!-- Main Configuration Content -->
   <div class="config-content">
@@ -39,9 +67,14 @@
             class="form-select academic-year-select">
             <option *ngFor="let year of academicYears" [value]="year">
               {{ year }}
+              <span *ngIf="year === currentAcademicYear">(Année actuelle)</span>
             </option>
           </select>
-          <p class="form-hint">Configuration pour l'année scolaire sélectionnée</p>
+          <p class="form-hint">
+            Configuration pour l'année scolaire sélectionnée
+            <span *ngIf="isCreatingNew" class="hint-highlight">- Nouvelle configuration</span>
+            <span *ngIf="!isCreatingNew" class="hint-highlight">- Configuration existante</span>
+          </p>
         </div>
       </section>
 
@@ -164,7 +197,7 @@
       </section>
 
       <!-- Payment Schedule Section -->
-      <section class="config-section schedule-section">
+      <!-- <section class="config-section schedule-section">
         <div class="section-header">
           <h2 class="section-title">
             <span class="section-icon">📅</span>
@@ -222,7 +255,7 @@
             </div>
           </div>
         </div>
-      </section>
+      </section> -->
 
       <!-- Grace Period Section -->
       <section class="config-section grace-period-section">
@@ -324,7 +357,7 @@
       </section>
 
       <!-- Current Configuration Summary -->
-      <section class="config-section summary-section" *ngIf="currentConfig">
+      <section class="config-section summary-section" *ngIf="currentConfig && !isCreatingNew">
         <div class="section-header">
           <h2 class="section-title">
             <span class="section-icon">ℹ️</span>
@@ -352,16 +385,71 @@
         </div>
       </section>
 
+      <!-- Preview Section for New Configuration -->
+      <section class="config-section preview-section" *ngIf="isCreatingNew">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="section-icon">👁️</span>
+            Aperçu de la Configuration
+          </h2>
+          <p class="section-description">Vérifiez les paramètres avant de créer la configuration</p>
+        </div>
+        
+        <div class="preview-grid">
+          <div class="preview-item">
+            <span class="preview-label">Année académique:</span>
+            <span class="preview-value">{{ configForm.get('academicYear')?.value }}</span>
+          </div>
+          <div class="preview-item">
+            <span class="preview-label">Période de paiement:</span>
+            <span class="preview-value">
+              {{ months[configForm.get('paymentSchedule.startMonth')?.value - 1]?.label || 'N/A' }} - 
+              {{ months[configForm.get('paymentSchedule.endMonth')?.value - 1]?.label || 'N/A' }}
+              ({{ calculateTotalMonths() }} mois)
+            </span>
+          </div>
+          <div class="preview-item">
+            <span class="preview-label">Période de grâce:</span>
+            <span class="preview-value">{{ configForm.get('gracePeriod')?.value || 0 }} jours</span>
+          </div>
+          <div class="preview-item" *ngIf="configForm.get('annualPaymentDiscount.enabled')?.value">
+            <span class="preview-label">Remise annuelle:</span>
+            <span class="preview-value">
+              <span *ngIf="configForm.get('annualPaymentDiscount.percentage')?.value > 0">
+                {{ configForm.get('annualPaymentDiscount.percentage')?.value }}%
+              </span>
+              <span *ngIf="configForm.get('annualPaymentDiscount.amount')?.value > 0">
+                {{ formatCurrency(configForm.get('annualPaymentDiscount.amount')?.value) }}
+              </span>
+            </span>
+          </div>
+        </div>
+      </section>
+
       <!-- Action Buttons -->
       <div class="actions-section">
-        <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="isLoading">
-          Annuler
-        </button>
-        <button type="submit" class="btn btn-primary" [disabled]="configForm.invalid || isLoading">
-          <span class="btn-spinner" *ngIf="isLoading">⏳</span>
-          <span *ngIf="!isLoading">💾 Enregistrer la Configuration</span>
-          <span *ngIf="isLoading">Enregistrement...</span>
-        </button>
+        <div class="actions-left">
+          <button 
+            type="button" 
+            class="btn btn-outline" 
+            (click)="resetForm()" 
+            [disabled]="isLoading">
+            <span class="btn-icon">🔄</span>
+            Réinitialiser
+          </button>
+        </div>
+        
+        <div class="actions-right">
+          <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="isLoading">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="configForm.invalid || isLoading">
+            <span class="btn-spinner" *ngIf="isLoading">⏳</span>
+            <span *ngIf="!isLoading && isCreatingNew">✨ Créer la Configuration</span>
+            <span *ngIf="!isLoading && !isCreatingNew">💾 Mettre à Jour la Configuration</span>
+            <span *ngIf="isLoading">{{ isCreatingNew ? 'Création...' : 'Mise à jour...' }}</span>
+          </button>
+        </div>
       </div>
     </form>
   </div>
@@ -370,7 +458,7 @@
   <div class="loading-overlay" *ngIf="isLoading">
     <div class="loading-spinner">
       <div class="spinner"></div>
-      <p>Chargement en cours...</p>
+      <p>{{ isCreatingNew ? 'Création de la configuration...' : 'Mise à jour de la configuration...' }}</p>
     </div>
   </div>
 </div>

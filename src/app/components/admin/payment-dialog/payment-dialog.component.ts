@@ -176,7 +176,7 @@ export class PaymentDialogComponent implements OnInit {
       this.paymentService.recordMonthlyPayment(studentId, paymentRequest, this.data.academicYear)
         .subscribe({
           next: (response) => {
-            this.showMessage('Paiement mensuel enregistré avec succès', 'success');
+
             this.dialogRef.close({
               success: true,
               paymentRecord: response,
@@ -195,7 +195,6 @@ export class PaymentDialogComponent implements OnInit {
       this.paymentService.recordAnnualPayment(studentId, paymentRequest, this.data.academicYear)
         .subscribe({
           next: (response) => {
-            this.showMessage('Paiement annuel enregistré avec succès', 'success');
             this.dialogRef.close({
               success: true,
               paymentRecord: response,

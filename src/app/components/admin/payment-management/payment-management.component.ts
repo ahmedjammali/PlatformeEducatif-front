@@ -1,4 +1,4 @@
-// payment-management.component.ts (Updated)
+// payment-management.component.ts (Updated with Delete All and Fixed Class Filter)
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -20,6 +20,31 @@ import {
 } from '../../../models/payment.model';
 import { Class } from '../../../models/class.model';
 import { User } from '../../../models/user.model';
+
+// Interfaces
+interface Toast {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  title?: string;
+  message: string;
+  duration?: number;
+  persistent?: boolean;
+}
+
+interface ConfirmationConfig {
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  type?: 'danger' | 'warning' | 'info' | 'success';
+  icon?: string;
+}
+
+interface ConfirmationState {
+  isOpen: boolean;
+  config: ConfirmationConfig | null;
+  resolve?: (value: boolean) => void;
+}
 
 interface PaymentStatus {
   value: string;
@@ -43,7 +68,6 @@ interface QuickAction {
   action: () => void;
 }
 
-// Create a compatible interface for the service response
 interface StudentPaymentDetailsResponse {
   student: {
     _id: string;
@@ -54,7 +78,7 @@ interface StudentPaymentDetailsResponse {
       name: string;
       grade: string;
     };
-    classGroup: string; // This will be a string from the service
+    classGroup: string;
   };
   paymentRecord: any;
 }
@@ -69,23 +93,50 @@ interface StudentPaymentDetailsResponse {
       state('expanded', style({ height: '*' })),
       transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
     ]),
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('200ms ease-in', style({ opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('200ms ease-out', style({ opacity: 0 }))
+      ])
+    ]),
+    trigger('slideIn', [
+      transition(':enter', [
+        style({ transform: 'scale(0.9) translateY(-20px)', opacity: 0 }),
+        animate('250ms ease-out', style({ transform: 'scale(1) translateY(0)', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('200ms ease-in', style({ transform: 'scale(0.9) translateY(-20px)', opacity: 0 }))
+      ])
+    ]),
+    trigger('slideInOut', [
+      transition(':enter', [
+        style({ transform: 'translateX(100%)', opacity: 0 }),
+        animate('300ms ease-in', style({ transform: 'translateX(0%)', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('300ms ease-out', style({ transform: 'translateX(100%)', opacity: 0 }))
+      ])
+    ])
   ]
 })
 export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewInit {
-  // Data sources
+  
+  // Core Data Properties
   students: StudentWithPayment[] = [];
   dashboard: PaymentDashboard | null = null;
   paymentConfig: PaymentConfiguration | null = null;
   classes: Class[] = [];
   totalStudents = 0;
   
-  // UI state
+  // UI State
   isLoading = false;
   selectedStudent: StudentWithPayment | null = null;
   expandedStudentId: string | null = null;
-  showBulkActions = false;
   
-  // Forms and filters
+  // Forms and Filters
   filterForm: FormGroup;
   searchControl: FormControl;
   academicYears: string[] = [];
@@ -96,22 +147,18 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   pageSize = 50;
   totalPages = 1;
   
-  // Modal state
+  // Modal States
   isPaymentDialogOpen = false;
   currentDialogData: PaymentDialogData | null = null;
   
-  // Table configuration
-  displayedColumns: string[] = [
-    'expand',
-    'student',
-    'class',
-    'status',
-    'financial',
-    'progress',
-    'actions'
-  ];
+  // Toast and Confirmation Systems
+  toasts: Toast[] = [];
+  confirmationState: ConfirmationState = {
+    isOpen: false,
+    config: null
+  };
   
-  // Filter options - Updated for new class groups
+  // Configuration Data
   paymentStatuses: PaymentStatus[] = [
     { value: '', label: 'Tous les statuts', icon: 'list', color: '#666666' },
     { value: 'completed', label: 'Payé', icon: 'check_circle', color: '#4CAF50' },
@@ -121,7 +168,6 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     { value: 'no_record', label: 'Sans dossier', icon: 'help_outline', color: '#666666' }
   ];
   
-  // Updated class groups
   classGroups: ClassGroup[] = [
     { value: '', label: 'Tous les niveaux', color: '#666666' },
     { value: 'école', label: 'École', color: '#2196F3' },
@@ -159,7 +205,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   ngAfterViewInit(): void {
-    // Setup any additional view-related functionality
+    // Setup any additional view-related functionality if needed
   }
 
   ngOnDestroy(): void {
@@ -167,8 +213,9 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     this.destroy$.complete();
   }
 
+  // ===== INITIALIZATION METHODS =====
+
   private checkQueryParams(): void {
-    // Handle any query parameters for auto-filtering
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       if (params['status']) {
         this.filterForm.patchValue({ paymentStatus: params['status'] });
@@ -192,7 +239,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
       },
       error: (error) => {
         console.error('Error loading classes:', error);
-        this.showMessage('Erreur lors du chargement des classes', 'error');
+        this.showError('Erreur lors du chargement des classes');
       }
     });
   }
@@ -205,7 +252,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
       },
       error: (error) => {
         if (error.status === 404) {
-          this.showMessage('Configuration de paiement non trouvée. Veuillez la configurer.', 'warning');
+          this.showWarning('Configuration de paiement non trouvée. Veuillez la configurer.');
         } else {
           console.error('Error loading payment config:', error);
         }
@@ -214,7 +261,6 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   private setupFilters(): void {
-    // Search filter with debounce
     this.searchControl.valueChanges
       .pipe(
         startWith(''),
@@ -224,22 +270,143 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
       )
       .subscribe(() => this.loadStudents());
 
-    // Form filters
     this.filterForm.valueChanges
       .pipe(
         debounceTime(300),
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
-        this.currentPage = 1; // Reset to first page on filter change
+        this.currentPage = 1;
         this.loadStudents();
         this.loadDashboard();
         this.loadPaymentConfig();
-        
-        // Update current academic year
         this.currentAcademicYear = this.filterForm.get('academicYear')?.value || this.currentAcademicYear;
       });
   }
+
+  // ===== NEW: CLASS FILTER HELPER =====
+  
+getFilteredClasses(): Class[] {
+  const selectedClassGroup = this.filterForm.get('classGroup')?.value;
+  
+  if (!selectedClassGroup) {
+    return this.classes;
+  }
+  
+  return this.classes.filter(classItem => {
+    const classGroup = this.getClassGroupFromGrade(classItem.grade);
+    return classGroup === selectedClassGroup;
+  });
+}
+  // ===== TOAST SYSTEM =====
+
+  private generateToastId(): string {
+    return Math.random().toString(36).substr(2, 9);
+  }
+
+  showToast(toast: Omit<Toast, 'id'>): void {
+    const newToast: Toast = {
+      ...toast,
+      id: this.generateToastId(),
+      duration: toast.duration || 5000
+    };
+
+    this.toasts = [...this.toasts, newToast];
+
+    if (!newToast.persistent) {
+      setTimeout(() => {
+        this.removeToast(newToast.id);
+      }, newToast.duration);
+    }
+  }
+
+  removeToast(id: string): void {
+    this.toasts = this.toasts.filter(toast => toast.id !== id);
+  }
+
+  showSuccess(message: string, title?: string, duration?: number): void {
+    this.showToast({ type: 'success', title, message, duration });
+  }
+
+  showError(message: string, title?: string, duration?: number): void {
+    this.showToast({ type: 'error', title: title || 'Erreur', message, duration: duration || 6000 });
+  }
+
+  showWarning(message: string, title?: string, duration?: number): void {
+    this.showToast({ type: 'warning', title: title || 'Attention', message, duration });
+  }
+
+  showInfo(message: string, title?: string, duration?: number): void {
+    this.showToast({ type: 'info', title, message, duration });
+  }
+
+  // ===== CONFIRMATION SYSTEM =====
+
+  confirm(config: ConfirmationConfig): Promise<boolean> {
+    return new Promise((resolve) => {
+      this.confirmationState = {
+        isOpen: true,
+        config,
+        resolve
+      };
+      document.body.style.overflow = 'hidden';
+    });
+  }
+
+  confirmDelete(itemName: string, customMessage?: string): Promise<boolean> {
+    return this.confirm({
+      title: 'Confirmer la suppression',
+      message: customMessage || `Êtes-vous sûr de vouloir supprimer ${itemName} ?`,
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      type: 'danger',
+      icon: '🗑️'
+    });
+  }
+
+  confirmAction(title: string, message: string, type: 'danger' | 'warning' | 'info' | 'success' = 'info'): Promise<boolean> {
+    return this.confirm({
+      title,
+      message,
+      type,
+      confirmText: 'Confirmer',
+      cancelText: 'Annuler'
+    });
+  }
+
+  onConfirmationConfirm(): void {
+    if (this.confirmationState.resolve) {
+      this.confirmationState.resolve(true);
+    }
+    this.closeConfirmation();
+  }
+
+  onConfirmationCancel(): void {
+    if (this.confirmationState.resolve) {
+      this.confirmationState.resolve(false);
+    }
+    this.closeConfirmation();
+  }
+
+  private closeConfirmation(): void {
+    this.confirmationState = {
+      isOpen: false,
+      config: null
+    };
+    document.body.style.overflow = 'auto';
+  }
+
+  getDefaultConfirmationIcon(): string {
+    switch (this.confirmationState.config?.type) {
+      case 'danger': return '⚠️';
+      case 'warning': return '⚡';
+      case 'success': return '✅';
+      case 'info': 
+      default: return 'ℹ️';
+    }
+  }
+
+  // ===== DATA LOADING METHODS =====
 
   loadStudents(): void {
     this.isLoading = true;
@@ -248,6 +415,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
       search: this.searchControl.value?.trim() || undefined,
       paymentStatus: this.filterForm.get('paymentStatus')?.value || undefined,
       classGroup: this.filterForm.get('classGroup')?.value || undefined,
+      classId: this.filterForm.get('classId')?.value || undefined, // FIXED: Include classId filter
       academicYear: this.filterForm.get('academicYear')?.value,
       page: this.currentPage,
       limit: this.pageSize
@@ -262,7 +430,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
       },
       error: (error) => {
         console.error('Error loading students:', error);
-        this.showMessage('Erreur lors du chargement des étudiants', 'error');
+        this.showError('Erreur lors du chargement des étudiants');
         this.isLoading = false;
         this.students = [];
       }
@@ -277,7 +445,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
       },
       error: (error) => {
         console.error('Error loading dashboard:', error);
-        this.showMessage('Erreur lors du chargement du tableau de bord', 'error');
+        this.showError('Erreur lors du chargement du tableau de bord');
       }
     });
   }
@@ -285,33 +453,49 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   refreshData(): void {
     this.loadStudents();
     this.loadDashboard();
-    this.showMessage('Données actualisées', 'success');
+    this.showSuccess('Données actualisées');
   }
+  private getClassGroupFromGrade(grade: string): string {
+  const ecoleGrades = ['6eme', '5eme', '4eme', '3eme', '2nde', '1ere'];
+  const collegeGrades = ['9eme', '8eme', '7eme'];
+  const lyceeGrades = ['4ᵉ année S', '3ᵉ année S', '2ᵉ année S', '1ʳᵉ année S'];
+  
+  if (ecoleGrades.includes(grade)) return 'école';
+  if (collegeGrades.includes(grade)) return 'college';
+  if (lyceeGrades.includes(grade)) return 'lycée';
+  
+  return 'école'; // Default
+}
 
-  // New bulk operations
-  bulkGeneratePayments(): void {
+  // ===== BULK OPERATIONS =====
+
+  async bulkGeneratePayments(): Promise<void> {
     if (!this.dashboard) {
-      this.showMessage('Tableau de bord non disponible', 'warning');
+      this.showWarning('Tableau de bord non disponible');
       return;
     }
 
     const studentsWithoutRecord = this.dashboard.statusCounts.no_record || 0;
     
     if (studentsWithoutRecord === 0) {
-      this.showMessage('Tous les étudiants ont déjà un dossier de paiement', 'info');
+      this.showInfo('Tous les étudiants ont déjà un dossier de paiement');
       return;
     }
 
-    const confirmMessage = `Voulez-vous générer des dossiers de paiement pour ${studentsWithoutRecord} étudiant(s) ?`;
-    
-    if (confirm(confirmMessage)) {
+    const confirmed = await this.confirmAction(
+      'Génération en masse',
+      `Voulez-vous générer des dossiers de paiement pour ${studentsWithoutRecord} étudiant(s) ?`,
+      'info'
+    );
+
+    if (confirmed) {
       const academicYear = this.filterForm.get('academicYear')?.value;
       this.isLoading = true;
       
       this.paymentService.bulkGeneratePayments(academicYear).subscribe({
         next: (response) => {
           const message = `Génération terminée: ${response.results.success} réussis, ${response.results.errors.length} erreurs`;
-          this.showMessage(message, 'success');
+          this.showSuccess(message);
           this.loadStudents();
           this.loadDashboard();
           this.isLoading = false;
@@ -322,29 +506,33 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
         },
         error: (error) => {
           console.error('Error in bulk generation:', error);
-          this.showMessage('Erreur lors de la génération en masse', 'error');
+          this.showError('Erreur lors de la génération en masse');
           this.isLoading = false;
         }
       });
     }
   }
 
-  updateExistingPayments(): void {
+  async updateExistingPayments(): Promise<void> {
     if (!this.paymentConfig) {
-      this.showMessage('Configuration de paiement non disponible', 'warning');
+      this.showWarning('Configuration de paiement non disponible');
       return;
     }
 
-    const confirmMessage = 'Voulez-vous mettre à jour tous les dossiers de paiement existants avec les nouveaux montants ?';
+    const confirmed = await this.confirmAction(
+      'Mise à jour des paiements',
+      'Voulez-vous mettre à jour tous les dossiers de paiement existants avec les nouveaux montants ?',
+      'warning'
+    );
     
-    if (confirm(confirmMessage)) {
+    if (confirmed) {
       const academicYear = this.filterForm.get('academicYear')?.value;
       this.isLoading = true;
       
       this.paymentService.updateExistingPaymentRecords(academicYear, true).subscribe({
         next: (result: BulkUpdateResult) => {
           const message = `Mise à jour terminée: ${result.results.updated} mis à jour, ${result.results.skipped} ignorés`;
-          this.showMessage(message, 'success');
+          this.showSuccess(message);
           this.loadStudents();
           this.loadDashboard();
           this.isLoading = false;
@@ -355,21 +543,76 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
         },
         error: (error) => {
           console.error('Error updating payments:', error);
-          this.showMessage('Erreur lors de la mise à jour', 'error');
+          this.showError('Erreur lors de la mise à jour');
           this.isLoading = false;
         }
       });
     }
   }
 
-  private showBulkErrors(errors: Array<{ studentId: string; error: string }>): void {
-    if (errors.length > 0) {
-      const errorMessage = `Erreurs rencontrées:\n${errors.map(e => `- ${e.error}`).join('\n')}`;
-      alert(errorMessage);
+  // ===== NEW: DELETE ALL PAYMENT RECORDS =====
+  
+  async deleteAllPaymentRecords(): Promise<void> {
+    if (!this.dashboard) {
+      this.showWarning('Tableau de bord non disponible');
+      return;
+    }
+
+    const studentsWithRecord = this.getStudentsWithRecord();
+    
+    if (studentsWithRecord === 0) {
+      this.showInfo('Aucun dossier de paiement à supprimer');
+      return;
+    }
+
+    const confirmed = await this.confirmDelete(
+      'tous les dossiers de paiement',
+      `⚠️ ATTENTION: Cette action supprimera définitivement TOUS les dossiers de paiement (${studentsWithRecord} dossier${studentsWithRecord > 1 ? 's' : ''}) pour l'année académique ${this.currentAcademicYear}.\n\nCette action est IRRÉVERSIBLE. Tous les paiements enregistrés seront perdus.\n\nÊtes-vous absolument sûr de vouloir continuer ?`
+    );
+
+    if (confirmed) {
+      // Double confirmation for this critical action
+      const doubleConfirmed = await this.confirmAction(
+        'Confirmation finale',
+        `Dernière confirmation: Supprimer ${studentsWithRecord} dossier${studentsWithRecord > 1 ? 's' : ''} de paiement ?`,
+        'danger'
+      );
+
+      if (doubleConfirmed) {
+        const academicYear = this.filterForm.get('academicYear')?.value;
+        this.isLoading = true;
+        
+        this.paymentService.deleteAllPaymentRecords(academicYear).subscribe({
+          next: (response) => {
+            const message = `Suppression terminée: ${response.results.deleted} dossier${response.results.deleted > 1 ? 's' : ''} supprimé${response.results.deleted > 1 ? 's' : ''}`;
+            this.showSuccess(message);
+            this.loadStudents();
+            this.loadDashboard();
+            this.isLoading = false;
+            
+            if (response.results.errors.length > 0) {
+              this.showBulkErrors(response.results.errors);
+            }
+          },
+          error: (error) => {
+            console.error('Error deleting all payment records:', error);
+            this.showError('Erreur lors de la suppression de tous les dossiers');
+            this.isLoading = false;
+          }
+        });
+      }
     }
   }
 
-  // Student Management Actions
+  private showBulkErrors(errors: Array<{ studentId: string; error: string }>): void {
+    if (errors.length > 0) {
+      const errorMessage = `Erreurs rencontrées:\n${errors.map(e => `- ${e.error}`).join('\n')}`;
+      this.showError(errorMessage, 'Erreurs lors de l\'opération', 8000);
+    }
+  }
+
+  // ===== STUDENT MANAGEMENT =====
+
   toggleExpandRow(student: StudentWithPayment): void {
     if (!student.hasPaymentRecord) return;
     this.expandedStudentId = this.expandedStudentId === student._id ? null : student._id;
@@ -377,7 +620,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
 
   generatePaymentRecord(student: StudentWithPayment): void {
     if (!student._id) {
-      this.showMessage('ID étudiant manquant', 'error');
+      this.showError('ID étudiant manquant');
       return;
     }
 
@@ -385,38 +628,41 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     
     this.paymentService.generatePaymentForStudent(student._id, academicYear).subscribe({
       next: (paymentRecord) => {
-        this.showMessage(`Dossier de paiement généré pour ${student.name}`, 'success');
+        this.showSuccess(`Dossier de paiement généré pour ${student.name}`);
         this.loadStudents();
         this.loadDashboard();
       },
       error: (error) => {
         console.error('Error generating payment record:', error);
         const errorMessage = error.error?.message || 'Erreur lors de la génération du dossier';
-        this.showMessage(errorMessage, 'error');
+        this.showError(errorMessage);
       }
     });
   }
 
-  deletePaymentRecord(student: StudentWithPayment): void {
+  async deletePaymentRecord(student: StudentWithPayment): Promise<void> {
     if (!student._id || !student.hasPaymentRecord) {
-      this.showMessage('Aucun dossier de paiement à supprimer', 'warning');
+      this.showWarning('Aucun dossier de paiement à supprimer');
       return;
     }
 
-    const confirmMessage = `Êtes-vous sûr de vouloir supprimer le dossier de paiement de ${student.name} ?`;
+    const confirmed = await this.confirmDelete(
+      `le dossier de paiement de ${student.name}`,
+      `Cette action supprimera définitivement le dossier de paiement de ${student.name}. Cette action est irréversible.`
+    );
     
-    if (confirm(confirmMessage)) {
+    if (confirmed) {
       const academicYear = this.filterForm.get('academicYear')?.value;
       
       this.paymentService.deletePaymentRecord(student._id, academicYear).subscribe({
         next: (response) => {
-          this.showMessage(`Dossier de paiement supprimé pour ${student.name}`, 'success');
+          this.showSuccess(`Dossier de paiement supprimé pour ${student.name}`);
           this.loadStudents();
           this.loadDashboard();
         },
         error: (error) => {
           console.error('Error deleting payment record:', error);
-          this.showMessage('Erreur lors de la suppression', 'error');
+          this.showError('Erreur lors de la suppression');
         }
       });
     }
@@ -429,22 +675,22 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     
     this.paymentService.getStudentPaymentDetails(student._id, academicYear).subscribe({
       next: (details: StudentPaymentDetailsResponse) => {
-        // Open details in a modal or navigate to details page
         this.selectedStudent = student;
         this.expandedStudentId = student._id;
         console.log('Student payment details:', details);
       },
       error: (error) => {
         console.error('Error loading student details:', error);
-        this.showMessage('Erreur lors du chargement des détails', 'error');
+        this.showError('Erreur lors du chargement des détails');
       }
     });
   }
 
-  // Payment dialog methods
+  // ===== PAYMENT DIALOG MANAGEMENT =====
+
   openPaymentDialog(student: StudentWithPayment, type: 'monthly' | 'annual', monthIndex?: number): void {
     if (!student.paymentRecord) {
-      this.showMessage('Veuillez d\'abord générer un dossier de paiement', 'warning');
+      this.showWarning('Veuillez d\'abord générer un dossier de paiement');
       return;
     }
 
@@ -472,20 +718,15 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   private handlePaymentResult(result: any): void {
     if (result.success) {
       const paymentType = result.type === 'monthly' ? 'mensuel' : 'annuel';
-      this.showMessage(`Paiement ${paymentType} enregistré avec succès`, 'success');
+      this.showSuccess(`Paiement ${paymentType} enregistré avec succès`);
       
       this.loadStudents();
       this.loadDashboard();
     }
   }
 
-  openPaymentDetails(student: StudentWithPayment): void {
-    if (!student.paymentRecord) return;
-    this.selectedStudent = student;
-    this.expandedStudentId = student._id;
-  }
+  // ===== EVENT HANDLERS =====
 
-  // Event Handlers
   onSearchInput(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.searchControl.setValue(target.value);
@@ -503,7 +744,13 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
 
   onClassGroupChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
-    this.filterForm.patchValue({ classGroup: target.value });
+    const selectedClassGroup = target.value;
+    
+    // FIXED: Clear classId when classGroup changes
+    this.filterForm.patchValue({ 
+      classGroup: selectedClassGroup,
+      classId: '' // Reset class selection when group changes
+    });
   }
 
   onClassIdChange(event: Event): void {
@@ -516,7 +763,8 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     this.changePageSize(target.value);
   }
 
-  // Pagination methods
+  // ===== PAGINATION METHODS =====
+
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
@@ -531,7 +779,8 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     this.loadStudents();
   }
 
-  // Filter Management
+  // ===== FILTER MANAGEMENT =====
+
   filterByStatus(status: string): void {
     this.filterForm.patchValue({ paymentStatus: status });
   }
@@ -555,67 +804,8 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     );
   }
 
-  // Export and Reports
-  exportToExcel(): void {
-    const filters = {
-      academicYear: this.filterForm.get('academicYear')?.value,
-      classGroup: this.filterForm.get('classGroup')?.value || undefined,
-      paymentStatus: this.filterForm.get('paymentStatus')?.value || undefined
-    };
-    
-    this.paymentService.exportPaymentData(filters).subscribe({
-      next: (exportData) => {
-        this.downloadExcelFile(exportData);
-        this.showMessage(`${exportData.totalRecords} enregistrements exportés`, 'success');
-      },
-      error: (error) => {
-        console.error('Error exporting data:', error);
-        this.showMessage('Erreur lors de l\'export', 'error');
-      }
-    });
-  }
+  // ===== NAVIGATION METHODS =====
 
-  private downloadExcelFile(exportData: any): void {
-    // Convert data to CSV format
-    const csvContent = this.convertToCSV(exportData.data);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `paiements_${exportData.academicYear || 'export'}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  }
-
-  private convertToCSV(data: any[]): string {
-    if (!data || data.length === 0) return '';
-    
-    const headers = Object.keys(data[0]);
-    const csvRows = [
-      headers.join(','),
-      ...data.map(row => headers.map(header => {
-        const value = row[header];
-        return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
-      }).join(','))
-    ];
-    
-    return csvRows.join('\n');
-  }
-
-  viewReports(): void {
-    this.router.navigate(['reports'], { relativeTo: this.route });
-  }
-
-  printReport(): void {
-    window.print();
-  }
-
-  // Navigation
   navigateToConfig(): void {
     this.router.navigate(['config'], { relativeTo: this.route });
   }
@@ -627,7 +817,8 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     });
   }
 
-  // Quick Actions
+  // ===== QUICK ACTIONS =====
+
   getQuickActions(): QuickAction[] {
     if (!this.dashboard) return [];
     
@@ -659,7 +850,8 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     ].filter(action => action.count > 0);
   }
 
-  // Utility Methods
+  // ===== UTILITY METHODS =====
+
   getStatusEmoji(status: string): string {
     const emojiMap: { [key: string]: string } = {
       'completed': '✅',
@@ -745,18 +937,6 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     return total > 0 ? Math.round((completed / total) * 100) : 0;
   }
 
-  getCollectionRateNumber(): number {
-    if (!this.dashboard) return 0;
-    return parseFloat(this.dashboard.overview.collectionRate) || 0;
-  }
-
-  getCollectionRateClass(): string {
-    const rate = this.getCollectionRateNumber();
-    if (rate >= 80) return 'excellent';
-    if (rate >= 60) return 'good';
-    return 'poor';
-  }
-
   isPaymentOverdue(dueDate: Date | string): boolean {
     return this.paymentService.isPaymentOverdue(dueDate, this.paymentConfig?.gracePeriod);
   }
@@ -765,35 +945,53 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     return this.paymentService.formatDate(date);
   }
 
-  private showMessage(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
-    console.log(`${type.toUpperCase()}: ${message}`);
-    
-    if (type === 'error') {
-      alert(`Erreur: ${message}`);
-    } else if (type === 'success') {
-      const toast = document.createElement('div');
-      toast.textContent = message;
-      toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #4CAF50;
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 8px;
-        z-index: 9999;
-        font-weight: 500;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      `;
-      document.body.appendChild(toast);
-      
-      setTimeout(() => {
-        if (document.body.contains(toast)) {
-          document.body.removeChild(toast);
-        }
-      }, 3000);
-    } else if (type === 'warning') {
-      alert(`Attention: ${message}`);
+  // ===== BUTTON HELPER METHODS =====
+
+  getStudentsWithoutRecord(): number {
+    if (!this.dashboard) return 0;
+    return this.dashboard.statusCounts.no_record || 0;
+  }
+
+  // NEW: Helper method for delete all button
+  getStudentsWithRecord(): number {
+    if (!this.dashboard) return 0;
+    const total = this.dashboard.overview.totalStudents || 0;
+    const withoutRecord = this.dashboard.statusCounts.no_record || 0;
+    return total - withoutRecord;
+  }
+
+  shouldShowBulkGenerate(): boolean {
+    return this.getStudentsWithoutRecord() > 0;
+  }
+
+  shouldShowUpdate(): boolean {
+    return !!this.paymentConfig;
+  }
+
+  shouldShowDeleteAll(): boolean {
+    return this.getStudentsWithRecord() > 0;
+  }
+
+  getGenerateButtonText(): string {
+    const count = this.getStudentsWithoutRecord();
+    if (count === 0) {
+      return 'Tous les dossiers créés';
     }
+    return `${count} étudiant${count > 1 ? 's' : ''} sans dossier`;
+  }
+
+  getUpdateButtonText(): string {
+    if (!this.paymentConfig) {
+      return 'Configuration requise';
+    }
+    return 'Appliquer nouvelle configuration';
+  }
+
+  getDeleteAllButtonText(): string {
+    const count = this.getStudentsWithRecord();
+    if (count === 0) {
+      return 'Aucun dossier à supprimer';
+    }
+    return `${count} dossier${count > 1 ? 's' : ''} existant${count > 1 ? 's' : ''}`;
   }
 }
