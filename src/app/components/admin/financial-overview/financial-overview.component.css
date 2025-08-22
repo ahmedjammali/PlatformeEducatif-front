@@ -1,10 +1,36 @@
-/* financial-overview.component.css - Updated with unified design */
+/* financial-overview.component.css - Complete stylesheet with all missing sections */
+
+/* CSS Variables for theming */
+:root {
+  --color-primary: #a4b465;
+  --color-primary-dark: #8b9b52;
+  --color-secondary: #6b7280;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+  --color-gray: #e5e7eb;
+  --color-gray-light: #f9fafb;
+  --color-gray-dark: #6b7280;
+  --gradient-primary: linear-gradient(135deg, #a4b465, #8b9b52);
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-full: 50%;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --transition-base: all 0.3s ease;
+  --z-dropdown: 1000;
+}
 
 /* Container */
 .financial-overview-container {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+  position: relative;
 }
 
 /* Loading State */
@@ -274,6 +300,120 @@
   font-weight: 600;
 }
 
+/* Component Collection Rates */
+.component-rates-section {
+  background-color: white;
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--color-gray);
+}
+
+.component-rates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.component-rate-card {
+  background: var(--color-gray-light);
+  border: 2px solid var(--color-gray);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.component-rate-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.component-rate-card.tuition {
+  border-color: var(--color-info);
+}
+
+.component-rate-card.tuition::before {
+  background: var(--color-info);
+}
+
+.component-rate-card.uniform {
+  border-color: var(--color-success);
+}
+
+.component-rate-card.uniform::before {
+  background: var(--color-success);
+}
+
+.component-rate-card.transportation {
+  border-color: var(--color-warning);
+}
+
+.component-rate-card.transportation::before {
+  background: var(--color-warning);
+}
+
+.component-rate-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.component-icon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.component-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.component-label {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  font-size: 1rem;
+}
+
+.component-rate {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.component-rate.excellent {
+  color: var(--color-success);
+}
+
+.component-rate.good {
+  color: var(--color-warning);
+}
+
+.component-rate.poor {
+  color: var(--color-error);
+}
+
+.component-progress {
+  width: 100%;
+}
+
+.progress-bar-small {
+  width: 100%;
+  height: 8px;
+  background-color: var(--color-gray);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--color-primary);
+}
+
 /* Revenue Cards Grid */
 .revenue-cards-grid {
   display: grid;
@@ -356,6 +496,37 @@
   line-height: 1.2;
 }
 
+.amount-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-gray);
+}
+
+.breakdown-item:last-child {
+  border-bottom: none;
+}
+
+.breakdown-label {
+  font-size: 0.875rem;
+  color: var(--color-gray-dark);
+  font-weight: 500;
+}
+
+.breakdown-value {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  font-size: 0.875rem;
+}
+
 .subtitle {
   font-size: 0.875rem;
   color: var(--color-gray-dark);
@@ -417,8 +588,8 @@
   font-weight: 500;
 }
 
-/* Class Group Section */
-.class-group-section {
+/* Payment Status Breakdown */
+.payment-status-section {
   background-color: white;
   border-radius: var(--radius-md);
   padding: 24px;
@@ -426,13 +597,118 @@
   border: 2px solid var(--color-gray);
 }
 
-.class-stats-grid {
+.status-breakdown-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
 }
 
-.class-stat-card {
+.status-card {
+  background: var(--color-gray-light);
+  border: 2px solid var(--color-gray);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.status-card.completed {
+  border-color: var(--color-success);
+}
+
+.status-card.completed::before {
+  background: var(--color-success);
+}
+
+.status-card.partial {
+  border-color: var(--color-warning);
+}
+
+.status-card.partial::before {
+  background: var(--color-warning);
+}
+
+.status-card.pending {
+  border-color: var(--color-info);
+}
+
+.status-card.pending::before {
+  background: var(--color-info);
+}
+
+.status-card.overdue {
+  border-color: var(--color-error);
+}
+
+.status-card.overdue::before {
+  background: var(--color-error);
+}
+
+.status-card.no-record {
+  border-color: var(--color-secondary);
+}
+
+.status-card.no-record::before {
+  background: var(--color-secondary);
+}
+
+.status-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.status-icon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-count {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.status-label {
+  font-size: 0.875rem;
+  color: var(--color-gray-dark);
+  font-weight: 500;
+}
+
+/* Component Usage Section */
+.component-usage-section {
+  background-color: white;
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--color-gray);
+}
+
+.component-usage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.usage-card {
   background: var(--color-gray-light);
   border: 2px solid var(--color-gray);
   border-radius: var(--radius-sm);
@@ -442,7 +718,7 @@
   overflow: hidden;
 }
 
-.class-stat-card::before {
+.usage-card::before {
   content: '';
   position: absolute;
   top: 0;
@@ -451,53 +727,159 @@
   height: 4px;
 }
 
-.class-stat-card.card-école {
-  border-color: var(--color-info);
-}
-
-.class-stat-card.card-école::before {
-  background: var(--color-info);
-}
-
-.class-stat-card.card-college {
+.usage-card.uniform {
   border-color: var(--color-success);
 }
 
-.class-stat-card.card-college::before {
+.usage-card.uniform::before {
   background: var(--color-success);
 }
 
-.class-stat-card.card-lycée {
+.usage-card.transportation {
   border-color: var(--color-warning);
 }
 
-.class-stat-card.card-lycée::before {
+.usage-card.transportation::before {
   background: var(--color-warning);
 }
 
-.class-stat-card:hover {
+.usage-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
-.class-stat-header {
+.usage-header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 16px;
 }
 
-.class-icon {
+.usage-icon {
   color: var(--color-primary);
 }
 
-.class-label {
+.usage-title {
   font-weight: 600;
   color: var(--color-primary-dark);
   font-size: 1rem;
 }
 
-.class-stat-content {
+.usage-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.usage-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-gray);
+}
+
+.usage-stat:last-child {
+  border-bottom: none;
+}
+
+.usage-label {
+  font-size: 0.875rem;
+  color: var(--color-gray-dark);
+  font-weight: 500;
+}
+
+.usage-value {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.usage-value.success {
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+/* Grade Category Section */
+.grade-category-section {
+  background-color: white;
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--color-gray);
+}
+
+.grade-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.grade-category-card {
+  background: var(--color-gray-light);
+  border: 2px solid var(--color-gray);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.grade-category-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.grade-category-card.card-école {
+  border-color: var(--color-info);
+}
+
+.grade-category-card.card-école::before {
+  background: var(--color-info);
+}
+
+.grade-category-card.card-college {
+  border-color: var(--color-success);
+}
+
+.grade-category-card.card-college::before {
+  background: var(--color-success);
+}
+
+.grade-category-card.card-lycée {
+  border-color: var(--color-warning);
+}
+
+.grade-category-card.card-lycée::before {
+  background: var(--color-warning);
+}
+
+.grade-category-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.grade-category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.grade-category-icon {
+  color: var(--color-primary);
+}
+
+.grade-category-label {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  font-size: 1rem;
+}
+
+.grade-category-content {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -528,6 +910,11 @@
 
 .stat-row .stat-value.revenue {
   color: var(--color-success);
+  font-weight: 700;
+}
+
+.stat-row .stat-value.average {
+  color: var(--color-info);
   font-weight: 700;
 }
 
@@ -577,7 +964,9 @@
     grid-template-columns: 1fr;
   }
   
-  .class-stats-grid {
+  .component-rates-grid,
+  .component-usage-grid,
+  .grade-category-grid {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   }
 }
@@ -627,8 +1016,11 @@
   }
   
   .collection-rate-section,
+  .component-rates-section,
   .financial-summary,
-  .class-group-section {
+  .payment-status-section,
+  .component-usage-section,
+  .grade-category-section {
     padding: 16px;
   }
   
@@ -672,12 +1064,18 @@
     font-size: 1.25rem;
   }
   
-  .class-stats-grid {
+  .component-rates-grid,
+  .status-breakdown-grid,
+  .component-usage-grid,
+  .grade-category-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
   
-  .class-stat-card {
+  .component-rate-card,
+  .status-card,
+  .usage-card,
+  .grade-category-card {
     padding: 16px;
   }
 }
@@ -705,8 +1103,11 @@
   }
   
   .collection-rate-section,
+  .component-rates-section,
   .financial-summary,
-  .class-group-section {
+  .payment-status-section,
+  .component-usage-section,
+  .grade-category-section {
     padding: 12px;
     border-radius: var(--radius-sm);
   }
@@ -752,11 +1153,17 @@
     font-size: 0.75rem;
   }
   
-  .class-stat-card {
+  .component-rate-card,
+  .status-card,
+  .usage-card,
+  .grade-category-card {
     padding: 12px;
   }
   
-  .class-label {
+  .component-label,
+  .status-label,
+  .usage-title,
+  .grade-category-label {
     font-size: 0.875rem;
   }
   
@@ -766,6 +1173,14 @@
   
   .stat-row .stat-value {
     font-size: 0.875rem;
+  }
+  
+  .component-rate {
+    font-size: 1.25rem;
+  }
+  
+  .status-count {
+    font-size: 1.125rem;
   }
 }
 
@@ -801,15 +1216,21 @@
   
   .revenue-card,
   .summary-stat,
-  .class-stat-card {
+  .component-rate-card,
+  .status-card,
+  .usage-card,
+  .grade-category-card {
     break-inside: avoid;
     box-shadow: none;
     border: 1px solid #ddd;
   }
   
   .collection-rate-section,
+  .component-rates-section,
   .financial-summary,
-  .class-group-section {
+  .payment-status-section,
+  .component-usage-section,
+  .grade-category-section {
     box-shadow: none;
     border: 1px solid #ddd;
   }
@@ -827,10 +1248,16 @@
 @media (prefers-contrast: high) {
   .revenue-card,
   .summary-stat,
-  .class-stat-card,
+  .component-rate-card,
+  .status-card,
+  .usage-card,
+  .grade-category-card,
   .collection-rate-section,
+  .component-rates-section,
   .financial-summary,
-  .class-group-section {
+  .payment-status-section,
+  .component-usage-section,
+  .grade-category-section {
     border: 2px solid var(--color-gray-dark);
   }
   
@@ -858,7 +1285,10 @@
   .btn-secondary:hover,
   .revenue-card:hover,
   .summary-stat:hover,
-  .class-stat-card:hover {
+  .component-rate-card:hover,
+  .status-card:hover,
+  .usage-card:hover,
+  .grade-category-card:hover {
     transform: none;
   }
 }
@@ -912,4 +1342,191 @@
 
 .financial-overview-container::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary);
+}
+
+/* Additional utility classes */
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.text-primary {
+  color: var(--color-primary);
+}
+
+.text-primary-dark {
+  color: var(--color-primary-dark);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.text-info {
+  color: var(--color-info);
+}
+
+.bg-primary {
+  background-color: var(--color-primary);
+}
+
+.bg-success {
+  background-color: var(--color-success);
+}
+
+.bg-warning {
+  background-color: var(--color-warning);
+}
+
+.bg-error {
+  background-color: var(--color-error);
+}
+
+.bg-info {
+  background-color: var(--color-info);
+}
+
+/* Loading states for individual sections */
+.section-loading {
+  position: relative;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.section-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid var(--color-gray);
+  border-top: 2px solid var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Empty state styles */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--color-gray-dark);
+}
+
+.empty-state svg {
+  margin-bottom: 16px;
+  color: var(--color-gray);
+  opacity: 0.6;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Tooltip styles */
+.tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.tooltip::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-base);
+  z-index: 1000;
+}
+
+.tooltip:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Badge styles */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.badge.badge-success {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--color-success);
+}
+
+.badge.badge-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning);
+}
+
+.badge.badge-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+}
+
+.badge.badge-info {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--color-info);
+}
+
+.badge.badge-primary {
+  background-color: rgba(164, 180, 101, 0.1);
+  color: var(--color-primary);
 }

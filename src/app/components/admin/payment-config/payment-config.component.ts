@@ -1,10 +1,11 @@
+// payment-config.component.ts - Corrected Version
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { PaymentService } from '../../../services/payment.service';
-import { PaymentConfiguration } from '../../../models/payment.model';
+import { PaymentConfiguration, Grade } from '../../../models/payment.model';
 
 @Component({
   selector: 'app-payment-config',
@@ -17,8 +18,28 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
   currentConfig: PaymentConfiguration | null = null;
   academicYears: string[] = [];
   currentAcademicYear: string;
-  isCreatingNew = false; // New flag to track if creating new config
+  isCreatingNew = false;
   private destroy$ = new Subject<void>();
+
+  // Grade definitions based on your payment model
+  primaryGrades: Grade[] = [
+    '1ère année primaire',
+    '2ème année primaire', 
+    '3ème année primaire',
+    '4ème année primaire',
+    '5ème année primaire',
+    '6ème année primaire'
+  ];
+
+  secondaryGrades: Grade[] = [
+    '7ème année',
+    '8ème année', 
+    '9ème année',
+    '1ère année lycée',
+    '2ème année lycée',
+    '3ème année lycée',
+    '4ème année lycée'
+  ];
 
   months = [
     { value: 1, label: 'Janvier' },
@@ -60,8 +81,8 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
     const currentYear = new Date().getFullYear();
     const years: string[] = [];
     
-    // Include past 2 years, current year, and next 3 years
-    for (let i = 0 ; i <= 3; i++) {
+    // Include current year and next 3 years
+    for (let i = 0; i <= 3; i++) {
       const year = currentYear + i;
       years.push(`${year}-${year + 1}`);
     }
@@ -69,12 +90,43 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
   }
 
   private createForm(): FormGroup {
+    const gradeAmountsGroup = this.fb.group({});
+    
+    // Add all grades with validators
+    gradeAmountsGroup.addControl('Maternal', this.fb.control(0, [Validators.required, Validators.min(0)]));
+    
+    this.primaryGrades.forEach(grade => {
+      gradeAmountsGroup.addControl(grade, this.fb.control(0, [Validators.required, Validators.min(0)]));
+    });
+    
+    this.secondaryGrades.forEach(grade => {
+      gradeAmountsGroup.addControl(grade, this.fb.control(0, [Validators.required, Validators.min(0)]));
+    });
+
     return this.fb.group({
       academicYear: [this.currentAcademicYear, Validators.required],
-      paymentAmounts: this.fb.group({
-        école: [0, [Validators.required, Validators.min(0)]],
-        college: [0, [Validators.required, Validators.min(0)]],
-        lycée: [0, [Validators.required, Validators.min(0)]]
+      gradeAmounts: gradeAmountsGroup,
+      uniform: this.fb.group({
+        enabled: [false],
+        price: [0, [Validators.min(0)]],
+        description: [''],
+        isOptional: [true]
+      }),
+      transportation: this.fb.group({
+        enabled: [false],
+        tariffs: this.fb.group({
+          close: this.fb.group({
+            enabled: [false],
+            monthlyPrice: [0, [Validators.min(0)]],
+            description: ['']
+          }),
+          far: this.fb.group({
+            enabled: [false],
+            monthlyPrice: [0, [Validators.min(0)]],
+            description: ['']
+          })
+        }),
+        isOptional: [true]
       }),
       paymentSchedule: this.fb.group({
         startMonth: [9, Validators.required],
@@ -91,6 +143,7 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
   }
 
   private setupFormSubscriptions(): void {
+    // Update total months when schedule changes
     this.configForm.get('paymentSchedule')?.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
@@ -98,10 +151,25 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
         this.configForm.get('paymentSchedule.totalMonths')?.setValue(totalMonths, { emitEvent: false });
       });
 
+    // Handle discount validation
     this.configForm.get('annualPaymentDiscount.enabled')?.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe((enabled: boolean) => {
         this.updateDiscountValidators(enabled);
+      });
+
+    // Handle uniform validation
+    this.configForm.get('uniform.enabled')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((enabled: boolean) => {
+        this.updateUniformValidators(enabled);
+      });
+
+    // Handle transportation validation
+    this.configForm.get('transportation.enabled')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((enabled: boolean) => {
+        this.updateTransportationValidators(enabled);
       });
   }
 
@@ -109,18 +177,43 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
     const percentageControl = this.configForm.get('annualPaymentDiscount.percentage');
     const amountControl = this.configForm.get('annualPaymentDiscount.amount');
 
-    if (enabled) {
-      percentageControl?.setValidators([Validators.min(0), Validators.max(100)]);
-      amountControl?.setValidators([Validators.min(0)]);
-    } else {
-      percentageControl?.setValidators([Validators.min(0), Validators.max(100)]);
-      amountControl?.setValidators([Validators.min(0)]);
+    if (!enabled) {
       percentageControl?.setValue(0);
       amountControl?.setValue(0);
     }
 
     percentageControl?.updateValueAndValidity();
     amountControl?.updateValueAndValidity();
+  }
+
+  private updateUniformValidators(enabled: boolean): void {
+    const priceControl = this.configForm.get('uniform.price');
+
+    if (enabled) {
+      priceControl?.setValidators([Validators.required, Validators.min(0.01)]);
+    } else {
+      priceControl?.setValidators([Validators.min(0)]);
+      priceControl?.setValue(0);
+    }
+
+    priceControl?.updateValueAndValidity();
+  }
+
+  private updateTransportationValidators(enabled: boolean): void {
+    const closePriceControl = this.configForm.get('transportation.tariffs.close.monthlyPrice');
+    const farPriceControl = this.configForm.get('transportation.tariffs.far.monthlyPrice');
+    const closeEnabledControl = this.configForm.get('transportation.tariffs.close.enabled');
+    const farEnabledControl = this.configForm.get('transportation.tariffs.far.enabled');
+
+    if (!enabled) {
+      closeEnabledControl?.setValue(false);
+      farEnabledControl?.setValue(false);
+      closePriceControl?.setValue(0);
+      farPriceControl?.setValue(0);
+    }
+
+    closePriceControl?.updateValueAndValidity();
+    farPriceControl?.updateValueAndValidity();
   }
 
   loadCurrentConfig(): void {
@@ -139,7 +232,6 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           if (error.status === 404) {
-            // No configuration found - this is normal for new academic years
             this.currentConfig = null;
             this.isCreatingNew = true;
             this.resetFormToDefaults();
@@ -154,15 +246,37 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
   }
 
   private resetFormToDefaults(): void {
-    // Keep the selected academic year but reset other fields to defaults
     const selectedYear = this.configForm.get('academicYear')?.value;
+    
+    // Reset grade amounts
+    const gradeAmountsDefaults: any = { 'Maternal': 0 };
+    this.primaryGrades.forEach(grade => gradeAmountsDefaults[grade] = 0);
+    this.secondaryGrades.forEach(grade => gradeAmountsDefaults[grade] = 0);
     
     this.configForm.patchValue({
       academicYear: selectedYear,
-      paymentAmounts: {
-        école: 0,
-        college: 0,
-        lycée: 0
+      gradeAmounts: gradeAmountsDefaults,
+      uniform: {
+        enabled: false,
+        price: 0,
+        description: '',
+        isOptional: true
+      },
+      transportation: {
+        enabled: false,
+        tariffs: {
+          close: {
+            enabled: false,
+            monthlyPrice: 0,
+            description: ''
+          },
+          far: {
+            enabled: false,
+            monthlyPrice: 0,
+            description: ''
+          }
+        },
+        isOptional: true
       },
       paymentSchedule: {
         startMonth: 9,
@@ -186,10 +300,28 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
 
     this.configForm.patchValue({
       academicYear: config.academicYear,
-      paymentAmounts: {
-        école: config.paymentAmounts.école || 0,
-        college: config.paymentAmounts.college || 0,
-        lycée: config.paymentAmounts.lycée || 0
+      gradeAmounts: config.gradeAmounts,
+      uniform: {
+        enabled: config.uniform?.enabled || false,
+        price: config.uniform?.price || 0,
+        description: config.uniform?.description || '',
+        isOptional: config.uniform?.isOptional ?? true
+      },
+      transportation: {
+        enabled: config.transportation?.enabled || false,
+        tariffs: {
+          close: {
+            enabled: config.transportation?.tariffs?.close?.enabled || false,
+            monthlyPrice: config.transportation?.tariffs?.close?.monthlyPrice || 0,
+            description: config.transportation?.tariffs?.close?.description || ''
+          },
+          far: {
+            enabled: config.transportation?.tariffs?.far?.enabled || false,
+            monthlyPrice: config.transportation?.tariffs?.far?.monthlyPrice || 0,
+            description: config.transportation?.tariffs?.far?.description || ''
+          }
+        },
+        isOptional: config.transportation?.isOptional ?? true
       },
       paymentSchedule: {
         startMonth: config.paymentSchedule.startMonth,
@@ -224,8 +356,8 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
     return months;
   }
 
-  calculateMonthlyAmount(classGroup: string): number {
-    const totalAmount = this.configForm.get(`paymentAmounts.${classGroup}`)?.value || 0;
+  calculateMonthlyAmount(grade: string): number {
+    const totalAmount = this.configForm.get(`gradeAmounts.${grade}`)?.value || 0;
     const totalMonths = this.calculateTotalMonths();
     return totalMonths > 0 ? Math.round(totalAmount / totalMonths) : 0;
   }
@@ -237,11 +369,49 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Validate that at least one payment amount is set
-    const amounts = this.configForm.get('paymentAmounts')?.value;
-    if (!amounts.école && !amounts.college && !amounts.lycée) {
-      this.showMessage('Veuillez définir au moins un montant de paiement', 'error');
+    // Validate that at least one grade amount is set
+    const gradeAmounts = this.configForm.get('gradeAmounts')?.value;
+    const hasAmounts = Object.values(gradeAmounts).some((amount: any) => amount > 0);
+    
+    if (!hasAmounts) {
+      this.showMessage('Veuillez définir au moins un montant pour un niveau d\'étude', 'error');
       return;
+    }
+
+    // Validate uniform configuration
+    if (this.configForm.get('uniform.enabled')?.value) {
+      const uniformPrice = this.configForm.get('uniform.price')?.value || 0;
+      if (uniformPrice <= 0) {
+        this.showMessage('Veuillez définir un prix pour l\'uniforme', 'error');
+        return;
+      }
+    }
+
+    // Validate transportation configuration
+    if (this.configForm.get('transportation.enabled')?.value) {
+      const closeEnabled = this.configForm.get('transportation.tariffs.close.enabled')?.value;
+      const farEnabled = this.configForm.get('transportation.tariffs.far.enabled')?.value;
+      
+      if (!closeEnabled && !farEnabled) {
+        this.showMessage('Veuillez activer au moins une zone de transport', 'error');
+        return;
+      }
+
+      if (closeEnabled) {
+        const closePrice = this.configForm.get('transportation.tariffs.close.monthlyPrice')?.value || 0;
+        if (closePrice <= 0) {
+          this.showMessage('Veuillez définir un prix pour la zone proche', 'error');
+          return;
+        }
+      }
+
+      if (farEnabled) {
+        const farPrice = this.configForm.get('transportation.tariffs.far.monthlyPrice')?.value || 0;
+        if (farPrice <= 0) {
+          this.showMessage('Veuillez définir un prix pour la zone éloignée', 'error');
+          return;
+        }
+      }
     }
 
     // Validate discount configuration
@@ -262,7 +432,6 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
     const formValue = this.prepareFormData();
-    const selectedYear = formValue.academicYear;
 
     this.paymentService.createOrUpdatePaymentConfig(formValue)
       .pipe(takeUntil(this.destroy$))
@@ -272,8 +441,8 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
           this.isCreatingNew = false;
           
           const message = this.isCreatingNew ? 
-            `Configuration créée avec succès pour ${selectedYear}` : 
-            `Configuration mise à jour avec succès pour ${selectedYear}`;
+            `Configuration créée avec succès pour ${config.academicYear}` : 
+            `Configuration mise à jour avec succès pour ${config.academicYear}`;
           
           this.showMessage(message, 'success');
           this.isLoading = false;
@@ -296,13 +465,45 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
   private prepareFormData(): any {
     const formValue = { ...this.configForm.value };
     
+    // Set total months
     formValue.paymentSchedule.totalMonths = this.calculateTotalMonths();
     
+    // Clean up discount configuration
     if (!formValue.annualPaymentDiscount.enabled) {
       formValue.annualPaymentDiscount = {
         enabled: false,
         percentage: 0,
         amount: 0
+      };
+    }
+
+    // Clean up uniform configuration
+    if (!formValue.uniform.enabled) {
+      formValue.uniform = {
+        enabled: false,
+        price: 0,
+        description: '',
+        isOptional: true
+      };
+    }
+
+    // Clean up transportation configuration
+    if (!formValue.transportation.enabled) {
+      formValue.transportation = {
+        enabled: false,
+        tariffs: {
+          close: {
+            enabled: false,
+            monthlyPrice: 0,
+            description: ''
+          },
+          far: {
+            enabled: false,
+            monthlyPrice: 0,
+            description: ''
+          }
+        },
+        isOptional: true
       };
     }
 
@@ -317,27 +518,22 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
     const target = event.target as HTMLSelectElement;
     const newYear = target.value;
     
-    // Update the form control
-    this.configForm.patchValue({ academicYear: newYear });
-    
-    // Show a confirmation if user has unsaved changes
+    // Show confirmation if user has unsaved changes
     if (this.configForm.dirty && this.currentConfig) {
       const confirmChange = confirm(
         'Vous avez des modifications non sauvegardées. Êtes-vous sûr de vouloir changer d\'année académique ?'
       );
       
       if (!confirmChange) {
-        // Revert to previous selection
         this.configForm.patchValue({ academicYear: this.currentConfig.academicYear });
         return;
       }
     }
     
-    // Load configuration for the new year
+    this.configForm.patchValue({ academicYear: newYear });
     this.loadCurrentConfig();
   }
 
-  // Copy configuration from another year
   copyFromPreviousYear(): void {
     if (!this.isCreatingNew) {
       this.showMessage('Cette fonction n\'est disponible que lors de la création d\'une nouvelle configuration', 'warning');
@@ -352,7 +548,6 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (config) => {
-          // Copy configuration but keep the new academic year
           const newAcademicYear = this.configForm.get('academicYear')?.value;
           this.patchFormWithConfig(config);
           this.configForm.patchValue({ academicYear: newAcademicYear });
@@ -366,20 +561,29 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
       });
   }
 
-  // Reset form to default values
   resetForm(): void {
-    this.configForm.reset();
     const selectedYear = this.configForm.get('academicYear')?.value || this.currentAcademicYear;
-    this.configForm.patchValue({
-      academicYear: selectedYear,
-      paymentAmounts: { école: 0, college: 0, lycée: 0 },
-      paymentSchedule: { startMonth: 9, endMonth: 5, totalMonths: 9 },
-      gracePeriod: 5,
-      annualPaymentDiscount: { enabled: false, percentage: 0, amount: 0 }
-    });
+    this.configForm.reset();
+    this.configForm.patchValue({ academicYear: selectedYear });
+    this.resetFormToDefaults();
   }
 
-  // Form validation helpers
+  // ===== TEMPLATE HELPER METHODS =====
+
+  getPrimaryGrades(): Grade[] {
+    return this.primaryGrades;
+  }
+
+  getSecondaryGrades(): Grade[] {
+    return this.secondaryGrades;
+  }
+
+  getGradeDisplayName(grade: Grade): string {
+    return this.paymentService.getGradeLabel(grade);
+  }
+
+  // ===== VALIDATION HELPERS =====
+
   isFieldInvalid(fieldPath: string): boolean {
     const field = this.configForm.get(fieldPath);
     return !!(field && field.invalid && (field.dirty || field.touched));
@@ -405,18 +609,39 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ===== UTILITY METHODS =====
+
+  formatCurrency(amount: number): string {
+    return this.paymentService.formatCurrency(amount);
+  }
+
+  formatDate(date: Date | string | undefined): string {
+    if (!date) return 'N/A';
+    return this.paymentService.formatDate(date);
+  }
+
+  getCreatedByName(createdBy: any): string {
+    if (!createdBy) return 'Système';
+    if (typeof createdBy === 'string') return 'Utilisateur';
+    return createdBy.name || 'Système';
+  }
+
+  isCreatingNewConfiguration(): boolean {
+    return this.isCreatingNew;
+  }
+
+  getConfigurationTitle(): string {
+    if (this.isCreatingNew) {
+      return `Créer une nouvelle configuration pour ${this.configForm.get('academicYear')?.value}`;
+    }
+    return `Modifier la configuration pour ${this.configForm.get('academicYear')?.value}`;
+  }
+
+  // ===== MESSAGE HANDLING =====
+
   private showMessage(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
     console.log(`${type.toUpperCase()}: ${message}`);
-    
-    if (type === 'error') {
-      this.showToast(message, 'error');
-    } else if (type === 'success') {
-      this.showToast(message, 'success');
-    } else if (type === 'warning') {
-      this.showToast(message, 'warning');
-    } else if (type === 'info') {
-      this.showToast(message, 'info');
-    }
+    this.showToast(message, type);
   }
 
   private showToast(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
@@ -451,41 +676,5 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
         document.body.removeChild(toast);
       }
     }, 5000);
-  }
-
-  formatCurrency(amount: number): string {
-    return this.paymentService.formatCurrency(amount);
-  }
-
-  formatDate(date: Date | string | undefined): string {
-    if (!date) return 'N/A';
-    return this.paymentService.formatDate(date);
-  }
-
-  getCreatedByName(createdBy: any): string {
-    if (!createdBy) return 'Système';
-    if (typeof createdBy === 'string') return 'Utilisateur';
-    return createdBy.name || 'Système';
-  }
-
-  getClassGroupInfo(classGroup: string): { label: string; icon: string; color: string } {
-    const classGroupMap = {
-      'école': { label: 'École', icon: '🏫', color: '#3b82f6' },
-      'college': { label: 'Collège', icon: '📚', color: '#10b981' },
-      'lycée': { label: 'Lycée', icon: '🧪', color: '#f59e0b' }
-    };
-    return classGroupMap[classGroup as keyof typeof classGroupMap] || 
-           { label: classGroup, icon: '📚', color: '#6b7280' };
-  }
-
-  isCreatingNewConfiguration(): boolean {
-    return this.isCreatingNew;
-  }
-
-  getConfigurationTitle(): string {
-    if (this.isCreatingNew) {
-      return `Créer une nouvelle configuration pour ${this.configForm.get('academicYear')?.value}`;
-    }
-    return `Modifier la configuration pour ${this.configForm.get('academicYear')?.value}`;
   }
 }

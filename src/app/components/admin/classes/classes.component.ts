@@ -305,11 +305,13 @@ export class ClassesComponent implements OnInit, OnDestroy {
   }
 
   // Students Management
-  manageStudents(classItem: Class): void {
-    this.selectedClass = classItem;
-    this.loadClassStudents(classItem._id!);
-    this.showStudentsModal = true;
-  }
+manageStudents(classItem: Class): void {
+  this.selectedClass = classItem;
+  // Refresh students data to ensure we have the latest class assignments
+  this.refreshStudentsData();
+  this.loadClassStudents(classItem._id!);
+  this.showStudentsModal = true;
+}
 
   private loadClassStudents(classId: string): void {
     this.classService.getClassStudents(classId)
@@ -326,13 +328,17 @@ export class ClassesComponent implements OnInit, OnDestroy {
       });
   }
 
-  private updateAvailableStudents(): void {
-    const classStudentIds = this.classStudents.map(s => s._id);
-    this.availableStudents = this.allStudents.filter(s => 
-      !classStudentIds.includes(s._id) && !s.studentClass
-    );
-    this.filterAvailableStudents();
-  }
+private updateAvailableStudents(): void {
+  const classStudentIds = this.classStudents.map(s => s._id);
+  this.availableStudents = this.allStudents.filter(s => 
+    !classStudentIds.includes(s._id) && !s.studentClass
+  );
+  this.filterAvailableStudents();
+}
+
+private refreshStudentsData(): void {
+  this.loadAllStudents(); // This will reload the students with their current class assignments
+}
 
   filterAvailableStudents(): void {
     if (this.studentSearchTerm) {
@@ -346,57 +352,77 @@ export class ClassesComponent implements OnInit, OnDestroy {
     }
   }
 
-  addStudentToClass(student: User): void {
-    if (!this.selectedClass) return;
-    
-    this.classService.addStudent(this.selectedClass._id!, { studentId: student._id! })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.classStudents.push(student);
-          this.updateAvailableStudents();
-          // Update the student count in the main view
-          const classIndex = this.classes.findIndex(c => c._id === this.selectedClass!._id);
-          if (classIndex > -1) {
-            if (!this.classes[classIndex].students) {
-              this.classes[classIndex].students = [];
-            }
-            (this.classes[classIndex].students as string[]).push(student._id!);
-            this.applyFilters();
-          }
-          this.toasterService.success(`${student.name} ajouté à la classe avec succès!`);
-        },
-        error: (error) => {
-          console.error('Error adding student:', error);
-          this.toasterService.error('Erreur lors de l\'ajout de l\'étudiant.');
+addStudentToClass(student: User): void {
+  if (!this.selectedClass) return;
+  
+  this.classService.addStudent(this.selectedClass._id!, { studentId: student._id! })
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: () => {
+        // Update local class students
+        this.classStudents.push(student);
+        
+        // Update the global allStudents array to reflect the class assignment
+        const studentIndex = this.allStudents.findIndex(s => s._id === student._id);
+        if (studentIndex > -1) {
+          this.allStudents[studentIndex].studentClass = this.selectedClass!._id;
         }
-      });
-  }
+        
+        this.updateAvailableStudents();
+        
+        // Update the student count in the main view
+        const classIndex = this.classes.findIndex(c => c._id === this.selectedClass!._id);
+        if (classIndex > -1) {
+          if (!this.classes[classIndex].students) {
+            this.classes[classIndex].students = [];
+          }
+          (this.classes[classIndex].students as string[]).push(student._id!);
+          this.applyFilters();
+        }
+        this.toasterService.success(`${student.name} ajouté à la classe avec succès!`);
+      },
+      error: (error) => {
+        console.error('Error adding student:', error);
+        this.toasterService.error('Erreur lors de l\'ajout de l\'étudiant.');
+      }
+    });
+}
 
-  removeStudentFromClass(student: User): void {
-    if (!this.selectedClass) return;
-    
-    this.classService.removeStudent(this.selectedClass._id!, student._id!)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.classStudents = this.classStudents.filter(s => s._id !== student._id);
-          this.updateAvailableStudents();
-          // Update the student count in the main view
-          const classIndex = this.classes.findIndex(c => c._id === this.selectedClass!._id);
-          if (classIndex > -1 && this.classes[classIndex].students) {
-            this.classes[classIndex].students = (this.classes[classIndex].students as string[])
-              .filter(id => id !== student._id);
-            this.applyFilters();
-          }
-          this.toasterService.success(`${student.name} retiré de la classe avec succès!`);
-        },
-        error: (error) => {
-          console.error('Error removing student:', error);
-          this.toasterService.error('Erreur lors du retrait de l\'étudiant.');
+removeStudentFromClass(student: User): void {
+  if (!this.selectedClass) return;
+  
+  this.classService.removeStudent(this.selectedClass._id!, student._id!)
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: () => {
+        // Update local class students
+        this.classStudents = this.classStudents.filter(s => s._id !== student._id);
+        
+        // Update the global allStudents array to remove the class assignment
+        const studentIndex = this.allStudents.findIndex(s => s._id === student._id);
+        if (studentIndex > -1) {
+          delete this.allStudents[studentIndex].studentClass;
+          // or set it to null if the property is required
+          // this.allStudents[studentIndex].studentClass = null;
         }
-      });
-  }
+        
+        this.updateAvailableStudents();
+        
+        // Update the student count in the main view
+        const classIndex = this.classes.findIndex(c => c._id === this.selectedClass!._id);
+        if (classIndex > -1 && this.classes[classIndex].students) {
+          this.classes[classIndex].students = (this.classes[classIndex].students as string[])
+            .filter(id => id !== student._id);
+          this.applyFilters();
+        }
+        this.toasterService.success(`${student.name} retiré de la classe avec succès!`);
+      },
+      error: (error) => {
+        console.error('Error removing student:', error);
+        this.toasterService.error('Erreur lors du retrait de l\'étudiant.');
+      }
+    });
+}
 
   closeStudentsModal(): void {
     this.showStudentsModal = false;

@@ -10,87 +10,19 @@ import {
   StudentWithPayment,
   PaymentDashboard,
   PaymentFilters,
-  RecordPaymentRequest
+  RecordPaymentRequest,
+  GeneratePaymentRequest,
+  BulkGeneratePaymentRequest,
+  PaymentReport,
+  MonthlyStats,
+  ExportData,
+  BulkUpdateResult,
+  StudentPaymentDetails,
+  AvailableGradesResponse,
+  Grade,
+  GradeCategory , 
+  UpdatePaymentRecordRequest
 } from '../models/payment.model';
-
-// Additional interfaces for new APIs
-export interface PaymentReport {
-  reportType: string;
-  academicYear: string;
-  classGroup: string;
-  dateRange: {
-    startDate?: string;
-    endDate?: string;
-  };
-  report: any;
-}
-
-export interface MonthlyStats {
-  academicYear: string;
-  monthlyStats: Array<{
-    month: number;
-    monthName: string;
-    expected: number;
-    collected: number;
-    pending: number;
-    overdue: number;
-    collectionRate: string;
-  }>;
-}
-
-export interface ExportData {
-  message: string;
-  totalRecords: number;
-  data: Array<{
-    'Student Name': string;
-    'Student Email': string;
-    'Class Group': string;
-    'Student Class': string;
-    'Total Amount': number;
-    'Paid Amount': number;
-    'Remaining Amount': number;
-    'Overall Status': string;
-    'Payment Type': string;
-    'Academic Year': string;
-    'Created Date': string;
-    'Created By': string;
-  }>;
-}
-
-export interface BulkUpdateResult {
-  message: string;
-  results: {
-    updated: number;
-    skipped: number;
-    errors: Array<{
-      studentId: string;
-      error: string;
-    }>;
-  };
-  configurationUsed: {
-    academicYear: string;
-    paymentAmounts: {
-      école: number;
-      college: number;
-      lycée: number;
-    };
-  };
-}
-
-export interface StudentPaymentDetails {
-  student: {
-    _id: string;
-    name: string;
-    email: string;
-    studentClass: {
-      _id: string;
-      name: string;
-      grade: string;
-    };
-    classGroup: string;
-  };
-  paymentRecord: StudentPayment;
-}
 
 @Injectable({
   providedIn: 'root'
@@ -119,6 +51,13 @@ export class PaymentService extends BaseService {
     ).pipe(map(response => response.config));
   }
 
+  // ✅ NEW: Get available grades
+  getAvailableGrades(): Observable<AvailableGradesResponse> {
+    return this.http.get<AvailableGradesResponse>(
+      `${this.apiUrl}${this.endpoint}/grades`
+    );
+  }
+
   // ===== STUDENT PAYMENT MANAGEMENT =====
   getAllStudentsWithPayments(filters?: PaymentFilters): Observable<{
     students: StudentWithPayment[];
@@ -144,34 +83,73 @@ export class PaymentService extends BaseService {
     );
   }
 
-  generatePaymentForStudent(studentId: string, academicYear?: string): Observable<StudentPayment> {
+  // ✅ UPDATED: Generate payment with new options
+  generatePaymentForStudent(
+    studentId: string, 
+    options: GeneratePaymentRequest = {}
+  ): Observable<StudentPayment> {
     return this.http.post<{ message: string; paymentRecord: StudentPayment }>(
       `${this.apiUrl}${this.endpoint}/student/${studentId}/generate`,
-      { academicYear }
+      options
     ).pipe(map(response => response.paymentRecord));
   }
 
-  recordMonthlyPayment(
+  // ✅ UPDATED: Record monthly tuition payment
+  recordMonthlyTuitionPayment(
     studentId: string,
     payment: RecordPaymentRequest,
     academicYear?: string
   ): Observable<StudentPayment> {
     const params = academicYear ? this.buildParams({ academicYear }) : undefined;
     return this.http.post<{ message: string; paymentRecord: StudentPayment }>(
-      `${this.apiUrl}${this.endpoint}/student/${studentId}/payment/monthly`,
+      `${this.apiUrl}${this.endpoint}/student/${studentId}/payment/tuition/monthly`,
       payment,
       { params }
     ).pipe(map(response => response.paymentRecord));
   }
 
-  recordAnnualPayment(
+  // ✅ NEW: Record monthly transportation payment
+  recordMonthlyTransportationPayment(
     studentId: string,
     payment: RecordPaymentRequest,
     academicYear?: string
   ): Observable<StudentPayment> {
     const params = academicYear ? this.buildParams({ academicYear }) : undefined;
     return this.http.post<{ message: string; paymentRecord: StudentPayment }>(
-      `${this.apiUrl}${this.endpoint}/student/${studentId}/payment/annual`,
+      `${this.apiUrl}${this.endpoint}/student/${studentId}/payment/transportation/monthly`,
+      payment,
+      { params }
+    ).pipe(map(response => response.paymentRecord));
+  }
+
+  updatePaymentRecordComponents(studentId: string, options: UpdatePaymentRecordRequest): Observable<StudentPayment> {
+  return this.http.put<StudentPayment>(`${this.apiUrl}${this.endpoint}/student/${studentId}/components`, options);
+}
+
+
+  // ✅ NEW: Record uniform payment
+  recordUniformPayment(
+    studentId: string,
+    payment: Omit<RecordPaymentRequest, 'monthIndex' | 'amount'>,
+    academicYear?: string
+  ): Observable<StudentPayment> {
+    const params = academicYear ? this.buildParams({ academicYear }) : undefined;
+    return this.http.post<{ message: string; paymentRecord: StudentPayment }>(
+      `${this.apiUrl}${this.endpoint}/student/${studentId}/payment/uniform`,
+      payment,
+      { params }
+    ).pipe(map(response => response.paymentRecord));
+  }
+
+  // ✅ UPDATED: Record annual tuition payment
+  recordAnnualTuitionPayment(
+    studentId: string,
+    payment: Omit<RecordPaymentRequest, 'monthIndex'>,
+    academicYear?: string
+  ): Observable<StudentPayment> {
+    const params = academicYear ? this.buildParams({ academicYear }) : undefined;
+    return this.http.post<{ message: string; paymentRecord: StudentPayment }>(
+      `${this.apiUrl}${this.endpoint}/student/${studentId}/payment/tuition/annual`,
       payment,
       { params }
     ).pipe(map(response => response.paymentRecord));
@@ -182,7 +160,7 @@ export class PaymentService extends BaseService {
     deletedRecord: {
       studentId: string;
       academicYear: string;
-      totalAmount: number;
+      totalAmounts: any;
     };
   }> {
     const params = academicYear ? this.buildParams({ academicYear }) : undefined;
@@ -191,7 +169,7 @@ export class PaymentService extends BaseService {
       deletedRecord: {
         studentId: string;
         academicYear: string;
-        totalAmount: number;
+        totalAmounts: any;
       };
     }>(
       `${this.apiUrl}${this.endpoint}/student/${studentId}`,
@@ -200,7 +178,9 @@ export class PaymentService extends BaseService {
   }
 
   // ===== BULK OPERATIONS =====
-  bulkGeneratePayments(academicYear?: string): Observable<{
+  
+  // ✅ UPDATED: Bulk generate with new options
+  bulkGeneratePayments(options: BulkGeneratePaymentRequest = {}): Observable<{
     message: string;
     results: {
       success: number;
@@ -217,7 +197,7 @@ export class PaymentService extends BaseService {
       };
     }>(
       `${this.apiUrl}${this.endpoint}/bulk/generate`,
-      { academicYear }
+      options
     );
   }
 
@@ -228,6 +208,33 @@ export class PaymentService extends BaseService {
     return this.http.put<BulkUpdateResult>(
       `${this.apiUrl}${this.endpoint}/bulk/update-existing`,
       { academicYear, updateUnpaidOnly }
+    );
+  }
+
+  deleteAllPaymentRecords(academicYear?: string): Observable<{
+    message: string;
+    results: {
+      deleted: number;
+      errors: Array<{
+        studentId: string;
+        error: string;
+      }>;
+    };
+  }> {
+    return this.http.delete<{
+      message: string;
+      results: {
+        deleted: number;
+        errors: Array<{
+          studentId: string;
+          error: string;
+        }>;
+      };
+    }>(
+      `${this.apiUrl}${this.endpoint}/bulk/delete-all`,
+      { 
+        body: { academicYear }
+      }
     );
   }
 
@@ -247,8 +254,12 @@ export class PaymentService extends BaseService {
     return this.dashboardData$.asObservable();
   }
 
-  getPaymentStatsByMonth(academicYear?: string): Observable<MonthlyStats> {
-    const params = academicYear ? this.buildParams({ academicYear }) : undefined;
+  // ✅ UPDATED: Get payment stats by month with component filter
+  getPaymentStatsByMonth(academicYear?: string, component: string = 'all'): Observable<MonthlyStats> {
+    const params = this.buildParams({ 
+      ...(academicYear && { academicYear }),
+      component 
+    });
     return this.http.get<MonthlyStats>(
       `${this.apiUrl}${this.endpoint}/stats/monthly`,
       { params }
@@ -256,11 +267,15 @@ export class PaymentService extends BaseService {
   }
 
   // ===== REPORTING =====
+  
+  // ✅ UPDATED: Get payment reports with new filters
   getPaymentReports(
-    reportType: 'summary' | 'detailed' | 'overdue' | 'collection' = 'summary',
+    reportType: 'summary' | 'detailed' | 'overdue' | 'collection' | 'component' = 'summary',
     filters?: {
       academicYear?: string;
-      classGroup?: 'école' | 'college' | 'lycée';
+      gradeCategory?: GradeCategory;
+      grade?: Grade;
+      component?: 'all' | 'tuition' | 'uniform' | 'transportation';
       startDate?: string;
       endDate?: string;
     }
@@ -275,10 +290,13 @@ export class PaymentService extends BaseService {
     );
   }
 
+  // ✅ UPDATED: Export payment data with new filters
   exportPaymentData(filters?: {
     academicYear?: string;
-    classGroup?: 'école' | 'college' | 'lycée';
+    gradeCategory?: GradeCategory;
+    grade?: Grade;
     paymentStatus?: 'pending' | 'partial' | 'completed' | 'overdue';
+    component?: 'all' | 'tuition' | 'uniform' | 'transportation';
   }): Observable<ExportData> {
     const params = this.buildParams(filters || {});
     return this.http.get<ExportData>(
@@ -288,32 +306,30 @@ export class PaymentService extends BaseService {
   }
 
   // ===== UTILITY METHODS =====
-getAcademicYears(): string[] {
-  const currentYear = new Date().getFullYear();
-  const years: string[] = [];
   
-  // Include past 2 years, current year, and next 3 years
-  // This ensures we can create configurations for future years
-  for (let i = 0; i <= 3; i++) {
-    const year = currentYear + i;
-    years.push(`${year}-${year + 1}`);
+  getAcademicYears(): string[] {
+    const currentYear = new Date().getFullYear();
+    const years: string[] = [];
+    
+    // Include past 2 years, current year, and next 3 years
+    for (let i = -2; i <= 3; i++) {
+      const year = currentYear + i;
+      years.push(`${year}-${year + 1}`);
+    }
+    return years;
   }
-  return years;
-}
 
-getCurrentAcademicYear(): string {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
-  
-  // Academic year typically starts in September
-  // If we're in months 1-7 (Jan-July), we're in the second half of the academic year
-  if (currentMonth < 8) {
-    return `${currentYear - 1}-${currentYear}`;
+  getCurrentAcademicYear(): string {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+    
+    // Academic year typically starts in September
+    if (currentMonth < 8) {
+      return `${currentYear - 1}-${currentYear}`;
+    }
+    return `${currentYear}-${currentYear + 1}`;
   }
-  // If we're in months 8-12 (Aug-Dec), we're in the first half of the academic year
-  return `${currentYear}-${currentYear + 1}`;
-}
 
   getPaymentStatusColor(status: string): string {
     const colorMap: { [key: string]: string } = {
@@ -321,7 +337,8 @@ getCurrentAcademicYear(): string {
       'partial': '#FF9800',
       'pending': '#2196F3',
       'overdue': '#F44336',
-      'no_record': '#666666'
+      'no_record': '#666666',
+      'not_applicable': '#9E9E9E'
     };
     return colorMap[status] || '#666666';
   }
@@ -332,27 +349,48 @@ getCurrentAcademicYear(): string {
       'partial': 'schedule',
       'pending': 'hourglass_empty',
       'overdue': 'error',
-      'no_record': 'help_outline'
+      'no_record': 'help_outline',
+      'not_applicable': 'remove_circle_outline'
     };
     return iconMap[status] || 'help_outline';
   }
 
-  getClassGroupColor(classGroup: string): string {
+  // ✅ UPDATED: Grade category colors and icons
+  getGradeCategoryColor(gradeCategory: string): string {
     const colorMap: { [key: string]: string } = {
-      'école': '#2196F3',    // Blue
-      'college': '#4CAF50',   // Green
-      'lycée': '#FF9800'      // Orange
+      'maternelle': '#E91E63',  // Pink
+      'primaire': '#2196F3',    // Blue
+      'secondaire': '#4CAF50'   // Green
     };
-    return colorMap[classGroup] || '#666666';
+    return colorMap[gradeCategory] || '#666666';
   }
 
-  getClassGroupIcon(classGroup: string): string {
+  getGradeCategoryIcon(gradeCategory: string): string {
     const iconMap: { [key: string]: string } = {
-      'école': 'school',
-      'college': 'domain',
-      'lycée': 'account_balance'
+      'maternelle': 'child_care',
+      'primaire': 'school',
+      'secondaire': 'account_balance'
     };
-    return iconMap[classGroup] || 'help_outline';
+    return iconMap[gradeCategory] || 'help_outline';
+  }
+
+  // ✅ NEW: Component colors and icons
+  getComponentColor(component: string): string {
+    const colorMap: { [key: string]: string } = {
+      'tuition': '#2196F3',      // Blue
+      'uniform': '#FF9800',      // Orange
+      'transportation': '#4CAF50' // Green
+    };
+    return colorMap[component] || '#666666';
+  }
+
+  getComponentIcon(component: string): string {
+    const iconMap: { [key: string]: string } = {
+      'tuition': 'school',
+      'uniform': 'checkroom',
+      'transportation': 'directions_bus'
+    };
+    return iconMap[component] || 'help_outline';
   }
 
   formatCurrency(amount: number): string {
@@ -394,7 +432,6 @@ getCurrentAcademicYear(): string {
     
     if (pendingPayments.length === 0) return null;
     
-    // Sort by due date and return the earliest
     pendingPayments.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
     return new Date(pendingPayments[0].dueDate);
   }
@@ -409,7 +446,8 @@ getCurrentAcademicYear(): string {
     return labelMap[method] || method;
   }
 
-  // Validation helpers
+  // ===== VALIDATION HELPERS =====
+  
   validatePaymentAmount(amount: number, maxAmount: number): string | null {
     if (!amount || amount <= 0) {
       return 'Le montant doit être supérieur à 0';
@@ -430,12 +468,41 @@ getCurrentAcademicYear(): string {
     return null;
   }
 
-  // Class group utilities updated for new structure
-  getClassGroups(): Array<{ value: string; label: string; color: string }> {
+  // ===== FILTER OPTIONS =====
+  
+  // ✅ UPDATED: Get grade categories
+  getGradeCategories(): Array<{ value: GradeCategory; label: string; color: string }> {
     return [
-      { value: 'école', label: 'École', color: this.getClassGroupColor('école') },
-      { value: 'college', label: 'Collège', color: this.getClassGroupColor('college') },
-      { value: 'lycée', label: 'Lycée', color: this.getClassGroupColor('lycée') }
+      { value: 'maternelle', label: 'Maternelle', color: this.getGradeCategoryColor('maternelle') },
+      { value: 'primaire', label: 'Primaire', color: this.getGradeCategoryColor('primaire') },
+      { value: 'secondaire', label: 'Secondaire', color: this.getGradeCategoryColor('secondaire') }
+    ];
+  }
+
+  // ✅ NEW: Get all grades with categories
+  getGradesWithCategories(): Array<{ value: Grade; label: string; category: GradeCategory }> {
+    return [
+      // Maternelle
+      { value: 'Maternal', label: 'Maternal', category: 'maternelle' },
+      
+      // Primaire
+      { value: '1ère année primaire', label: '1ère année primaire', category: 'primaire' },
+      { value: '2ème année primaire', label: '2ème année primaire', category: 'primaire' },
+      { value: '3ème année primaire', label: '3ème année primaire', category: 'primaire' },
+      { value: '4ème année primaire', label: '4ème année primaire', category: 'primaire' },
+      { value: '5ème année primaire', label: '5ème année primaire', category: 'primaire' },
+      { value: '6ème année primaire', label: '6ème année primaire', category: 'primaire' },
+      
+      // Secondaire - Collège
+      { value: '7ème année', label: '7ème année (Collège)', category: 'secondaire' },
+      { value: '8ème année', label: '8ème année (Collège)', category: 'secondaire' },
+      { value: '9ème année', label: '9ème année (Collège)', category: 'secondaire' },
+      
+      // Secondaire - Lycée
+      { value: '1ère année lycée', label: '1ère année lycée', category: 'secondaire' },
+      { value: '2ème année lycée', label: '2ème année lycée', category: 'secondaire' },
+      { value: '3ème année lycée', label: '3ème année lycée', category: 'secondaire' },
+      { value: '4ème année lycée', label: '4ème année lycée', category: 'secondaire' }
     ];
   }
 
@@ -449,38 +516,234 @@ getCurrentAcademicYear(): string {
     ];
   }
 
+  // ✅ UPDATED: Get report types with new component report
   getReportTypes(): Array<{ value: string; label: string; description: string }> {
     return [
       { value: 'summary', label: 'Résumé', description: 'Vue d\'ensemble des statistiques de paiement' },
       { value: 'detailed', label: 'Détaillé', description: 'Rapport détaillé avec filtrage par date' },
       { value: 'overdue', label: 'En retard', description: 'Étudiants avec paiements en retard' },
-      { value: 'collection', label: 'Collecte', description: 'Analyse des collectes par date et méthode' }
+      { value: 'collection', label: 'Collecte', description: 'Analyse des collectes par date et méthode' },
+      { value: 'component', label: 'Composants', description: 'Analyse par composant (frais scolaires, uniforme, transport)' }
     ];
   }
-  deleteAllPaymentRecords(academicYear?: string): Observable<{
-  message: string;
-  results: {
-    deleted: number;
-    errors: Array<{
-      studentId: string;
-      error: string;
-    }>;
-  };
-}> {
-  return this.http.delete<{
-    message: string;
-    results: {
-      deleted: number;
-      errors: Array<{
-        studentId: string;
-        error: string;
-      }>;
+
+  // ✅ NEW: Get payment components
+  getPaymentComponents(): Array<{ value: string; label: string; color: string; icon: string }> {
+    return [
+      { value: 'all', label: 'Tous les composants', color: '#666666', icon: 'view_list' },
+      { value: 'tuition', label: 'Frais scolaires', color: this.getComponentColor('tuition'), icon: this.getComponentIcon('tuition') },
+      { value: 'uniform', label: 'Uniforme', color: this.getComponentColor('uniform'), icon: this.getComponentIcon('uniform') },
+      { value: 'transportation', label: 'Transport', color: this.getComponentColor('transportation'), icon: this.getComponentIcon('transportation') }
+    ];
+  }
+
+  getPaymentMethods(): Array<{ value: string; label: string; icon: string }> {
+    return [
+      { value: 'cash', label: 'Espèces', icon: 'money' },
+      { value: 'check', label: 'Chèque', icon: 'receipt' },
+      { value: 'bank_transfer', label: 'Virement bancaire', icon: 'account_balance' },
+      { value: 'online', label: 'En ligne', icon: 'payment' }
+    ];
+  }
+
+  // ✅ NEW: Get transportation types
+  getTransportationTypes(): Array<{ value: string; label: string; description: string }> {
+    return [
+      { value: 'close', label: 'Zone proche', description: 'Transport pour les étudiants habitant près de l\'école' },
+      { value: 'far', label: 'Zone éloignée', description: 'Transport pour les étudiants habitant loin de l\'école' }
+    ];
+  }
+
+  // ===== HELPER METHODS FOR PAYMENT CALCULATIONS =====
+  
+  calculateTotalAmounts(paymentRecord: StudentPayment): {
+    tuition: number;
+    uniform: number;
+    transportation: number;
+    grandTotal: number;
+  } {
+    return {
+      tuition: paymentRecord.totalAmounts?.tuition || 0,
+      uniform: paymentRecord.totalAmounts?.uniform || 0,
+      transportation: paymentRecord.totalAmounts?.transportation || 0,
+      grandTotal: paymentRecord.totalAmounts?.grandTotal || 0
     };
-  }>(
-    `${this.apiUrl}${this.endpoint}/bulk/delete-all`,
-    { 
-      body: { academicYear }
+  }
+
+  calculateRemainingAmounts(paymentRecord: StudentPayment): {
+    tuition: number;
+    uniform: number;
+    transportation: number;
+    grandTotal: number;
+  } {
+    const total = this.calculateTotalAmounts(paymentRecord);
+    const paid = {
+      tuition: paymentRecord.paidAmounts?.tuition || 0,
+      uniform: paymentRecord.paidAmounts?.uniform || 0,
+      transportation: paymentRecord.paidAmounts?.transportation || 0,
+      grandTotal: paymentRecord.paidAmounts?.grandTotal || 0
+    };
+
+    return {
+      tuition: total.tuition - paid.tuition,
+      uniform: total.uniform - paid.uniform,
+      transportation: total.transportation - paid.transportation,
+      grandTotal: total.grandTotal - paid.grandTotal
+    };
+  }
+
+  getOverduePayments(paymentRecord: StudentPayment, gracePeriod: number = 5): {
+    tuition: any[];
+    transportation: any[];
+    total: number;
+  } {
+    const overdueTuition = paymentRecord.tuitionMonthlyPayments?.filter(payment => 
+      this.isPaymentOverdue(payment.dueDate, gracePeriod) && 
+      (payment.status === 'pending' || payment.status === 'partial')
+    ) || [];
+
+    const overdueTransportation = paymentRecord.transportation?.monthlyPayments?.filter(payment => 
+      this.isPaymentOverdue(payment.dueDate, gracePeriod) && 
+      (payment.status === 'pending' || payment.status === 'partial')
+    ) || [];
+
+    return {
+      tuition: overdueTuition,
+      transportation: overdueTransportation,
+      total: overdueTuition.length + overdueTransportation.length
+    };
+  }
+
+  getPaymentHistory(paymentRecord: StudentPayment): any[] {
+    const history: any[] = [];
+
+    // Add tuition payments
+    paymentRecord.tuitionMonthlyPayments?.forEach(payment => {
+      if (payment.paymentDate && payment.paidAmount > 0) {
+        history.push({
+          date: payment.paymentDate,
+          amount: payment.paidAmount,
+          method: payment.paymentMethod,
+          receiptNumber: payment.receiptNumber,
+          type: 'tuition_monthly',
+          month: payment.monthName,
+          component: 'tuition'
+        });
+      }
+    });
+
+    // Add annual tuition payment
+    if (paymentRecord.annualTuitionPayment?.isPaid && paymentRecord.annualTuitionPayment.paymentDate) {
+      history.push({
+        date: paymentRecord.annualTuitionPayment.paymentDate,
+        amount: paymentRecord.tuitionFees.amount - (paymentRecord.annualTuitionPayment.discount || 0),
+        method: paymentRecord.annualTuitionPayment.paymentMethod,
+        receiptNumber: paymentRecord.annualTuitionPayment.receiptNumber,
+        type: 'tuition_annual',
+        component: 'tuition'
+      });
     }
-  );
+
+    // Add uniform payment
+    if (paymentRecord.uniform?.isPaid && paymentRecord.uniform.paymentDate) {
+      history.push({
+        date: paymentRecord.uniform.paymentDate,
+        amount: paymentRecord.uniform.price,
+        method: paymentRecord.uniform.paymentMethod,
+        receiptNumber: paymentRecord.uniform.receiptNumber,
+        type: 'uniform',
+        component: 'uniform'
+      });
+    }
+
+    // Add transportation payments
+    paymentRecord.transportation?.monthlyPayments?.forEach(payment => {
+      if (payment.paymentDate && payment.paidAmount > 0) {
+        history.push({
+          date: payment.paymentDate,
+          amount: payment.paidAmount,
+          method: payment.paymentMethod,
+          receiptNumber: payment.receiptNumber,
+          type: 'transportation_monthly',
+          month: payment.monthName,
+          component: 'transportation'
+        });
+      }
+    });
+
+    // Sort by date (most recent first)
+    return history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
+  // ===== GRADE LABEL HELPERS =====
+  
+  getGradeLabel(grade: Grade): string {
+    const gradeLabels: { [key in Grade]: string } = {
+      'Maternal': 'Maternelle',
+      '1ère année primaire': '1ère année primaire',
+      '2ème année primaire': '2ème année primaire', 
+      '3ème année primaire': '3ème année primaire',
+      '4ème année primaire': '4ème année primaire',
+      '5ème année primaire': '5ème année primaire',
+      '6ème année primaire': '6ème année primaire',
+      '7ème année': '7ème année (Collège)',
+      '8ème année': '8ème année (Collège)',
+      '9ème année': '9ème année (Collège)',
+      '1ère année lycée': '1ère année lycée',
+      '2ème année lycée': '2ème année lycée',
+      '3ème année lycée': '3ème année lycée',
+      '4ème année lycée': '4ème année lycée'
+    };
+    return gradeLabels[grade] || grade;
+  }
+
+  getGradeCategoryLabel(category: GradeCategory): string {
+    const categoryLabels: { [key in GradeCategory]: string } = {
+      'maternelle': 'Maternelle',
+      'primaire': 'Primaire',
+      'secondaire': 'Secondaire (Collège + Lycée)'
+    };
+    return categoryLabels[category] || category;
+  }
+
+  // ===== ERROR HANDLING HELPERS =====
+  
+
+// Also add error handling helper if you don't have it already
+handlePaymentError(error: any): string {
+  if (error.error && error.error.message) {
+    return error.error.message;
+  }
+  
+  switch (error.status) {
+    case 400:
+      return 'Données invalides. Veuillez vérifier les informations saisies.';
+    case 404:
+      return 'Dossier de paiement non trouvé.';
+    case 403:
+      return 'Vous n\'avez pas les permissions nécessaires.';
+    case 500:
+      return 'Erreur du serveur. Veuillez réessayer plus tard.';
+    default:
+      return 'Une erreur inattendue s\'est produite.';
+  }
 }
+
+  validatePaymentData(payment: RecordPaymentRequest): string[] {
+    const errors: string[] = [];
+
+    if (!payment.paymentMethod) {
+      errors.push('La méthode de paiement est requise');
+    }
+
+    if (payment.amount !== undefined && payment.amount <= 0) {
+      errors.push('Le montant doit être supérieur à 0');
+    }
+
+    if (payment.receiptNumber && payment.receiptNumber.trim().length < 3) {
+      errors.push('Le numéro de reçu doit contenir au moins 3 caractères');
+    }
+
+    return errors;
+  }
 }

@@ -1,8 +1,8 @@
-// payment-management.component.ts (Updated with Delete All and Fixed Class Filter)
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { takeUntil, debounceTime, distinctUntilChanged, startWith } from 'rxjs/operators';
+// payment-management.component.ts - Cleaned Version
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { FormControl, FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { Subject, BehaviorSubject, Observable, combineLatest } from 'rxjs';
+import { takeUntil, debounceTime, distinctUntilChanged, startWith, map, catchError } from 'rxjs/operators';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { Router, ActivatedRoute } from '@angular/router';
 
@@ -16,12 +16,21 @@ import {
   PaymentDashboard,
   PaymentFilters,
   PaymentConfiguration,
-  BulkUpdateResult
+  BulkUpdateResult,
+  Grade,
+  GradeCategory,
+  AvailableGradesResponse,
+  GeneratePaymentRequest,
+  BulkGeneratePaymentRequest,
+  StudentPayment,
+  MonthlyPayment,
+  PaymentHistoryItem,
+  UpdatePaymentRecordRequest
 } from '../../../models/payment.model';
 import { Class } from '../../../models/class.model';
 import { User } from '../../../models/user.model';
 
-// Interfaces
+// ===== INTERFACES =====
 interface Toast {
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';
@@ -53,10 +62,16 @@ interface PaymentStatus {
   color: string;
 }
 
-interface ClassGroup {
-  value: string;
+interface GradeCategoryOption {
+  value: GradeCategory | '';
   label: string;
   color: string;
+}
+
+interface GradeOption {
+  value: Grade | '';
+  label: string;
+  category: GradeCategory | null;
 }
 
 interface QuickAction {
@@ -66,21 +81,6 @@ interface QuickAction {
   icon: string;
   color: string;
   action: () => void;
-}
-
-interface StudentPaymentDetailsResponse {
-  student: {
-    _id: string;
-    name: string;
-    email: string;
-    studentClass: {
-      _id: string;
-      name: string;
-      grade: string;
-    };
-    classGroup: string;
-  };
-  paymentRecord: any;
 }
 
 @Component({
@@ -124,41 +124,46 @@ interface StudentPaymentDetailsResponse {
 })
 export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewInit {
   
-  // Core Data Properties
+  // ===== CORE DATA PROPERTIES =====
   students: StudentWithPayment[] = [];
   dashboard: PaymentDashboard | null = null;
   paymentConfig: PaymentConfiguration | null = null;
   classes: Class[] = [];
   totalStudents = 0;
+  availableGrades: AvailableGradesResponse | null = null;
   
-  // UI State
+  // ===== UI STATE =====
   isLoading = false;
   selectedStudent: StudentWithPayment | null = null;
   expandedStudentId: string | null = null;
   
-  // Forms and Filters
+  // ===== FORMS AND FILTERS =====
   filterForm: FormGroup;
   searchControl: FormControl;
+  generateForm: FormGroup;
+  editForm: FormGroup;
   academicYears: string[] = [];
   currentAcademicYear: string;
   
-  // Pagination
+  // ===== PAGINATION =====
   currentPage = 1;
   pageSize = 50;
   totalPages = 1;
   
-  // Modal States
+  // ===== MODAL STATES =====
   isPaymentDialogOpen = false;
+  isGenerateDialogOpen = false;
+  isEditDialogOpen = false;
   currentDialogData: PaymentDialogData | null = null;
   
-  // Toast and Confirmation Systems
+  // ===== TOAST AND CONFIRMATION SYSTEMS =====
   toasts: Toast[] = [];
   confirmationState: ConfirmationState = {
     isOpen: false,
     config: null
   };
   
-  // Configuration Data
+  // ===== CONFIGURATION DATA =====
   paymentStatuses: PaymentStatus[] = [
     { value: '', label: 'Tous les statuts', icon: 'list', color: '#666666' },
     { value: 'completed', label: 'Payé', icon: 'check_circle', color: '#4CAF50' },
@@ -168,12 +173,14 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     { value: 'no_record', label: 'Sans dossier', icon: 'help_outline', color: '#666666' }
   ];
   
-  classGroups: ClassGroup[] = [
+  gradeCategories: GradeCategoryOption[] = [
     { value: '', label: 'Tous les niveaux', color: '#666666' },
-    { value: 'école', label: 'École', color: '#2196F3' },
-    { value: 'college', label: 'Collège', color: '#4CAF50' },
-    { value: 'lycée', label: 'Lycée', color: '#FF9800' }
+    { value: 'maternelle', label: 'Maternelle', color: '#E91E63' },
+    { value: 'primaire', label: 'Primaire', color: '#2196F3' },
+    { value: 'secondaire', label: 'Secondaire', color: '#4CAF50' }
   ];
+  
+  grades: GradeOption[] = [];
   
   private destroy$ = new Subject<void>();
 
@@ -182,18 +189,31 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     private classService: ClassService,
     private userService: UserService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef
   ) {
     this.currentAcademicYear = this.paymentService.getCurrentAcademicYear();
     this.academicYears = this.paymentService.getAcademicYears();
     
     // Initialize forms
     this.searchControl = new FormControl('');
-    this.filterForm = new FormGroup({
-      paymentStatus: new FormControl(''),
-      classGroup: new FormControl(''),
-      classId: new FormControl(''),
-      academicYear: new FormControl(this.currentAcademicYear)
+    this.filterForm = this.fb.group({
+      paymentStatus: [''],
+      gradeCategory: [''],
+      grade: [''],
+      classId: [''],
+      academicYear: [this.currentAcademicYear]
+    });
+
+    this.generateForm = this.fb.group({
+      hasUniform: [false],
+      transportationType: ['']
+    });
+
+    this.editForm = this.fb.group({
+      hasUniform: [false],
+      transportationType: ['']
     });
   }
 
@@ -205,7 +225,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   ngAfterViewInit(): void {
-    // Setup any additional view-related functionality if needed
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy(): void {
@@ -220,16 +240,51 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
       if (params['status']) {
         this.filterForm.patchValue({ paymentStatus: params['status'] });
       }
-      if (params['classGroup']) {
-        this.filterForm.patchValue({ classGroup: params['classGroup'] });
+      if (params['gradeCategory']) {
+        this.filterForm.patchValue({ gradeCategory: params['gradeCategory'] });
+      }
+      if (params['grade']) {
+        this.filterForm.patchValue({ grade: params['grade'] });
       }
     });
   }
 
   private loadInitialData(): void {
+    this.loadAvailableGrades();
     this.loadClasses();
     this.loadPaymentConfig();
     this.loadStudents();
+  }
+
+  private loadAvailableGrades(): void {
+    this.paymentService.getAvailableGrades().subscribe({
+      next: (grades) => {
+        this.availableGrades = grades;
+        this.buildGradeOptions();
+      },
+      error: (error) => {
+        console.error('Error loading available grades:', error);
+        this.showError('Erreur lors du chargement des niveaux');
+      }
+    });
+  }
+
+  private buildGradeOptions(): void {
+    if (!this.availableGrades) return;
+    
+    this.grades = [
+      { value: '', label: 'Tous les niveaux', category: null }
+    ];
+    
+    Object.entries(this.availableGrades.categorizedGrades).forEach(([category, gradeList]) => {
+      gradeList.forEach(grade => {
+        this.grades.push({
+          value: grade,
+          label: this.paymentService.getGradeLabel(grade),
+          category: category as GradeCategory
+        });
+      });
+    });
   }
 
   private loadClasses(): void {
@@ -284,20 +339,49 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
       });
   }
 
-  // ===== NEW: CLASS FILTER HELPER =====
+  // ===== FILTER HELPERS =====
   
-getFilteredClasses(): Class[] {
-  const selectedClassGroup = this.filterForm.get('classGroup')?.value;
-  
-  if (!selectedClassGroup) {
+  getFilteredClasses(): Class[] {
+    const selectedGradeCategory = this.filterForm.get('gradeCategory')?.value;
+    const selectedGrade = this.filterForm.get('grade')?.value;
+    
+    if (selectedGrade) {
+      return this.classes.filter(classItem => classItem.grade === selectedGrade);
+    }
+    
+    if (selectedGradeCategory) {
+      return this.classes.filter(classItem => {
+        const gradeCategory = this.getGradeCategoryFromGrade(classItem.grade);
+        return gradeCategory === selectedGradeCategory;
+      });
+    }
+    
     return this.classes;
   }
-  
-  return this.classes.filter(classItem => {
-    const classGroup = this.getClassGroupFromGrade(classItem.grade);
-    return classGroup === selectedClassGroup;
-  });
-}
+
+  getFilteredGrades(): GradeOption[] {
+    const selectedGradeCategory = this.filterForm.get('gradeCategory')?.value;
+    
+    if (!selectedGradeCategory) {
+      return this.grades;
+    }
+    
+    return this.grades.filter(grade => 
+      !grade.category || grade.category === selectedGradeCategory
+    );
+  }
+
+  private getGradeCategoryFromGrade(grade: string): GradeCategory | null {
+    if (!this.availableGrades) return null;
+    
+    for (const [category, gradeList] of Object.entries(this.availableGrades.categorizedGrades)) {
+      if (gradeList.includes(grade as Grade)) {
+        return category as GradeCategory;
+      }
+    }
+    return null;
+  }
+
   // ===== TOAST SYSTEM =====
 
   private generateToastId(): string {
@@ -414,8 +498,9 @@ getFilteredClasses(): Class[] {
     const filters: PaymentFilters = {
       search: this.searchControl.value?.trim() || undefined,
       paymentStatus: this.filterForm.get('paymentStatus')?.value || undefined,
-      classGroup: this.filterForm.get('classGroup')?.value || undefined,
-      classId: this.filterForm.get('classId')?.value || undefined, // FIXED: Include classId filter
+      gradeCategory: this.filterForm.get('gradeCategory')?.value || undefined,
+      grade: this.filterForm.get('grade')?.value || undefined,
+      classId: this.filterForm.get('classId')?.value || undefined,
       academicYear: this.filterForm.get('academicYear')?.value,
       page: this.currentPage,
       limit: this.pageSize
@@ -455,17 +540,6 @@ getFilteredClasses(): Class[] {
     this.loadDashboard();
     this.showSuccess('Données actualisées');
   }
-  private getClassGroupFromGrade(grade: string): string {
-  const ecoleGrades = ['6eme', '5eme', '4eme', '3eme', '2nde', '1ere'];
-  const collegeGrades = ['9eme', '8eme', '7eme'];
-  const lyceeGrades = ['4ᵉ année S', '3ᵉ année S', '2ᵉ année S', '1ʳᵉ année S'];
-  
-  if (ecoleGrades.includes(grade)) return 'école';
-  if (collegeGrades.includes(grade)) return 'college';
-  if (lyceeGrades.includes(grade)) return 'lycée';
-  
-  return 'école'; // Default
-}
 
   // ===== BULK OPERATIONS =====
 
@@ -484,7 +558,7 @@ getFilteredClasses(): Class[] {
 
     const confirmed = await this.confirmAction(
       'Génération en masse',
-      `Voulez-vous générer des dossiers de paiement pour ${studentsWithoutRecord} étudiant(s) ?`,
+      `Voulez-vous générer des dossiers de paiement pour ${studentsWithoutRecord} étudiant(s) ?\n\nOptions par défaut:\n- Uniforme: Non inclus\n- Transport: Non inclus\n\nVous pourrez personnaliser chaque dossier individuellement après la création.`,
       'info'
     );
 
@@ -492,7 +566,13 @@ getFilteredClasses(): Class[] {
       const academicYear = this.filterForm.get('academicYear')?.value;
       this.isLoading = true;
       
-      this.paymentService.bulkGeneratePayments(academicYear).subscribe({
+      const options: BulkGeneratePaymentRequest = {
+        academicYear,
+        defaultUniform: false,
+        defaultTransportation: null
+      };
+      
+      this.paymentService.bulkGeneratePayments(options).subscribe({
         next: (response) => {
           const message = `Génération terminée: ${response.results.success} réussis, ${response.results.errors.length} erreurs`;
           this.showSuccess(message);
@@ -550,8 +630,6 @@ getFilteredClasses(): Class[] {
     }
   }
 
-  // ===== NEW: DELETE ALL PAYMENT RECORDS =====
-  
   async deleteAllPaymentRecords(): Promise<void> {
     if (!this.dashboard) {
       this.showWarning('Tableau de bord non disponible');
@@ -571,7 +649,6 @@ getFilteredClasses(): Class[] {
     );
 
     if (confirmed) {
-      // Double confirmation for this critical action
       const doubleConfirmed = await this.confirmAction(
         'Confirmation finale',
         `Dernière confirmation: Supprimer ${studentsWithRecord} dossier${studentsWithRecord > 1 ? 's' : ''} de paiement ?`,
@@ -618,26 +695,160 @@ getFilteredClasses(): Class[] {
     this.expandedStudentId = this.expandedStudentId === student._id ? null : student._id;
   }
 
-  generatePaymentRecord(student: StudentWithPayment): void {
-    if (!student._id) {
+  // ===== GENERATE PAYMENT DIALOG =====
+
+  openGenerateDialog(student: StudentWithPayment): void {
+    this.selectedStudent = student;
+    this.generateForm.reset({
+      hasUniform: false,
+      transportationType: ''
+    });
+    this.isGenerateDialogOpen = true;
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeGenerateDialog(): void {
+    this.isGenerateDialogOpen = false;
+    this.selectedStudent = null;
+    document.body.style.overflow = 'auto';
+  }
+
+  generatePaymentRecord(): void {
+    if (!this.selectedStudent?._id) {
       this.showError('ID étudiant manquant');
       return;
     }
 
+    const formValues = this.generateForm.value;
     const academicYear = this.filterForm.get('academicYear')?.value;
     
-    this.paymentService.generatePaymentForStudent(student._id, academicYear).subscribe({
+    const options: GeneratePaymentRequest = {
+      academicYear,
+      hasUniform: formValues.hasUniform || false,
+      transportationType: formValues.transportationType || null
+    };
+    
+    this.isLoading = true;
+    
+    this.paymentService.generatePaymentForStudent(this.selectedStudent._id, options).subscribe({
       next: (paymentRecord) => {
-        this.showSuccess(`Dossier de paiement généré pour ${student.name}`);
+        this.showSuccess(`Dossier de paiement généré pour ${this.selectedStudent?.name}`);
         this.loadStudents();
         this.loadDashboard();
+        this.closeGenerateDialog();
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('Error generating payment record:', error);
-        const errorMessage = error.error?.message || 'Erreur lors de la génération du dossier';
+        const errorMessage = this.paymentService.handlePaymentError(error);
         this.showError(errorMessage);
+        this.isLoading = false;
       }
     });
+  }
+
+  // ===== EDIT PAYMENT DIALOG =====
+
+  editPaymentRecord(student: StudentWithPayment): void {
+    this.selectedStudent = student;
+    
+    const currentUniform = this.isUniformPurchased(student);
+    const currentTransportationType = this.getTransportationTypeForStudent(student);
+    
+    this.editForm.patchValue({
+      hasUniform: currentUniform,
+      transportationType: currentTransportationType
+    });
+    
+    if (this.isUniformPaid(student)) {
+      this.editForm.get('hasUniform')?.disable();
+    } else {
+      this.editForm.get('hasUniform')?.enable();
+    }
+    
+    this.isEditDialogOpen = true;
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeEditDialog(): void {
+    this.isEditDialogOpen = false;
+    this.selectedStudent = null;
+    document.body.style.overflow = 'auto';
+  }
+
+  updatePaymentRecord(): void {
+    if (!this.selectedStudent?._id || !this.selectedStudent.paymentRecord) {
+      this.showError('Dossier de paiement introuvable');
+      return;
+    }
+
+    const formValues = this.editForm.value;
+    const academicYear = this.filterForm.get('academicYear')?.value;
+    
+    const updateRequest: UpdatePaymentRecordRequest = {
+      academicYear,
+      hasUniform: formValues.hasUniform || false,
+      transportationType: formValues.transportationType || null
+    };
+
+    this.isLoading = true;
+    
+    this.paymentService.updatePaymentRecordComponents(this.selectedStudent._id, updateRequest).subscribe({
+      next: (updatedPaymentRecord) => {
+        this.showSuccess(`Dossier de paiement mis à jour pour ${this.selectedStudent?.name}`);
+        
+        const studentIndex = this.students.findIndex(s => s._id === this.selectedStudent?._id);
+        if (studentIndex !== -1) {
+          this.students[studentIndex].paymentRecord = updatedPaymentRecord;
+        }
+        
+        this.loadStudents();
+        this.loadDashboard();
+        this.closeEditDialog();
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error updating payment record:', error);
+        const errorMessage = this.paymentService.handlePaymentError(error);
+        this.showError(errorMessage || 'Erreur lors de la mise à jour du dossier');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  validateEditForm(): string[] {
+    const errors: string[] = [];
+    
+    if (!this.selectedStudent) {
+      errors.push('Aucun étudiant sélectionné');
+      return errors;
+    }
+    
+    const formValues = this.editForm.value;
+    
+    if (!formValues.hasUniform && this.isUniformPaid(this.selectedStudent)) {
+      errors.push('Impossible de retirer l\'uniforme car il a déjà été payé');
+    }
+    
+    if (this.hasTransportationPaymentsForStudent(this.selectedStudent)) {
+      const currentType = this.getTransportationTypeForStudent(this.selectedStudent);
+      if (formValues.transportationType !== currentType) {
+        errors.push('Impossible de changer le type de transport car des paiements ont déjà été effectués');
+      }
+    }
+    
+    return errors;
+  }
+
+  onEditFormSubmit(): void {
+    const validationErrors = this.validateEditForm();
+    
+    if (validationErrors.length > 0) {
+      validationErrors.forEach(error => this.showWarning(error));
+      return;
+    }
+    
+    this.updatePaymentRecord();
   }
 
   async deletePaymentRecord(student: StudentWithPayment): Promise<void> {
@@ -668,37 +879,54 @@ getFilteredClasses(): Class[] {
     }
   }
 
-  viewStudentDetails(student: StudentWithPayment): void {
-    if (!student._id || !student.hasPaymentRecord) return;
-    
-    const academicYear = this.filterForm.get('academicYear')?.value;
-    
-    this.paymentService.getStudentPaymentDetails(student._id, academicYear).subscribe({
-      next: (details: StudentPaymentDetailsResponse) => {
-        this.selectedStudent = student;
-        this.expandedStudentId = student._id;
-        console.log('Student payment details:', details);
-      },
-      error: (error) => {
-        console.error('Error loading student details:', error);
-        this.showError('Erreur lors du chargement des détails');
-      }
-    });
-  }
-
   // ===== PAYMENT DIALOG MANAGEMENT =====
 
-  openPaymentDialog(student: StudentWithPayment, type: 'monthly' | 'annual', monthIndex?: number): void {
+  openPaymentDialog(student: StudentWithPayment, type: 'tuition_monthly' | 'tuition_annual' | 'uniform' | 'transportation_monthly', monthIndex?: number): void {
     if (!student.paymentRecord) {
       this.showWarning('Veuillez d\'abord générer un dossier de paiement');
       return;
     }
 
+    let component: 'tuition' | 'uniform' | 'transportation' = 'tuition';
+    
+    switch (type) {
+      case 'tuition_monthly':
+      case 'tuition_annual':
+        component = 'tuition';
+        break;
+      case 'uniform':
+        component = 'uniform';
+        break;
+      case 'transportation_monthly':
+        component = 'transportation';
+        break;
+    }
+
+    const validationError = this.validatePaymentDialog(student, component);
+    if (validationError) {
+      this.showWarning(validationError);
+      return;
+    }
+
+    let dialogType: 'monthly' | 'annual' = 'monthly';
+    
+    switch (type) {
+      case 'tuition_monthly':
+      case 'uniform':
+      case 'transportation_monthly':
+        dialogType = 'monthly';
+        break;
+      case 'tuition_annual':
+        dialogType = 'annual';
+        break;
+    }
+
     this.currentDialogData = {
       student: student,
-      type: type,
+      type: dialogType,
       monthIndex: monthIndex,
-      academicYear: this.filterForm.get('academicYear')?.value || this.currentAcademicYear
+      academicYear: this.filterForm.get('academicYear')?.value || this.currentAcademicYear,
+      component: component
     };
 
     this.isPaymentDialogOpen = true;
@@ -717,9 +945,24 @@ getFilteredClasses(): Class[] {
 
   private handlePaymentResult(result: any): void {
     if (result.success) {
-      const paymentType = result.type === 'monthly' ? 'mensuel' : 'annuel';
-      this.showSuccess(`Paiement ${paymentType} enregistré avec succès`);
+      let paymentType = 'paiement';
       
+      switch (result.type) {
+        case 'tuition_monthly':
+          paymentType = 'paiement mensuel des frais scolaires';
+          break;
+        case 'tuition_annual':
+          paymentType = 'paiement annuel des frais scolaires';
+          break;
+        case 'uniform':
+          paymentType = 'paiement de l\'uniforme';
+          break;
+        case 'transportation_monthly':
+          paymentType = 'paiement mensuel du transport';
+          break;
+      }
+      
+      this.showSuccess(`${paymentType} enregistré avec succès`);
       this.loadStudents();
       this.loadDashboard();
     }
@@ -742,14 +985,24 @@ getFilteredClasses(): Class[] {
     this.filterForm.patchValue({ paymentStatus: target.value });
   }
 
-  onClassGroupChange(event: Event): void {
+  onGradeCategoryChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
-    const selectedClassGroup = target.value;
+    const selectedGradeCategory = target.value;
     
-    // FIXED: Clear classId when classGroup changes
     this.filterForm.patchValue({ 
-      classGroup: selectedClassGroup,
-      classId: '' // Reset class selection when group changes
+      gradeCategory: selectedGradeCategory,
+      grade: '',
+      classId: ''
+    });
+  }
+
+  onGradeChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const selectedGrade = target.value;
+    
+    this.filterForm.patchValue({ 
+      grade: selectedGrade,
+      classId: ''
     });
   }
 
@@ -789,7 +1042,8 @@ getFilteredClasses(): Class[] {
     this.searchControl.setValue('');
     this.filterForm.patchValue({
       paymentStatus: '',
-      classGroup: '',
+      gradeCategory: '',
+      grade: '',
       classId: ''
     });
   }
@@ -799,7 +1053,8 @@ getFilteredClasses(): Class[] {
     return !!(
       this.searchControl.value ||
       formValues.paymentStatus ||
-      formValues.classGroup ||
+      formValues.gradeCategory ||
+      formValues.grade ||
       formValues.classId
     );
   }
@@ -808,13 +1063,6 @@ getFilteredClasses(): Class[] {
 
   navigateToConfig(): void {
     this.router.navigate(['config'], { relativeTo: this.route });
-  }
-
-  navigateToFinancialOverview(): void {
-    this.router.navigate(['financial-overview'], { 
-      relativeTo: this.route,
-      queryParams: { academicYear: this.currentAcademicYear }
-    });
   }
 
   // ===== QUICK ACTIONS =====
@@ -869,14 +1117,6 @@ getFilteredClasses(): Class[] {
     return statusObj?.label || status;
   }
 
-  getStatusColor(status: string): string {
-    return this.paymentService.getPaymentStatusColor(status);
-  }
-
-  getStatusIcon(status: string): string {
-    return this.paymentService.getPaymentStatusIcon(status);
-  }
-
   getStatusCount(status: string): number {
     if (!this.dashboard) return 0;
     
@@ -896,10 +1136,11 @@ getFilteredClasses(): Class[] {
 
   calculateProgress(student: StudentWithPayment): number {
     if (!student.paymentRecord) return 0;
-    return this.paymentService.calculatePaymentProgress(
-      student.paymentRecord.paidAmount,
-      student.paymentRecord.totalAmount
-    );
+    
+    const totalAmount = student.paymentRecord.totalAmounts?.grandTotal || 0;
+    const paidAmount = student.paymentRecord.paidAmounts?.grandTotal || 0;
+    
+    return this.paymentService.calculatePaymentProgress(paidAmount, totalAmount);
   }
 
   getClassName(student: StudentWithPayment): string {
@@ -910,31 +1151,27 @@ getFilteredClasses(): Class[] {
   }
 
   getClassGrade(student: StudentWithPayment): string {
+    if (student.grade) {
+      return this.paymentService.getGradeLabel(student.grade);
+    }
     if (typeof student.studentClass === 'object' && student.studentClass?.grade) {
       return student.studentClass.grade;
     }
     return 'Non assigné';
   }
 
-  getClassGroupLabel(classGroup: string): string {
-    const group = this.classGroups.find(g => g.value === classGroup);
-    return group?.label || classGroup;
+  getGradeCategoryLabel(gradeCategory: GradeCategory | string): string {
+    if (!gradeCategory) return '';
+    return this.paymentService.getGradeCategoryLabel(gradeCategory as GradeCategory);
   }
 
-  getClassGroupColor(classGroup: string): string {
-    const group = this.classGroups.find(g => g.value === classGroup);
-    return group?.color || '#666666';
+  getGradeCategoryColor(gradeCategory: GradeCategory | string): string {
+    if (!gradeCategory) return '#666666';
+    return this.paymentService.getGradeCategoryColor(gradeCategory);
   }
 
   getPaymentMethodLabel(method?: string): string {
     return this.paymentService.getPaymentMethodLabel(method || '');
-  }
-
-  getCompletionRate(): number {
-    if (!this.dashboard) return 0;
-    const total = this.dashboard.overview.totalStudents;
-    const completed = this.dashboard.statusCounts.completed;
-    return total > 0 ? Math.round((completed / total) * 100) : 0;
   }
 
   isPaymentOverdue(dueDate: Date | string): boolean {
@@ -945,6 +1182,11 @@ getFilteredClasses(): Class[] {
     return this.paymentService.formatDate(date);
   }
 
+  safeFormatDate(date: Date | string | undefined | null): string {
+    if (!date) return 'Non définie';
+    return this.paymentService.formatDate(date);
+  }
+
   // ===== BUTTON HELPER METHODS =====
 
   getStudentsWithoutRecord(): number {
@@ -952,7 +1194,6 @@ getFilteredClasses(): Class[] {
     return this.dashboard.statusCounts.no_record || 0;
   }
 
-  // NEW: Helper method for delete all button
   getStudentsWithRecord(): number {
     if (!this.dashboard) return 0;
     const total = this.dashboard.overview.totalStudents || 0;
@@ -960,38 +1201,389 @@ getFilteredClasses(): Class[] {
     return total - withoutRecord;
   }
 
-  shouldShowBulkGenerate(): boolean {
-    return this.getStudentsWithoutRecord() > 0;
-  }
+  // ===== COMPONENT-SPECIFIC HELPERS =====
 
-  shouldShowUpdate(): boolean {
-    return !!this.paymentConfig;
-  }
-
-  shouldShowDeleteAll(): boolean {
-    return this.getStudentsWithRecord() > 0;
-  }
-
-  getGenerateButtonText(): string {
-    const count = this.getStudentsWithoutRecord();
-    if (count === 0) {
-      return 'Tous les dossiers créés';
+  getTotalAmounts(student: StudentWithPayment): any {
+    if (!student.paymentRecord?.totalAmounts) {
+      return {
+        tuition: 0,
+        uniform: 0,
+        transportation: 0,
+        grandTotal: 0
+      };
     }
-    return `${count} étudiant${count > 1 ? 's' : ''} sans dossier`;
+    
+    return student.paymentRecord.totalAmounts;
   }
 
-  getUpdateButtonText(): string {
-    if (!this.paymentConfig) {
-      return 'Configuration requise';
+  getPaidAmounts(student: StudentWithPayment): any {
+    if (!student.paymentRecord?.paidAmounts) {
+      return {
+        tuition: 0,
+        uniform: 0,
+        transportation: 0,
+        grandTotal: 0
+      };
     }
-    return 'Appliquer nouvelle configuration';
+    
+    return student.paymentRecord.paidAmounts;
   }
 
-  getDeleteAllButtonText(): string {
-    const count = this.getStudentsWithRecord();
-    if (count === 0) {
-      return 'Aucun dossier à supprimer';
+  getRemainingAmounts(student: StudentWithPayment): any {
+    if (!student.paymentRecord?.remainingAmounts) {
+      const total = this.getTotalAmounts(student);
+      const paid = this.getPaidAmounts(student);
+      
+      return {
+        tuition: Math.max(0, total.tuition - paid.tuition),
+        uniform: Math.max(0, total.uniform - paid.uniform),
+        transportation: Math.max(0, total.transportation - paid.transportation),
+        grandTotal: Math.max(0, total.grandTotal - paid.grandTotal)
+      };
     }
-    return `${count} dossier${count > 1 ? 's' : ''} existant${count > 1 ? 's' : ''}`;
+    
+    return student.paymentRecord.remainingAmounts;
+  }
+
+  validatePaymentDialog(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation'): string | null {
+    if (!student.paymentRecord) {
+      return 'Aucun dossier de paiement trouvé pour cet étudiant';
+    }
+
+    switch (component) {
+      case 'tuition':
+        if (student.paymentRecord.annualTuitionPayment?.isPaid) {
+          return 'Le paiement annuel des frais scolaires a déjà été effectué';
+        }
+        break;
+        
+      case 'uniform':
+        if (!student.paymentRecord.uniform?.purchased) {
+          return 'Cet étudiant n\'a pas commandé d\'uniforme';
+        }
+        if (student.paymentRecord.uniform?.isPaid) {
+          return 'L\'uniforme a déjà été payé';
+        }
+        break;
+        
+      case 'transportation':
+        if (!student.paymentRecord.transportation?.using) {
+          return 'Cet étudiant n\'utilise pas le service de transport';
+        }
+        break;
+    }
+    
+    return null;
+  }
+
+  hasUniform(student: StudentWithPayment): boolean {
+    return student.paymentRecord?.uniform?.purchased || false;
+  }
+
+  hasTransportation(student: StudentWithPayment): boolean {
+    return student.paymentRecord?.transportation?.using || false;
+  }
+
+  getTransportationType(student: StudentWithPayment): string {
+    if (!this.hasTransportation(student)) return '';
+    const type = student.paymentRecord?.transportation?.type || '';
+    return type === 'close' ? 'Zone proche' : type === 'far' ? 'Zone éloignée' : type;
+  }
+
+  getComponentStatus(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation'): string {
+    if (!student.paymentRecord?.componentStatus) {
+      return student.paymentRecord?.overallStatus || 'pending';
+    }
+    
+    if (component === 'uniform') {
+      if (!student.paymentRecord.uniform?.purchased) {
+        return 'not_applicable';
+      }
+      return student.paymentRecord.uniform?.isPaid ? 'completed' : 'pending';
+    }
+    
+    return student.paymentRecord.componentStatus[component] || 'pending';
+  }
+
+  getComponentStatusLabel(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation'): string {
+    const status = this.getComponentStatus(student, component);
+    const componentName = component === 'tuition' ? 'Frais scolaires' : 
+                         component === 'uniform' ? 'Uniforme' : 'Transport';
+    
+    switch (status) {
+      case 'completed': return `${componentName} - Payé`;
+      case 'partial': return `${componentName} - Paiement partiel`;
+      case 'pending': return `${componentName} - En attente`;
+      case 'overdue': return `${componentName} - En retard`;
+      case 'not_applicable': return `${componentName} - Non applicable`;
+      default: return `${componentName} - ${status}`;
+    }
+  }
+
+  canPayComponent(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation'): boolean {
+    if (!student.paymentRecord) return false;
+    
+    switch (component) {
+      case 'tuition':
+        return !student.paymentRecord.annualTuitionPayment?.isPaid;
+        
+      case 'uniform':
+        return !!(student.paymentRecord.uniform?.purchased && !student.paymentRecord.uniform?.isPaid);
+        
+      case 'transportation':
+        return !!(student.paymentRecord.transportation?.using);
+        
+      default:
+        return false;
+    }
+  }
+
+  getComponentProgress(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation'): number {
+    if (!student.paymentRecord) return 0;
+    
+    const totalAmounts = this.getTotalAmounts(student);
+    const paidAmounts = this.getPaidAmounts(student);
+    
+    const total = totalAmounts[component] || 0;
+    const paid = paidAmounts[component] || 0;
+    
+    return total > 0 ? Math.round((paid / total) * 100) : 0;
+  }
+
+  // ===== PAYMENT HISTORY =====
+
+  getPaymentHistory(student: StudentWithPayment): PaymentHistoryItem[] {
+    if (!student.paymentRecord) return [];
+    
+    return this.paymentService.getPaymentHistory(student.paymentRecord);
+  }
+
+  // ===== GENERATE DIALOG HELPERS =====
+
+  getTuitionAmountForGrade(grade: Grade | null): number {
+    if (!grade || !this.paymentConfig?.gradeAmounts) return 0;
+    return this.paymentConfig.gradeAmounts[grade] || 0;
+  }
+
+  getUniformPrice(student?: StudentWithPayment): number {
+    if (student?.paymentRecord?.uniform?.price) {
+      return student.paymentRecord.uniform.price;
+    }
+    return this.paymentConfig?.uniform?.price || 0;
+  }
+
+  getUniformDescription(): string {
+    return this.paymentConfig?.uniform?.description || '';
+  }
+
+  isUniformEnabled(): boolean {
+    return this.paymentConfig?.uniform?.enabled || false;
+  }
+
+  isTransportationEnabled(): boolean {
+    return this.paymentConfig?.transportation?.enabled || false;
+  }
+
+  isTransportationCloseEnabled(): boolean {
+    return this.paymentConfig?.transportation?.tariffs?.close?.enabled || false;
+  }
+
+  isTransportationFarEnabled(): boolean {
+    return this.paymentConfig?.transportation?.tariffs?.far?.enabled || false;
+  }
+
+  getTransportationMonthlyPrice(type: 'close' | 'far'): number {
+    if (!this.paymentConfig?.transportation?.tariffs) return 0;
+    
+    if (type === 'close') {
+      return this.paymentConfig.transportation.tariffs.close?.monthlyPrice || 0;
+    } else {
+      return this.paymentConfig.transportation.tariffs.far?.monthlyPrice || 0;
+    }
+  }
+
+  getTransportDescription(type: string): string {
+    if (!this.paymentConfig?.transportation?.tariffs) return '';
+    
+    switch (type) {
+      case 'close':
+        return this.paymentConfig.transportation.tariffs.close?.description || 'Transport pour zone proche';
+      case 'far':
+        return this.paymentConfig.transportation.tariffs.far?.description || 'Transport pour zone éloignée';
+      default:
+        return '';
+    }
+  }
+
+  getTransportationMonths(): number {
+    if (!this.paymentConfig?.paymentSchedule) return 10;
+    return this.paymentConfig.paymentSchedule.totalMonths;
+  }
+
+  getTransportationTotal(): number {
+    const formValues = this.generateForm.value;
+    const transportationType = formValues.transportationType;
+    
+    if (!transportationType || !this.paymentConfig?.transportation?.tariffs) return 0;
+    
+    const monthlyPrice = this.getTransportationMonthlyPrice(transportationType);
+    return monthlyPrice * this.getTransportationMonths();
+  }
+
+  calculateEstimatedTotal(): number {
+    if (!this.selectedStudent?.grade) return 0;
+    
+    const formValues = this.generateForm.value;
+    let total = 0;
+    
+    total += this.getTuitionAmountForGrade(this.selectedStudent.grade);
+    
+    if (formValues.hasUniform) {
+      total += this.getUniformPrice();
+    }
+    
+    if (formValues.transportationType) {
+      total += this.getTransportationTotal();
+    }
+    
+    return total;
+  }
+
+  // ===== TRACK BY FUNCTIONS =====
+
+  trackByStudentId(index: number, student: StudentWithPayment): string {
+    return student._id;
+  }
+
+  trackByPaymentId(index: number, payment: MonthlyPayment): string {
+    return `${payment.month}-${payment.dueDate}`;
+  }
+
+  trackByHistoryItem(index: number, item: PaymentHistoryItem): string {
+    return `${item.date}-${item.amount}-${item.component}`;
+  }
+
+  // ===== EDIT FORM HELPERS =====
+
+  hasTransportationPaymentsForStudent(student: StudentWithPayment, type?: 'close' | 'far'): boolean {
+    const monthlyPayments = student.paymentRecord?.transportation?.monthlyPayments;
+    if (!monthlyPayments) {
+      return false;
+    }
+    
+    const paidPayments = monthlyPayments.filter(payment => payment.status === 'paid');
+    
+    if (!type) {
+      return paidPayments.length > 0;
+    }
+    
+    // If specific type is requested, check if current transportation type matches and has payments
+    return paidPayments.length > 0 && 
+           student.paymentRecord?.transportation?.type === type;
+  }
+
+  hasTransportationMonthlyPayments(student: StudentWithPayment): boolean {
+    return !!(this.hasTransportation(student) && 
+             student.paymentRecord && 
+             student.paymentRecord.transportation && 
+             student.paymentRecord.transportation.monthlyPayments && 
+             student.paymentRecord.transportation.monthlyPayments.length > 0);
+  }
+
+  getTransportationPaidPayments(): number {
+    if (!this.selectedStudent?.paymentRecord?.transportation?.monthlyPayments) {
+      return 0;
+    }
+    
+    return this.selectedStudent.paymentRecord.transportation.monthlyPayments
+      .filter(payment => payment.status === 'paid').length;
+  }
+
+  getTransportationTotalPayments(): number {
+    if (!this.selectedStudent?.paymentRecord?.transportation?.monthlyPayments) {
+      return 0;
+    }
+    
+    return this.selectedStudent.paymentRecord.transportation.monthlyPayments.length;
+  }
+
+  isChangingTransportationType(): boolean {
+    if (!this.selectedStudent?.paymentRecord?.transportation) {
+      return false;
+    }
+    
+    const currentType = this.getTransportationTypeForStudent(this.selectedStudent);
+    const selectedType = this.editForm.get('transportationType')?.value;
+    
+    return currentType !== selectedType;
+  }
+
+  hasChanges(): boolean {
+    if (!this.selectedStudent?.paymentRecord) {
+      return false;
+    }
+    
+    const formValues = this.editForm.value;
+    const currentUniform = this.selectedStudent.paymentRecord.uniform?.purchased || false;
+    const currentTransport = this.selectedStudent.paymentRecord.transportation?.type || '';
+    
+    return formValues.hasUniform !== currentUniform || 
+           formValues.transportationType !== currentTransport;
+  }
+
+  getCurrentTotal(): number {
+    if (!this.selectedStudent?.paymentRecord) {
+      return 0;
+    }
+    
+    return this.getTotalAmounts(this.selectedStudent)?.grandTotal || 0;
+  }
+
+  getNewTotal(): number {
+    if (!this.selectedStudent?.grade) {
+      return 0;
+    }
+    
+    const formValues = this.editForm.value;
+    let total = 0;
+    
+    total += this.getTuitionAmountForGrade(this.selectedStudent.grade);
+    
+    if (formValues.hasUniform && this.isUniformEnabled()) {
+      total += this.getUniformPrice();
+    }
+    
+    if (formValues.transportationType) {
+      const monthlyPrice = this.getTransportationMonthlyPrice(formValues.transportationType);
+      total += monthlyPrice * this.getTransportationMonths();
+    }
+    
+    return total;
+  }
+
+  getTotalDifference(): number {
+    return this.getNewTotal() - this.getCurrentTotal();
+  }
+
+  // ===== SAFE GETTERS FOR EDIT FORM =====
+
+  isUniformPaid(student: StudentWithPayment): boolean {
+    return !!(student.paymentRecord?.uniform?.isPaid);
+  }
+
+  isUniformPurchased(student: StudentWithPayment): boolean {
+    return !!(student.paymentRecord?.uniform?.purchased);
+  }
+
+  getUniformPaymentDate(student: StudentWithPayment): Date | string | null {
+    return student.paymentRecord?.uniform?.paymentDate || null;
+  }
+
+  isUsingTransportation(student: StudentWithPayment): boolean {
+    return !!(student.paymentRecord?.transportation?.using);
+  }
+
+  getTransportationTypeForStudent(student: StudentWithPayment): string {
+    return student.paymentRecord?.transportation?.type || '';
   }
 }
