@@ -1,0 +1,213 @@
+  <!-- invoice.component.html -->
+  <div class="invoice-container" *ngIf="invoiceData">
+  <div class="invoice-actions no-print">
+      <button 
+        class="btn btn-primary download-btn" 
+        (click)="downloadPDF()"
+        [disabled]="isGeneratingPdf">
+        <span class="btn-icon" *ngIf="!isGeneratingPdf">📥</span>
+        <span class="spinner" *ngIf="isGeneratingPdf">⏳</span>
+        {{ isGeneratingPdf ? 'Génération...' : 'Télécharger PDF' }}
+      </button>
+
+    </div>
+
+    <!-- Invoice Content -->
+    <div class="invoice-content">
+      <!-- Header -->
+      <div class="invoice-header">
+        <div class="school-info">
+          <h1 class="school-name">Lycée Privée</h1>
+          <div class="school-details">
+            <p>{{ invoiceData.schoolInfo.address }}</p>
+            <p>Tél: {{ invoiceData.schoolInfo.phone }}</p>
+            <p>Email: {{ invoiceData.schoolInfo.email }}</p>
+          </div>
+        </div>
+        
+        <div class="invoice-info">
+          <h2 class="invoice-title">FACTURE</h2>
+          <div class="invoice-details">
+            <p><strong>N° Facture:</strong> {{ invoiceData.invoiceNumber }}</p>
+            <p><strong>Date d'émission:</strong> {{ formatDate(invoiceData.generatedDate) }}</p>
+            <p><strong>Année Académique:</strong> {{ invoiceData.academicYear }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student Information -->
+      <div class="student-section">
+        <h3>Informations de l'Étudiant</h3>
+        <div class="student-info-grid">
+          <div class="student-info-item">
+            <span class="label">Nom Complet:</span>
+            <span class="value">{{ invoiceData.student.name }}</span>
+          </div>
+          <div class="student-info-item">
+            <span class="label">Email:</span>
+            <span class="value">{{ invoiceData.student.email }}</span>
+          </div>
+          <div class="student-info-item">
+            <span class="label">Niveau:</span>
+            <span class="value">{{ getClassGrade() }}</span>
+          </div>
+          <div class="student-info-item">
+            <span class="label">Classe:</span>
+            <span class="value">{{ getClassName() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Services Summary -->
+      <div class="services-section">
+        <h3>Services Souscrits</h3>
+        <div class="services-grid">
+          <!-- Tuition -->
+          <div class="service-item">
+            <div class="service-header">
+              <span class="service-icon">📚</span>
+              <span class="service-name">Frais Scolaires</span>
+              <span class="service-status included">Inclus</span>
+            </div>
+            <div class="service-details">
+              <span class="service-amount">{{ formatCurrency(invoiceData.totals.tuition) }} payé</span>
+              <span class="service-remaining" *ngIf="invoiceData.remainingAmounts.tuition > 0">
+                ({{ formatCurrency(invoiceData.remainingAmounts.tuition) }} restant)
+              </span>
+            </div>
+          </div>
+
+          <!-- Uniform -->
+          <div class="service-item" *ngIf="hasUniform()">
+            <div class="service-header">
+              <span class="service-icon">👔</span>
+              <span class="service-name">Uniforme</span>
+              <span class="service-status" 
+                    [class]="invoiceData.remainingAmounts.uniform === 0 ? 'paid' : 'pending'">
+                {{ invoiceData.remainingAmounts.uniform === 0 ? 'Payé' : 'En cours' }}
+              </span>
+            </div>
+            <div class="service-details">
+              <span class="service-amount">{{ formatCurrency(invoiceData.totals.uniform) }} payé</span>
+              <span class="service-remaining" *ngIf="invoiceData.remainingAmounts.uniform > 0">
+                ({{ formatCurrency(invoiceData.remainingAmounts.uniform) }} restant)
+              </span>
+            </div>
+          </div>
+
+          <!-- Transportation -->
+          <div class="service-item" *ngIf="hasTransportation()">
+            <div class="service-header">
+              <span class="service-icon">🚌</span>
+              <span class="service-name">Transport - {{ getTransportationType() }}</span>
+              <span class="service-status" 
+                    [class]="invoiceData.remainingAmounts.transportation === 0 ? 'paid' : 'pending'">
+                {{ invoiceData.remainingAmounts.transportation === 0 ? 'Payé' : 'En cours' }}
+              </span>
+            </div>
+            <div class="service-details">
+              <span class="service-amount">{{ formatCurrency(invoiceData.totals.transportation) }} payé</span>
+              <span class="service-remaining" *ngIf="invoiceData.remainingAmounts.transportation > 0">
+                ({{ formatCurrency(invoiceData.remainingAmounts.transportation) }} restant)
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment History Table -->
+      <div class="payments-section" *ngIf="invoiceData.payments.length > 0">
+        <h3>Historique des Paiements</h3>
+        <table class="payments-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Service</th>
+              <th>Détails</th>
+              <th>Méthode</th>
+              <th>N° Reçu</th>
+              <th>Montant</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let payment of invoiceData.payments">
+              <td>{{ formatDate(payment.date) }}</td>
+              <td>
+                <div class="payment-component">
+                  <span class="component-icon">
+                    {{ payment.component === 'tuition' ? '📚' : 
+                      payment.component === 'uniform' ? '👔' : 
+                      payment.component === 'transportation' ? '🚌' : '💰' }}
+                  </span>
+                  <span>{{ getComponentLabel(payment.component) }}</span>
+                </div>
+              </td>
+              <td>
+                <span *ngIf="payment.month" class="payment-month">{{ payment.month }}</span>
+                <span *ngIf="!payment.month " class="payment-type">Paiement unique</span>
+              </td>
+              <td>{{ getPaymentMethodLabel(payment.method) }}</td>
+              <td>
+                <span *ngIf="payment.receiptNumber" class="receipt-number">{{ payment.receiptNumber }}</span>
+                <span *ngIf="!payment.receiptNumber" class="no-receipt">—</span>
+              </td>
+              <td class="payment-amount">{{ formatCurrency(payment.amount) }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="5"><strong>Total Payé</strong></td>
+              <td class="total-amount"><strong>{{ formatCurrency(invoiceData.totals.grandTotal) }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- No Payments Message -->
+      <div class="no-payments" *ngIf="invoiceData.payments.length === 0">
+        <div class="no-payments-content">
+          <span class="no-payments-icon">💳</span>
+          <h4>Aucun paiement enregistré</h4>
+          <p>Cet étudiant n'a effectué aucun paiement pour l'année académique {{ invoiceData.academicYear }}.</p>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="invoice-summary">
+        <div class="summary-grid">
+          <div class="summary-item total-due">
+            <span class="summary-label">Montant Total Dû:</span>
+            <span class="summary-value">{{ formatCurrency((invoiceData.totals.grandTotal + invoiceData.remainingAmounts.grandTotal)) }}</span>
+          </div>
+          <div class="summary-item total-paid">
+            <span class="summary-label">Total Payé:</span>
+            <span class="summary-value">{{ formatCurrency(invoiceData.totals.grandTotal) }}</span>
+          </div>
+          <div class="summary-item remaining" *ngIf="invoiceData.remainingAmounts.grandTotal > 0">
+            <span class="summary-label">Solde Restant:</span>
+            <span class="summary-value remaining-amount">{{ formatCurrency(invoiceData.remainingAmounts.grandTotal) }}</span>
+          </div>
+          <div class="summary-item paid-complete" *ngIf="invoiceData.remainingAmounts.grandTotal === 0">
+            <span class="summary-label">Statut:</span>
+            <span class="summary-value paid-status">✅ Entièrement Payé</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="invoice-footer">
+        <div class="footer-note">
+          <p><strong>Note:</strong> Cette facture récapitule tous les paiements effectués pour l'année académique {{ invoiceData.academicYear }}.</p>
+          <p>Pour toute question concernant cette facture, veuillez contacter l'administration scolaire.</p>
+        </div>
+        
+        <div class="footer-signature">
+          <p>Facture générée automatiquement le {{ formatDate(invoiceData.generatedDate) }}</p>
+          <div class="signature-line">
+            <p>_____________________</p>
+            <p>Administration Scolaire</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

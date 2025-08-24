@@ -512,6 +512,15 @@
                         <span class="btn-icon">📋</span>
                       </button>
 
+
+                   <button 
+                        class="action-btn invoice"
+                        title="Extraire la facture"
+                        *ngIf="student.hasPaymentRecord"
+                        (click)="openInvoiceDialog(student)">
+                        <span class="btn-icon">📄</span>
+                      </button>
+
                       <!-- View Details -->
                       <button 
                         class="action-btn details"
@@ -1219,6 +1228,17 @@
     </div>
   </div>
 </div>
+<!-- Invoice Dialog Modal -->
+  <div class="modal-overlay" *ngIf="isInvoiceDialogOpen" (click)="closeInvoiceDialog()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <app-invoice-dialog
+        *ngIf="selectedStudentForInvoice"
+        [student]="selectedStudentForInvoice"
+        [academicYear]="currentAcademicYear"
+        (dialogClosed)="closeInvoiceDialog()">
+      </app-invoice-dialog>
+    </div>
+  </div>
 
   <!-- Confirmation Modal -->
   <div class="modal-overlay" *ngIf="confirmationState.isOpen" [@fadeIn] (click)="onConfirmationCancel()">

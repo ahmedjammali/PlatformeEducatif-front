@@ -113,7 +113,7 @@
    ==================================== */
 .payment-management-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 50%, #F0F8FF 100%);
+  
   padding: var(--spacing-md);
   animation: fadeIn 0.6s ease-out;
 }
@@ -125,9 +125,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 30%, rgba(122, 178, 211, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(185, 229, 232, 0.1) 0%, transparent 50%);
+
   pointer-events: none;
   z-index: -1;
 }
@@ -2818,75 +2816,7 @@
   }
 }
 
-/* ====================================
-   DARK MODE SUPPORT (REDUCED)
-   ==================================== */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-white: #1a1a1a;
-    --color-black: #ffffff;
-    --color-gray-light: #2d2d2d;
-    --color-gray: #404040;
-    --color-gray-dark: #b0b0b0;
-    --color-primary-dark: #87ceeb;
-    --color-secondary: #2a3b47;
-    --color-accent: #3a4b57;
-  }
-  
-  .payment-management-container {
-    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 50%, #1a2329 100%);
-  }
-  
-  .modal-overlay {
-    background: rgba(0, 0, 0, 0.8);
-  }
-}
 
-/* ====================================
-   PRINT STYLES (OPTIMIZED)
-   ==================================== */
-@media print {
-  .payment-management-container {
-    background: white;
-    padding: 0;
-  }
-  
-  .header-section,
-  .filters-section,
-  .quick-actions-section,
-  .modal-overlay,
-  .toaster-container {
-    display: none;
-  }
-  
-  .table-card {
-    box-shadow: none;
-    border: 1px solid #000;
-  }
-  
-  .table-header {
-    background: #f0f0f0 !important;
-    color: #000 !important;
-  }
-  
-  .payment-table th,
-  .payment-table td {
-    border: 1px solid #000;
-    padding: var(--spacing-xs);
-  }
-  
-  .action-buttons {
-    display: none;
-  }
-  
-  .expand-btn {
-    display: none;
-  }
-  
-  .expanded-row {
-    display: none;
-  }
-}
 
   
   .pagination {
@@ -3130,26 +3060,13 @@ select:focus-visible {
   }
 }
 
-/* ====================================
-   DARK MODE SUPPORT
-   ==================================== */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-white: #1a1a1a;
-    --color-black: #ffffff;
-    --color-gray-light: #2d2d2d;
-    --color-gray: #404040;
-    --color-gray-dark: #b0b0b0;
-    --color-primary-dark: #87ceeb;
-    --color-secondary: #2a3b47;
-    --color-accent: #3a4b57;
-  }
-  
-  .payment-management-container {
-    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 50%, #1a2329 100%);
-  }
-  
-  .modal-overlay {
-    background: rgba(0, 0, 0, 0.8);
-  }
+
+.action-btn.invoice {
+  background: linear-gradient(135deg, #6f42c1, #8e5dd8);
+  color: white;
+}
+
+.action-btn.details {
+  background: linear-gradient(135deg, var(--color-info), #64B5F6);
+  color: white;
 }

@@ -103,6 +103,8 @@ import { PaymentManagementComponent } from './components/admin/payment-managemen
 import { PaymentDialogComponent } from './components/admin/payment-dialog/payment-dialog.component';
 import { PaymentConfigComponent } from './components/admin/payment-config/payment-config.component';
 import { FinancialOverviewComponent } from './components/admin/financial-overview/financial-overview.component';
+import { InvoiceComponent } from './components/admin/invoice/invoice.component';
+import { InvoiceDialogComponent } from './components/admin/invoice-dialog/invoice-dialog.component';
 
 
 const MaterialModules = [
@@ -176,7 +178,9 @@ const MaterialModules = [
     PaymentManagementComponent,
     PaymentDialogComponent,
     PaymentConfigComponent,
-    FinancialOverviewComponent
+    FinancialOverviewComponent,
+    InvoiceComponent,
+    InvoiceDialogComponent
   ],
   imports: [
     BrowserModule,

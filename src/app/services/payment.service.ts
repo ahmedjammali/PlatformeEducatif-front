@@ -312,7 +312,7 @@ export class PaymentService extends BaseService {
     const years: string[] = [];
     
     // Include past 2 years, current year, and next 3 years
-    for (let i = -2; i <= 3; i++) {
+    for (let i = 0; i <= 3; i++) {
       const year = currentYear + i;
       years.push(`${year}-${year + 1}`);
     }

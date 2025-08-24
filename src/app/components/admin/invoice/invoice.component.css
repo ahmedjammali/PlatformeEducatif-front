@@ -1,0 +1,874 @@
+
+  .invoice-container {
+    max-width: 210mm; /* A4 width */
+    min-height: 297mm; /* A4 height */
+    margin: 0 auto;
+    background: white;
+    padding: 20mm;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+  }
+
+  /* ====================================
+    PRINT ACTIONS (HIDDEN IN PRINT)
+    ==================================== */
+  .invoice-actions {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .print-btn {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    margin: 0 auto;
+  }
+
+  .print-btn:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  }
+
+  .btn-icon {
+    font-size: 18px;
+  }
+
+  /* ====================================
+    INVOICE CONTENT
+    ==================================== */
+  .invoice-content {
+    background: white;
+    position: relative;
+  }
+
+  /* ====================================
+    INVOICE HEADER
+    ==================================== */
+  .invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 3px solid #007bff;
+  }
+
+  .school-info {
+    flex: 1;
+  }
+
+  .school-name {
+    font-size: 28px;
+    font-weight: 800;
+    color: #007bff;
+    margin-bottom: 1rem;
+    margin-top: 0;
+  }
+
+  .school-details p {
+    margin: 0.25rem 0;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .invoice-info {
+    text-align: right;
+    flex: 1;
+  }
+
+  .invoice-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: #007bff;
+    margin-bottom: 1rem;
+    margin-top: 0;
+  }
+
+  .invoice-details p {
+    margin: 0.5rem 0;
+    font-size: 14px;
+  }
+
+  .invoice-details strong {
+    color: #333;
+  }
+
+  /* ====================================
+    STUDENT SECTION
+    ==================================== */
+  .student-section {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    border-left: 4px solid #28a745;
+  }
+
+  .student-section h3 {
+    color: #28a745;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .student-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+
+  .student-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+  }
+
+  .student-info-item .label {
+    font-weight: 600;
+    color: #495057;
+  }
+
+  .student-info-item .value {
+    font-weight: 500;
+    color: #212529;
+  }
+
+  /* ====================================
+    SERVICES SECTION
+    ==================================== */
+  .services-section {
+    margin-bottom: 2rem;
+  }
+
+  .services-section h3 {
+    color: #6f42c1;
+    margin-bottom: 1rem;
+    font-size: 20px;
+    font-weight: 700;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #6f42c1;
+  }
+
+  .services-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .service-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .service-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .service-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .service-icon {
+    font-size: 20px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border-radius: 50%;
+  }
+
+  .service-name {
+    flex: 1;
+    font-weight: 600;
+    color: #212529;
+    font-size: 16px;
+  }
+
+  .service-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .service-status.included {
+    background: #d1ecf1;
+    color: #0c5460;
+  }
+
+  .service-status.paid {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .service-status.pending {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .service-details {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .service-amount {
+    font-weight: 600;
+    color: #28a745;
+  }
+
+  .service-remaining {
+    color: #ffc107;
+    font-style: italic;
+  }
+
+  /* ====================================
+    PAYMENTS TABLE
+    ==================================== */
+  .payments-section {
+    margin-bottom: 2rem;
+  }
+
+  .payments-section h3 {
+    color: #dc3545;
+    margin-bottom: 1rem;
+    font-size: 20px;
+    font-weight: 700;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dc3545;
+  }
+
+  .payments-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .payments-table thead th {
+    background: #343a40;
+    color: white;
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .payments-table tbody td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: top;
+  }
+
+  .payments-table tbody tr:hover {
+    background: #f8f9fa;
+  }
+
+  .payment-component {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .component-icon {
+    font-size: 16px;
+  }
+
+  .payment-month {
+    font-weight: 600;
+    color: #007bff;
+  }
+
+  .payment-description {
+    color: #666;
+    font-style: italic;
+  }
+
+  .payment-type {
+    color: #28a745;
+    font-weight: 500;
+  }
+
+  .receipt-number {
+    font-family: 'Courier New', monospace;
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+  }
+
+  .no-receipt {
+    color: #adb5bd;
+  }
+
+  .payment-amount {
+    font-weight: 600;
+    color: #28a745;
+    text-align: right;
+  }
+
+  .payments-table tfoot .total-row {
+    background: #f8f9fa;
+    border-top: 2px solid #dee2e6;
+  }
+
+  .payments-table tfoot td {
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+
+  .total-amount {
+    font-size: 16px;
+    color: #007bff;
+    text-align: right;
+  }
+
+  /* ====================================
+    NO PAYMENTS STATE
+    ==================================== */
+  .no-payments {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+    margin-bottom: 2rem;
+  }
+
+  .no-payments-content {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .no-payments-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+  }
+
+  .no-payments h4 {
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+  }
+
+  .no-payments p {
+    color: #adb5bd;
+    margin: 0;
+  }
+
+  /* ====================================
+    INVOICE SUMMARY
+    ==================================== */
+  .invoice-summary {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    border-left: 4px solid #007bff;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .summary-item {
+    background: white;
+    padding: 1rem;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .summary-label {
+    font-weight: 600;
+    color: #495057;
+  }
+
+  .summary-value {
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .summary-item.total-due .summary-value {
+    color: #6c757d;
+  }
+
+  .summary-item.total-paid .summary-value {
+    color: #28a745;
+  }
+
+  .summary-item.remaining .summary-value {
+    color: #dc3545;
+  }
+
+  .paid-status {
+    color: #28a745;
+    font-weight: 700;
+  }
+
+  /* ====================================
+    INVOICE FOOTER
+    ==================================== */
+  .invoice-footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .footer-note {
+    flex: 1;
+    margin-right: 2rem;
+  }
+
+  .footer-note p {
+    margin: 0.5rem 0;
+    color: #666;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .footer-signature {
+    text-align: center;
+    min-width: 200px;
+  }
+
+  .footer-signature p {
+    margin: 0.5rem 0;
+    color: #666;
+    font-size: 12px;
+  }
+
+  .signature-line {
+    margin-top: 2rem;
+  }
+
+  .signature-line p:first-child {
+    margin-bottom: 0.25rem;
+    color: #333;
+  }
+
+  /* ====================================
+    PRINT STYLES
+    ==================================== */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    
+    .invoice-container {
+      max-width: none;
+      margin: 0;
+      padding: 15mm;
+      box-shadow: none;
+      background: white;
+      min-height: auto;
+    }
+    
+    .invoice-header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+    }
+    
+    .school-name {
+      font-size: 24px;
+    }
+    
+    .invoice-title {
+      font-size: 28px;
+    }
+    
+    .student-section {
+      margin-bottom: 1.5rem;
+      break-inside: avoid;
+    }
+    
+    .services-section {
+      margin-bottom: 1.5rem;
+      break-inside: avoid;
+    }
+    
+    .payments-section {
+      margin-bottom: 1.5rem;
+    }
+    
+    .payments-table {
+      font-size: 11px;
+    }
+    
+    .payments-table thead th {
+      padding: 8px 6px;
+      font-size: 10px;
+    }
+    
+    .payments-table tbody td {
+      padding: 8px 6px;
+      font-size: 10px;
+    }
+    
+    .invoice-summary {
+      margin-bottom: 1.5rem;
+      break-inside: avoid;
+    }
+    
+    .invoice-footer {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      break-inside: avoid;
+    }
+    
+    .footer-note p {
+      font-size: 11px;
+    }
+    
+    .footer-signature p {
+      font-size: 10px;
+    }
+    
+    /* Ensure proper page breaks */
+    .payments-table {
+      break-inside: auto;
+    }
+    
+    .payments-table thead {
+      display: table-header-group;
+    }
+    
+    .payments-table tbody tr {
+      break-inside: avoid;
+    }
+  }
+
+  /* ====================================
+    RESPONSIVE DESIGN
+    ==================================== */
+  @media (max-width: 768px) {
+    .invoice-container {
+      padding: 1rem;
+      font-size: 13px;
+    }
+    
+    .invoice-header {
+      flex-direction: column;
+      text-align: center;
+      gap: 1.5rem;
+    }
+    
+    .invoice-info {
+      text-align: center;
+    }
+    
+    .school-name {
+      font-size: 24px;
+    }
+    
+    .invoice-title {
+      font-size: 28px;
+    }
+    
+    .student-info-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .summary-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .invoice-footer {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .footer-note {
+      margin-right: 0;
+    }
+    
+    .payments-table {
+      font-size: 11px;
+    }
+    
+    .payments-table thead th {
+      padding: 8px 4px;
+      font-size: 10px;
+    }
+    
+    .payments-table tbody td {
+      padding: 6px 4px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .invoice-container {
+      padding: 0.5rem;
+      font-size: 12px;
+    }
+    
+    .school-name {
+      font-size: 20px;
+    }
+    
+    .invoice-title {
+      font-size: 24px;
+    }
+    
+    .student-section h3,
+    .services-section h3,
+    .payments-section h3 {
+      font-size: 16px;
+    }
+    
+    .service-item {
+      padding: 0.75rem;
+    }
+    
+    .service-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    .service-status {
+      align-self: flex-end;
+    }
+  }
+
+
+  /* When invoice dialog is open, prepare for printing */
+  body.invoice-dialog-open {
+    @media print {
+      /* Hide all Angular app content except invoice */
+      app-root > *:not(app-invoice-dialog),
+      app-payment-management > *:not(.modal-overlay) {
+        display: none !important;
+      }
+      
+      /* Hide all modals except invoice dialog */
+      .modal-overlay:not(.invoice-print-container) {
+        display: none !important;
+      }
+    }
+  }
+
+  @media print {
+    /* Global print resets */
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+    
+    /* When printing from invoice dialog */
+    body.invoice-dialog-open {
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white !important;
+    }
+    
+    /* Hide common UI elements */
+    .no-print,
+    .btn,
+    .btn-action,
+    .btn-primary,
+    .print-btn,
+    .close-btn,
+    button[type="button"],
+    .header-section,
+    .filters-section,
+    .quick-actions-section,
+    .table-section,
+    .pagination,
+    .toaster-container,
+    .modal-overlay:not(.invoice-print-container),
+    .payment-management-container,
+    app-payment-management > *:not(.modal-overlay) {
+      display: none !important;
+    }
+    
+    /* Show only invoice-related content */
+    .invoice-print-container,
+    .invoice-dialog-container,
+    .invoice-dialog-content,
+    .invoice-container,
+    .invoice-container * {
+      display: block !important;
+      visibility: visible !important;
+    }
+    
+    /* Position invoice correctly for printing */
+    .invoice-print-container {
+      position: static !important;
+      width: 100% !important;
+      height: auto !important;
+      background: transparent !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    
+    .invoice-dialog-container {
+      position: static !important;
+      width: 100% !important;
+      height: auto !important;
+      max-width: none !important;
+      max-height: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      background: white !important;
+      overflow: visible !important;
+    }
+    
+    .invoice-dialog-content {
+      position: static !important;
+      overflow: visible !important;
+      padding: 0 !important;
+    }
+    
+    .invoice-container {
+      position: static !important;
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 15mm !important;
+      box-shadow: none !important;
+      page-break-inside: avoid;
+    }
+    
+    /* Ensure proper page layout */
+    @page {
+      size: A4;
+      margin: 0;
+    }
+    
+    /* Handle page breaks properly */
+    .invoice-header,
+    .student-section,
+    .services-section,
+    .invoice-summary,
+    .invoice-footer {
+      page-break-inside: avoid;
+    }
+    
+    .payments-table {
+      page-break-inside: auto;
+    }
+    
+    .payments-table tr {
+      page-break-inside: avoid;
+    }
+  }
+
+  /* Add these styles to your invoice.component.css */
+
+  /* ====================================
+    ACTION BUTTONS
+    ==================================== */
+  .invoice-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    outline: none;
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  }
+
+  .btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #545b62);
+    color: white;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #545b62, #3d4349);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+  }
+
+  .download-btn {
+    background: linear-gradient(135deg, #28a745, #218838);
+  }
+
+  .download-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #218838, #1e7e34);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+  }
+
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }

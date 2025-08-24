@@ -1,3 +1,16 @@
+/* Uniform card - smaller width */
+.option-card:first-child {
+  max-width: 350px;
+  min-width: 320px;
+}
+
+/* Transportation card - takes remaining space */
+.option-card:last-child {
+  flex: 1;
+  min-width: 500px;
+}/* ========================================
+   CSS Variables & Reset
+   ======================================== */
 
 * {
   box-sizing: border-box;
@@ -16,7 +29,7 @@ body {
    Main Container - Compact
    ======================================== */
 .payment-config-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: var(--spacing-lg);
   background: var(--color-white);
@@ -29,8 +42,8 @@ body {
 .config-header {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-xl) var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
   box-shadow: var(--shadow-md);
 }
 
@@ -90,17 +103,18 @@ body {
 .config-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
 }
 
 .config-section {
   background: var(--color-white);
   border: 1px solid var(--color-gray);
   border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
   box-shadow: var(--shadow-sm);
   transition: var(--transition-base);
+  margin-bottom: var(--spacing-md);
 }
 
 .config-section:hover {
@@ -128,7 +142,7 @@ body {
    Form Elements - Compact
    ======================================== */
 .form-group {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
 }
 
 .form-group:last-child {
@@ -146,7 +160,7 @@ body {
 .form-input,
 .form-select {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
   border: 1px solid var(--color-gray);
   border-radius: var(--radius-sm);
   font-size: var(--font-sm);
@@ -177,11 +191,11 @@ body {
   border: 1px solid var(--color-gray);
   border-right: none;
   border-radius: var(--radius-sm) 0 0 var(--radius-sm);
-  padding: var(--spacing-sm);
+  padding: var(--spacing-md);
   font-size: var(--font-sm);
   color: var(--color-primary-dark);
   font-weight: 500;
-  min-width: 50px;
+  min-width: 55px;
   text-align: center;
 }
 
@@ -206,8 +220,9 @@ body {
 .grade-category {
   background: var(--color-gray-light);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
   border: 1px solid var(--color-gray);
+  margin-bottom: var(--spacing-lg);
 }
 
 .category-title {
@@ -236,7 +251,7 @@ body {
   background: var(--color-white);
   border: 1px solid var(--color-gray);
   border-radius: var(--radius-md);
-  padding: var(--spacing-md);
+  padding: var(--spacing-lg);
   transition: var(--transition-base);
   position: relative;
 }
@@ -249,9 +264,9 @@ body {
 .grade-header {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-sm);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
   border-bottom: 1px solid var(--color-gray);
 }
 
@@ -302,9 +317,9 @@ body {
 
 .monthly-display {
   background: var(--color-accent);
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-sm);
-  margin-top: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
   text-align: center;
   font-size: var(--font-sm);
   font-weight: 500;
@@ -324,13 +339,13 @@ body {
 .schedule-summary {
   background: var(--color-primary);
   color: var(--color-white);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
   border-radius: var(--radius-md);
   text-align: center;
   font-weight: 600;
   font-size: var(--font-sm);
   white-space: nowrap;
-  min-height: 40px;
+  min-height: 45px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -341,16 +356,16 @@ body {
    ======================================== */
 .inline-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+  grid-template-columns: 350px 1fr;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
 }
 
 .option-card {
   background: var(--color-gray-light);
   border: 1px solid var(--color-gray);
   border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
   transition: var(--transition-base);
 }
 
@@ -362,9 +377,9 @@ body {
 .option-toggle {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-  padding: var(--spacing-md);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-lg);
   background: var(--color-white);
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-gray);
@@ -372,7 +387,7 @@ body {
 
 .option-fields {
   border-top: 1px solid var(--color-gray);
-  padding-top: var(--spacing-md);
+  padding-top: var(--spacing-lg);
   transition: var(--transition-base);
 }
 
@@ -423,56 +438,81 @@ body {
 }
 
 /* ========================================
-   Transportation Zones
+   Transportation Zones - FIXED: Horizontal Layout
    ======================================== */
 .transport-zones {
+  margin-top: var(--spacing-lg);
+}
+
+.zones-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-md);
+  gap: var(--spacing-lg);
+  width: 100%;
 }
 
 .zone-card {
   background: var(--color-white);
   border: 1px solid var(--color-gray);
   border-radius: var(--radius-md);
-  padding: var(--spacing-md);
+  padding: var(--spacing-lg);
   transition: var(--transition-base);
+  min-height: 150px;
 }
 
 .zone-card:hover {
-  box-shadow: var(--shadow-sm);
-  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
 }
 
 .zone-header {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--color-gray);
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 2px solid var(--color-gray);
 }
 
 .zone-icon {
-  font-size: var(--font-lg);
+  font-size: var(--font-xl);
+  margin-right: var(--spacing-sm);
 }
 
 .zone-name {
   font-weight: 600;
   color: var(--color-primary-dark);
-  font-size: var(--font-sm);
+  font-size: var(--font-base);
   flex: 1;
 }
 
-.zone-toggle {
-  margin-bottom: var(--spacing-md);
-  padding: var(--spacing-sm);
-  background: var(--color-gray-light);
-  border-radius: var(--radius-sm);
+.zone-toggle-inline {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-accent);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-primary);
+}
+
+/* Zone specific styling */
+.zone-card[ng-reflect-form-group-name="close"] {
+  border-left: 4px solid var(--color-success);
+}
+
+.zone-card[ng-reflect-form-group-name="close"] .zone-icon {
+  color: var(--color-success);
+}
+
+.zone-card[ng-reflect-form-group-name="far"] {
+  border-left: 4px solid var(--color-warning);
+}
+
+.zone-card[ng-reflect-form-group-name="far"] .zone-icon {
+  color: var(--color-warning);
 }
 
 /* ========================================
@@ -481,15 +521,15 @@ body {
 .settings-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
 }
 
 .settings-card {
   background: var(--color-gray-light);
   border: 1px solid var(--color-gray);
   border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
   transition: var(--transition-base);
 }
 
@@ -529,7 +569,7 @@ body {
    Button Styles - Compact
    ======================================== */
 .btn {
-  padding: var(--spacing-sm) var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-xl);
   border-radius: var(--radius-md);
   font-weight: 500;
   font-size: var(--font-sm);
@@ -538,12 +578,12 @@ body {
   transition: var(--transition-base);
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
   text-decoration: none;
   background: none;
   white-space: nowrap;
   justify-content: center;
-  min-height: 36px;
+  min-height: 40px;
 }
 
 .btn:disabled {
@@ -603,16 +643,16 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
   margin-top: var(--spacing-xl);
-  padding-top: var(--spacing-lg);
+  padding-top: var(--spacing-xl);
   border-top: 1px solid var(--color-gray);
 }
 
 .actions-left,
 .actions-right {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   align-items: center;
 }
 
@@ -735,8 +775,16 @@ body {
     grid-template-columns: 1fr;
   }
   
-  .transport-zones {
+  .option-card:first-child,
+  .option-card:last-child {
+    max-width: none;
+    min-width: auto;
+    flex: none;
+  }
+  
+  .zones-container {
     grid-template-columns: 1fr;
+    gap: var(--spacing-md);
   }
   
   .schedule-inline {

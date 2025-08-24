@@ -155,6 +155,11 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   isGenerateDialogOpen = false;
   isEditDialogOpen = false;
   currentDialogData: PaymentDialogData | null = null;
+
+
+  isInvoiceDialogOpen = false;
+
+  selectedStudentForInvoice: StudentWithPayment | null = null;
   
   // ===== TOAST AND CONFIRMATION SYSTEMS =====
   toasts: Toast[] = [];
@@ -535,12 +540,29 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     });
   }
 
+  
   refreshData(): void {
     this.loadStudents();
     this.loadDashboard();
     this.showSuccess('Données actualisées');
   }
 
+    openInvoiceDialog(student: StudentWithPayment): void {
+    if (!student.hasPaymentRecord) {
+      this.showWarning('Aucun dossier de paiement trouvé pour cet étudiant');
+      return;
+    }
+
+    this.selectedStudentForInvoice = student;
+    this.isInvoiceDialogOpen = true;
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeInvoiceDialog(): void {
+    this.isInvoiceDialogOpen = false;
+    this.selectedStudentForInvoice = null;
+    document.body.style.overflow = 'auto';
+  }
   // ===== BULK OPERATIONS =====
 
   async bulkGeneratePayments(): Promise<void> {
