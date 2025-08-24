@@ -1,4 +1,4 @@
-// admin-layout.component.ts - ENHANCED VERSION
+// admin-layout.component.ts - FIXED VERSION
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil, filter } from 'rxjs';
@@ -151,7 +151,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'contact': '/admin/contact',
       'schools': '/superadmin/schools',
       'payments': '/admin/payments',
-      'Aperçu Financier' : '/admin/payments/financial-overview',
+      'financialOverview': '/admin/payments/financial-overview', // FIXED: Use consistent key
     };
 
     const targetRoute = routeMap[route];
@@ -181,7 +181,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'reports': 'Rapports et Statistiques',
       'schools': 'Gestion de l\'École',
       'payments': 'Gestion des Paiements',
-      'Aperçu Financier': 'Aperçu Financier',
+      'financialOverview': 'Aperçu Financier', // FIXED: Use consistent key
     };
     
     return titles[this.activeRoute] || 'Tableau de Bord';
@@ -390,26 +390,33 @@ export class LayoutComponent implements OnInit, OnDestroy {
       });
   }
 
-private setActiveRoute(): void {
-  const currentUrl = this.router.url;
-  
-  // More robust route detection - ADD PAYMENTS ROUTE
-  const routes = [
-    { path: '/users', route: 'users' },
-    { path: '/classes', route: 'classes' },
-    { path: '/subjects', route: 'subjects' },
-    { path: '/notifications', route: 'notifications' },
-    { path: '/grades', route: 'grades' },
-    { path: '/contact', route: 'contact' },
-    { path: '/payments', route: 'payments' }, // ADD THIS LINE
-    { path: '/reports', route: 'reports' },
-    { path: '/schools', route: 'schools' },
-    {path : '/payments/financial-overview', route: 'Aperçu Financier' }, // ADD THIS LINE
-  ];
+  private setActiveRoute(): void {
+    const currentUrl = this.router.url;
+    
+    // More robust route detection with proper hierarchy
+    const routes = [
+      // Order matters: more specific routes first
+      { path: '/admin/payments/financial-overview', route: 'financialOverview' },
+      { path: '/admin/payments', route: 'payments' },
+      { path: '/admin/users', route: 'users' },
+      { path: '/admin/classes', route: 'classes' },
+      { path: '/admin/subjects', route: 'subjects' },
+      { path: '/admin/notifications', route: 'notifications' },
+      { path: '/admin/grades', route: 'grades' },
+      { path: '/admin/contact', route: 'contact' },
+      { path: '/admin/reports', route: 'reports' },
+      { path: '/superadmin/schools', route: 'schools' },
+    ];
 
-  const activeRoute = routes.find(r => currentUrl.includes(r.path));
-  this.activeRoute = activeRoute ? activeRoute.route : 'dashboard';
-}
+    // Find the most specific matching route
+    const activeRoute = routes.find(r => currentUrl === r.path || 
+      (currentUrl.startsWith(r.path) && currentUrl.charAt(r.path.length) === '/') ||
+      currentUrl === r.path + '/'
+    );
+    
+    this.activeRoute = activeRoute ? activeRoute.route : 'dashboard';
+  }
+
   private setupMessageListener(): void {
     window.addEventListener('message', this.handleMessage.bind(this));
   }

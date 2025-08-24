@@ -200,7 +200,7 @@
 
 <nav class="navbar" [class.scrolled]="isScrolled" *ngIf="!isLoggedIn" >
   <div class="navbar-container">
-    <!-- Logo Section -->
+
     <div class="navbar-logo" routerLink="/" (click)="closeMobileMenu()">
       <div class="logo-icon">
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -212,7 +212,8 @@
       <span class="logo-text">{{schoolName}}</span>
     </div>
 
-    <!-- Desktop Navigation -->
+
+<!-- 
     <div class="navbar-menu desktop-menu">
       <a class="nav-link" 
          [class.active]="isActiveSection('home')"
@@ -287,7 +288,7 @@
       </div>
     </div>
 
-    <!-- Mobile Menu Toggle -->
+
     <button class="mobile-menu-toggle" 
             (click)="toggleMobileMenu()" 
             [attr.aria-expanded]="isMobileMenuOpen" 
@@ -299,16 +300,16 @@
         <span></span>
       </span>
     </button>
-  </div>
+  </div> -->
 
-  <!-- Mobile Navigation Overlay -->
-  <div class="mobile-menu-overlay" 
+
+  <!-- <div class="mobile-menu-overlay" 
        [class.open]="isMobileMenuOpen" 
        (click)="closeMobileMenu()"
-       [attr.aria-hidden]="!isMobileMenuOpen"></div>
+       [attr.aria-hidden]="!isMobileMenuOpen"></div> -->
   
   <!-- Mobile Navigation -->
-  <div class="mobile-menu" 
+  <!-- <div class="mobile-menu" 
        [class.open]="isMobileMenuOpen"
        [attr.aria-hidden]="!isMobileMenuOpen"
        role="navigation"
@@ -378,8 +379,8 @@
           <polyline points="9,18 15,12 9,6"></polyline>
         </svg>
       </a>
-    </nav>
-    
+    </nav> -->
+<!--     
     <div class="mobile-nav-actions">
       <button *ngIf="!isLoggedIn" 
               class="mobile-login-btn" 
@@ -429,6 +430,6 @@
           </svg>
         </button>
       </div>
-    </div>
+    </div> -->
   </div>
 </nav>

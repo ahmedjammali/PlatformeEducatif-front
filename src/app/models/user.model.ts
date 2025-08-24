@@ -3,7 +3,7 @@ import { School } from "./school.model";
 import { Subject } from "./subject.model";
 
 export interface User {
-  _id?: string;
+  _id: string; // Make _id required since backend always returns it
   name: string;
   email: string;
   password?: string;

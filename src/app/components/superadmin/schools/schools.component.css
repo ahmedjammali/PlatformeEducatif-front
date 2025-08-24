@@ -1121,3 +1121,122 @@ app-toaster {
     font-size: 0.875rem;
   }
 }
+/* Add these styles to your existing school-management.component.css */
+
+/* Admin Management Card */
+.admin-management-card {
+  background-color: white;
+  border-radius: var(--radius-md);
+  padding: 32px;
+  box-shadow: var(--shadow-sm);
+  margin-top: 24px;
+}
+
+/* Admin List */
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background-color: rgba(164, 180, 101, 0.05);
+  border: 1px solid var(--color-gray);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+}
+
+.admin-item:hover {
+  border-color: var(--color-primary);
+  background-color: rgba(164, 180, 101, 0.08);
+}
+
+.admin-info {
+  flex: 1;
+}
+
+.admin-name {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+}
+
+.admin-email {
+  color: var(--color-gray-dark);
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+.admin-meta {
+  color: var(--color-gray-dark);
+  font-size: 0.75rem;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Button sizes */
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  min-height: auto;
+}
+
+.btn-sm svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Empty state for admins */
+.empty-state-small {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-state-small .empty-icon {
+  color: var(--color-gray-dark);
+  margin-bottom: 16px;
+}
+
+.empty-state-small p {
+  color: var(--color-gray-dark);
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Responsive admin management */
+@media (max-width: 768px) {
+  .admin-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .admin-actions {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+  
+  .admin-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .card-header button {
+    align-self: stretch;
+    justify-content: center;
+  }
+}

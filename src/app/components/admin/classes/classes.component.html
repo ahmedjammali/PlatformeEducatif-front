@@ -41,23 +41,26 @@
         <label>Niveau</label>
         <select [(ngModel)]="selectedGrade" (ngModelChange)="onFilterChange()">
           <option value="">Tous les niveaux</option>
-          <option value="6eme">6eme</option>
-          <option value="5eme">5eme</option>
-          <option value="4eme">4eme</option>
-          <option value="3eme">3eme</option>
-          <option value="2nde">2nde</option>
-          <option value="1ere">1ere</option>
+              <option value="4ème année lycée">4ème année lycée</option>
+              <option value="3ème année lycée">3ème année lycée</option>
+              <option value="2ème année lycée">2ème année lycée</option>
+              <option value="1ère année lycée">1ère année lycée</option>
+
+              <option value="9ème année">9ème année</option>
+              <option value="8ème année">8ème année</option>
+              <option value="7ème année">7ème année</option>
+
+              <option value="6ème année primaire">6ème année primaire</option>
+              <option value="5ème année primaire">5ème année primaire</option>
+              <option value="4ème année primaire">4ème année primaire</option>
+              <option value="3ème année primaire">3ème année primaire</option>
+              <option value="2ème année primaire">2ème année primaire</option>
+              <option value="1ère année primaire">1ère année primaire</option>
+              <option value="Maternal">Maternal</option>
         </select>
       </div>
 
-      <div class="filter-group">
-        <label>Année Scolaire</label>
-        <select [(ngModel)]="selectedYear" (ngModelChange)="onFilterChange()">
-          <option value="">Toutes les années</option>
-          <option value="2024">2024-2025</option>
-          <option value="2023">2023-2024</option>
-        </select>
-      </div>
+
 
       <button class="btn-secondary" (click)="resetFilters()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
