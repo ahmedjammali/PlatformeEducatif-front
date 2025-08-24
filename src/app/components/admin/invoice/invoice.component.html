@@ -1,213 +1,223 @@
-  <!-- invoice.component.html -->
-  <div class="invoice-container" *ngIf="invoiceData">
+<!-- invoice.component.html -->
+<div class="invoice-container" *ngIf="invoiceData">
   <div class="invoice-actions no-print">
-      <button 
-        class="btn btn-primary download-btn" 
-        (click)="downloadPDF()"
-        [disabled]="isGeneratingPdf">
-        <span class="btn-icon" *ngIf="!isGeneratingPdf">📥</span>
-        <span class="spinner" *ngIf="isGeneratingPdf">⏳</span>
-        {{ isGeneratingPdf ? 'Génération...' : 'Télécharger PDF' }}
-      </button>
+    <button 
+      class="btn btn-primary download-btn" 
+      (click)="downloadPDF()"
+      [disabled]="isGeneratingPdf">
+      <span class="btn-icon" *ngIf="!isGeneratingPdf">📥</span>
+      <span class="spinner" *ngIf="isGeneratingPdf">⏳</span>
+      {{ isGeneratingPdf ? 'Génération...' : 'Télécharger PDF' }}
+    </button>
+  </div>
 
+  <!-- Invoice Content -->
+  <div class="invoice-content">
+    <!-- Header -->
+    <div class="invoice-header">
+      <div class="school-info">
+        <h1 class="school-name">{{ invoiceData.schoolInfo.name }}</h1>
+        <div class="school-details">
+          <p>{{ invoiceData.schoolInfo.address }}</p>
+          <p>Tél: {{ invoiceData.schoolInfo.phone }}</p>
+          <p>Email: {{ invoiceData.schoolInfo.email }}</p>
+        </div>
+      </div>
+      <div class="invoice-meta">
+        <div class="code-tva">
+          <strong>Code TVA :</strong> 1641042J
+        </div>
+      </div>
     </div>
 
-    <!-- Invoice Content -->
-    <div class="invoice-content">
-      <!-- Header -->
-      <div class="invoice-header">
-        <div class="school-info">
-          <h1 class="school-name">Lycée Privée</h1>
-          <div class="school-details">
-            <p>{{ invoiceData.schoolInfo.address }}</p>
-            <p>Tél: {{ invoiceData.schoolInfo.phone }}</p>
-            <p>Email: {{ invoiceData.schoolInfo.email }}</p>
-          </div>
+    <!-- Student Information Box -->
+    <div class="student-box">
+      <div class="student-row">
+        <span class="student-label">Doit :</span>
+        <span>{{ invoiceData.student._id || '000000' | slice:0:8 }} {{ invoiceData.student.name | uppercase }}</span>
+      </div>
+      <div class="student-row">
+        <span class="student-label">Matricule Fiscal :</span>
+        <span>-</span>
+      </div>
+      <div class="student-row">
+        <span class="student-label">Mode de paiement :</span>
+        <span>Mixte</span>
+      </div>
+    </div>
+
+    <!-- Invoice Details Box -->
+    <div class="invoice-details-box">
+      <div class="invoice-details-header">
+        <span class="facture-title">B.L. FACTURE</span>
+        <span class="page-info">Page 1/1</span>
+      </div>
+      <div class="invoice-details-content">
+        <div class="details-row">
+          <span class="details-label">Numéro :</span>
+          <span>{{ invoiceData.invoiceNumber.split('-')[2] || '0001156' }}</span>
         </div>
-        
-        <div class="invoice-info">
-          <h2 class="invoice-title">FACTURE</h2>
-          <div class="invoice-details">
-            <p><strong>N° Facture:</strong> {{ invoiceData.invoiceNumber }}</p>
-            <p><strong>Date d'émission:</strong> {{ formatDate(invoiceData.generatedDate) }}</p>
-            <p><strong>Année Académique:</strong> {{ invoiceData.academicYear }}</p>
-          </div>
+        <div class="details-row">
+          <span class="details-label">Date :</span>
+          <span>{{ formatDateShort(invoiceData.generatedDate) }}</span>
+        </div>
+        <div class="details-row">
+          <span class="details-label">Échéance :</span>
+          <span>{{ formatDateShort(invoiceData.generatedDate) }}</span>
         </div>
       </div>
+    </div>
 
-      <!-- Student Information -->
-      <div class="student-section">
-        <h3>Informations de l'Étudiant</h3>
-        <div class="student-info-grid">
-          <div class="student-info-item">
-            <span class="label">Nom Complet:</span>
-            <span class="value">{{ invoiceData.student.name }}</span>
-          </div>
-          <div class="student-info-item">
-            <span class="label">Email:</span>
-            <span class="value">{{ invoiceData.student.email }}</span>
-          </div>
-          <div class="student-info-item">
-            <span class="label">Niveau:</span>
-            <span class="value">{{ getClassGrade() }}</span>
-          </div>
-          <div class="student-info-item">
-            <span class="label">Classe:</span>
-            <span class="value">{{ getClassName() }}</span>
-          </div>
-        </div>
-      </div>
+    <!-- Main Table -->
+    <table class="main-table">
+      <thead>
+        <tr>
+          <th class="ref-col">Référence</th>
+          <th class="designation-col">Désignation</th>
+          <th class="qty-col">Qté</th>
+          <th class="price-col">Prix HT</th>
+          <th class="amount-col">Montant HT</th>
+          <th class="tva-col">TVA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Tuition Fee Row -->
+        <tr class="payment-row">
+          <td>001</td>
+          <td class="designation-col">
+            <span class="service-icon">📚</span>
+            FRAIS SCOLAIRES - ANNÉE ACADÉMIQUE {{ invoiceData.academicYear }}
+          </td>
+          <td>1,00</td>
+          <td class="price-col">{{ formatCurrencyTable(invoiceData.totals.tuition + invoiceData.remainingAmounts.tuition) }}</td>
+          <td class="amount-col" [class.amount-positive]="invoiceData.totals.tuition > 0" [class.amount-pending]="invoiceData.remainingAmounts.tuition > 0">
+            {{ formatCurrencyTable(invoiceData.totals.tuition) }}
+          </td>
+          <td>0,00</td>
+        </tr>
 
-      <!-- Services Summary -->
-      <div class="services-section">
-        <h3>Services Souscrits</h3>
-        <div class="services-grid">
-          <!-- Tuition -->
-          <div class="service-item">
-            <div class="service-header">
-              <span class="service-icon">📚</span>
-              <span class="service-name">Frais Scolaires</span>
-              <span class="service-status included">Inclus</span>
-            </div>
-            <div class="service-details">
-              <span class="service-amount">{{ formatCurrency(invoiceData.totals.tuition) }} payé</span>
-              <span class="service-remaining" *ngIf="invoiceData.remainingAmounts.tuition > 0">
-                ({{ formatCurrency(invoiceData.remainingAmounts.tuition) }} restant)
-              </span>
-            </div>
-          </div>
+        <!-- Uniform Row (if applicable) -->
+        <tr class="payment-row" *ngIf="hasUniform()">
+          <td>002</td>
+          <td class="designation-col">
+            <span class="service-icon">👔</span>
+            UNIFORME SCOLAIRE
+          </td>
+          <td>1,00</td>
+          <td class="price-col">{{ formatCurrencyTable(invoiceData.totals.uniform + invoiceData.remainingAmounts.uniform) }}</td>
+          <td class="amount-col" [class.amount-positive]="invoiceData.totals.uniform > 0" [class.amount-pending]="invoiceData.remainingAmounts.uniform > 0">
+            {{ formatCurrencyTable(invoiceData.totals.uniform) }}
+          </td>
+          <td>0,00</td>
+        </tr>
 
-          <!-- Uniform -->
-          <div class="service-item" *ngIf="hasUniform()">
-            <div class="service-header">
-              <span class="service-icon">👔</span>
-              <span class="service-name">Uniforme</span>
-              <span class="service-status" 
-                    [class]="invoiceData.remainingAmounts.uniform === 0 ? 'paid' : 'pending'">
-                {{ invoiceData.remainingAmounts.uniform === 0 ? 'Payé' : 'En cours' }}
-              </span>
-            </div>
-            <div class="service-details">
-              <span class="service-amount">{{ formatCurrency(invoiceData.totals.uniform) }} payé</span>
-              <span class="service-remaining" *ngIf="invoiceData.remainingAmounts.uniform > 0">
-                ({{ formatCurrency(invoiceData.remainingAmounts.uniform) }} restant)
-              </span>
-            </div>
-          </div>
+        <!-- Transportation Row (if applicable) -->
+        <tr class="payment-row" *ngIf="hasTransportation()">
+          <td>{{ hasUniform() ? '003' : '002' }}</td>
+          <td class="designation-col">
+            <span class="service-icon">🚌</span>
+            TRANSPORT - {{ getTransportationType() | uppercase }}
+          </td>
+          <td>1,00</td>
+          <td class="price-col">{{ formatCurrencyTable(invoiceData.totals.transportation + invoiceData.remainingAmounts.transportation) }}</td>
+          <td class="amount-col" [class.amount-positive]="invoiceData.totals.transportation > 0" [class.amount-pending]="invoiceData.remainingAmounts.transportation > 0">
+            {{ formatCurrencyTable(invoiceData.totals.transportation) }}
+          </td>
+          <td>0,00</td>
+        </tr>
 
-          <!-- Transportation -->
-          <div class="service-item" *ngIf="hasTransportation()">
-            <div class="service-header">
-              <span class="service-icon">🚌</span>
-              <span class="service-name">Transport - {{ getTransportationType() }}</span>
-              <span class="service-status" 
-                    [class]="invoiceData.remainingAmounts.transportation === 0 ? 'paid' : 'pending'">
-                {{ invoiceData.remainingAmounts.transportation === 0 ? 'Payé' : 'En cours' }}
-              </span>
-            </div>
-            <div class="service-details">
-              <span class="service-amount">{{ formatCurrency(invoiceData.totals.transportation) }} payé</span>
-              <span class="service-remaining" *ngIf="invoiceData.remainingAmounts.transportation > 0">
-                ({{ formatCurrency(invoiceData.remainingAmounts.transportation) }} restant)
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+        <!-- Empty rows for spacing -->
+        <ng-container *ngFor="let i of getEmptyRows()">
+          <tr class="payment-row">
+            <td></td>
+            <td class="designation-col"></td>
+            <td></td>
+            <td class="price-col"></td>
+            <td class="amount-col"></td>
+            <td></td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
 
-      <!-- Payment History Table -->
-      <div class="payments-section" *ngIf="invoiceData.payments.length > 0">
-        <h3>Historique des Paiements</h3>
-        <table class="payments-table">
+    <!-- Totals Section -->
+    <div class="totals-section">
+      <div class="tva-box">
+        <table class="tva-table">
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Service</th>
-              <th>Détails</th>
-              <th>Méthode</th>
-              <th>N° Reçu</th>
-              <th>Montant</th>
+              <th>Base</th>
+              <th>TVA%</th>
+              <th>TVA</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let payment of invoiceData.payments">
-              <td>{{ formatDate(payment.date) }}</td>
-              <td>
-                <div class="payment-component">
-                  <span class="component-icon">
-                    {{ payment.component === 'tuition' ? '📚' : 
-                      payment.component === 'uniform' ? '👔' : 
-                      payment.component === 'transportation' ? '🚌' : '💰' }}
-                  </span>
-                  <span>{{ getComponentLabel(payment.component) }}</span>
-                </div>
-              </td>
-              <td>
-                <span *ngIf="payment.month" class="payment-month">{{ payment.month }}</span>
-                <span *ngIf="!payment.month " class="payment-type">Paiement unique</span>
-              </td>
-              <td>{{ getPaymentMethodLabel(payment.method) }}</td>
-              <td>
-                <span *ngIf="payment.receiptNumber" class="receipt-number">{{ payment.receiptNumber }}</span>
-                <span *ngIf="!payment.receiptNumber" class="no-receipt">—</span>
-              </td>
-              <td class="payment-amount">{{ formatCurrency(payment.amount) }}</td>
+            <tr>
+              <td>{{ formatCurrencyTable(invoiceData.totals.grandTotal) }}</td>
+              <td>0,00</td>
+              <td>0,00</td>
             </tr>
           </tbody>
-          <tfoot>
-            <tr class="total-row">
-              <td colspan="5"><strong>Total Payé</strong></td>
-              <td class="total-amount"><strong>{{ formatCurrency(invoiceData.totals.grandTotal) }}</strong></td>
-            </tr>
-          </tfoot>
         </table>
       </div>
 
-      <!-- No Payments Message -->
-      <div class="no-payments" *ngIf="invoiceData.payments.length === 0">
-        <div class="no-payments-content">
-          <span class="no-payments-icon">💳</span>
-          <h4>Aucun paiement enregistré</h4>
-          <p>Cet étudiant n'a effectué aucun paiement pour l'année académique {{ invoiceData.academicYear }}.</p>
+      <div class="totals-box">
+        <div class="total-line total-ht">
+          <strong>Total H.T</strong>
+          <span class="total-amount">{{ formatCurrencyTable(invoiceData.totals.grandTotal) }}</span>
+        </div>
+        <div class="total-line">
+          <strong>T.V.A.</strong>
+          <span class="total-amount">0,00</span>
+        </div>
+        <div class="total-line">
+          <strong>Timbre fiscal</strong>
+          <span class="total-amount">0,00</span>
+        </div>
+        <div class="total-line total-ttc">
+          <strong>Total TTC</strong>
+          <span class="total-amount">{{ formatCurrencyTable(invoiceData.totals.grandTotal) }}</span>
         </div>
       </div>
+    </div>
 
-      <!-- Summary -->
-      <div class="invoice-summary">
-        <div class="summary-grid">
-          <div class="summary-item total-due">
-            <span class="summary-label">Montant Total Dû:</span>
-            <span class="summary-value">{{ formatCurrency((invoiceData.totals.grandTotal + invoiceData.remainingAmounts.grandTotal)) }}</span>
-          </div>
-          <div class="summary-item total-paid">
-            <span class="summary-label">Total Payé:</span>
-            <span class="summary-value">{{ formatCurrency(invoiceData.totals.grandTotal) }}</span>
-          </div>
-          <div class="summary-item remaining" *ngIf="invoiceData.remainingAmounts.grandTotal > 0">
-            <span class="summary-label">Solde Restant:</span>
-            <span class="summary-value remaining-amount">{{ formatCurrency(invoiceData.remainingAmounts.grandTotal) }}</span>
-          </div>
-          <div class="summary-item paid-complete" *ngIf="invoiceData.remainingAmounts.grandTotal === 0">
-            <span class="summary-label">Statut:</span>
-            <span class="summary-value paid-status">✅ Entièrement Payé</span>
-          </div>
-        </div>
+    <!-- Payment History Section (if needed) -->
+    <div class="payment-history-section" *ngIf="showPaymentHistory && invoiceData.payments.length > 0">
+      <h3>Détail des Paiements</h3>
+      <table class="payment-history-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Service</th>
+            <th>Montant</th>
+            <th>Méthode</th>
+            <th>N° Reçu</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let payment of invoiceData.payments">
+            <td>{{ formatDateShort(payment.date) }}</td>
+            <td>{{ getComponentLabel(payment.component) }}</td>
+            <td>{{ formatCurrencyTable(payment.amount) }}</td>
+            <td>{{ getPaymentMethodLabel(payment.method) }}</td>
+            <td>{{ payment.receiptNumber || '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-section">
+      <div class="amount-words">
+        <strong>Arrêtée la présente B.L. Facture à la somme de :</strong><br>
+        {{ convertAmountToWords(invoiceData.totals.grandTotal) | uppercase }}
       </div>
-
-      <!-- Footer -->
-      <div class="invoice-footer">
-        <div class="footer-note">
-          <p><strong>Note:</strong> Cette facture récapitule tous les paiements effectués pour l'année académique {{ invoiceData.academicYear }}.</p>
-          <p>Pour toute question concernant cette facture, veuillez contacter l'administration scolaire.</p>
-        </div>
-        
-        <div class="footer-signature">
-          <p>Facture générée automatiquement le {{ formatDate(invoiceData.generatedDate) }}</p>
-          <div class="signature-line">
-            <p>_____________________</p>
-            <p>Administration Scolaire</p>
-          </div>
+      <div class="signature-section">
+        <div class="signature-label"><strong>Signature</strong></div>
+        <div class="signature-box">
+          <!-- Optional: Add school stamp/logo here -->
         </div>
       </div>
     </div>
   </div>
+</div>

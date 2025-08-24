@@ -47,6 +47,7 @@ interface InvoiceData {
 export class InvoiceComponent implements OnInit {
   @Input() student!: StudentWithPayment;
   @Input() academicYear!: string;
+  @Input() showPaymentHistory: boolean = false;
   
   invoiceData!: InvoiceData;
   isLoading = false;
@@ -109,12 +110,88 @@ export class InvoiceComponent implements OnInit {
       totals,
       remainingAmounts,
       schoolInfo: {
-        name: 'École Internationale',
-        address: '123 Rue de l\'Éducation, Tunis, Tunisie',
-        phone: '+216 XX XXX XXX',
-        email: 'contact@ecole-internationale.tn'
+        name: 'Ons School',
+        address: 'Rue de la Liberté, 9110 Jilma',
+        phone: '+216 76 65 70 82',
+        email: 'onsschool2019@gmail.com'
       }
     };
+  }
+
+  // Format currency for table display (Tunisian format)
+  formatCurrencyTable(amount: number): string {
+    return amount.toFixed(3).replace('.', ',');
+  }
+
+  // Format date in short format (dd/MM/yyyy)
+  formatDateShort(date: Date | string): string {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const day = dateObj.getDate().toString().padStart(2, '0');
+    const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+    const year = dateObj.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  // Convert amount to words in French (simplified version)
+  convertAmountToWords(amount: number): string {
+    const ones = ['', 'UN', 'DEUX', 'TROIS', 'QUATRE', 'CINQ', 'SIX', 'SEPT', 'HUIT', 'NEUF'];
+    const teens = ['DIX', 'ONZE', 'DOUZE', 'TREIZE', 'QUATORZE', 'QUINZE', 'SEIZE', 'DIX-SEPT', 'DIX-HUIT', 'DIX-NEUF'];
+    const tens = ['', '', 'VINGT', 'TRENTE', 'QUARANTE', 'CINQUANTE', 'SOIXANTE', 'SOIXANTE-DIX', 'QUATRE-VINGT', 'QUATRE-VINGT-DIX'];
+    
+    if (amount === 0) return 'ZÉRO DINARS';
+    if (amount < 0) return 'MONTANT NÉGATIF';
+    
+    const integerPart = Math.floor(amount);
+    const decimalPart = Math.round((amount - integerPart) * 1000);
+    
+    let result = this.convertIntegerToWords(integerPart, ones, teens, tens);
+    result += integerPart === 1 ? ' DINAR' : ' DINARS';
+    
+    if (decimalPart > 0) {
+      result += ' ET ' + this.convertIntegerToWords(decimalPart, ones, teens, tens);
+      result += decimalPart === 1 ? ' MILLIME' : ' MILLIMES';
+    }
+    
+    return result;
+  }
+
+  private convertIntegerToWords(num: number, ones: string[], teens: string[], tens: string[]): string {
+    if (num === 0) return '';
+    if (num < 10) return ones[num];
+    if (num < 20) return teens[num - 10];
+    if (num < 100) {
+      const tensPart = Math.floor(num / 10);
+      const onesPart = num % 10;
+      return tens[tensPart] + (onesPart > 0 ? '-' + ones[onesPart] : '');
+    }
+    if (num < 1000) {
+      const hundredsPart = Math.floor(num / 100);
+      const remainder = num % 100;
+      let result = hundredsPart === 1 ? 'CENT' : ones[hundredsPart] + ' CENT';
+      if (remainder > 0) {
+        result += ' ' + this.convertIntegerToWords(remainder, ones, teens, tens);
+      }
+      return result;
+    }
+    if (num < 1000000) {
+      const thousandsPart = Math.floor(num / 1000);
+      const remainder = num % 1000;
+      let result = thousandsPart === 1 ? 'MILLE' : this.convertIntegerToWords(thousandsPart, ones, teens, tens) + ' MILLE';
+      if (remainder > 0) {
+        result += ' ' + this.convertIntegerToWords(remainder, ones, teens, tens);
+      }
+      return result;
+    }
+    
+    return 'MONTANT TROP ÉLEVÉ';
+  }
+
+  // Get empty rows for table spacing
+  getEmptyRows(): number[] {
+    const usedRows = 1 + (this.hasUniform() ? 1 : 0) + (this.hasTransportation() ? 1 : 0);
+    const totalRows = 10; // Standard invoice table height
+    const emptyRowsCount = Math.max(0, totalRows - usedRows);
+    return Array(emptyRowsCount).fill(0).map((_, i) => i);
   }
 
   // Old print method (kept for compatibility)
@@ -135,7 +212,7 @@ export class InvoiceComponent implements OnInit {
       wrapper.style.width = '800px'; // Fixed width for consistent rendering
       wrapper.style.padding = '40px';
       wrapper.style.backgroundColor = 'white';
-      wrapper.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+      wrapper.style.fontFamily = 'Arial, sans-serif';
       
       // Clone the invoice content
       const invoiceElement = document.querySelector('.invoice-content') as HTMLElement;
@@ -248,7 +325,7 @@ export class InvoiceComponent implements OnInit {
       }
 
       // Generate filename
-      const fileName = `Facture_${this.student.name.replace(/\s+/g, '_')}_${this.invoiceData.invoiceNumber}.pdf`;
+      const fileName = `Facture_${this.student.name.replace(/\s+/g, '_')}_${this.invoiceData.invoiceNumber.split('-').pop()}.pdf`;
       
       // Save the PDF
       pdf.save(fileName);
@@ -263,127 +340,90 @@ export class InvoiceComponent implements OnInit {
 
   // Apply inline styles for better PDF rendering
   private applyInlineStyles(element: HTMLElement): void {
+    // Apply the new traditional invoice styles
+    element.style.fontFamily = 'Arial, sans-serif';
+    element.style.fontSize = '11px';
+    element.style.lineHeight = '1.4';
+    element.style.color = '#000';
+    
     // Invoice header
     const header = element.querySelector('.invoice-header') as HTMLElement;
     if (header) {
       header.style.display = 'flex';
       header.style.justifyContent = 'space-between';
-      header.style.marginBottom = '30px';
-      header.style.paddingBottom = '20px';
-      header.style.borderBottom = '3px solid #007bff';
+      header.style.marginBottom = '20px';
+      header.style.borderBottom = '1px solid #000';
+      header.style.paddingBottom = '15px';
     }
 
-    // School info
-    const schoolInfo = element.querySelector('.school-info') as HTMLElement;
-    if (schoolInfo) {
-      schoolInfo.style.flex = '1';
+    // Student box
+    const studentBox = element.querySelector('.student-box') as HTMLElement;
+    if (studentBox) {
+      studentBox.style.border = '2px solid #000';
+      studentBox.style.padding = '10px';
+      studentBox.style.marginBottom = '20px';
     }
 
-    const schoolName = element.querySelector('.school-name') as HTMLElement;
-    if (schoolName) {
-      schoolName.style.fontSize = '24px';
-      schoolName.style.fontWeight = 'bold';
-      schoolName.style.color = '#007bff';
-      schoolName.style.marginBottom = '10px';
+    // Invoice details box
+    const detailsBox = element.querySelector('.invoice-details-box') as HTMLElement;
+    if (detailsBox) {
+      detailsBox.style.border = '2px solid #000';
+      detailsBox.style.marginBottom = '20px';
     }
 
-    // Invoice info
-    const invoiceInfo = element.querySelector('.invoice-info') as HTMLElement;
-    if (invoiceInfo) {
-      invoiceInfo.style.textAlign = 'right';
-      invoiceInfo.style.flex = '1';
+    // Main table
+    const mainTable = element.querySelector('.main-table') as HTMLElement;
+    if (mainTable) {
+      mainTable.style.width = '100%';
+      mainTable.style.borderCollapse = 'collapse';
+      mainTable.style.border = '2px solid #000';
+      mainTable.style.marginBottom = '20px';
     }
 
-    const invoiceTitle = element.querySelector('.invoice-title') as HTMLElement;
-    if (invoiceTitle) {
-      invoiceTitle.style.fontSize = '28px';
-      invoiceTitle.style.fontWeight = 'bold';
-      invoiceTitle.style.color = '#007bff';
-      invoiceTitle.style.marginBottom = '10px';
-    }
-
-    // Student section
-    const studentSection = element.querySelector('.student-section') as HTMLElement;
-    if (studentSection) {
-      studentSection.style.background = '#f8f9fa';
-      studentSection.style.padding = '15px';
-      studentSection.style.borderRadius = '8px';
-      studentSection.style.marginBottom = '20px';
-      studentSection.style.pageBreakInside = 'avoid';
-    }
-
-    // Services section
-    const servicesSection = element.querySelector('.services-section') as HTMLElement;
-    if (servicesSection) {
-      servicesSection.style.marginBottom = '20px';
-      servicesSection.style.pageBreakInside = 'avoid';
-    }
-
-    // Service items
-    const serviceItems = element.querySelectorAll('.service-item');
-    serviceItems.forEach((item) => {
-      const serviceItem = item as HTMLElement;
-      serviceItem.style.background = 'white';
-      serviceItem.style.border = '1px solid #e9ecef';
-      serviceItem.style.borderRadius = '8px';
-      serviceItem.style.padding = '10px';
-      serviceItem.style.marginBottom = '10px';
-      serviceItem.style.pageBreakInside = 'avoid';
-    });
-
-    // Payments table
-    const paymentsTable = element.querySelector('.payments-table') as HTMLElement;
-    if (paymentsTable) {
-      paymentsTable.style.width = '100%';
-      paymentsTable.style.borderCollapse = 'collapse';
-      paymentsTable.style.marginBottom = '20px';
-      paymentsTable.style.pageBreakInside = 'auto';
-    }
-
-    // Table headers
-    const tableHeaders = element.querySelectorAll('.payments-table thead th');
+    // Table headers and cells
+    const tableHeaders = element.querySelectorAll('.main-table th');
     tableHeaders.forEach((th) => {
       const header = th as HTMLElement;
-      header.style.background = '#343a40';
-      header.style.color = 'white';
-      header.style.padding = '10px';
-      header.style.textAlign = 'left';
-      header.style.fontSize = '12px';
+      header.style.border = '1px solid #000';
+      header.style.padding = '8px 5px';
+      header.style.textAlign = 'center';
+      header.style.fontWeight = 'bold';
+      header.style.background = '#f0f0f0';
+      header.style.fontSize = '10px';
     });
 
-    // Table cells
-    const tableCells = element.querySelectorAll('.payments-table tbody td');
+    const tableCells = element.querySelectorAll('.main-table td');
     tableCells.forEach((td) => {
       const cell = td as HTMLElement;
-      cell.style.padding = '8px';
-      cell.style.borderBottom = '1px solid #e9ecef';
-      cell.style.fontSize = '11px';
+      cell.style.border = '1px solid #000';
+      cell.style.padding = '8px 5px';
+      cell.style.textAlign = 'center';
+      cell.style.fontSize = '10px';
+      cell.style.verticalAlign = 'top';
     });
 
-    // Table rows - prevent breaking
-    const tableRows = element.querySelectorAll('.payments-table tbody tr');
-    tableRows.forEach((tr) => {
-      const row = tr as HTMLElement;
-      row.style.pageBreakInside = 'avoid';
-    });
-
-    // Summary section
-    const summarySection = element.querySelector('.invoice-summary') as HTMLElement;
-    if (summarySection) {
-      summarySection.style.background = 'linear-gradient(135deg, #f8f9fa, #e9ecef)';
-      summarySection.style.padding = '15px';
-      summarySection.style.borderRadius = '8px';
-      summarySection.style.marginBottom = '20px';
-      summarySection.style.pageBreakInside = 'avoid';
+    // Totals section
+    const totalsSection = element.querySelector('.totals-section') as HTMLElement;
+    if (totalsSection) {
+      totalsSection.style.display = 'flex';
+      totalsSection.style.justifyContent = 'space-between';
+      totalsSection.style.marginBottom = '20px';
     }
 
-    // Footer
-    const footer = element.querySelector('.invoice-footer') as HTMLElement;
-    if (footer) {
-      footer.style.marginTop = '30px';
-      footer.style.paddingTop = '20px';
-      footer.style.borderTop = '2px solid #e9ecef';
-      footer.style.pageBreakInside = 'avoid';
+    // TVA box
+    const tvaBox = element.querySelector('.tva-box') as HTMLElement;
+    if (tvaBox) {
+      tvaBox.style.border = '2px solid #000';
+      tvaBox.style.padding = '10px';
+      tvaBox.style.width = '200px';
+    }
+
+    // Signature box
+    const signatureBox = element.querySelector('.signature-box') as HTMLElement;
+    if (signatureBox) {
+      signatureBox.style.border = '1px solid #000';
+      signatureBox.style.height = '80px';
+      signatureBox.style.marginTop = '10px';
     }
   }
 
