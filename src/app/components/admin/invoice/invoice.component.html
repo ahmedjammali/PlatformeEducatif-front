@@ -89,11 +89,11 @@
             FRAIS SCOLAIRES - ANNÉE ACADÉMIQUE {{ invoiceData.academicYear }}
           </td>
           <td>1,00</td>
-          <td class="price-col">{{ formatCurrencyTable(invoiceData.totals.tuition + invoiceData.remainingAmounts.tuition) }}</td>
+          <td class="price-col">{{ formatCurrencyTable(getHTAmount('tuition') + invoiceData.remainingAmounts.tuition) }}</td>
           <td class="amount-col" [class.amount-positive]="invoiceData.totals.tuition > 0" [class.amount-pending]="invoiceData.remainingAmounts.tuition > 0">
-            {{ formatCurrencyTable(invoiceData.totals.tuition) }}
+            {{ formatCurrencyTable(getHTAmount('tuition')) }}
           </td>
-          <td>0,00</td>
+          <td>{{ formatCurrencyTable(getTVAAmount('tuition')) }}</td>
         </tr>
 
         <!-- Uniform Row (if applicable) -->
@@ -104,11 +104,11 @@
             UNIFORME SCOLAIRE
           </td>
           <td>1,00</td>
-          <td class="price-col">{{ formatCurrencyTable(invoiceData.totals.uniform + invoiceData.remainingAmounts.uniform) }}</td>
+          <td class="price-col">{{ formatCurrencyTable(getHTAmount('uniform') + invoiceData.remainingAmounts.uniform) }}</td>
           <td class="amount-col" [class.amount-positive]="invoiceData.totals.uniform > 0" [class.amount-pending]="invoiceData.remainingAmounts.uniform > 0">
-            {{ formatCurrencyTable(invoiceData.totals.uniform) }}
+            {{ formatCurrencyTable(getHTAmount('uniform')) }}
           </td>
-          <td>0,00</td>
+          <td>{{ formatCurrencyTable(getTVAAmount('uniform')) }}</td>
         </tr>
 
         <!-- Transportation Row (if applicable) -->
@@ -119,11 +119,11 @@
             TRANSPORT - {{ getTransportationType() | uppercase }}
           </td>
           <td>1,00</td>
-          <td class="price-col">{{ formatCurrencyTable(invoiceData.totals.transportation + invoiceData.remainingAmounts.transportation) }}</td>
+          <td class="price-col">{{ formatCurrencyTable(getHTAmount('transportation') + invoiceData.remainingAmounts.transportation) }}</td>
           <td class="amount-col" [class.amount-positive]="invoiceData.totals.transportation > 0" [class.amount-pending]="invoiceData.remainingAmounts.transportation > 0">
-            {{ formatCurrencyTable(invoiceData.totals.transportation) }}
+            {{ formatCurrencyTable(getHTAmount('transportation')) }}
           </td>
-          <td>0,00</td>
+          <td>{{ formatCurrencyTable(getTVAAmount('transportation')) }}</td>
         </tr>
 
         <!-- Empty rows for spacing -->
@@ -153,9 +153,9 @@
           </thead>
           <tbody>
             <tr>
-              <td>{{ formatCurrencyTable(invoiceData.totals.grandTotal) }}</td>
-              <td>0,00</td>
-              <td>0,00</td>
+              <td>{{ formatCurrencyTable(invoiceData.totalsWithTVA.totalHT) }}</td>
+              <td>{{ invoiceData.tva.rate }},00</td>
+              <td>{{ formatCurrencyTable(invoiceData.tva.totalTVA) }}</td>
             </tr>
           </tbody>
         </table>
@@ -164,11 +164,11 @@
       <div class="totals-box">
         <div class="total-line total-ht">
           <strong>Total H.T</strong>
-          <span class="total-amount">{{ formatCurrencyTable(invoiceData.totals.grandTotal) }}</span>
+          <span class="total-amount">{{ formatCurrencyTable(invoiceData.totalsWithTVA.totalHT) }}</span>
         </div>
         <div class="total-line">
-          <strong>T.V.A.</strong>
-          <span class="total-amount">0,00</span>
+          <strong>T.V.A. ({{ invoiceData.tva.rate }}%)</strong>
+          <span class="total-amount">{{ formatCurrencyTable(invoiceData.tva.totalTVA) }}</span>
         </div>
         <div class="total-line">
           <strong>Timbre fiscal</strong>
@@ -176,7 +176,7 @@
         </div>
         <div class="total-line total-ttc">
           <strong>Total TTC</strong>
-          <span class="total-amount">{{ formatCurrencyTable(invoiceData.totals.grandTotal) }}</span>
+          <span class="total-amount">{{ formatCurrencyTable(invoiceData.totalsWithTVA.totalTTC) }}</span>
         </div>
       </div>
     </div>
@@ -189,7 +189,9 @@
           <tr>
             <th>Date</th>
             <th>Service</th>
-            <th>Montant</th>
+            <th>Montant HT</th>
+            <th>TVA</th>
+            <th>Montant TTC</th>
             <th>Méthode</th>
             <th>N° Reçu</th>
           </tr>
@@ -199,6 +201,8 @@
             <td>{{ formatDateShort(payment.date) }}</td>
             <td>{{ getComponentLabel(payment.component) }}</td>
             <td>{{ formatCurrencyTable(payment.amount) }}</td>
+            <td>{{ formatCurrencyTable(payment.amount * invoiceData.tva.rate / 100) }}</td>
+            <td>{{ formatCurrencyTable(payment.amount * (1 + invoiceData.tva.rate / 100)) }}</td>
             <td>{{ getPaymentMethodLabel(payment.method) }}</td>
             <td>{{ payment.receiptNumber || '-' }}</td>
           </tr>
@@ -210,7 +214,7 @@
     <div class="footer-section">
       <div class="amount-words">
         <strong>Arrêtée la présente B.L. Facture à la somme de :</strong><br>
-        {{ convertAmountToWords(invoiceData.totals.grandTotal) | uppercase }}
+        {{ convertAmountToWords(invoiceData.totalsWithTVA.totalTTC) | uppercase }}
       </div>
       <div class="signature-section">
         <div class="signature-label"><strong>Signature</strong></div>

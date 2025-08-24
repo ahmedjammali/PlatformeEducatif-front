@@ -37,6 +37,21 @@ interface InvoiceData {
     phone: string;
     email: string;
   };
+  // New TVA-related properties
+  tva: {
+    rate: number; // TVA rate (7%)
+    tuitionTVA: number;
+    uniformTVA: number;
+    transportationTVA: number;
+    totalTVA: number;
+  };
+  totalsWithTVA: {
+    tuitionHT: number;
+    uniformHT: number;
+    transportationHT: number;
+    totalHT: number;
+    totalTTC: number;
+  };
 }
 
 @Component({
@@ -52,6 +67,8 @@ export class InvoiceComponent implements OnInit {
   invoiceData!: InvoiceData;
   isLoading = false;
   isGeneratingPdf = false;
+
+  private readonly TVA_RATE = 0.07; // 7% TVA rate
 
   constructor(private paymentService: PaymentService) {}
 
@@ -101,6 +118,10 @@ export class InvoiceComponent implements OnInit {
       grandTotal: Math.max(0, totalAmounts.grandTotal - paidAmounts.grandTotal)
     };
 
+    // Calculate TVA amounts
+    const tva = this.calculateTVA(totals);
+    const totalsWithTVA = this.calculateTotalsWithTVA(totals, tva);
+
     this.invoiceData = {
       student: this.student,
       academicYear: this.academicYear,
@@ -109,6 +130,8 @@ export class InvoiceComponent implements OnInit {
       payments,
       totals,
       remainingAmounts,
+      tva,
+      totalsWithTVA,
       schoolInfo: {
         name: 'Ons School',
         address: 'Rue de la Liberté, 9110 Jilma',
@@ -116,6 +139,70 @@ export class InvoiceComponent implements OnInit {
         email: 'onsschool2019@gmail.com'
       }
     };
+  }
+
+  // Calculate TVA for each component
+  private calculateTVA(totals: any): any {
+    const tuitionTVA = totals.tuition * this.TVA_RATE;
+    const uniformTVA = totals.uniform * this.TVA_RATE;
+    const transportationTVA = totals.transportation * this.TVA_RATE;
+    const totalTVA = tuitionTVA + uniformTVA + transportationTVA;
+
+    return {
+      rate: 7, // Fixed rate as integer to avoid floating point issues
+      tuitionTVA,
+      uniformTVA,
+      transportationTVA,
+      totalTVA
+    };
+  }
+
+  // Calculate totals including TVA
+  private calculateTotalsWithTVA(totals: any, tva: any): any {
+    return {
+      tuitionHT: totals.tuition,
+      uniformHT: totals.uniform,
+      transportationHT: totals.transportation,
+      totalHT: totals.grandTotal,
+      totalTTC: totals.grandTotal + tva.totalTVA
+    };
+  }
+
+  // Get TVA amount for a specific component
+  getTVAAmount(component: 'tuition' | 'uniform' | 'transportation'): number {
+    switch (component) {
+      case 'tuition':
+        return this.invoiceData?.tva?.tuitionTVA || 0;
+      case 'uniform':
+        return this.invoiceData?.tva?.uniformTVA || 0;
+      case 'transportation':
+        return this.invoiceData?.tva?.transportationTVA || 0;
+      default:
+        return 0;
+    }
+  }
+
+  // Get HT amount (amount without TVA)
+  getHTAmount(component: 'tuition' | 'uniform' | 'transportation'): number {
+    if (!this.invoiceData) return 0;
+    
+    switch (component) {
+      case 'tuition':
+        return this.invoiceData.totals.tuition;
+      case 'uniform':
+        return this.invoiceData.totals.uniform;
+      case 'transportation':
+        return this.invoiceData.totals.transportation;
+      default:
+        return 0;
+    }
+  }
+
+  // Get TTC amount (amount with TVA)
+  getTTCAmount(component: 'tuition' | 'uniform' | 'transportation'): number {
+    const htAmount = this.getHTAmount(component);
+    const tvaAmount = this.getTVAAmount(component);
+    return htAmount + tvaAmount;
   }
 
   // Format currency for table display (Tunisian format)
