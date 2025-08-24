@@ -41,7 +41,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   
   // Pagination
   currentPage = 1;
-  itemsPerPage = 10;
+  itemsPerPage = 15;
   totalPages = 1;
   
   // Selection
