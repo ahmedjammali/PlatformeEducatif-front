@@ -110,6 +110,12 @@
         <div class="user-assignments" *ngIf="user.role === 'student' && user.studentClass">
           <strong>Classe:</strong> {{ getClassName(user.studentClass) }}
         </div>
+        <div class="user-assignments" *ngIf="user.role === 'student' && user.parentName">
+          <strong>Parent:</strong> {{ user.parentName }}
+        </div>
+        <div class="user-assignments" *ngIf="user.role === 'teacher' && user.phoneNumber">
+          <strong>Téléphone:</strong> {{ user.phoneNumber }}
+        </div>
         <div class="user-assignments" *ngIf="user.role === 'teacher' && user.teachingClasses">
           <strong>Matières:</strong> {{ getTeachingClassesDisplay(user.teachingClasses) }}
         </div>
@@ -170,14 +176,13 @@
               </svg>
             </th>
             <th>Rôle</th>
-            <th>Classe/Matières</th>
+            <th>Informations</th>
             <th (click)="sortBy('createdAt')" class="sortable">
               Date d'ajout
               <svg *ngIf="sortField === 'createdAt'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline [attr.points]="sortOrder === 'asc' ? '18 15 12 9 6 15' : '18 9 12 15 6 9'"/>
               </svg>
             </th>
-            <th>Statut</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -205,20 +210,30 @@
               </span>
             </td>
             <td>
-              <div *ngIf="user.role === 'student' && user.studentClass" class="class-info">
-                {{ getClassName(user.studentClass) }}
+              <div *ngIf="user.role === 'student'" class="user-details-table">
+                <div *ngIf="user.studentClass" class="detail-row">
+                  <strong>Classe:</strong> {{ getClassName(user.studentClass) }}
+                </div>
+                <div *ngIf="user.parentName" class="detail-row">
+                  <strong>Parent:</strong> {{ user.parentName }}
+                </div>
+                <div *ngIf="user.parentPhoneNumber" class="detail-row">
+                  <strong>Tél. Parent:</strong> {{ user.parentPhoneNumber }}
+                </div>
               </div>
-              <div *ngIf="user.role === 'teacher'" class="teaching-info">
-                {{ getTeachingClassesDisplay(user.teachingClasses) }}
+              <div *ngIf="user.role === 'teacher'" class="user-details-table">
+                <div *ngIf="user.phoneNumber" class="detail-row">
+                  <strong>Téléphone:</strong> {{ user.phoneNumber }}
+                </div>
+                <div *ngIf="user.teachingClasses && user.teachingClasses.length > 0" class="detail-row">
+                  <strong>Classes:</strong> {{ getTeachingClassesDisplay(user.teachingClasses) }}
+                </div>
               </div>
               <span *ngIf="user.role === 'admin'" class="text-muted">
-                Non assigné
+                Administrateur
               </span>
             </td>
             <td>{{ formatDate(user.createdAt) }}</td>
-            <td>
-              <span class="status-badge active">Actif</span>
-            </td>
             <td>
               <div class="action-buttons">
                 <button class="btn-icon" (click)="viewUser(user)" title="Voir détails">
@@ -334,7 +349,6 @@
 
     <div class="modal-body" *ngIf="userToDelete">
       <div class="delete-warning">
-
         <div class="warning-content">
           <h3>Êtes-vous sûr de vouloir supprimer cet utilisateur ?</h3>
           
@@ -394,21 +408,20 @@
           </div>
         </div>
       </div>
-
-      
     </div>
+    
     <div class="modal-footer delete-footer">
-        <button type="button" class="btn-secondary" (click)="closeDeleteModal()">
-          Annuler
-        </button>
-        <button type="button" class="btn-danger" (click)="confirmDeleteUser()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          </svg>
-          Supprimer définitivement
-        </button>
-      </div>
+      <button type="button" class="btn-secondary" (click)="closeDeleteModal()">
+        Annuler
+      </button>
+      <button type="button" class="btn-danger" (click)="confirmDeleteUser()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+        Supprimer définitivement
+      </button>
+    </div>
   </div>
 </div>
 
@@ -426,69 +439,143 @@
     </div>
 
     <form [formGroup]="userForm" (ngSubmit)="saveUser()" class="user-form">
-      <div class="form-row">
-        <div class="form-group">
-          <label>Nom complet <span class="required">*</span></label>
-          <input 
-            type="text" 
-            formControlName="name" 
-            placeholder="Ex: Jean Dupont"
-            [class.error]="isFieldInvalid('name')"
-          />
-          <span class="error-message" *ngIf="isFieldInvalid('name')">
-            Le nom est requis (minimum 3 caractères)
-          </span>
+      <!-- Basic Information -->
+      <div class="form-section">
+        <h4>Informations de base</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nom complet <span class="required">*</span></label>
+            <input 
+              type="text" 
+              formControlName="name" 
+              placeholder="Ex: Jean Dupont"
+              [class.error]="isFieldInvalid('name')"
+            />
+            <span class="error-message" *ngIf="isFieldInvalid('name')">
+              Le nom est requis (minimum 3 caractères)
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label>Email <span class="required">*</span></label>
+            <input 
+              type="email" 
+              formControlName="email" 
+              placeholder="email@example.com"
+              [class.error]="isFieldInvalid('email')"
+            />
+            <span class="error-message" *ngIf="isFieldInvalid('email')">
+              Email valide requis
+            </span>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Email <span class="required">*</span></label>
-          <input 
-            type="email" 
-            formControlName="email" 
-            placeholder="email@example.com"
-            [class.error]="isFieldInvalid('email')"
-          />
-          <span class="error-message" *ngIf="isFieldInvalid('email')">
-            Email valide requis
-          </span>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Rôle <span class="required">*</span></label>
+            <select formControlName="role" (change)="onRoleChange()">
+              <option value="">Sélectionner un rôle</option>
+              <option value="teacher">Enseignant</option>
+              <option value="student">Étudiant</option>
+              <option value="admin" *ngIf="isSuperAdmin">Administrateur</option>
+            </select>
+            <span class="error-message" *ngIf="isFieldInvalid('role')">
+              Le rôle est requis
+            </span>
+          </div>
+
+          <div class="form-group" *ngIf="!editingUser && shouldShowPasswordField()">
+            <label>
+              Mot de passe 
+              <span class="required" *ngIf="isPasswordRequired()">*</span>
+              <span class="optional" *ngIf="!isPasswordRequired()">(optionnel)</span>
+            </label>
+            <div class="password-input">
+              <input 
+                [type]="showPassword ? 'text' : 'password'" 
+                formControlName="password" 
+                placeholder="Minimum 6 caractères"
+                [class.error]="isFieldInvalid('password')"
+              />
+              <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path *ngIf="!showPassword" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle *ngIf="!showPassword" cx="12" cy="12" r="3"/>
+                  <path *ngIf="showPassword" d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                  <line *ngIf="showPassword" x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <span class="error-message" *ngIf="isFieldInvalid('password')">
+              Le mot de passe doit contenir au moins 6 caractères
+            </span>
+          </div>
         </div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label>Rôle <span class="required">*</span></label>
-          <select formControlName="role">
-            <option value="">Sélectionner un rôle</option>
-            <option value="teacher">Enseignant</option>
-            <option value="student">Étudiant</option>
-            <option value="admin" *ngIf="isSuperAdmin">Administrateur</option>
-          </select>
-          <span class="error-message" *ngIf="isFieldInvalid('role')">
-            Le rôle est requis
-          </span>
+      <!-- Teacher-specific fields -->
+      <div class="form-section" *ngIf="Role === 'teacher'">
+        <h4>Informations Enseignant</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Numéro de téléphone <span class="required">*</span></label>
+            <input 
+              type="tel" 
+              formControlName="phoneNumber" 
+              placeholder="Ex: +216 XX XXX XXX"
+              [class.error]="isFieldInvalid('phoneNumber')"
+            />
+            <span class="error-message" *ngIf="isFieldInvalid('phoneNumber')">
+              Le numéro de téléphone est requis
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student-specific fields -->
+      <div class="form-section" *ngIf="Role === 'student'">
+        <h4>Informations Étudiant</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nom du parent <span class="required">*</span></label>
+            <input 
+              type="text" 
+              formControlName="parentName" 
+              placeholder="Ex: Ahmed Ben Ali"
+              [class.error]="isFieldInvalid('parentName')"
+            />
+            <span class="error-message" *ngIf="isFieldInvalid('parentName')">
+              Le nom du parent est requis
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label>CIN du parent <span class="required">*</span></label>
+            <input 
+              type="text" 
+              formControlName="parentCin" 
+              placeholder="Ex: 12345678"
+              [class.error]="isFieldInvalid('parentCin')"
+            />
+            <span class="error-message" *ngIf="isFieldInvalid('parentCin')">
+              Le CIN du parent est requis
+            </span>
+          </div>
         </div>
 
-        <div class="form-group" *ngIf="!editingUser">
-          <label>Mot de passe <span class="required">*</span></label>
-          <div class="password-input">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Téléphone du parent <span class="required">*</span></label>
             <input 
-              [type]="showPassword ? 'text' : 'password'" 
-              formControlName="password" 
-              placeholder="Minimum 6 caractères"
-              [class.error]="isFieldInvalid('password')"
+              type="tel" 
+              formControlName="parentPhoneNumber" 
+              placeholder="Ex: +216 XX XXX XXX"
+              [class.error]="isFieldInvalid('parentPhoneNumber')"
             />
-            <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path *ngIf="!showPassword" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle *ngIf="!showPassword" cx="12" cy="12" r="3"/>
-                <path *ngIf="showPassword" d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
-                <line *ngIf="showPassword" x1="1" y1="1" x2="23" y2="23"/>
-              </svg>
-            </button>
+            <span class="error-message" *ngIf="isFieldInvalid('parentPhoneNumber')">
+              Le téléphone du parent est requis
+            </span>
           </div>
-          <span class="error-message" *ngIf="isFieldInvalid('password')">
-            Le mot de passe doit contenir au moins 6 caractères
-          </span>
         </div>
       </div>
 
@@ -564,23 +651,45 @@
                 {{ getClassName(viewingUser.studentClass) }}
               </span>
             </div>
+            <div class="info-row" *ngIf="viewingUser.parentName">
+              <span class="label">Nom du parent:</span>
+              <span class="value">{{ viewingUser.parentName }}</span>
+            </div>
+            <div class="info-row" *ngIf="viewingUser.parentCin">
+              <span class="label">CIN du parent:</span>
+              <span class="value">{{ viewingUser.parentCin }}</span>
+            </div>
+            <div class="info-row" *ngIf="viewingUser.parentPhoneNumber">
+              <span class="label">Téléphone du parent:</span>
+              <span class="value">{{ viewingUser.parentPhoneNumber }}</span>
+            </div>
           </div>
 
           <!-- Teacher-specific info -->
           <div class="info-card" *ngIf="viewingUser.role === 'teacher'">
             <h4>Information Enseignant</h4>
+            <div class="info-row" *ngIf="viewingUser.phoneNumber">
+              <span class="label">Téléphone:</span>
+              <span class="value">{{ viewingUser.phoneNumber }}</span>
+            </div>
             <div class="teaching-assignments" *ngIf="viewingUser.teachingClasses && viewingUser.teachingClasses.length > 0">
-              <div *ngFor="let tc of viewingUser.teachingClasses" class="assignment-detail">
-                <div class="class-name">{{ getClassName(tc.class) }}</div>
-                <div class="subjects">
-                  <span *ngFor="let subject of getSubjectsArray(tc.subjects); let last = last" class="subject-tag">
-                    {{ getSubjectName(subject) }}<span *ngIf="!last">, </span>
-                  </span>
+              <div class="info-row">
+                <span class="label">Classes enseignées:</span>
+                <div class="value">
+                  <div *ngFor="let tc of viewingUser.teachingClasses" class="assignment-detail">
+                    <div class="class-name">{{ getClassName(tc.class) }}</div>
+                    <div class="subjects">
+                      <span *ngFor="let subject of getSubjectsArray(tc.subjects); let last = last" class="subject-tag">
+                        {{ getSubjectName(subject) }}<span *ngIf="!last">, </span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div *ngIf="!viewingUser.teachingClasses || viewingUser.teachingClasses.length === 0" class="no-assignments">
-              <span class="text-muted">Aucune classe assignée</span>
+            <div *ngIf="!viewingUser.teachingClasses || viewingUser.teachingClasses.length === 0" class="info-row">
+              <span class="label">Classes assignées:</span>
+              <span class="value text-muted">Aucune classe assignée</span>
             </div>
           </div>
         </div>

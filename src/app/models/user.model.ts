@@ -14,6 +14,10 @@ export interface User {
   createdBy?: User | string;
   createdAt?: Date;
   updatedAt?: Date;
+  phoneNumber?: string;
+  parentName?: string;
+  parentCin   ?: string;
+  parentPhoneNumber?: string;
 }
 
 export interface TeachingClass {

@@ -68,7 +68,7 @@ export class InvoiceComponent implements OnInit {
   isLoading = false;
   isGeneratingPdf = false;
 
-  private readonly TVA_RATE = 0.07; // 7% TVA rate
+  private readonly TVA_RATE = 0; // 7% TVA rate
 
   constructor(private paymentService: PaymentService) {}
 
@@ -149,7 +149,7 @@ export class InvoiceComponent implements OnInit {
     const totalTVA = tuitionTVA + uniformTVA + transportationTVA;
 
     return {
-      rate: 7, // Fixed rate as integer to avoid floating point issues
+      rate: 0, // Fixed rate as integer to avoid floating point issues
       tuitionTVA,
       uniformTVA,
       transportationTVA,

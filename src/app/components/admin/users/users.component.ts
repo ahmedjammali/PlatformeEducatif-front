@@ -67,7 +67,7 @@ export class UsersComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private classService: ClassService,
     private authService: AuthService,
-    private toasterService: ToasterService  // Keep as private since we're using separate component
+    private toasterService: ToasterService
   ) {
     this.initializeForm();
   }
@@ -87,8 +87,14 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.userForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      role: ['', Validators.required]
+      password: [''],
+      role: ['', Validators.required],
+      // Teacher-specific fields
+      phoneNumber: [''],
+      // Student-specific fields
+      parentName: [''],
+      parentCin: [''],
+      parentPhoneNumber: ['']
     });
   }
 
@@ -102,10 +108,11 @@ export class UsersComponent implements OnInit, OnDestroy {
         this.filterAndPaginateUsers();
       });
   }
+
   // Add this method to your UsersComponent class
-trackByUserId(index: number, user: any): string {
-  return user._id || index.toString();
-}
+  trackByUserId(index: number, user: any): string {
+    return user._id || index.toString();
+  }
 
   private loadUsers(): void {
     this.isLoading = true;
@@ -252,6 +259,16 @@ trackByUserId(index: number, user: any): string {
     this.toasterService.info('Filtres réinitialisés');
   }
 
+  // Form validation helpers - FIXED
+  get formRole(): string {
+    return this.userForm.get('role')?.value || '';
+  }
+
+  // FIXED: Use formRole getter consistently
+  get Role(): string {
+    return this.formRole;
+  }
+
   sortBy(field: string): void {
     if (this.sortField === field) {
       this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
@@ -262,12 +279,60 @@ trackByUserId(index: number, user: any): string {
     this.filterAndPaginateUsers();
   }
 
+  shouldShowPasswordField(): boolean {
+    const role = this.formRole;
+    return !this.editingUser && ['admin', 'superadmin'].includes(role);
+  }
+
+  isPasswordRequired(): boolean {
+    const role = this.formRole;
+    return ['admin', 'superadmin'].includes(role);
+  }
+
+  onRoleChange(): void {
+    const role = this.formRole;
+    this.updateFormValidators(role);
+  }
+
+  private updateFormValidators(role: string): void {
+    // Clear all conditional validators first
+    this.userForm.get('password')?.clearValidators();
+    this.userForm.get('phoneNumber')?.clearValidators();
+    this.userForm.get('parentName')?.clearValidators();
+    this.userForm.get('parentCin')?.clearValidators();
+    this.userForm.get('parentPhoneNumber')?.clearValidators();
+
+    // Set password validators based on role (only for new users)
+    if (!this.editingUser) {
+      if (this.isPasswordRequired()) {
+        this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
+      } else {
+        this.userForm.get('password')?.setValidators([Validators.minLength(6)]); // Optional but min length if provided
+      }
+    }
+
+    // Set role-specific validators
+    if (role === 'teacher') {
+      this.userForm.get('phoneNumber')?.setValidators([Validators.required]);
+    } else if (role === 'student') {
+      this.userForm.get('parentName')?.setValidators([Validators.required]);
+      this.userForm.get('parentCin')?.setValidators([Validators.required]);
+      this.userForm.get('parentPhoneNumber')?.setValidators([Validators.required]);
+    }
+
+    // Update validation status
+    this.userForm.get('password')?.updateValueAndValidity();
+    this.userForm.get('phoneNumber')?.updateValueAndValidity();
+    this.userForm.get('parentName')?.updateValueAndValidity();
+    this.userForm.get('parentCin')?.updateValueAndValidity();
+    this.userForm.get('parentPhoneNumber')?.updateValueAndValidity();
+  }
+
   // Modal Methods
   openCreateUserModal(): void {
     this.editingUser = null;
     this.userForm.reset();
-    this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
-    this.userForm.get('password')?.updateValueAndValidity();
+    this.updateFormValidators(''); // Clear validators initially
     this.showUserModal = true;
   }
 
@@ -276,12 +341,19 @@ trackByUserId(index: number, user: any): string {
     this.userForm.patchValue({
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      phoneNumber: user.phoneNumber || '',
+      parentName: user.parentName || '',
+      parentCin: user.parentCin || '',
+      parentPhoneNumber: user.parentPhoneNumber || ''
     });
     
-    // Remove password requirement for editing
+    // For editing, password is never required
     this.userForm.get('password')?.clearValidators();
     this.userForm.get('password')?.updateValueAndValidity();
+    
+    // Set role-specific validators for editing
+    this.updateFormValidators(user.role);
     
     this.showUserModal = true;
   }
@@ -332,15 +404,25 @@ trackByUserId(index: number, user: any): string {
     this.isSaving = true;
     const formValue = this.userForm.value;
     
-    // Prepare user data
+    // Prepare user data with role-specific fields
     const userData: Partial<User> = {
       name: formValue.name,
       email: formValue.email,
       role: formValue.role
     };
     
+    // Add password only if provided and it's a new user
     if (!this.editingUser && formValue.password) {
       userData.password = formValue.password;
+    }
+
+    // Add role-specific fields
+    if (formValue.role === 'teacher') {
+      userData.phoneNumber = formValue.phoneNumber;
+    } else if (formValue.role === 'student') {
+      userData.parentName = formValue.parentName;
+      userData.parentCin = formValue.parentCin;
+      userData.parentPhoneNumber = formValue.parentPhoneNumber;
     }
     
     const saveObservable = this.editingUser
