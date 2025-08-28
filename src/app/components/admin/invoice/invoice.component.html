@@ -83,18 +83,30 @@
       <tbody>
         <!-- Tuition Fee Row -->
         <tr class="payment-row">
-          <td>001</td>
-          <td class="designation-col">
-            <span class="service-icon">📚</span>
-            FRAIS SCOLAIRES - ANNÉE ACADÉMIQUE {{ invoiceData.academicYear }}
-          </td>
-          <td>1,00</td>
-          <td class="price-col">{{ formatCurrencyTable(getHTAmount('tuition') + invoiceData.remainingAmounts.tuition) }}</td>
-          <td class="amount-col" [class.amount-positive]="invoiceData.totals.tuition > 0" [class.amount-pending]="invoiceData.remainingAmounts.tuition > 0">
-            {{ formatCurrencyTable(getHTAmount('tuition')) }}
-          </td>
-          <td>{{ formatCurrencyTable(getTVAAmount('tuition')) }}</td>
-        </tr>
+  <td>001</td>
+  <td class="designation-col">
+    <span class="service-icon">📚</span>
+    FRAIS SCOLAIRES - ANNÉE ACADÉMIQUE {{ invoiceData.academicYear }}
+    <!-- ✅ NEW: Show discount info if applicable -->
+    <div *ngIf="hasDiscount()" class="discount-info">
+      <small style="color: #666; font-style: italic;">
+        Montant original: {{ formatCurrencyTable(getOriginalTuitionAmount()) }} DT<br>
+        Remise {{ getDiscountPercentage() }}%: -{{ formatCurrencyTable(getDiscountAmount()) }} DT
+      </small>
+    </div>
+  </td>
+  <td>1,00</td>
+  <td class="price-col">
+    <!-- ✅ UPDATED: Show original amount if discount exists, otherwise show current amount -->
+    {{ formatCurrencyTable(hasDiscount() ? getOriginalTuitionAmount()  : getHTAmount('tuition') + invoiceData.remainingAmounts.tuition) }}
+  </td>
+  <td class="amount-col" [class.amount-positive]="invoiceData.totals.tuition > 0" [class.amount-pending]="invoiceData.remainingAmounts.tuition > 0">
+    {{ formatCurrencyTable(getHTAmount('tuition')) }}
+  </td>
+  <td>{{ formatCurrencyTable(getTVAAmount('tuition')) }}</td>
+</tr>
+
+
 
         <!-- Uniform Row (if applicable) -->
         <tr class="payment-row" *ngIf="hasUniform()">

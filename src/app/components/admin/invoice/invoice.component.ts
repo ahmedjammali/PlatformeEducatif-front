@@ -12,7 +12,6 @@ declare module 'jspdf' {
     autoTable: (options: any) => jsPDF;
   }
 }
-
 interface InvoiceData {
   student: StudentWithPayment;
   academicYear: string;
@@ -37,9 +36,8 @@ interface InvoiceData {
     phone: string;
     email: string;
   };
-  // New TVA-related properties
   tva: {
-    rate: number; // TVA rate (7%)
+    rate: number;
     tuitionTVA: number;
     uniformTVA: number;
     transportationTVA: number;
@@ -52,8 +50,14 @@ interface InvoiceData {
     totalHT: number;
     totalTTC: number;
   };
+  // ✅ NEW: Add discount information
+  discount: {
+    enabled: boolean;
+    percentage?: number;
+    originalTuitionAmount?: number;
+    discountAmount?: number;
+  };
 }
-
 @Component({
   selector: 'app-invoice',
   templateUrl: './invoice.component.html',
@@ -122,23 +126,26 @@ export class InvoiceComponent implements OnInit {
     const tva = this.calculateTVA(totals);
     const totalsWithTVA = this.calculateTotalsWithTVA(totals, tva);
 
-    this.invoiceData = {
-      student: this.student,
-      academicYear: this.academicYear,
-      generatedDate: new Date(),
-      invoiceNumber,
-      payments,
-      totals,
-      remainingAmounts,
-      tva,
-      totalsWithTVA,
-      schoolInfo: {
-        name: 'Ons School',
-        address: 'Rue de la Liberté, 9110 Jilma',
-        phone: '+216 76 65 70 82',
-        email: 'onsschool2019@gmail.com'
-      }
-    };
+    const discount = this.calculateDiscountInfo();
+
+  this.invoiceData = {
+    student: this.student,
+    academicYear: this.academicYear,
+    generatedDate: new Date(),
+    invoiceNumber,
+    payments,
+    totals,
+    remainingAmounts,
+    tva,
+    totalsWithTVA,
+    discount, // ✅ ADD: Include discount info
+    schoolInfo: {
+      name: 'Ons School',
+      address: 'Rue de la Liberté, 9110 Jilma',
+      phone: '+216 76 65 70 82',
+      email: 'onsschool2019@gmail.com'
+    }
+  };
   }
 
   // Calculate TVA for each component
@@ -565,4 +572,43 @@ export class InvoiceComponent implements OnInit {
     const type = this.student.paymentRecord?.transportation?.type || '';
     return type === 'close' ? 'Zone proche' : type === 'far' ? 'Zone éloignée' : type;
   }
+
+  private calculateDiscountInfo(): any {
+  const paymentRecord = this.student.paymentRecord;
+  
+  if (!paymentRecord?.discount?.enabled) {
+    return { enabled: false };
+  }
+
+  const discountPercentage = paymentRecord.discount.percentage || 0;
+  const currentTuitionAmount = paymentRecord.totalAmounts?.tuition || 0;
+  
+  // Calculate original amount before discount
+  const originalTuitionAmount = currentTuitionAmount / (1 - discountPercentage / 100);
+  const discountAmount = originalTuitionAmount - currentTuitionAmount;
+
+  return {
+    enabled: true,
+    percentage: discountPercentage,
+    originalTuitionAmount,
+    discountAmount
+  };
+}
+
+// ===== 4. ADD helper methods =====
+hasDiscount(): boolean {
+  return this.invoiceData?.discount?.enabled || false;
+}
+
+getOriginalTuitionAmount(): number {
+  return this.invoiceData?.discount?.originalTuitionAmount || 0;
+}
+
+getDiscountAmount(): number {
+  return this.invoiceData?.discount?.discountAmount || 0;
+}
+
+getDiscountPercentage(): number {
+  return this.invoiceData?.discount?.percentage || 0;
+}
 }

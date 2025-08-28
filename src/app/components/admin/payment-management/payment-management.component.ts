@@ -25,7 +25,10 @@ import {
   StudentPayment,
   MonthlyPayment,
   PaymentHistoryItem,
-  UpdatePaymentRecordRequest
+  UpdatePaymentRecordRequest , 
+    StudentDiscount,
+  ApplyDiscountRequest,
+  ApplyDiscountResponse
 } from '../../../models/payment.model';
 import { Class } from '../../../models/class.model';
 import { User } from '../../../models/user.model';
@@ -131,6 +134,10 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   classes: Class[] = [];
   totalStudents = 0;
   availableGrades: AvailableGradesResponse | null = null;
+
+  isDiscountDialogOpen = false;
+  discountForm!: FormGroup;
+
   
   // ===== UI STATE =====
   isLoading = false;
@@ -227,7 +234,14 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     this.setupFilters();
     this.loadDashboard();
     this.checkQueryParams();
-  }
+        this.discountForm = this.fb.group({
+        discountType: ['monthly', Validators.required],
+        percentage: [0, [Validators.required, Validators.min(1), Validators.max(100)]],
+        notes: ['']
+        });
+        }
+
+
 
   ngAfterViewInit(): void {
     this.cdr.detectChanges();
@@ -1327,6 +1341,39 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     return student.paymentRecord.componentStatus[component] || 'pending';
   }
 
+  getOriginalAmounts(student: StudentWithPayment): any {
+  if (!student.paymentRecord) {
+    return { tuition: 0, uniform: 0, transportation: 0, grandTotal: 0 };
+  }
+
+  // Calculate original tuition from grade configuration
+  const originalTuition = this.getTuitionAmountForGrade(student.grade);
+  
+  // Get uniform price from config or stored value
+  let originalUniform = 0;
+  if (student.paymentRecord.uniform?.purchased) {
+    originalUniform = this.getUniformPrice(student);
+  }
+
+  // Calculate transportation from config
+  let originalTransportation = 0;
+  if (student.paymentRecord.transportation?.using) {
+    const type = student.paymentRecord.transportation.type;
+    const monthlyPrice = this.getTransportationMonthlyPrice(type as 'close' | 'far');
+    const months = this.getTransportationMonths();
+    originalTransportation = monthlyPrice * months;
+  }
+
+  const originalGrandTotal = originalTuition + originalUniform + originalTransportation;
+
+  return {
+    tuition: originalTuition,
+    uniform: originalUniform,
+    transportation: originalTransportation,
+    grandTotal: originalGrandTotal
+  };
+}
+
   getComponentStatusLabel(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation'): string {
     const status = this.getComponentStatus(student, component);
     const componentName = component === 'tuition' ? 'Frais scolaires' : 
@@ -1608,4 +1655,235 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   getTransportationTypeForStudent(student: StudentWithPayment): string {
     return student.paymentRecord?.transportation?.type || '';
   }
+
+openDiscountDialog(student: StudentWithPayment): void {
+  if (!student.hasPaymentRecord) {
+    this.showWarning('Aucun dossier de paiement trouvé pour cet étudiant');
+    return;
+  }
+
+  // CHANGE: Block if student already has a discount
+  if (this.hasDiscount(student)) {
+    this.showWarning('Cet étudiant a déjà une remise. Vous devez d\'abord la supprimer pour en créer une nouvelle.');
+    return;
+  }
+
+  this.selectedStudent = student;
+  
+  // Always reset form for new discount creation
+  this.discountForm.reset({
+    discountType: 'monthly',
+    percentage: 0,
+    notes: ''
+  });
+  
+  this.isDiscountDialogOpen = true;
+  document.body.style.overflow = 'hidden';
+}
+
+
+closeDiscountDialog(): void {
+  this.isDiscountDialogOpen = false;
+  this.selectedStudent = null;
+  document.body.style.overflow = 'auto';
+}
+async applyDiscount(): Promise<void> {
+  if (!this.selectedStudent?._id || !this.discountForm.valid) {
+    this.showError('Veuillez remplir tous les champs requis');
+    return;
+  }
+
+  // CHANGE: Block if student already has a discount
+  if (this.hasDiscount(this.selectedStudent)) {
+    this.showError('Cet étudiant a déjà une remise. Supprimez-la d\'abord pour en créer une nouvelle.');
+    return;
+  }
+
+  const formValues = this.discountForm.value;
+  const academicYear = this.filterForm.get('academicYear')?.value;
+
+  const discountRequest: ApplyDiscountRequest = {
+    discountType: formValues.discountType,
+    percentage: formValues.percentage,
+    notes: formValues.notes || undefined
+  };
+
+  this.isLoading = true;
+  
+  this.paymentService.applyStudentDiscount(this.selectedStudent._id, discountRequest, academicYear).subscribe({
+    next: (response) => {
+      this.showSuccess(
+        `Remise de ${response.discount.percentage}% appliquée avec succès`,
+        'Remise appliquée'
+      );
+      
+      // Update the selected student immediately
+      if (this.selectedStudent && this.selectedStudent.paymentRecord) {
+        this.selectedStudent.paymentRecord.discount = {
+          enabled: true,
+          type: response.discount.type as 'monthly' | 'annual',
+          percentage: response.discount.percentage,
+          appliedDate: new Date(),
+          notes: discountRequest.notes
+        };
+      }
+      
+      this.loadStudents();
+      this.loadDashboard();
+      this.closeDiscountDialog();
+      this.isLoading = false;
+    },
+    error: (error) => {
+      console.error('Error applying discount:', error);
+      const errorMessage = this.paymentService.handlePaymentError(error) || 'Erreur lors de l\'application de la remise';
+      this.showError(errorMessage);
+      this.isLoading = false;
+    }
+  });
+}
+async removeDiscount(student: StudentWithPayment): Promise<void> {
+  if (!student._id || !this.hasDiscount(student)) {
+    this.showWarning('Aucune remise à supprimer');
+    return;
+  }
+
+  const discountPercentage = this.getDiscountPercentage(student);
+  const confirmed = await this.confirmAction(
+    'Supprimer la remise',
+    `Voulez-vous supprimer la remise de ${discountPercentage}% pour ${student.name} ?\n\nCette action est irréversible.`,
+    'warning'
+  );
+
+  if (!confirmed) return;
+
+  const academicYear = this.filterForm.get('academicYear')?.value;
+  this.isLoading = true;
+
+  this.paymentService.removeStudentDiscount(student._id, academicYear).subscribe({
+    next: (response) => {
+      this.showSuccess(`Remise supprimée pour ${student.name}`);
+      
+      // Update the student in the local array immediately
+      const studentIndex = this.students.findIndex(s => s._id === student._id);
+      if (studentIndex !== -1 && this.students[studentIndex].paymentRecord?.discount) {
+        this.students[studentIndex].paymentRecord!.discount = {
+          enabled: false,
+          type: undefined,
+          percentage: undefined,
+          appliedBy: undefined,
+          appliedDate: undefined,
+          notes: undefined
+        };
+      }
+      
+      this.loadStudents();
+      this.loadDashboard();
+      this.isLoading = false;
+    },
+    error: (error) => {
+      console.error('Error removing discount:', error);
+      const errorMessage = this.paymentService.handlePaymentError(error) || 'Erreur lors de la suppression de la remise';
+      this.showError(errorMessage);
+      this.isLoading = false;
+    }
+  });
+}
+
+hasDiscount(student: StudentWithPayment): boolean {
+  return !!(
+    student.paymentRecord?.discount?.enabled && 
+    student.paymentRecord?.discount?.percentage && 
+    student.paymentRecord.discount.percentage > 0
+  );
+}
+
+getDiscountDisplayText(student: StudentWithPayment): string {
+  if (!this.hasDiscount(student)) return 'Aucune remise';
+  
+  const discount = student.paymentRecord?.discount;
+  if (!discount) return 'Aucune remise';
+  
+  const typeLabel = discount.type === 'annual' ? 'Annuelle' : 'Mensuelle';
+  return `${typeLabel} - ${discount.percentage}%`;
+}
+
+
+getDiscountPercentage(student: StudentWithPayment): number {
+  if (!this.hasDiscount(student)) return 0;
+  return student.paymentRecord?.discount?.percentage || 0;
+}
+
+getDiscountType(student: StudentWithPayment): 'monthly' | 'annual' | null {
+  if (!this.hasDiscount(student)) return null;
+  return student.paymentRecord?.discount?.type || null;
+}
+getDiscountAmount(student: StudentWithPayment): number {
+  if (!this.hasDiscount(student)) return 0;
+  
+  // Use original tuition amount, not the stored (already discounted) amount
+  const originalTuition = this.getOriginalAmounts(student).tuition;
+  const percentage = this.getDiscountPercentage(student);
+  
+  return Math.round(originalTuition * percentage / 100);
+}
+getDiscountedAmount(student: StudentWithPayment): number {
+  const originalTotalAmount = this.getOriginalAmounts(student).grandTotal;
+  const discountAmount = this.getDiscountAmount(student);
+  
+  return originalTotalAmount - discountAmount;
+}
+// ===== FORM VALIDATION =====
+isDiscountFormValid(): boolean {
+  return this.discountForm.valid;
+}
+needsAmountRecalculation(student: StudentWithPayment): boolean {
+  if (!this.hasDiscount(student)) return false;
+  
+  const originalAmounts = this.getOriginalAmounts(student);
+  const storedAmounts = this.getTotalAmounts(student);
+  const discountAmount = this.getDiscountAmount(student);
+  
+  // Check if stored amounts match what they should be after discount
+  const expectedTuitionAfterDiscount = originalAmounts.tuition - discountAmount;
+  const expectedGrandTotal = originalAmounts.grandTotal - discountAmount;
+  
+  return Math.abs(storedAmounts.tuition - expectedTuitionAfterDiscount) > 1 ||
+         Math.abs(storedAmounts.grandTotal - expectedGrandTotal) > 1;
+}
+getDiscountFormErrors(): string[] {
+  const errors: string[] = [];
+  
+  if (this.discountForm.get('percentage')?.hasError('required')) {
+    errors.push('Le pourcentage est requis');
+  }
+  
+  if (this.discountForm.get('percentage')?.hasError('min')) {
+    errors.push('Le pourcentage doit être supérieur à 0');
+  }
+  
+  if (this.discountForm.get('percentage')?.hasError('max')) {
+    errors.push('Le pourcentage ne peut pas dépasser 100');
+  }
+  
+  return errors;
+}
+
+getDiscountPreview(): { original: number; discount: number; final: number } {
+  if (!this.selectedStudent) {
+    return { original: 0, discount: 0, final: 0 };
+  }
+
+  const percentage = this.discountForm.get('percentage')?.value || 0;
+  const originalTuition = this.getOriginalAmounts(this.selectedStudent).tuition;
+  const originalTotal = this.getOriginalAmounts(this.selectedStudent).grandTotal;
+  
+  const discountAmount = Math.round(originalTuition * percentage / 100);
+  const finalAmount = originalTotal - discountAmount;
+
+  return {
+    original: originalTotal,
+    discount: discountAmount,
+    final: finalAmount
+  };
+}
 }

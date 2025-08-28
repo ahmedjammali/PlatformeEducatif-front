@@ -346,15 +346,40 @@
                     </div>
                   </td>
 
-                  <!-- Financial Information Cell -->
                   <td class="financial-cell">
                     <div class="financial-info" *ngIf="student.paymentRecord">
-                      <div class="amount-row">
-                        <span class="amount-label">Total:</span>
-                        <span class="amount-value total">
-                          {{ formatCurrency(getTotalAmounts(student)?.grandTotal || 0) }}
+                      <!-- Discount Information (if applicable) -->
+                      <div class="discount-info" *ngIf="hasDiscount(student)">
+                        <div class="discount-badge">
+                          <span class="discount-icon">💰</span>
+                          <span class="discount-text">{{ getDiscountDisplayText(student) }}</span>
+                        </div>
+                      </div>
+                      
+                      <!-- FIXED: Original tuition amount (if discount applied) -->
+                      <div class="amount-row original-amount" *ngIf="hasDiscount(student)">
+                        <span class="amount-label">Frais scolaires originaux:</span>
+                        <span class="amount-value original">
+                          {{ formatCurrency(getOriginalAmounts(student).tuition) }}
                         </span>
                       </div>
+                      
+                      <!-- Discount amount -->
+                      <div class="amount-row discount-amount" *ngIf="hasDiscount(student)">
+                        <span class="amount-label">Remise ({{ getDiscountPercentage(student) }}%):</span>
+                        <span class="amount-value discount">
+                          -{{ formatCurrency(getDiscountAmount(student)) }}
+                        </span>
+                      </div>
+                      
+                      <!-- Final total -->
+                      <div class="amount-row">
+                        <span class="amount-label">{{ hasDiscount(student) ? 'Total après remise:' : 'Total:' }}</span>
+                        <span class="amount-value total" [class.discounted]="hasDiscount(student)">
+                          {{ formatCurrency(hasDiscount(student) ? getDiscountedAmount(student) : getTotalAmounts(student)?.grandTotal || 0) }}
+                        </span>
+                      </div>
+                      
                       <div class="amount-row">
                         <span class="amount-label">Payé:</span>
                         <span class="amount-value paid">
@@ -465,90 +490,117 @@
                   </td>
 
                   <!-- Actions Cell -->
-                  <td class="actions-cell">
-                    <div class="action-buttons">
-                      <!-- Generate Payment Record -->
-                      <button 
-                        class="action-btn generate"
-                        title="Générer dossier de paiement"
-                        *ngIf="!student.hasPaymentRecord"
-                        (click)="openGenerateDialog(student)">
-                        <span class="btn-icon">➕</span>
-                      </button>
+                  <!-- Updated Action Buttons with proper discount functionality -->
+<td class="actions-cell">
+  <div class="action-buttons">
+    <!-- Generate Payment Record -->
+    <button 
+      class="action-btn generate"
+      title="Générer dossier de paiement"
+      *ngIf="!student.hasPaymentRecord"
+      (click)="openGenerateDialog(student)">
+      <span class="btn-icon">➕</span>
+    </button>
 
-                      <!-- Tuition Payment -->
-                      <button 
-                        class="action-btn tuition"
-                        title="Paiement frais scolaires"
-                        *ngIf="student.hasPaymentRecord && canPayComponent(student, 'tuition')"
-                        (click)="openPaymentDialog(student, 'tuition_monthly')">
-                        <span class="btn-icon">📚</span>
-                      </button>
+    <!-- Tuition Payment -->
+    <button 
+      class="action-btn tuition"
+      title="Paiement frais scolaires"
+      *ngIf="student.hasPaymentRecord && canPayComponent(student, 'tuition')"
+      (click)="openPaymentDialog(student, 'tuition_monthly')">
+      <span class="btn-icon">📚</span>
+    </button>
 
-                      <!-- Uniform Payment -->
-                      <button 
-                        class="action-btn uniform"
-                        title="Paiement uniforme"
-                        *ngIf="student.hasPaymentRecord && canPayComponent(student, 'uniform')"
-                        (click)="openPaymentDialog(student, 'uniform')">
-                        <span class="btn-icon">👔</span>
-                      </button>
+    <!-- Uniform Payment -->
+    <button 
+      class="action-btn uniform"
+      title="Paiement uniforme"
+      *ngIf="student.hasPaymentRecord && canPayComponent(student, 'uniform')"
+      (click)="openPaymentDialog(student, 'uniform')">
+      <span class="btn-icon">👔</span>
+    </button>
 
-                      <!-- Transportation Payment -->
-                      <button 
-                        class="action-btn transportation"
-                        title="Paiement transport"
-                        *ngIf="student.hasPaymentRecord && canPayComponent(student, 'transportation')"
-                        (click)="openPaymentDialog(student, 'transportation_monthly')">
-                        <span class="btn-icon">🚌</span>
-                      </button>
+    <!-- Transportation Payment -->
+    <button 
+      class="action-btn transportation"
+      title="Paiement transport"
+      *ngIf="student.hasPaymentRecord && canPayComponent(student, 'transportation')"
+      (click)="openPaymentDialog(student, 'transportation_monthly')">
+      <span class="btn-icon">🚌</span>
+    </button>
 
-                      <!-- Annual Payment -->
-                      <button 
-                        class="action-btn annual"
-                        title="Paiement annuel"
-                        *ngIf="student.hasPaymentRecord && !student.paymentRecord?.annualTuitionPayment?.isPaid"
-                        (click)="openPaymentDialog(student, 'tuition_annual')">
-                        <span class="btn-icon">📋</span>
-                      </button>
+    <!-- Annual Payment -->
+    <button 
+      class="action-btn annual"
+      title="Paiement annuel"
+      *ngIf="student.hasPaymentRecord && !student.paymentRecord?.annualTuitionPayment?.isPaid"
+      (click)="openPaymentDialog(student, 'tuition_annual')">
+      <span class="btn-icon">📋</span>
+    </button>
 
+    <!-- Invoice Button -->
+    <button 
+      class="action-btn invoice"
+      title="Extraire la facture"
+      *ngIf="student.hasPaymentRecord"
+      (click)="openInvoiceDialog(student)">
+      <span class="btn-icon">📄</span>
+    </button>
 
-                   <button 
-                        class="action-btn invoice"
-                        title="Extraire la facture"
-                        *ngIf="student.hasPaymentRecord"
-                        (click)="openInvoiceDialog(student)">
-                        <span class="btn-icon">📄</span>
-                      </button>
+    <!-- View Details -->
+    <button 
+      class="action-btn details"
+      title="Voir détails"
+      *ngIf="student.hasPaymentRecord"
+      (click)="toggleExpandRow(student)">
+      <span class="btn-icon">👁️</span>
+    </button>
 
-                      <!-- View Details -->
-                      <button 
-                        class="action-btn details"
-                        title="Voir détails"
-                        *ngIf="student.hasPaymentRecord"
-                        (click)="toggleExpandRow(student)">
-                        <span class="btn-icon">👁️</span>
-                      </button>
+    <!-- Edit Payment Record -->
+    <button 
+      class="action-btn edit"
+      title="Modifier les composants"
+      *ngIf="student.hasPaymentRecord"
+      (click)="editPaymentRecord(student)">
+      <span class="btn-icon">✏️</span>
+    </button>
 
-                      <!-- Edit Payment Record -->
-                      <button 
-                        class="action-btn edit"
-                        title="Modifier les composants"
-                        *ngIf="student.hasPaymentRecord"
-                        (click)="editPaymentRecord(student)">
-                        <span class="btn-icon">✏️</span>
-                      </button>
+    <!-- Apply/Edit Discount -->
+    <button 
+      class="action-btn discount"
+      title="Appliquer une remise"
+      *ngIf="student.hasPaymentRecord && !hasDiscount(student)"
+      (click)="openDiscountDialog(student)">
+      <span class="btn-icon">💰</span>
+    </button>
 
-                      <!-- Delete Payment Record -->
-                      <button 
-                        class="action-btn delete"
-                        title="Supprimer dossier"
-                        *ngIf="student.hasPaymentRecord"
-                        (click)="deletePaymentRecord(student)">
-                        <span class="btn-icon">🗑️</span>
-                      </button>
-                    </div>
-                  </td>
+    <!-- View Discount (only show if discount exists, no action) -->
+    <button 
+      class="action-btn discount-view"
+      [title]="'Remise active: ' + getDiscountPercentage(student) + '%'"
+      *ngIf="student.hasPaymentRecord && hasDiscount(student)"
+      disabled>
+      <span class="btn-icon">💰</span>
+    </button>
+    <!-- Remove Discount -->
+    <button 
+      class="action-btn remove-discount"
+      [title]="'Supprimer la remise de ' + getDiscountPercentage(student) + '%'"
+      *ngIf="student.hasPaymentRecord && hasDiscount(student)"
+      (click)="removeDiscount(student)">
+      <span class="btn-icon">❌</span>
+    </button>
+
+    <!-- Delete Payment Record -->
+    <button 
+      class="action-btn delete"
+      title="Supprimer dossier"
+      *ngIf="student.hasPaymentRecord"
+      (click)="deletePaymentRecord(student)">
+      <span class="btn-icon">🗑️</span>
+    </button>
+  </div>
+</td>
                 </tr>
 
                 <!-- Expanded Detail Row -->
@@ -574,7 +626,49 @@
                             </span>
                           </div>
                         </div>
-
+<div class="discount-section" *ngIf="hasDiscount(student)">
+  <div class="discount-header">
+    <h4>💰 Remise Appliquée</h4>
+  </div>
+  <div class="discount-details-card">
+    <div class="discount-summary">
+      <div class="discount-item">
+        <span class="label">Type:</span>
+        <span class="value">{{ getDiscountType(student) === 'monthly' ? 'Mensuelle' : 'Annuelle' }}</span>
+      </div>
+      <div class="discount-item">
+        <span class="label">Pourcentage:</span>
+        <span class="value discount-percentage">{{ getDiscountPercentage(student) }}%</span>
+      </div>
+      <div class="discount-item">
+        <span class="label">Montant de la remise:</span>
+        <span class="value discount-amount">{{ formatCurrency(getDiscountAmount(student)) }}</span>
+      </div>
+      <div class="discount-item total-after-discount">
+        <span class="label">Total après remise:</span>
+        <span class="value final-amount">{{ formatCurrency(getDiscountedAmount(student)) }}</span>
+      </div>
+      <div class="discount-item" *ngIf="student.paymentRecord?.discount?.notes">
+        <span class="label">Notes:</span>
+        <span class="value">{{ student.paymentRecord.discount.notes }}</span>
+      </div>
+      <div class="discount-item" *ngIf="student.paymentRecord?.discount?.appliedDate">
+        <span class="label">Appliquée le:</span>
+        <span class="value">{{ safeFormatDate(student.paymentRecord.discount.appliedDate) }}</span>
+      </div>
+    </div>
+    
+ <div class="discount-actions">
+      <button 
+        class="btn btn-danger btn-small"
+        (click)="removeDiscount(student)"
+        title="Supprimer la remise">
+        <span class="btn-icon">❌</span>
+        Supprimer la remise
+      </button>
+    </div>
+  </div>
+</div>
                         <!-- Component Summary Cards -->
                         <div class="component-summary-grid">
                           <!-- Tuition Component -->
@@ -1025,16 +1119,16 @@
               <h5>💸 Total Estimé</h5>
               <div class="calculation-breakdown">
                 <div class="calc-line">
-                  <span>Frais scolaires:</span>
-                  <span>{{ formatCurrency(getTuitionAmountForGrade(selectedStudent.grade)) }}</span>
+                  <span>Montant des frais scolaires:</span>
+                  <span>{{ formatCurrency(getTotalAmounts(selectedStudent)?.tuition || 0) }}</span>
                 </div>
-                <div class="calc-line" *ngIf="generateForm.get('hasUniform')?.value">
-                  <span>Uniforme:</span>
-                  <span>{{ formatCurrency(getUniformPrice()) }}</span>
+                <div class="calc-line discount-line">
+                  <span>Remise ({{ discountForm.get('percentage')?.value }}%):</span>
+                  <span class="discount-amount">-{{ formatCurrency((getTotalAmounts(selectedStudent)?.tuition || 0) * (discountForm.get('percentage')?.value || 0) / 100) }}</span>
                 </div>
-                <div class="calc-line" *ngIf="generateForm.get('transportationType')?.value">
-                  <span>Transport ({{ getTransportationMonths() }} mois):</span>
-                  <span>{{ formatCurrency(getTransportationTotal()) }}</span>
+                <div class="calc-line total-line">
+                  <strong>Nouveau montant total:</strong>
+                  <strong class="final-amount">{{ formatCurrency((getTotalAmounts(selectedStudent)?.grandTotal || 0) - ((getTotalAmounts(selectedStudent)?.tuition || 0) * (discountForm.get('percentage')?.value || 0) / 100)) }}</strong>
                 </div>
                 <div class="calc-line total-line">
                   <strong>Total:</strong>
@@ -1316,4 +1410,137 @@
       </div>
     </div>
   </div>
+
+
+  <div class="modal-overlay" *ngIf="isDiscountDialogOpen" (click)="closeDiscountDialog()">
+  <div class="modal-container discount-dialog" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Appliquer une Remise</h3>
+      <button class="close-btn" (click)="closeDiscountDialog()">✖️</button>
+    </div>
+    
+    <div class="modal-body" *ngIf="selectedStudent">
+      <div class="student-info">
+        <h4>{{ selectedStudent.name }}</h4>
+        <p>{{ getClassGrade(selectedStudent) }} - {{ getClassName(selectedStudent) }}</p>
+        
+      
+      </div>
+      
+      <form [formGroup]="discountForm" (ngSubmit)="applyDiscount()">
+        <!-- Discount Type -->
+        <div class="form-section">
+          <label class="form-label" for="discountType">Type de remise</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input 
+                type="radio" 
+                formControlName="discountType"
+                value="monthly"
+                id="monthly"
+                class="radio-input">
+              <span class="radio-custom"></span>
+              <div class="radio-content">
+                <span class="radio-title">Remise mensuelle</span>
+                <span class="radio-description">Appliquée sur chaque paiement mensuel</span>
+              </div>
+            </label>
+            
+            <label class="radio-label">
+              <input 
+                type="radio" 
+                formControlName="discountType"
+                value="annual"
+                id="annual"
+                class="radio-input">
+              <span class="radio-custom"></span>
+              <div class="radio-content">
+                <span class="radio-title">Remise annuelle</span>
+                <span class="radio-description">Appliquée sur le montant total annuel</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Discount Percentage -->
+        <div class="form-section">
+          <label class="form-label" for="percentage">Pourcentage de remise</label>
+          <div class="input-group">
+            <input 
+              type="number" 
+              formControlName="percentage"
+              id="percentage"
+              class="form-input"
+              [class.error]="discountForm.get('percentage')?.invalid && discountForm.get('percentage')?.touched"
+              placeholder="Entrer le pourcentage"
+              min="1" 
+              max="100" 
+              step="1">
+            <span class="input-suffix">%</span>
+          </div>
+          <div class="form-error" *ngIf="discountForm.get('percentage')?.invalid && discountForm.get('percentage')?.touched">
+            <span *ngIf="discountForm.get('percentage')?.hasError('required')">Le pourcentage est requis</span>
+            <span *ngIf="discountForm.get('percentage')?.hasError('min')">Le pourcentage doit être d'au moins 1%</span>
+            <span *ngIf="discountForm.get('percentage')?.hasError('max')">Le pourcentage ne peut pas dépasser 100%</span>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-section">
+          <label class="form-label" for="notes">Notes (optionnel)</label>
+          <textarea 
+            formControlName="notes"
+            id="notes"
+            class="form-textarea"
+            placeholder="Raison de la remise, conditions particulières..."
+            rows="3">
+          </textarea>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="form-section preview-section" *ngIf="discountForm.get('percentage')?.value > 0">
+          <div class="preview-card">
+            <h5>💡 Aperçu de la remise</h5>
+            <div class="preview-calculation" *ngIf="selectedStudent">
+              <div class="calc-line">
+                <span>Montant original:</span>
+                <span>{{ formatCurrency(getOriginalAmounts(selectedStudent).tuition) }}</span>
+              </div>
+              <div class="calc-line discount-line">
+                <span>Remise ({{ discountForm.get('percentage')?.value }}%):</span>
+                <span class="discount-amount">-{{ formatCurrency(getOriginalAmounts(selectedStudent).tuition * (discountForm.get('percentage')?.value || 0) / 100) }}</span>
+              </div>
+              <div class="calc-line total-line">
+                <strong>Nouveau montant des frais scolaires:</strong>
+                <strong class="final-amount">{{ formatCurrency(getOriginalAmounts(selectedStudent).tuition - (getOriginalAmounts(selectedStudent).tuition * (discountForm.get('percentage')?.value || 0) / 100)) }}</strong>
+              </div>
+              <div class="calc-line total-line">
+                <strong>Grand total après remise:</strong>
+                <strong class="final-amount">{{ formatCurrency(getOriginalAmounts(selectedStudent).grandTotal - (getOriginalAmounts(selectedStudent).tuition * (discountForm.get('percentage')?.value || 0) / 100)) }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeDiscountDialog()">
+        Annuler
+      </button>
+      <button 
+        class="btn btn-success" 
+        (click)="applyDiscount()"
+        [disabled]="!isDiscountFormValid() || isLoading">
+        <span *ngIf="isLoading">
+          <span class="spinner-small"></span>
+          Application...
+        </span>
+         <span *ngIf="!isLoading">
+          Appliquer la remise
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
 </div>

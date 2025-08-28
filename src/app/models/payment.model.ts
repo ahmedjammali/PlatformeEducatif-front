@@ -133,6 +133,23 @@ export interface AnnualTuitionPayment {
   recordedBy?: User | string;
 }
 
+
+
+// ===== UPDATED STUDENT WITH PAYMENT INTERFACE =====
+export interface StudentWithPayment {
+  _id: string;
+  name: string;
+  email: string;
+  studentClass: {
+    _id: string;
+    name: string;
+    grade: string;
+  } | null;
+  grade: Grade | null;
+  gradeCategory: GradeCategory | null;
+  paymentRecord: StudentPayment | null;
+  hasPaymentRecord: boolean;
+}
 // ===== UPDATED STUDENT PAYMENT INTERFACE =====
 export interface StudentPayment {
   _id?: string;
@@ -195,26 +212,11 @@ export interface StudentPayment {
     uniform: 'not_applicable' | 'pending' | 'completed';
     transportation: 'not_applicable' | 'pending' | 'partial' | 'completed' | 'overdue';
   };
+  discount: StudentDiscount;
 
   createdBy: User | string;
   createdAt?: Date;
   updatedAt?: Date;
-}
-
-// ===== UPDATED STUDENT WITH PAYMENT INTERFACE =====
-export interface StudentWithPayment {
-  _id: string;
-  name: string;
-  email: string;
-  studentClass: {
-    _id: string;
-    name: string;
-    grade: string;
-  } | null;
-  grade: Grade | null;
-  gradeCategory: GradeCategory | null;
-  paymentRecord: StudentPayment | null;
-  hasPaymentRecord: boolean;
 }
 
 // ===== UPDATED PAYMENT DASHBOARD =====
@@ -324,119 +326,6 @@ export interface BulkGeneratePaymentRequest {
   defaultTransportation?: 'close' | 'far' | null;
 }
 
-// ===== UPDATED PAYMENT REPORT INTERFACE =====
-export interface PaymentReport {
-  reportType: 'summary' | 'detailed' | 'overdue' | 'collection' | 'component';
-  academicYear: string;
-  gradeCategory: string;
-  grade: string;
-  component: 'all' | 'tuition' | 'uniform' | 'transportation';
-  dateRange: {
-    startDate?: string;
-    endDate?: string;
-  };
-  report: {
-    overview?: {
-      totalStudents: number;
-      totalExpected: number;
-      totalCollected: number;
-      totalOutstanding: number;
-      collectionRate: string;
-    };
-    statusBreakdown?: {
-      completed: number;
-      partial: number;
-      pending: number;
-      overdue: number;
-    };
-    gradeCategoryBreakdown?: {
-      maternelle: { count: number; collected: number; expected: number; };
-      primaire: { count: number; collected: number; expected: number; };
-      secondaire: { count: number; collected: number; expected: number; };
-    };
-    // ✅ NEW: Component breakdown for detailed analysis
-    componentBreakdown?: {
-      tuition: {
-        totalStudents: number;
-        totalExpected: number;
-        totalCollected: number;
-        statusCounts: {
-          completed: number;
-          partial: number;
-          pending: number;
-          overdue: number;
-        };
-      };
-      uniform: {
-        totalStudents: number;
-        notUsingService: number;
-        totalExpected: number;
-        totalCollected: number;
-        statusCounts: {
-          completed: number;
-          pending: number;
-          not_applicable: number;
-        };
-      };
-      transportation: {
-        totalStudents: number;
-        notUsingService: number;
-        closeZone: number;
-        farZone: number;
-        totalExpected: number;
-        totalCollected: number;
-        statusCounts: {
-          completed: number;
-          partial: number;
-          pending: number;
-          overdue: number;
-          not_applicable: number;
-        };
-      };
-    };
-    payments?: Array<any>;
-    totalOverdue?: number;
-    totalOverdueAmount?: number;
-    dateRange?: { startDate: string; endDate: string; };
-    totalCollected?: number;
-    collectionsByMonth?: { [key: string]: number };
-    collectionsByMethod?: { [key: string]: number };
-    averageMonthlyCollection?: string;
-  };
-}
-
-// ===== UPDATED MONTHLY STATS =====
-export interface MonthlyStats {
-  academicYear: string;
-  component: string;
-  monthlyStats: Array<{
-    month: number;
-    monthName: string;
-    tuition: {
-      expected: number;
-      collected: number;
-      pending: number;
-      overdue: number;
-      collectionRate: string;
-    };
-    transportation: {
-      expected: number;
-      collected: number;
-      pending: number;
-      overdue: number;
-      collectionRate: string;
-    };
-    total: {
-      expected: number;
-      collected: number;
-      pending: number;
-      overdue: number;
-      collectionRate: string;
-    };
-  }>;
-}
-
-// ===== UPDATED EXPORT DATA =====
 export interface ExportData {
   message: string;
   totalRecords: number;
@@ -493,22 +382,7 @@ export interface BulkUpdateResult {
   };
 }
 
-// ===== UPDATED STUDENT PAYMENT DETAILS =====
-export interface StudentPaymentDetails {
-  student: {
-    _id: string;
-    name: string;
-    email: string;
-    studentClass: {
-      _id: string;
-      name: string;
-      grade: string;
-    };
-    grade: Grade;
-    gradeCategory: GradeCategory;
-  };
-  paymentRecord: StudentPayment;
-}
+
 
 // ===== UTILITY INTERFACES =====
 export interface PaymentSummary {
@@ -598,35 +472,6 @@ export interface AvailableGradesResponse {
   };
 }
 
-// ===== NOTIFICATION AND DIALOG INTERFACES =====
-export interface PaymentNotification {
-  id: string;
-  type: 'overdue' | 'due_soon' | 'payment_received' | 'config_updated';
-  title: string;
-  message: string;
-  studentId?: string;
-  studentName?: string;
-  amount?: number;
-  dueDate?: Date;
-  createdAt: Date;
-  read: boolean;
-  priority: 'low' | 'medium' | 'high';
-}
-
-export interface BulkOperationProgress {
-  total: number;
-  processed: number;
-  successful: number;
-  failed: number;
-  errors: Array<{
-    studentId: string;
-    studentName: string;
-    error: string;
-  }>;
-  isComplete: boolean;
-  startTime: Date;
-  endTime?: Date;
-}
 
 export interface PaymentDialogData {
   student: StudentWithPayment;
@@ -636,24 +481,6 @@ export interface PaymentDialogData {
   component?: 'tuition' | 'uniform' | 'transportation';
 }
 
-export interface PaymentMethodConfig {
-  id: string;
-  name: string;
-  label: string;
-  icon: string;
-  enabled: boolean;
-  requiresReceiptNumber: boolean;
-  allowsPartialPayments: boolean;
-}
-
-export interface AcademicYearConfig {
-  year: string;
-  startDate: Date;
-  endDate: Date;
-  isActive: boolean;
-  paymentStartMonth: number;
-  paymentEndMonth: number;
-}
 
 // ===== FINANCIAL SUMMARY =====
 export interface FinancialSummary {
@@ -688,33 +515,41 @@ export interface FinancialSummary {
   discountsGiven: number;
 }
 
-export interface PaymentStatusHistory {
-  studentId: string;
-  academicYear: string;
-  statusChanges: Array<{
-    date: Date;
-    fromStatus: string;
-    toStatus: string;
-    amount?: number;
-    notes?: string;
-    changedBy: string;
-  }>;
-}
 
-export interface PaymentReminderConfig {
-  enabled: boolean;
-  daysBeforeDue: number[];
-  reminderTypes: ('email' | 'sms' | 'notification')[];
-  customMessage?: string;
-  escalationRules: Array<{
-    daysOverdue: number;
-    action: string;
-    recipients: string[];
-  }>;
-}
+
+
 
 export interface UpdatePaymentRecordRequest {
   academicYear: string;
   hasUniform: boolean;
   transportationType: 'close' | 'far' | null;
 }
+
+  export interface StudentDiscount {
+    enabled: boolean;
+    type?: 'monthly' | 'annual';
+    percentage?: number;
+    appliedBy?: User | string;
+    appliedDate?: Date | string;
+    notes?: string;
+  }
+
+  // ✅ NEW: Apply discount request interface
+  export interface ApplyDiscountRequest {
+    discountType: 'monthly' | 'annual';
+    percentage: number;
+    notes?: string;
+  }
+
+  // ✅ NEW: Apply discount response interface
+  export interface ApplyDiscountResponse {
+    message: string;
+    discount: {
+      type: string;
+      percentage: number;
+      amount: number;
+      originalAmount: number;
+      newAmount: number;
+    };
+    paymentRecord: StudentPayment;
+  }

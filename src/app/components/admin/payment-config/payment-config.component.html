@@ -315,35 +315,7 @@
           </div>
         </div>
 
-        <!-- Annual Payment Discount -->
-        <div class="settings-card">
-          <h3 class="section-title">
-            <span class="section-icon">🏷️</span>
-            Remise Paiement Annuel
-          </h3>
-          <div formGroupName="annualPaymentDiscount">
-            <div class="option-toggle">
-              <input type="checkbox" formControlName="enabled" class="checkbox-input" id="discountEnabled">
-              <label for="discountEnabled" class="checkbox-text">Activer remise</label>
-            </div>
-            <div class="form-group" *ngIf="configForm.get('annualPaymentDiscount.enabled')?.value">
-              <label class="form-label">Pourcentage</label>
-              <div class="input-group">
-                <span class="input-prefix">%</span>
-                <input 
-                  type="number" 
-                  formControlName="percentage" 
-                  min="0" 
-                  max="100"
-                  class="form-input" 
-                  placeholder="0">
-              </div>
-              <div class="field-error" *ngIf="isFieldInvalid('annualPaymentDiscount.percentage')">
-                {{ getFieldError('annualPaymentDiscount.percentage') }}
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         <!-- Configuration Status -->
         <div class="settings-card" *ngIf="currentConfig && !isCreatingNew">
