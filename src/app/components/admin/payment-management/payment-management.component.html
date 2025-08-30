@@ -538,14 +538,26 @@
       <span class="btn-icon">📋</span>
     </button>
 
-    <!-- Invoice Button -->
-    <button 
-      class="action-btn invoice"
-      title="Extraire la facture"
-      *ngIf="student.hasPaymentRecord"
-      (click)="openInvoiceDialog(student)">
-      <span class="btn-icon">📄</span>
-    </button>
+<div class="invoice-btn-group" *ngIf="student.hasPaymentRecord">
+  <!-- Default Invoice Button (Cumulative) -->
+  <button 
+    class="action-btn invoice"
+    title="Facture cumulative"
+    (click)="openInvoiceDialog(student, false)">
+    <span class="btn-icon">📄</span>
+  </button>
+  
+  <!-- Monthly Invoice Button (if monthly payments exist) -->
+  <button 
+    class="action-btn invoice-monthly"
+    title="Facture du mois en cours"
+*ngIf="(student.paymentRecord?.tuitionMonthlyPayments?.length ?? 0) > 0"
+
+
+    (click)="openInvoiceDialog(student, true, getCurrentMonthIndex(student))">
+    <span class="btn-icon">📅</span>
+  </button>
+</div>
 
     <!-- View Details -->
     <button 
@@ -574,14 +586,7 @@
       <span class="btn-icon">💰</span>
     </button>
 
-    <!-- View Discount (only show if discount exists, no action) -->
-    <button 
-      class="action-btn discount-view"
-      [title]="'Remise active: ' + getDiscountPercentage(student) + '%'"
-      *ngIf="student.hasPaymentRecord && hasDiscount(student)"
-      disabled>
-      <span class="btn-icon">💰</span>
-    </button>
+  
     <!-- Remove Discount -->
     <button 
       class="action-btn remove-discount"
@@ -782,16 +787,28 @@
                                   <span class="receipt-number" *ngIf="payment.receiptNumber">
                                     Reçu: {{ payment.receiptNumber }}
                                   </span>
+                                  <button 
+                                  *ngIf="payment.status === 'paid' || payment.status === 'partial'"
+                                  class="btn btn-small invoice-btn"
+                                  title="Facture pour ce mois"
+                                  (click)="openInvoiceDialog(student, true, idx)">
+                                  <span class="btn-icon">Facture pour ce mois📄</span>
+                                </button>
                                 </div>
                               </div>
 
-                              <div class="month-actions" *ngIf="payment.status !== 'paid'">
+                              <div class="month-actions">
+                                <!-- Pay button - only show for unpaid months -->
                                 <button 
+                                  *ngIf="payment.status !== 'paid'" 
                                   class="btn btn-small pay-btn"
                                   (click)="openPaymentDialog(student, 'tuition_monthly', idx)">
                                   <span class="btn-icon">💳</span>
                                   {{ payment.status === 'partial' ? 'Compléter' : 'Payer' }}
                                 </button>
+                                
+                                <!-- Invoice button - only show for paid or partial months -->
+                                
                               </div>
                             </div>
                           </div>
@@ -838,17 +855,29 @@
                                   <span class="receipt-number" *ngIf="payment.receiptNumber">
                                     Reçu: {{ payment.receiptNumber }}
                                   </span>
+                                   <button 
+                                *ngIf="payment.status === 'paid' || payment.status === 'partial'"
+                                class="btn btn-small invoice-btn"
+                                title="Facture transport pour ce mois"
+                                (click)="openInvoiceDialog(student, true, idx)">
+                                <span class="btn-icon">Facture transport pour ce mois📄</span>
+                              </button>
                                 </div>
                               </div>
 
-                              <div class="month-actions" *ngIf="payment.status !== 'paid'">
-                                <button 
-                                  class="btn btn-small pay-btn transportation"
-                                  (click)="openPaymentDialog(student, 'transportation_monthly', idx)">
-                                  <span class="btn-icon">🚌</span>
-                                  {{ payment.status === 'partial' ? 'Compléter' : 'Payer' }}
-                                </button>
-                              </div>
+                             <div class="month-actions">
+                              <!-- Pay button - only show for unpaid transportation months -->
+                              <button 
+                                *ngIf="payment.status !== 'paid'"
+                                class="btn btn-small pay-btn transportation"
+                                (click)="openPaymentDialog(student, 'transportation_monthly', idx)">
+                                <span class="btn-icon">🚌</span>
+                                {{ payment.status === 'partial' ? 'Compléter' : 'Payer' }}
+                              </button>
+                              
+                              <!-- Invoice button - only show for paid or partial transportation months -->
+                             
+                            </div>
                             </div>
                           </div>
                         </div>
@@ -1324,16 +1353,19 @@
 </div>
 <!-- Invoice Dialog Modal -->
   <div class="modal-overlay" *ngIf="isInvoiceDialogOpen" (click)="closeInvoiceDialog()">
-    <div class="modal-container" (click)="$event.stopPropagation()">
-      <app-invoice-dialog
-        *ngIf="selectedStudentForInvoice"
-        [student]="selectedStudentForInvoice"
-        [academicYear]="currentAcademicYear"
-        (dialogClosed)="closeInvoiceDialog()">
-      </app-invoice-dialog>
-    </div>
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <app-invoice-dialog
+      *ngIf="selectedStudentForInvoice"
+      [student]="selectedStudentForInvoice"
+      [academicYear]="currentAcademicYear"
+      [showCurrentMonthOnly]="showCurrentMonthOnlyInInvoice"
+      [currentMonthIndex]="currentMonthIndexForInvoice"
+      [currentPaymentDate]="currentPaymentDateForInvoice"
+      [monthName]="monthNameForInvoice"
+      (dialogClosed)="closeInvoiceDialog()">
+    </app-invoice-dialog>
   </div>
-
+</div>
   <!-- Confirmation Modal -->
   <div class="modal-overlay" *ngIf="confirmationState.isOpen" [@fadeIn] (click)="onConfirmationCancel()">
     <div class="modal-container" (click)="$event.stopPropagation()" [@slideIn]>

@@ -163,6 +163,11 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   isEditDialogOpen = false;
   currentDialogData: PaymentDialogData | null = null;
 
+   showCurrentMonthOnlyInInvoice = false;
+  currentMonthIndexForInvoice?: number;
+  currentPaymentDateForInvoice?: Date;
+  monthNameForInvoice?: string;
+
 
   isInvoiceDialogOpen = false;
 
@@ -561,21 +566,59 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     this.showSuccess('Données actualisées');
   }
 
-    openInvoiceDialog(student: StudentWithPayment): void {
+   openInvoiceDialog(student: StudentWithPayment, showCurrentMonthOnly = false, monthIndex?: number): void {
     if (!student.hasPaymentRecord) {
       this.showWarning('Aucun dossier de paiement trouvé pour cet étudiant');
       return;
     }
 
     this.selectedStudentForInvoice = student;
+    
+    // ✅ NEW: Set monthly context parameters
+    this.showCurrentMonthOnlyInInvoice = showCurrentMonthOnly;
+    this.currentMonthIndexForInvoice = monthIndex;
+    
+    // Set month name and payment date if showing specific month
+    if (showCurrentMonthOnly && monthIndex !== undefined && student.paymentRecord?.tuitionMonthlyPayments) {
+      const monthPayment = student.paymentRecord.tuitionMonthlyPayments[monthIndex];
+      if (monthPayment) {
+        this.monthNameForInvoice = monthPayment.monthName;
+        this.currentPaymentDateForInvoice = new Date(monthPayment.dueDate);
+      }
+    } else {
+      this.monthNameForInvoice = undefined;
+      this.currentPaymentDateForInvoice = undefined;
+    }
+
     this.isInvoiceDialogOpen = true;
     document.body.style.overflow = 'hidden';
   }
-
-  closeInvoiceDialog(): void {
+ closeInvoiceDialog(): void {
     this.isInvoiceDialogOpen = false;
     this.selectedStudentForInvoice = null;
+    
+    // ✅ NEW: Reset monthly context parameters
+    this.showCurrentMonthOnlyInInvoice = false;
+    this.currentMonthIndexForInvoice = undefined;
+    this.currentPaymentDateForInvoice = undefined;
+    this.monthNameForInvoice = undefined;
+    
     document.body.style.overflow = 'auto';
+  }
+
+   getCurrentMonthName(): string {
+    const monthNames = [
+      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ];
+    return monthNames[new Date().getMonth()];
+  }
+
+  // 5. Add helper method to determine if we should show monthly invoice
+  shouldShowMonthlyInvoice(student: StudentWithPayment): boolean {
+    // You can add logic here to determine when to show monthly vs cumulative
+    // For example, show monthly if we're in the middle of the academic year
+    return student.paymentRecord?.paymentType === 'monthly';
   }
   // ===== BULK OPERATIONS =====
 
@@ -1885,5 +1928,88 @@ getDiscountPreview(): { original: number; discount: number; final: number } {
     discount: discountAmount,
     final: finalAmount
   };
+}
+
+// Additional helper methods to add to payment-management.component.ts
+
+// Add these methods to your PaymentManagementComponent class:
+
+/**
+ * Get the current month index for a student's payment schedule
+ */
+getCurrentMonthIndex(student: StudentWithPayment): number {
+  if (!student.paymentRecord?.tuitionMonthlyPayments) {
+    return 0;
+  }
+
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+
+  // Find the payment for the current month
+  const currentMonthPayment = student.paymentRecord.tuitionMonthlyPayments.findIndex(payment => {
+    const paymentDate = new Date(payment.dueDate);
+    return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+  });
+
+  // Return the found index or default to 0
+  return currentMonthPayment >= 0 ? currentMonthPayment : 0;
+}
+
+/**
+ * Get month name from month index
+ */
+getMonthNameFromIndex(monthIndex: number): string {
+  const monthNames = [
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+  ];
+  return monthNames[monthIndex] || 'Mois inconnu';
+}
+
+/**
+ * Get the payment for a specific month
+ */
+getPaymentForMonth(student: StudentWithPayment, monthIndex: number): MonthlyPayment | null {
+  if (!student.paymentRecord?.tuitionMonthlyPayments || monthIndex < 0) {
+    return null;
+  }
+  
+  return student.paymentRecord.tuitionMonthlyPayments[monthIndex] || null;
+}
+
+/**
+ * Check if a month has any payments
+ */
+hasPaymentsForMonth(student: StudentWithPayment, monthIndex: number): boolean {
+  const payment = this.getPaymentForMonth(student, monthIndex);
+  return !!(payment && payment.paidAmount > 0);
+}
+
+/**
+ * Get transportation payment for specific month
+ */
+getTransportationPaymentForMonth(student: StudentWithPayment, monthIndex: number): MonthlyPayment | null {
+  if (!student.paymentRecord?.transportation?.monthlyPayments || monthIndex < 0) {
+    return null;
+  }
+  
+  return student.paymentRecord.transportation.monthlyPayments[monthIndex] || null;
+}
+
+
+/**
+ * Quick access method for current month invoice
+ */
+openCurrentMonthInvoice(student: StudentWithPayment): void {
+  const currentMonthIndex = this.getCurrentMonthIndex(student);
+  this.openInvoiceDialog(student, true, currentMonthIndex);
+}
+
+/**
+ * Quick access method for cumulative invoice
+ */
+openCumulativeInvoice(student: StudentWithPayment): void {
+  this.openInvoiceDialog(student, false);
 }
 }

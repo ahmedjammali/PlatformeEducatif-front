@@ -3694,3 +3694,52 @@ select:focus-visible {
     max-width: none;
   }
 }
+
+/* Add these styles to payment-management.component.css */
+
+/* Invoice Button Group Styling */
+.invoice-btn-group {
+  display: flex;
+  gap: 4px;
+  position: relative;
+}
+
+.action-btn.invoice-monthly {
+  background: #2196F3;
+  color: white;
+  border-color: #1976D2;
+}
+
+.action-btn.invoice-monthly:hover {
+  background: #1976D2;
+  transform: translateY(-2px);
+}
+
+/* Monthly Invoice Button in Payment Cards */
+.btn.invoice-btn {
+  background: #6C757D;
+  color: white;
+  border-color: #6C757D;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+}
+
+.btn.invoice-btn:hover {
+  background: #5A6268;
+  border-color: #5A6268;
+}
+
+
+/* Responsive adjustments for invoice button group */
+@media (max-width: 768px) {
+  .invoice-btn-group {
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .action-btn.invoice,
+  .action-btn.invoice-monthly {
+    width: 100%;
+    justify-content: center;
+  }
+}

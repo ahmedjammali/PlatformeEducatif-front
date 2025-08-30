@@ -621,3 +621,113 @@
     display: none; /* Hide TVA column on very small screens */
   }
 }
+/* Additional CSS for current month invoice features */
+
+/* Current Month Summary Section */
+.current-month-summary {
+  margin: 20px 0;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.current-month-summary h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px dotted #ccc;
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-item.summary-total {
+  grid-column: 1 / -1;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 2px solid #333;
+  border-bottom: none;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #555;
+}
+
+.summary-amount {
+  font-size: 12px;
+  font-weight: bold;
+  color: #333;
+}
+
+.summary-total .summary-label,
+.summary-total .summary-amount {
+  font-size: 14px;
+  color: #000;
+}
+
+/* Discount info styling improvements */
+.discount-info {
+  margin-top: 5px;
+  padding: 5px;
+  background-color: #e8f5e8;
+  border-radius: 3px;
+  border-left: 3px solid #4caf50;
+}
+
+.discount-info small {
+  display: block;
+  line-height: 1.3;
+}
+
+/* Enhanced payment row styling for better visibility */
+.payment-row .amount-col.amount-positive {
+  background-color: #e8f5e8;
+  font-weight: bold;
+}
+
+.payment-row .amount-col.amount-pending {
+  background-color: #fff3cd;
+  font-style: italic;
+}
+
+/* Print and PDF specific styles */
+@media print {
+  .current-month-summary {
+    background-color: transparent !important;
+    border: 1px solid #000 !important;
+  }
+  
+  .discount-info {
+    background-color: transparent !important;
+    border-left: 2px solid #000 !important;
+  }
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-item.summary-total {
+    grid-column: 1;
+  }
+}
