@@ -39,7 +39,7 @@ import { PaymentConfigComponent } from './components/admin/payment-config/paymen
 import { FinancialOverviewComponent } from './components/admin/financial-overview/financial-overview.component';
 
 const routes: Routes = [
-  { path: '', component: LoginComponent },
+  { path: '', component: LandingPageComponent },
   { path: 'login', component: LoginComponent },
   { path: 'unauthorized', component: UnauthorizedComponent },
 

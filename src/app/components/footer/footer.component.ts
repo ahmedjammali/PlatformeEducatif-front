@@ -32,7 +32,7 @@ export class FooterComponent implements OnInit, OnDestroy {
   contactInfo = {
     address: '123 Avenue de l\'Éducation, Tunis 1000',
     phone: '+216 71 234 567',
-    email: 'contact@lilischool.tn',
+    email: 'onsschool2019@gmail.com',
     hours: 'Lun - Ven: 8h00 - 17h00'
   };
 

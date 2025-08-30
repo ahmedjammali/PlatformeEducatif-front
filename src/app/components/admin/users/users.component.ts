@@ -279,54 +279,57 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.filterAndPaginateUsers();
   }
 
-  shouldShowPasswordField(): boolean {
-    const role = this.formRole;
-    return !this.editingUser && ['admin', 'superadmin'].includes(role);
-  }
+shouldShowPasswordField(): boolean {
+  const role = this.formRole;
+  // Show password field for all roles when creating new users
+  return !this.editingUser && ['admin', 'superadmin', 'teacher', 'student'].includes(role);
+}
 
-  isPasswordRequired(): boolean {
-    const role = this.formRole;
-    return ['admin', 'superadmin'].includes(role);
-  }
+
+isPasswordRequired(): boolean {
+  const role = this.formRole;
+  // Password is now required for all roles when creating new users
+  return ['admin', 'superadmin', 'teacher', 'student'].includes(role);
+}
 
   onRoleChange(): void {
     const role = this.formRole;
     this.updateFormValidators(role);
   }
 
-  private updateFormValidators(role: string): void {
-    // Clear all conditional validators first
-    this.userForm.get('password')?.clearValidators();
-    this.userForm.get('phoneNumber')?.clearValidators();
-    this.userForm.get('parentName')?.clearValidators();
-    this.userForm.get('parentCin')?.clearValidators();
-    this.userForm.get('parentPhoneNumber')?.clearValidators();
+private updateFormValidators(role: string): void {
+  // Clear all conditional validators first
+  this.userForm.get('password')?.clearValidators();
+  this.userForm.get('phoneNumber')?.clearValidators();
+  this.userForm.get('parentName')?.clearValidators();
+  this.userForm.get('parentCin')?.clearValidators();
+  this.userForm.get('parentPhoneNumber')?.clearValidators();
 
-    // Set password validators based on role (only for new users)
-    if (!this.editingUser) {
-      if (this.isPasswordRequired()) {
-        this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
-      } else {
-        this.userForm.get('password')?.setValidators([Validators.minLength(6)]); // Optional but min length if provided
-      }
+  // Set password validators based on role (only for new users)
+  if (!this.editingUser) {
+    if (this.isPasswordRequired()) {
+      this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
+    } else {
+      this.userForm.get('password')?.setValidators([Validators.minLength(6)]); // Optional but min length if provided
     }
-
-    // Set role-specific validators
-    if (role === 'teacher') {
-      this.userForm.get('phoneNumber')?.setValidators([Validators.required]);
-    } else if (role === 'student') {
-      this.userForm.get('parentName')?.setValidators([Validators.required]);
-      this.userForm.get('parentCin')?.setValidators([Validators.required]);
-      this.userForm.get('parentPhoneNumber')?.setValidators([Validators.required]);
-    }
-
-    // Update validation status
-    this.userForm.get('password')?.updateValueAndValidity();
-    this.userForm.get('phoneNumber')?.updateValueAndValidity();
-    this.userForm.get('parentName')?.updateValueAndValidity();
-    this.userForm.get('parentCin')?.updateValueAndValidity();
-    this.userForm.get('parentPhoneNumber')?.updateValueAndValidity();
   }
+
+  // Set role-specific validators
+  if (role === 'teacher') {
+    this.userForm.get('phoneNumber')?.setValidators([Validators.required]);
+  } else if (role === 'student') {
+    this.userForm.get('parentName')?.setValidators([Validators.required]);
+    this.userForm.get('parentCin')?.setValidators([Validators.required]);
+    this.userForm.get('parentPhoneNumber')?.setValidators([Validators.required]);
+  }
+
+  // Update validation status
+  this.userForm.get('password')?.updateValueAndValidity();
+  this.userForm.get('phoneNumber')?.updateValueAndValidity();
+  this.userForm.get('parentName')?.updateValueAndValidity();
+  this.userForm.get('parentCin')?.updateValueAndValidity();
+  this.userForm.get('parentPhoneNumber')?.updateValueAndValidity();
+}
 
   // Modal Methods
   openCreateUserModal(): void {

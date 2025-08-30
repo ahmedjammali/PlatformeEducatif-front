@@ -1,4 +1,4 @@
-<!-- admin-layout.component.html - FIXED VERSION -->
+<!-- admin-layout.component.html - MERGED VERSION -->
 <div class="dashboard-container">
   
   <!-- Mobile Header - Added for mobile responsiveness -->
@@ -16,7 +16,13 @@
       <span *ngIf="schoolInfo">{{ schoolInfo.name }}</span>
     </div>
     
-
+    <button class="mobile-notification-btn" (click)="showNotifications()" [class.has-notifications]="unreadNotificationCount > 0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <span class="mobile-badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount }}</span>
+    </button>
   </header>
 
   <!-- Mobile Overlay -->
@@ -98,6 +104,31 @@
           </a>
         </li>
 
+        <!-- Notifications -->
+        <li class="nav-item" [class.active]="activeRoute === 'notifications'" [class.has-notifications]="unreadNotificationCount > 0">
+          <a (click)="navigateTo('notifications')" class="nav-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span class="nav-text">Notifications</span>
+            <span class="nav-badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount }}</span>
+          </a>
+        </li>
+
+        <!-- Student Grades -->
+        <li class="nav-item" [class.active]="activeRoute === 'grades'">
+          <a (click)="navigateTo('grades')" class="nav-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+              <path d="M19 11H15a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z"/>
+              <path d="M12 2L8 6h8L12 2z"/>
+              <path d="M8 6v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V6"/>
+            </svg>
+            <span class="nav-text">Notes des Étudiants</span>
+          </a>
+        </li>
+
         <!-- Payments - For all admin types -->
         <li class="nav-item" [class.active]="activeRoute === 'payments'">
           <a (click)="navigateTo('payments')" class="nav-link">
@@ -118,6 +149,17 @@
               <path d="M6 12h.01M18 12h.01"/>
             </svg>
             <span class="nav-text">Aperçu Financier</span>  
+          </a>
+        </li>
+
+        <!-- Contact Page -->
+        <li class="nav-item" [class.active]="activeRoute === 'contact'">
+          <a (click)="navigateTo('contact')" class="nav-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <span class="nav-text">Contact</span>
           </a>
         </li>
 
@@ -177,7 +219,14 @@
       </div>
       
       <div class="header-right">
-
+        <!-- Quick Actions -->
+        <button class="action-btn" (click)="showNotifications()" [class.has-notifications]="unreadNotificationCount > 0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="notification-badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount }}</span>
+        </button>
         
         <div class="school-info" *ngIf="schoolInfo">
           <span class="school-name">{{ schoolInfo.name }}</span>

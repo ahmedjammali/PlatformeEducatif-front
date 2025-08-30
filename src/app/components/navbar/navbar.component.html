@@ -1,4 +1,4 @@
-<!-- <nav class="navbar" [class.scrolled]="isScrolled" *ngIf="!isLoggedIn" >
+<nav class="navbar" [class.scrolled]="isScrolled" *ngIf="!isLoggedIn" >
   <div class="navbar-container">
 
     <div class="navbar-logo" routerLink="/" (click)="closeMobileMenu()">
@@ -195,7 +195,7 @@
       </div>
     </div>
   </div>
-</nav> -->
+</nav>
 
 
 <nav class="navbar" [class.scrolled]="isScrolled" *ngIf="!isLoggedIn" >
@@ -203,17 +203,14 @@
 
     <div class="navbar-logo" routerLink="/" (click)="closeMobileMenu()">
       <div class="logo-icon">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 2L28 8v12c0 7.732-5.268 12-12 12S4 27.732 4 20V8l12-6z" fill="var(--color-primary)" stroke="var(--color-primary-dark)" stroke-width="1.5"/>
-          <circle cx="16" cy="14" r="4" fill="var(--color-white)" opacity="0.9"/>
-          <path d="M12 22h8M10 25h12" stroke="var(--color-white)" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
-        </svg>
+      <img src="assets/cigle.jpg" alt="" height="30" width="40" style="border-radius: 12px;">
+
       </div>
       <span class="logo-text">{{schoolName}}</span>
     </div>
 
 
-<!-- 
+
     <div class="navbar-menu desktop-menu">
       <a class="nav-link" 
          [class.active]="isActiveSection('home')"
@@ -231,14 +228,7 @@
          [attr.aria-current]="isActiveSection('about') ? 'page' : null">
         <span>À Propos</span>
       </a>
-      <a class="nav-link" 
-         [class.active]="isActiveSection('admission')"
-         (click)="scrollToSection('admission')"
-         role="button"
-         tabindex="0"
-         [attr.aria-current]="isActiveSection('admission') ? 'page' : null">
-        <span>Admission</span>
-      </a>
+
       <a class="nav-link" 
          [class.active]="isActiveSection('contact')"
          (click)="scrollToSection('contact')"
@@ -300,16 +290,16 @@
         <span></span>
       </span>
     </button>
-  </div> -->
+  </div> 
 
 
-  <!-- <div class="mobile-menu-overlay" 
+   <div class="mobile-menu-overlay" 
        [class.open]="isMobileMenuOpen" 
        (click)="closeMobileMenu()"
-       [attr.aria-hidden]="!isMobileMenuOpen"></div> -->
+       [attr.aria-hidden]="!isMobileMenuOpen"></div>
   
   <!-- Mobile Navigation -->
-  <!-- <div class="mobile-menu" 
+  <div class="mobile-menu" 
        [class.open]="isMobileMenuOpen"
        [attr.aria-hidden]="!isMobileMenuOpen"
        role="navigation"
@@ -379,8 +369,8 @@
           <polyline points="9,18 15,12 9,6"></polyline>
         </svg>
       </a>
-    </nav> -->
-<!--     
+    </nav> 
+  
     <div class="mobile-nav-actions">
       <button *ngIf="!isLoggedIn" 
               class="mobile-login-btn" 
@@ -430,6 +420,6 @@
           </svg>
         </button>
       </div>
-    </div> -->
+    </div>
   </div>
 </nav>
