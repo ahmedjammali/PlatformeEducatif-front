@@ -996,16 +996,14 @@ body.menu-open {
   backdrop-filter: blur(8px);
   opacity: 0;
   visibility: hidden;
-  transition: all var(--transition-base);
+  transition: all 0.2s ease; /* Réduit de 0.3s à 0.2s */
   z-index: calc(var(--z-navbar) - 1);
 }
-
 .mobile-menu-overlay.open {
   opacity: 1;
   visibility: visible;
 }
 
-/* Mobile Menu */
 .mobile-menu {
   position: fixed;
   top: 0;
@@ -1019,7 +1017,7 @@ body.menu-open {
     var(--color-accent) 100%);
   backdrop-filter: blur(25px);
   box-shadow: var(--shadow-xl);
-  transition: right var(--transition-slow);
+  transition: right 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Réduit de 0.5s à 0.3s avec easing plus rapide */
   z-index: var(--z-navbar);
   display: flex;
   flex-direction: column;

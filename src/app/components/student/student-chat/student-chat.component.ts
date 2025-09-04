@@ -389,9 +389,9 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
 
   // UI Helper Methods
   toggleSidebar(): void {
-    console.log('Toggling sidebar');
+
     this.sidebarCollapsed = !this.sidebarCollapsed;
-    console.log('Sidebar collapsed:', this.sidebarCollapsed);
+
   }
 
   private scrollToBottom(): void {

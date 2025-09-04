@@ -9,7 +9,6 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { PaymentService } from '../../../services/payment.service';
 import { ClassService } from '../../../services/class.service';
 import { UserService } from '../../../services/user.service';
-import { PaymentDialogComponent, PaymentDialogData } from '../payment-dialog/payment-dialog.component';
 
 import {
   StudentWithPayment,
@@ -25,10 +24,11 @@ import {
   StudentPayment,
   MonthlyPayment,
   PaymentHistoryItem,
-  UpdatePaymentRecordRequest , 
-    StudentDiscount,
+  UpdatePaymentRecordRequest,
+  StudentDiscount,
   ApplyDiscountRequest,
-  ApplyDiscountResponse
+  ApplyDiscountResponse,
+  PaymentDialogData  // ✅ Add this here
 } from '../../../models/payment.model';
 import { Class } from '../../../models/class.model';
 import { User } from '../../../models/user.model';
@@ -151,6 +151,9 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   editForm: FormGroup;
   academicYears: string[] = [];
   currentAcademicYear: string;
+
+  // Add this property to your class
+componentOnlyForInvoice?: 'uniform' | 'inscriptionFee';
   
   // ===== PAGINATION =====
   currentPage = 1;
@@ -223,15 +226,17 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
       academicYear: [this.currentAcademicYear]
     });
 
-    this.generateForm = this.fb.group({
-      hasUniform: [false],
-      transportationType: ['']
-    });
+  this.generateForm = this.fb.group({
 
-    this.editForm = this.fb.group({
-      hasUniform: [false],
-      transportationType: ['']
-    });
+    hasUniform: [false],
+    transportationType: ['']
+  });
+
+  this.editForm = this.fb.group({
+    hasInscriptionFee: [false], // ✅ FIXED: Add this field
+    hasUniform: [false],
+    transportationType: ['']
+  });
   }
 
   ngOnInit(): void {
@@ -323,6 +328,10 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     });
   }
 
+// ✅ ADD THIS NEW METHOD:
+getCurrentInscriptionFeeStatus(student: StudentWithPayment): boolean {
+  return student.paymentRecord?.inscriptionFee?.applicable || false;
+}
   private loadPaymentConfig(): void {
     const academicYear = this.filterForm.get('academicYear')?.value;
     this.paymentService.getPaymentConfig(academicYear).subscribe({
@@ -593,18 +602,19 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     this.isInvoiceDialogOpen = true;
     document.body.style.overflow = 'hidden';
   }
- closeInvoiceDialog(): void {
-    this.isInvoiceDialogOpen = false;
-    this.selectedStudentForInvoice = null;
-    
-    // ✅ NEW: Reset monthly context parameters
-    this.showCurrentMonthOnlyInInvoice = false;
-    this.currentMonthIndexForInvoice = undefined;
-    this.currentPaymentDateForInvoice = undefined;
-    this.monthNameForInvoice = undefined;
-    
-    document.body.style.overflow = 'auto';
-  }
+closeInvoiceDialog(): void {
+  this.isInvoiceDialogOpen = false;
+  this.selectedStudentForInvoice = null;
+  
+  // Reset monthly context parameters
+  this.showCurrentMonthOnlyInInvoice = false;
+  this.currentMonthIndexForInvoice = undefined;
+  this.currentPaymentDateForInvoice = undefined;
+  this.monthNameForInvoice = undefined;
+  this.componentOnlyForInvoice = undefined; // ADD THIS LINE
+  
+  document.body.style.overflow = 'auto';
+}
 
    getCurrentMonthName(): string {
     const monthNames = [
@@ -622,55 +632,56 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   }
   // ===== BULK OPERATIONS =====
 
-  async bulkGeneratePayments(): Promise<void> {
-    if (!this.dashboard) {
-      this.showWarning('Tableau de bord non disponible');
-      return;
-    }
-
-    const studentsWithoutRecord = this.dashboard.statusCounts.no_record || 0;
-    
-    if (studentsWithoutRecord === 0) {
-      this.showInfo('Tous les étudiants ont déjà un dossier de paiement');
-      return;
-    }
-
-    const confirmed = await this.confirmAction(
-      'Génération en masse',
-      `Voulez-vous générer des dossiers de paiement pour ${studentsWithoutRecord} étudiant(s) ?\n\nOptions par défaut:\n- Uniforme: Non inclus\n- Transport: Non inclus\n\nVous pourrez personnaliser chaque dossier individuellement après la création.`,
-      'info'
-    );
-
-    if (confirmed) {
-      const academicYear = this.filterForm.get('academicYear')?.value;
-      this.isLoading = true;
-      
-      const options: BulkGeneratePaymentRequest = {
-        academicYear,
-        defaultUniform: false,
-        defaultTransportation: null
-      };
-      
-      this.paymentService.bulkGeneratePayments(options).subscribe({
-        next: (response) => {
-          const message = `Génération terminée: ${response.results.success} réussis, ${response.results.errors.length} erreurs`;
-          this.showSuccess(message);
-          this.loadStudents();
-          this.loadDashboard();
-          this.isLoading = false;
-          
-          if (response.results.errors.length > 0) {
-            this.showBulkErrors(response.results.errors);
-          }
-        },
-        error: (error) => {
-          console.error('Error in bulk generation:', error);
-          this.showError('Erreur lors de la génération en masse');
-          this.isLoading = false;
-        }
-      });
-    }
+async bulkGeneratePayments(): Promise<void> {
+  if (!this.dashboard) {
+    this.showWarning('Tableau de bord non disponible');
+    return;
   }
+
+  const studentsWithoutRecord = this.dashboard.statusCounts.no_record || 0;
+  
+  if (studentsWithoutRecord === 0) {
+    this.showInfo('Tous les étudiants ont déjà un dossier de paiement');
+    return;
+  }
+
+  const confirmed = await this.confirmAction(
+    'Génération en masse',
+    `Voulez-vous générer des dossiers de paiement pour ${studentsWithoutRecord} étudiant(s) ?\n\nOptions par défaut:\n- Frais d'inscription: Non inclus\n- Uniforme: Non inclus\n- Transport: Non inclus\n\nVous pourrez personnaliser chaque dossier individuellement après la création.`,
+    'info'
+  );
+
+  if (confirmed) {
+    const academicYear = this.filterForm.get('academicYear')?.value;
+    this.isLoading = true;
+    
+    const options: BulkGeneratePaymentRequest = {
+    academicYear,
+    defaultInscriptionFee: true, // ✅ Change to true by default
+    defaultUniform: false,
+    defaultTransportation: null
+  };
+  
+    this.paymentService.bulkGeneratePayments(options).subscribe({
+      next: (response) => {
+        const message = `Génération terminée: ${response.results.success} réussis, ${response.results.errors.length} erreurs`;
+        this.showSuccess(message);
+        this.loadStudents();
+        this.loadDashboard();
+        this.isLoading = false;
+        
+        if (response.results.errors.length > 0) {
+          this.showBulkErrors(response.results.errors);
+        }
+      },
+      error: (error) => {
+        console.error('Error in bulk generation:', error);
+        this.showError('Erreur lors de la génération en masse');
+        this.isLoading = false;
+      }
+    });
+  }
+}
 
   async updateExistingPayments(): Promise<void> {
     if (!this.paymentConfig) {
@@ -792,62 +803,77 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     document.body.style.overflow = 'auto';
   }
 
-  generatePaymentRecord(): void {
-    if (!this.selectedStudent?._id) {
-      this.showError('ID étudiant manquant');
-      return;
-    }
-
-    const formValues = this.generateForm.value;
-    const academicYear = this.filterForm.get('academicYear')?.value;
-    
-    const options: GeneratePaymentRequest = {
-      academicYear,
-      hasUniform: formValues.hasUniform || false,
-      transportationType: formValues.transportationType || null
-    };
-    
-    this.isLoading = true;
-    
-    this.paymentService.generatePaymentForStudent(this.selectedStudent._id, options).subscribe({
-      next: (paymentRecord) => {
-        this.showSuccess(`Dossier de paiement généré pour ${this.selectedStudent?.name}`);
-        this.loadStudents();
-        this.loadDashboard();
-        this.closeGenerateDialog();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error generating payment record:', error);
-        const errorMessage = this.paymentService.handlePaymentError(error);
-        this.showError(errorMessage);
-        this.isLoading = false;
-      }
-    });
+generatePaymentRecord(): void {
+  if (!this.selectedStudent?._id) {
+    this.showError('ID étudiant manquant');
+    return;
   }
 
-  // ===== EDIT PAYMENT DIALOG =====
-
-  editPaymentRecord(student: StudentWithPayment): void {
-    this.selectedStudent = student;
-    
-    const currentUniform = this.isUniformPurchased(student);
-    const currentTransportationType = this.getTransportationTypeForStudent(student);
-    
-    this.editForm.patchValue({
-      hasUniform: currentUniform,
-      transportationType: currentTransportationType
-    });
-    
-    if (this.isUniformPaid(student)) {
-      this.editForm.get('hasUniform')?.disable();
-    } else {
-      this.editForm.get('hasUniform')?.enable();
+  const formValues = this.generateForm.value;
+  const academicYear = this.filterForm.get('academicYear')?.value;
+  
+  const options: GeneratePaymentRequest = {
+    academicYear,
+    hasUniform: formValues.hasUniform || false,
+    transportationType: formValues.transportationType || null,
+        includeInscriptionFee: true // ✅ Always set to true if config enabled
+  };
+  
+  this.isLoading = true;
+  
+  this.paymentService.generatePaymentForStudent(this.selectedStudent._id, options).subscribe({
+    next: (paymentRecord) => {
+      this.showSuccess(`Dossier de paiement généré pour ${this.selectedStudent?.name}`);
+      this.loadStudents();
+      this.loadDashboard();
+      this.closeGenerateDialog();
+      this.isLoading = false;
+    },
+    error: (error) => {
+      console.error('Error generating payment record:', error);
+      const errorMessage = this.paymentService.handlePaymentError(error);
+      this.showError(errorMessage);
+      this.isLoading = false;
     }
-    
-    this.isEditDialogOpen = true;
-    document.body.style.overflow = 'hidden';
+  });
+}
+
+getInscriptionFeeAmount(student: StudentWithPayment): number {
+  if (!student.paymentRecord?.inscriptionFee?.price) {
+    return 0;
   }
+  return student.paymentRecord.inscriptionFee.price;
+}
+editPaymentRecord(student: StudentWithPayment): void {
+  this.selectedStudent = student;
+  console.log('Editing payment record for student:', student);
+  
+  const currentInscriptionFee = this.getCurrentInscriptionFeeStatus(student); // ✅ ADD THIS
+  const currentUniform = this.isUniformPurchased(student);
+  const currentTransportationType = this.getTransportationTypeForStudent(student);
+  
+  this.editForm.patchValue({
+    hasInscriptionFee: currentInscriptionFee, // ✅ ADD THIS
+    hasUniform: currentUniform,
+    transportationType: currentTransportationType
+  });
+  
+  // Handle disabled states
+  if (this.isInscriptionFeePaid(student)) {
+    this.editForm.get('hasInscriptionFee')?.disable();
+  } else {
+    this.editForm.get('hasInscriptionFee')?.enable();
+  }
+  
+  if (this.isUniformPaid(student)) {
+    this.editForm.get('hasUniform')?.disable();
+  } else {
+    this.editForm.get('hasUniform')?.enable();
+  }
+  
+  this.isEditDialogOpen = true;
+  document.body.style.overflow = 'hidden';
+}
 
   closeEditDialog(): void {
     this.isEditDialogOpen = false;
@@ -855,69 +881,77 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     document.body.style.overflow = 'auto';
   }
 
-  updatePaymentRecord(): void {
-    if (!this.selectedStudent?._id || !this.selectedStudent.paymentRecord) {
-      this.showError('Dossier de paiement introuvable');
-      return;
-    }
-
-    const formValues = this.editForm.value;
-    const academicYear = this.filterForm.get('academicYear')?.value;
-    
-    const updateRequest: UpdatePaymentRecordRequest = {
-      academicYear,
-      hasUniform: formValues.hasUniform || false,
-      transportationType: formValues.transportationType || null
-    };
-
-    this.isLoading = true;
-    
-    this.paymentService.updatePaymentRecordComponents(this.selectedStudent._id, updateRequest).subscribe({
-      next: (updatedPaymentRecord) => {
-        this.showSuccess(`Dossier de paiement mis à jour pour ${this.selectedStudent?.name}`);
-        
-        const studentIndex = this.students.findIndex(s => s._id === this.selectedStudent?._id);
-        if (studentIndex !== -1) {
-          this.students[studentIndex].paymentRecord = updatedPaymentRecord;
-        }
-        
-        this.loadStudents();
-        this.loadDashboard();
-        this.closeEditDialog();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error updating payment record:', error);
-        const errorMessage = this.paymentService.handlePaymentError(error);
-        this.showError(errorMessage || 'Erreur lors de la mise à jour du dossier');
-        this.isLoading = false;
-      }
-    });
+updatePaymentRecord(): void {
+  if (!this.selectedStudent?._id || !this.selectedStudent.paymentRecord) {
+    this.showError('Dossier de paiement introuvable');
+    return;
   }
 
-  validateEditForm(): string[] {
-    const errors: string[] = [];
-    
-    if (!this.selectedStudent) {
-      errors.push('Aucun étudiant sélectionné');
-      return errors;
-    }
-    
-    const formValues = this.editForm.value;
-    
-    if (!formValues.hasUniform && this.isUniformPaid(this.selectedStudent)) {
-      errors.push('Impossible de retirer l\'uniforme car il a déjà été payé');
-    }
-    
-    if (this.hasTransportationPaymentsForStudent(this.selectedStudent)) {
-      const currentType = this.getTransportationTypeForStudent(this.selectedStudent);
-      if (formValues.transportationType !== currentType) {
-        errors.push('Impossible de changer le type de transport car des paiements ont déjà été effectués');
+  const formValues = this.editForm.value;
+  const academicYear = this.filterForm.get('academicYear')?.value;
+  
+  const updateRequest: UpdatePaymentRecordRequest = {
+    academicYear,
+    hasInscriptionFee: formValues.hasInscriptionFee || false, // ✅ FIXED: Add this field
+    hasUniform: formValues.hasUniform || false,
+    transportationType: formValues.transportationType || null
+  };
+
+  this.isLoading = true;
+  
+  this.paymentService.updatePaymentRecordComponents(this.selectedStudent._id, updateRequest).subscribe({
+    next: (updatedPaymentRecord) => {
+      this.showSuccess(`Dossier de paiement mis à jour pour ${this.selectedStudent?.name}`);
+      
+      const studentIndex = this.students.findIndex(s => s._id === this.selectedStudent?._id);
+      if (studentIndex !== -1) {
+        this.students[studentIndex].paymentRecord = updatedPaymentRecord;
       }
+      
+      this.loadStudents();
+      this.loadDashboard();
+      this.closeEditDialog();
+      this.isLoading = false;
+    },
+    error: (error) => {
+      console.error('Error updating payment record:', error);
+      const errorMessage = this.paymentService.handlePaymentError(error);
+      this.showError(errorMessage || 'Erreur lors de la mise à jour du dossier');
+      this.isLoading = false;
     }
-    
+  });
+}
+
+
+// UPDATE validateEditForm method:
+validateEditForm(): string[] {
+  const errors: string[] = [];
+  
+  if (!this.selectedStudent) {
+    errors.push('Aucun étudiant sélectionné');
     return errors;
   }
+  
+  const formValues = this.editForm.value;
+  
+  // ✅ ADD: Inscription fee validation
+  if (!formValues.hasInscriptionFee && this.isInscriptionFeePaid(this.selectedStudent)) {
+    errors.push('Impossible de retirer les frais d\'inscription car ils ont déjà été payés');
+  }
+  
+  if (!formValues.hasUniform && this.isUniformPaid(this.selectedStudent)) {
+    errors.push('Impossible de retirer l\'uniforme car il a déjà été payé');
+  }
+  
+  if (this.hasTransportationPaymentsForStudent(this.selectedStudent)) {
+    const currentType = this.getTransportationTypeForStudent(this.selectedStudent);
+    if (formValues.transportationType !== currentType) {
+      errors.push('Impossible de changer le type de transport car des paiements ont déjà été effectués');
+    }
+  }
+  
+  return errors;
+}
 
   onEditFormSubmit(): void {
     const validationErrors = this.validateEditForm();
@@ -957,60 +991,62 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
       });
     }
   }
-
-  // ===== PAYMENT DIALOG MANAGEMENT =====
-
-  openPaymentDialog(student: StudentWithPayment, type: 'tuition_monthly' | 'tuition_annual' | 'uniform' | 'transportation_monthly', monthIndex?: number): void {
-    if (!student.paymentRecord) {
-      this.showWarning('Veuillez d\'abord générer un dossier de paiement');
-      return;
-    }
-
-    let component: 'tuition' | 'uniform' | 'transportation' = 'tuition';
-    
-    switch (type) {
-      case 'tuition_monthly':
-      case 'tuition_annual':
-        component = 'tuition';
-        break;
-      case 'uniform':
-        component = 'uniform';
-        break;
-      case 'transportation_monthly':
-        component = 'transportation';
-        break;
-    }
-
-    const validationError = this.validatePaymentDialog(student, component);
-    if (validationError) {
-      this.showWarning(validationError);
-      return;
-    }
-
-    let dialogType: 'monthly' | 'annual' = 'monthly';
-    
-    switch (type) {
-      case 'tuition_monthly':
-      case 'uniform':
-      case 'transportation_monthly':
-        dialogType = 'monthly';
-        break;
-      case 'tuition_annual':
-        dialogType = 'annual';
-        break;
-    }
-
-    this.currentDialogData = {
-      student: student,
-      type: dialogType,
-      monthIndex: monthIndex,
-      academicYear: this.filterForm.get('academicYear')?.value || this.currentAcademicYear,
-      component: component
-    };
-
-    this.isPaymentDialogOpen = true;
-    document.body.style.overflow = 'hidden';
+openPaymentDialog(student: StudentWithPayment, type: 'tuition_monthly' | 'tuition_annual' | 'uniform' | 'transportation_monthly' | 'inscription_fee', monthIndex?: number): void {
+  if (!student.paymentRecord) {
+    this.showWarning('Veuillez d\'abord générer un dossier de paiement');
+    return;
   }
+
+  let component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee' = 'tuition';
+  
+  switch (type) {
+    case 'tuition_monthly':
+    case 'tuition_annual':
+      component = 'tuition';
+      break;
+    case 'uniform':
+      component = 'uniform';
+      break;
+    case 'transportation_monthly':
+      component = 'transportation';
+      break;
+    case 'inscription_fee':
+      component = 'inscriptionFee';
+      break;
+  }
+
+  const validationError = this.validatePaymentDialog(student, component);
+  if (validationError) {
+    this.showWarning(validationError);
+    return;
+  }
+
+  let dialogType: 'monthly' | 'annual' = 'monthly';
+  
+  switch (type) {
+    case 'tuition_monthly':
+    case 'uniform':
+    case 'transportation_monthly':
+    case 'inscription_fee':
+      dialogType = 'monthly';
+      break;
+    case 'tuition_annual':
+      dialogType = 'annual';
+      break;
+  }
+
+  this.currentDialogData = {
+    student: student,
+    type: dialogType,
+    monthIndex: monthIndex,
+    academicYear: this.filterForm.get('academicYear')?.value || this.currentAcademicYear,
+    component: component
+  };
+
+  this.isPaymentDialogOpen = true;
+  document.body.style.overflow = 'hidden';
+}
+
 
   closePaymentDialog(result?: any): void {
     this.isPaymentDialogOpen = false;
@@ -1023,29 +1059,33 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   private handlePaymentResult(result: any): void {
-    if (result.success) {
-      let paymentType = 'paiement';
-      
-      switch (result.type) {
-        case 'tuition_monthly':
-          paymentType = 'paiement mensuel des frais scolaires';
-          break;
-        case 'tuition_annual':
-          paymentType = 'paiement annuel des frais scolaires';
-          break;
-        case 'uniform':
-          paymentType = 'paiement de l\'uniforme';
-          break;
-        case 'transportation_monthly':
-          paymentType = 'paiement mensuel du transport';
-          break;
-      }
-      
-      this.showSuccess(`${paymentType} enregistré avec succès`);
-      this.loadStudents();
-      this.loadDashboard();
+  if (result.success) {
+    let paymentType = 'paiement';
+    
+    switch (result.type) {
+      case 'tuition_monthly':
+        paymentType = 'paiement mensuel des frais scolaires';
+        break;
+      case 'tuition_annual':
+        paymentType = 'paiement annuel des frais scolaires';
+        break;
+      case 'uniform':
+        paymentType = 'paiement de l\'uniforme';
+        break;
+      case 'transportation_monthly':
+        paymentType = 'paiement mensuel du transport';
+        break;
+      // ✅ NEW: Handle inscription fee payment result
+      case 'inscription_fee':
+        paymentType = 'paiement des frais d\'inscription';
+        break;
     }
+    
+    this.showSuccess(`${paymentType} enregistré avec succès`);
+    this.loadStudents();
+    this.loadDashboard();
   }
+}
 
   // ===== EVENT HANDLERS =====
 
@@ -1282,78 +1322,89 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
 
   // ===== COMPONENT-SPECIFIC HELPERS =====
 
-  getTotalAmounts(student: StudentWithPayment): any {
-    if (!student.paymentRecord?.totalAmounts) {
-      return {
-        tuition: 0,
-        uniform: 0,
-        transportation: 0,
-        grandTotal: 0
-      };
-    }
+getTotalAmounts(student: StudentWithPayment): any {
+  if (!student.paymentRecord?.totalAmounts) {
+    return {
+      tuition: 0,
+      inscriptionFee: 0, // ✅ NEW
+      uniform: 0,
+      transportation: 0,
+      grandTotal: 0
+    };
+  }
+  
+  return student.paymentRecord.totalAmounts;
+}
+
+getPaidAmounts(student: StudentWithPayment): any {
+  if (!student.paymentRecord?.paidAmounts) {
+    return {
+      tuition: 0,
+      inscriptionFee: 0, // ✅ NEW
+      uniform: 0,
+      transportation: 0,
+      grandTotal: 0
+    };
+  }
+  
+  return student.paymentRecord.paidAmounts;
+}
+getRemainingAmounts(student: StudentWithPayment): any {
+  if (!student.paymentRecord?.remainingAmounts) {
+    const total = this.getTotalAmounts(student);
+    const paid = this.getPaidAmounts(student);
     
-    return student.paymentRecord.totalAmounts;
+    return {
+      tuition: Math.max(0, total.tuition - paid.tuition),
+      inscriptionFee: Math.max(0, total.inscriptionFee - paid.inscriptionFee), // ✅ NEW
+      uniform: Math.max(0, total.uniform - paid.uniform),
+      transportation: Math.max(0, total.transportation - paid.transportation),
+      grandTotal: Math.max(0, total.grandTotal - paid.grandTotal)
+    };
+  }
+  
+  return student.paymentRecord.remainingAmounts;
+}
+validatePaymentDialog(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'): string | null {
+  if (!student.paymentRecord) {
+    return 'Aucun dossier de paiement trouvé pour cet étudiant';
   }
 
-  getPaidAmounts(student: StudentWithPayment): any {
-    if (!student.paymentRecord?.paidAmounts) {
-      return {
-        tuition: 0,
-        uniform: 0,
-        transportation: 0,
-        grandTotal: 0
-      };
-    }
-    
-    return student.paymentRecord.paidAmounts;
-  }
-
-  getRemainingAmounts(student: StudentWithPayment): any {
-    if (!student.paymentRecord?.remainingAmounts) {
-      const total = this.getTotalAmounts(student);
-      const paid = this.getPaidAmounts(student);
-      
-      return {
-        tuition: Math.max(0, total.tuition - paid.tuition),
-        uniform: Math.max(0, total.uniform - paid.uniform),
-        transportation: Math.max(0, total.transportation - paid.transportation),
-        grandTotal: Math.max(0, total.grandTotal - paid.grandTotal)
-      };
-    }
-    
-    return student.paymentRecord.remainingAmounts;
-  }
-
-  validatePaymentDialog(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation'): string | null {
-    if (!student.paymentRecord) {
-      return 'Aucun dossier de paiement trouvé pour cet étudiant';
-    }
-
-    switch (component) {
-      case 'tuition':
-        if (student.paymentRecord.annualTuitionPayment?.isPaid) {
-          return 'Le paiement annuel des frais scolaires a déjà été effectué';
-        }
-        break;
+  switch (component) {
+    case 'tuition':
+      if (student.paymentRecord.annualTuitionPayment?.isPaid) {
+        return 'Le paiement annuel des frais scolaires a déjà été effectué';
+      }
+      break;
         
-      case 'uniform':
-        if (!student.paymentRecord.uniform?.purchased) {
-          return 'Cet étudiant n\'a pas commandé d\'uniforme';
-        }
-        if (student.paymentRecord.uniform?.isPaid) {
-          return 'L\'uniforme a déjà été payé';
-        }
-        break;
+    case 'uniform':
+      if (!student.paymentRecord.uniform?.purchased) {
+        return 'Cet étudiant n\'a pas commandé d\'uniforme';
+      }
+      if (student.paymentRecord.uniform?.isPaid) {
+        return 'L\'uniforme a déjà été payé';
+      }
+      break;
         
-      case 'transportation':
-        if (!student.paymentRecord.transportation?.using) {
-          return 'Cet étudiant n\'utilise pas le service de transport';
-        }
-        break;
-    }
-    
-    return null;
+    case 'transportation':
+      if (!student.paymentRecord.transportation?.using) {
+        return 'Cet étudiant n\'utilise pas le service de transport';
+      }
+      break;
+
+    // ✅ NEW: Inscription fee validation
+    case 'inscriptionFee':
+      if (!student.paymentRecord.inscriptionFee?.applicable) {
+        return 'Les frais d\'inscription ne sont pas applicables pour cet étudiant';
+      }
+      if (student.paymentRecord.inscriptionFee?.isPaid) {
+        return 'Les frais d\'inscription ont déjà été payés';
+      }
+      break;
   }
+  
+  return null;
+} 
 
   hasUniform(student: StudentWithPayment): boolean {
     return student.paymentRecord?.uniform?.purchased || false;
@@ -1369,21 +1420,28 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     return type === 'close' ? 'Zone proche' : type === 'far' ? 'Zone éloignée' : type;
   }
 
-  getComponentStatus(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation'): string {
-    if (!student.paymentRecord?.componentStatus) {
-      return student.paymentRecord?.overallStatus || 'pending';
-    }
-    
-    if (component === 'uniform') {
-      if (!student.paymentRecord.uniform?.purchased) {
-        return 'not_applicable';
-      }
-      return student.paymentRecord.uniform?.isPaid ? 'completed' : 'pending';
-    }
-    
-    return student.paymentRecord.componentStatus[component] || 'pending';
+getComponentStatus(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'): string {
+  if (!student.paymentRecord?.componentStatus) {
+    return student.paymentRecord?.overallStatus || 'pending';
   }
-
+  
+  if (component === 'uniform') {
+    if (!student.paymentRecord.uniform?.purchased) {
+      return 'not_applicable';
+    }
+    return student.paymentRecord.uniform?.isPaid ? 'completed' : 'pending';
+  }
+  
+  // ✅ NEW: Handle inscription fee status
+  if (component === 'inscriptionFee') {
+    if (!student.paymentRecord.inscriptionFee?.applicable) {
+      return 'not_applicable';
+    }
+    return student.paymentRecord.inscriptionFee?.isPaid ? 'completed' : 'pending';
+  }
+  
+  return student.paymentRecord.componentStatus[component] || 'pending';
+}
   getOriginalAmounts(student: StudentWithPayment): any {
   if (!student.paymentRecord) {
     return { tuition: 0, uniform: 0, transportation: 0, grandTotal: 0 };
@@ -1416,51 +1474,58 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     grandTotal: originalGrandTotal
   };
 }
-
-  getComponentStatusLabel(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation'): string {
-    const status = this.getComponentStatus(student, component);
-    const componentName = component === 'tuition' ? 'Frais scolaires' : 
-                         component === 'uniform' ? 'Uniforme' : 'Transport';
-    
-    switch (status) {
-      case 'completed': return `${componentName} - Payé`;
-      case 'partial': return `${componentName} - Paiement partiel`;
-      case 'pending': return `${componentName} - En attente`;
-      case 'overdue': return `${componentName} - En retard`;
-      case 'not_applicable': return `${componentName} - Non applicable`;
-      default: return `${componentName} - ${status}`;
-    }
+getComponentStatusLabel(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'): string {
+  const status = this.getComponentStatus(student, component);
+  const componentName = component === 'tuition' ? 'Frais scolaires' : 
+                       component === 'uniform' ? 'Uniforme' : 
+                       component === 'transportation' ? 'Transport' :
+                       component === 'inscriptionFee' ? 'Frais d\'inscription' : // ✅ NEW
+                       component;
+  
+  switch (status) {
+    case 'completed': return `${componentName} - Payé`;
+    case 'partial': return `${componentName} - Paiement partiel`;
+    case 'pending': return `${componentName} - En attente`;
+    case 'overdue': return `${componentName} - En retard`;
+    case 'not_applicable': return `${componentName} - Non applicable`;
+    default: return `${componentName} - ${status}`;
   }
+}
 
-  canPayComponent(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation'): boolean {
-    if (!student.paymentRecord) return false;
-    
-    switch (component) {
-      case 'tuition':
-        return !student.paymentRecord.annualTuitionPayment?.isPaid;
-        
-      case 'uniform':
-        return !!(student.paymentRecord.uniform?.purchased && !student.paymentRecord.uniform?.isPaid);
-        
-      case 'transportation':
-        return !!(student.paymentRecord.transportation?.using);
-        
-      default:
-        return false;
-    }
-  }
+canPayComponent(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'): boolean {
+  if (!student.paymentRecord) return false;
+  
+  switch (component) {
+    case 'tuition':
+      return !student.paymentRecord.annualTuitionPayment?.isPaid;
+      
+    case 'uniform':
+      return !!(student.paymentRecord.uniform?.purchased && !student.paymentRecord.uniform?.isPaid);
+      
+    case 'transportation':
+      return !!(student.paymentRecord.transportation?.using);
 
-  getComponentProgress(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation'): number {
-    if (!student.paymentRecord) return 0;
-    
-    const totalAmounts = this.getTotalAmounts(student);
-    const paidAmounts = this.getPaidAmounts(student);
-    
-    const total = totalAmounts[component] || 0;
-    const paid = paidAmounts[component] || 0;
-    
-    return total > 0 ? Math.round((paid / total) * 100) : 0;
+    // ✅ NEW: Handle inscription fee component
+    case 'inscriptionFee':
+      return !!(student.paymentRecord.inscriptionFee?.applicable && !student.paymentRecord.inscriptionFee?.isPaid);
+      
+    default:
+      return false;
   }
+}
+
+
+getComponentProgress(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'): number {
+  if (!student.paymentRecord) return 0;
+  
+  const totalAmounts = this.getTotalAmounts(student);
+  const paidAmounts = this.getPaidAmounts(student);
+  
+  const total = totalAmounts[component] || 0;
+  const paid = paidAmounts[component] || 0;
+  
+  return total > 0 ? Math.round((paid / total) * 100) : 0;
+}
 
   // ===== PAYMENT HISTORY =====
 
@@ -1542,27 +1607,32 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     return monthlyPrice * this.getTransportationMonths();
   }
 
-  calculateEstimatedTotal(): number {
-    if (!this.selectedStudent?.grade) return 0;
-    
-    const formValues = this.generateForm.value;
-    let total = 0;
-    
-    total += this.getTuitionAmountForGrade(this.selectedStudent.grade);
-    
-    if (formValues.hasUniform) {
-      total += this.getUniformPrice();
-    }
-    
-    if (formValues.transportationType) {
-      total += this.getTransportationTotal();
-    }
-    
-    return total;
+calculateEstimatedTotal(): number {
+  if (!this.selectedStudent?.grade) return 0;
+  
+  const formValues = this.generateForm.value;
+  let total = 0;
+  
+  // Tuition
+  total += this.getTuitionAmountForGrade(this.selectedStudent.grade);
+  
+  // ✅ CHANGE: Always add inscription fee if enabled (automatic)
+  if (this.isInscriptionFeeEnabled()) {
+    total += this.getInscriptionFeeForStudent(this.selectedStudent);
   }
-
-  // ===== TRACK BY FUNCTIONS =====
-
+  
+  // Uniform
+  if (formValues.hasUniform) {
+    total += this.getUniformPrice();
+  }
+  
+  // Transportation
+  if (formValues.transportationType) {
+    total += this.getTransportationTotal();
+  }
+  
+  return total;
+}
   trackByStudentId(index: number, student: StudentWithPayment): string {
     return student._id;
   }
@@ -1629,19 +1699,22 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     
     return currentType !== selectedType;
   }
-
-  hasChanges(): boolean {
-    if (!this.selectedStudent?.paymentRecord) {
-      return false;
-    }
-    
-    const formValues = this.editForm.value;
-    const currentUniform = this.selectedStudent.paymentRecord.uniform?.purchased || false;
-    const currentTransport = this.selectedStudent.paymentRecord.transportation?.type || '';
-    
-    return formValues.hasUniform !== currentUniform || 
-           formValues.transportationType !== currentTransport;
+hasChanges(): boolean {
+  if (!this.selectedStudent?.paymentRecord) {
+    return false;
   }
+  
+  const formValues = this.editForm.value;
+  const currentInscriptionFee = this.getCurrentInscriptionFeeStatus(this.selectedStudent); // ✅ USE NEW METHOD
+  const currentUniform = this.selectedStudent.paymentRecord.uniform?.purchased || false;
+  const currentTransport = this.selectedStudent.paymentRecord.transportation?.type || '';
+  
+  return formValues.hasInscriptionFee !== currentInscriptionFee || // ✅ ADD THIS
+         formValues.hasUniform !== currentUniform || 
+         formValues.transportationType !== currentTransport;
+}
+
+
 
   getCurrentTotal(): number {
     if (!this.selectedStudent?.paymentRecord) {
@@ -1651,28 +1724,35 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
     return this.getTotalAmounts(this.selectedStudent)?.grandTotal || 0;
   }
 
-  getNewTotal(): number {
-    if (!this.selectedStudent?.grade) {
-      return 0;
-    }
-    
-    const formValues = this.editForm.value;
-    let total = 0;
-    
-    total += this.getTuitionAmountForGrade(this.selectedStudent.grade);
-    
-    if (formValues.hasUniform && this.isUniformEnabled()) {
-      total += this.getUniformPrice();
-    }
-    
-    if (formValues.transportationType) {
-      const monthlyPrice = this.getTransportationMonthlyPrice(formValues.transportationType);
-      total += monthlyPrice * this.getTransportationMonths();
-    }
-    
-    return total;
+getNewTotal(): number {
+  if (!this.selectedStudent?.grade) {
+    return 0;
   }
-
+  
+  const formValues = this.editForm.value;
+  let total = 0;
+  
+  // Tuition
+  total += this.getTuitionAmountForGrade(this.selectedStudent.grade);
+  
+  // ✅ FIXED: Inscription fee in edit form
+  if (formValues.hasInscriptionFee && this.isInscriptionFeeEnabled()) {
+    total += this.getInscriptionFeeForStudent(this.selectedStudent);
+  }
+  
+  // Uniform
+  if (formValues.hasUniform && this.isUniformEnabled()) {
+    total += this.getUniformPrice();
+  }
+  
+  // Transportation
+  if (formValues.transportationType) {
+    const monthlyPrice = this.getTransportationMonthlyPrice(formValues.transportationType);
+    total += monthlyPrice * this.getTransportationMonths();
+  }
+  
+  return total;
+}
   getTotalDifference(): number {
     return this.getNewTotal() - this.getCurrentTotal();
   }
@@ -2011,5 +2091,86 @@ openCurrentMonthInvoice(student: StudentWithPayment): void {
  */
 openCumulativeInvoice(student: StudentWithPayment): void {
   this.openInvoiceDialog(student, false);
+}
+
+hasInscriptionFee(student: StudentWithPayment): boolean {
+  return student.paymentRecord?.inscriptionFee?.applicable || false;
+}
+
+isInscriptionFeePaid(student: StudentWithPayment): boolean {
+  return !!(student.paymentRecord?.inscriptionFee?.isPaid);
+}
+
+canPayInscriptionFee(student: StudentWithPayment): boolean {
+  return !!(student.paymentRecord?.inscriptionFee?.applicable && !student.paymentRecord?.inscriptionFee?.isPaid);
+}
+
+getInscriptionFeePaymentDate(student: StudentWithPayment): Date | string | null {
+  return student.paymentRecord?.inscriptionFee?.paymentDate || null;
+}
+
+// ✅ NEW: Configuration checking methods
+isInscriptionFeeEnabled(): boolean {
+  return this.paymentConfig?.inscriptionFee?.enabled || false;
+}
+
+getInscriptionFeeDescription(): string {
+  return this.paymentConfig?.inscriptionFee?.description || 'Frais d\'inscription obligatoires';
+}
+
+getInscriptionFeeForStudent(student: StudentWithPayment): number {
+  if (!this.paymentConfig?.inscriptionFee?.enabled || !student.gradeCategory) {
+    return 0;
+  }
+
+  if (student.gradeCategory === 'maternelle' || student.gradeCategory === 'primaire') {
+    return this.paymentConfig.inscriptionFee.prices.maternelleAndPrimaire || 0;
+  }
+  
+  if (student.gradeCategory === 'secondaire') {
+    return this.paymentConfig.inscriptionFee.prices.collegeAndLycee || 0;
+  }
+  
+  return 0;
+}
+
+/**
+ * Open invoice dialog specifically for inscription fee
+ */
+openInscriptionFeeInvoice(student: StudentWithPayment): void {
+  if (!student.hasPaymentRecord || !student.paymentRecord?.inscriptionFee?.isPaid) {
+    this.showWarning('Les frais d\'inscription n\'ont pas encore été payés');
+    return;
+  }
+
+  this.selectedStudentForInvoice = student;
+  this.showCurrentMonthOnlyInInvoice = false;
+  this.currentMonthIndexForInvoice = undefined;
+  this.currentPaymentDateForInvoice = undefined;
+  this.monthNameForInvoice = undefined;
+  this.componentOnlyForInvoice = 'inscriptionFee'; // NEW: Set component-only mode
+
+  this.isInvoiceDialogOpen = true;
+  document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Open invoice dialog specifically for uniform
+ */
+openUniformInvoice(student: StudentWithPayment): void {
+  if (!student.hasPaymentRecord || !student.paymentRecord?.uniform?.isPaid) {
+    this.showWarning('L\'uniforme n\'a pas encore été payé');
+    return;
+  }
+
+  this.selectedStudentForInvoice = student;
+  this.showCurrentMonthOnlyInInvoice = false;
+  this.currentMonthIndexForInvoice = undefined;
+  this.currentPaymentDateForInvoice = undefined;
+  this.monthNameForInvoice = undefined;
+  this.componentOnlyForInvoice = 'uniform'; // NEW: Set component-only mode
+
+  this.isInvoiceDialogOpen = true;
+  document.body.style.overflow = 'hidden';
 }
 }

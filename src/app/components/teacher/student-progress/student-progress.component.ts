@@ -95,10 +95,7 @@ export class StudentProgressComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
-    console.log('=== STUDENT PROGRESS COMPONENT INITIALIZED ===');
-    console.log('Current user:', this.currentUser);
-    console.log('My classes:', this.myClasses);
-    console.log('All exercises:', this.allExercises);
+
     
     this.initializeDates();
     this.filterTeacherExercises();
@@ -120,20 +117,15 @@ export class StudentProgressComponent implements OnInit, OnDestroy {
 
   // Filter exercises to show only those created by the current teacher
   private filterTeacherExercises(): void {
-    console.log('=== FILTERING TEACHER EXERCISES ===');
+
     if (!this.currentUser) {
       console.error('No current user found!');
       return;
     }
     
-    console.log('Current user ID:', this.currentUser._id);
-    console.log('Total exercises before filtering:', this.allExercises.length);
+
     
-    // First, let's check the structure of exercises to understand the createdBy field
-    if (this.allExercises.length > 0) {
-      console.log('Sample exercise structure:', this.allExercises[0]);
-      console.log('Available fields in first exercise:', Object.keys(this.allExercises[0]));
-    }
+  
     
     this.teacherExercises = this.allExercises.filter(exercise => {
       // Check different possible fields for the creator
@@ -170,7 +162,7 @@ export class StudentProgressComponent implements OnInit, OnDestroy {
         const exerciseClassId = typeof exercise.class === 'string' ? 
           exercise.class : exercise.class?._id;
         const belongsToTeacherClass = this.myClasses.some(c => c._id === exerciseClassId);
-        console.log(`  Exercise belongs to teacher's class: ${belongsToTeacherClass}`);
+
         
         // If we can't determine creator, include exercises from teacher's classes
         return belongsToTeacherClass;

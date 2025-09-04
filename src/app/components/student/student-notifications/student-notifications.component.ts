@@ -310,7 +310,7 @@ export class StudentNotificationsComponent implements OnInit, OnDestroy {
       )
       .subscribe(blob => {
         if (blob) {
-          console.log('File downloaded successfully');
+
         }
       });
   }

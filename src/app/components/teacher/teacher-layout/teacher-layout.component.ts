@@ -113,9 +113,9 @@ export class TeacherLayoutComponent implements OnInit, OnDestroy {
   }
 
   closeMobileSidebar(): void {
-    console.log('Closing mobile sidebar - before:', this.mobileMenuOpen);
+
     this.mobileMenuOpen = false;
-    console.log('Closing mobile sidebar - after:', this.mobileMenuOpen);
+
     // Restore body scroll
     document.body.style.overflow = '';
     document.body.style.position = '';

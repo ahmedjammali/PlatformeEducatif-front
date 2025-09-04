@@ -76,9 +76,9 @@ export class StudentExerciseExecutionComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           this.exercise = response.exercise;
-          console.log('Loaded exercise:', this.exercise);
+
           this.studentProgress = response.studentProgress || null;
-          console.log('Student progress:', this.studentProgress);
+ 
           this.initializeAnswers();
           this.loading = false;
         },
@@ -190,7 +190,7 @@ onBlankChange(questionIndex: number, blankIndex: number | undefined): void {
     this.fillBlankAnswers[questionIndex].blanks.push('');
   }
   
-  console.log('Blank changed:', questionIndex, blankIndex, this.fillBlankAnswers[questionIndex].blanks[blankIndex]);
+
 }
 
   // Navigation
@@ -358,14 +358,11 @@ onBlankChange(questionIndex: number, blankIndex: number | undefined): void {
 
   // Add debugging method to understand the data structure
   debugExerciseData(): void {
-    console.log('Exercise:', this.exercise);
-    console.log('Fill blank questions:', this.exercise?.fillBlankQuestions);
-    console.log('Fill blank answers:', this.fillBlankAnswers);
+
     
     if (this.exercise?.fillBlankQuestions) {
       this.exercise.fillBlankQuestions.forEach((question, index) => {
-        console.log(`Question ${index}:`, question);
-        console.log(`Sentence parts:`, this.getSentenceParts(question));
+
       });
     }
   }

@@ -105,11 +105,10 @@ export class LandingPageComponent implements OnInit, OnDestroy {
     // Fetch school name from service
     this.schoolService.getSchool().subscribe({
       next: (response) => {
-        console.log('School data fetched:', response);
+
         this.schoolName = response.school.name || 'École Privée Excellence';
         this.schoolAbbreviation = this.generateSchoolAbbreviation(this.schoolName);
-        console.log('School Name:', this.schoolName);
-        console.log('School Abbreviation:', this.schoolAbbreviation);
+
       },
       error: (error) => {
         console.error('Error fetching school name:', error);

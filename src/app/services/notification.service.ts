@@ -239,7 +239,7 @@ export class NotificationService {
       map(response => response.notifications?.filter(n => n.isRead).map(n => n._id) || []),
       map(readIds => {
         // This is a placeholder - you might want to implement a bulk delete endpoint
-        console.log('Would clear these read notifications:', readIds);
+
         return readIds;
       })
     );

@@ -36,7 +36,7 @@ export class ExerciseFormComponent implements OnInit, OnChanges {
     private authService: AuthService
   ) {
     this.currentUser = this.authService.getCurrentUser() as ExtendedUser | null;
-    console.log('Current User:', this.currentUser);
+
   }
 
   ngOnInit(): void {
@@ -326,7 +326,7 @@ export class ExerciseFormComponent implements OnInit, OnChanges {
     // Filter classes where the current teacher teaches the selected subject
     this.filteredClasses = this.classes.filter(classItem => {
       const teacherSubject = classItem.teacherSubjects.find(ts => {
-        console.log('Teacher Subject:', ts);
+
         const teacherId = typeof ts.teacher === 'string' ? ts.teacher : ts.teacher._id;
         const currentUserId = this.currentUser?._id || this.currentUser?.id;
         return teacherId === currentUserId;

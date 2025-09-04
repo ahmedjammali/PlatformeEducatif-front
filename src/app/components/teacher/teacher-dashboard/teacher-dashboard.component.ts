@@ -229,7 +229,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     this.calculateDashboardStats();
     this.buildMappings();
     
-    console.log('Exercise created in dashboard:', exercise);
+
   }
 
   onExerciseUpdated(exercise: Exercise): void {

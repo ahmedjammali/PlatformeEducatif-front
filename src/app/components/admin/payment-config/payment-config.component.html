@@ -287,6 +287,45 @@
             </div>
           </div>
         </div>
+        <!-- Add this section after the Transportation Configuration in the inline-options div -->
+
+        <!-- Inscription Fee Configuration -->
+        <div class="option-card">
+          <h3 class="section-title">
+            <span class="section-icon">📝</span>
+            Frais d'Inscription
+          </h3>
+          <div formGroupName="inscriptionFee">
+            <div class="option-toggle">
+              <input type="checkbox" formControlName="enabled" class="checkbox-input" id="inscriptionEnabled">
+              <label for="inscriptionEnabled" class="checkbox-text">Activer les frais d'inscription</label>
+            </div>
+            <div class="option-fields" *ngIf="configForm.get('inscriptionFee.enabled')?.value">
+              <div formGroupName="prices" class="inscription-prices">
+                <div class="form-group">
+                  <label class="form-label">Maternelle & Primaire</label>
+                  <div class="input-group">
+                    <span class="input-prefix">TND</span>
+                    <input type="number" formControlName="maternelleAndPrimaire" min="0" class="form-input" placeholder="0">
+                  </div>
+                  <div class="field-error" *ngIf="isFieldInvalid('inscriptionFee.prices.maternelleAndPrimaire')">
+                    {{ getFieldError('inscriptionFee.prices.maternelleAndPrimaire') }}
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Collège & Lycée</label>
+                  <div class="input-group">
+                    <span class="input-prefix">TND</span>
+                    <input type="number" formControlName="collegeAndLycee" min="0" class="form-input" placeholder="0">
+                  </div>
+                  <div class="field-error" *ngIf="isFieldInvalid('inscriptionFee.prices.collegeAndLycee')">
+                    {{ getFieldError('inscriptionFee.prices.collegeAndLycee') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Bottom Settings Row -->

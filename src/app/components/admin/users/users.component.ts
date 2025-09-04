@@ -528,9 +528,7 @@ private updateFormValidators(role: string): void {
       `La suppression en masse de ${count} utilisateur(s) n'est pas encore disponible.`,
       'Fonctionnalité à venir'
     );
-    
-    // TODO: Implement bulk delete with confirmation modal
-    console.log('Delete selected:', this.selectedUsers);
+
   }
 
   exportSelected(): void {
@@ -543,8 +541,7 @@ private updateFormValidators(role: string): void {
       `Export de ${this.selectedUsers.length} utilisateur(s) en cours...`
     );
     
-    // TODO: Implement export functionality
-    console.log('Export selected:', this.selectedUsers);
+
   }
 
   // Pagination

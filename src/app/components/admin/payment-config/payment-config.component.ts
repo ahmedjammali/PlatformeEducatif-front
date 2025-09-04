@@ -128,6 +128,15 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
         }),
         isOptional: [true]
       }),
+      inscriptionFee: this.fb.group({
+        enabled: [false],
+        prices: this.fb.group({
+          maternelleAndPrimaire: [0, [Validators.min(0)]],
+          collegeAndLycee: [0, [Validators.min(0)]]
+        }),
+        description: ['']
+      }),
+
       paymentSchedule: this.fb.group({
         startMonth: [9, Validators.required],
         endMonth: [5, Validators.required],
@@ -171,7 +180,25 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
       .subscribe((enabled: boolean) => {
         this.updateTransportationValidators(enabled);
       });
+      this.configForm.get('inscriptionFee.enabled')?.valueChanges
+  .pipe(takeUntil(this.destroy$))
+  .subscribe((enabled: boolean) => {
+    this.updateInscriptionFeeValidators(enabled);
+  });
   }
+
+  private updateInscriptionFeeValidators(enabled: boolean): void {
+  const maternelleControl = this.configForm.get('inscriptionFee.prices.maternelleAndPrimaire');
+  const collegeControl = this.configForm.get('inscriptionFee.prices.collegeAndLycee');
+
+  if (!enabled) {
+    maternelleControl?.setValue(0);
+    collegeControl?.setValue(0);
+  }
+
+  maternelleControl?.updateValueAndValidity();
+  collegeControl?.updateValueAndValidity();
+}
 
   private updateDiscountValidators(enabled: boolean): void {
     const percentageControl = this.configForm.get('annualPaymentDiscount.percentage');
@@ -278,6 +305,14 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
         },
         isOptional: true
       },
+      inscriptionFee: {
+        enabled: false,
+        prices: {
+          maternelleAndPrimaire: 0,
+          collegeAndLycee: 0
+        },
+        description: ''
+      },
       paymentSchedule: {
         startMonth: 9,
         endMonth: 5,
@@ -322,6 +357,14 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
           }
         },
         isOptional: config.transportation?.isOptional ?? true
+      },
+      inscriptionFee: {
+        enabled: config.inscriptionFee?.enabled || false,
+        prices: {
+          maternelleAndPrimaire: config.inscriptionFee?.prices?.maternelleAndPrimaire || 0,
+          collegeAndLycee: config.inscriptionFee?.prices?.collegeAndLycee || 0
+        },
+        description: config.inscriptionFee?.description || ''
       },
       paymentSchedule: {
         startMonth: config.paymentSchedule.startMonth,
@@ -413,6 +456,15 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
         }
       }
     }
+    if (this.configForm.get('inscriptionFee.enabled')?.value) {
+  const maternellePrice = this.configForm.get('inscriptionFee.prices.maternelleAndPrimaire')?.value || 0;
+  const collegePrice = this.configForm.get('inscriptionFee.prices.collegeAndLycee')?.value || 0;
+  
+  if (maternellePrice <= 0 && collegePrice <= 0) {
+    this.showMessage('Veuillez définir au moins un prix pour les frais d\'inscription', 'error');
+    return;
+  }
+}
 
     // Validate discount configuration
     if (this.configForm.get('annualPaymentDiscount.enabled')?.value) {
@@ -504,6 +556,16 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
           }
         },
         isOptional: true
+      };
+    }
+    if (!formValue.inscriptionFee.enabled) {
+      formValue.inscriptionFee = {
+        enabled: false,
+        prices: {
+          maternelleAndPrimaire: 0,
+          collegeAndLycee: 0
+        },
+        description: ''
       };
     }
 
@@ -640,7 +702,7 @@ export class PaymentConfigComponent implements OnInit, OnDestroy {
   // ===== MESSAGE HANDLING =====
 
   private showMessage(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
-    console.log(`${type.toUpperCase()}: ${message}`);
+
     this.showToast(message, type);
   }
 

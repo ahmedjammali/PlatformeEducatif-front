@@ -69,7 +69,12 @@
       </div>
 
       <!-- Month Selection for Monthly Payment (NOT for Uniform) -->
-      <div class="form-section month-selection" *ngIf="data.type === 'monthly' && data.component !== 'uniform' && (data.component === 'tuition' || data.component === 'transportation')">
+      <!-- Month Selection for Monthly Payment (NOT for Uniform or Inscription Fee) -->
+<div class="form-section month-selection" 
+     *ngIf="data.type === 'monthly' && 
+            data.component !== 'uniform' && 
+            data.component !== 'inscriptionFee' &&
+            (data.component === 'tuition' || data.component === 'transportation')">
         <div class="section-header">
           <h4 class="section-title">
             <span class="section-icon">📅</span>
@@ -160,6 +165,33 @@
           </div>
         </div>
       </div>
+
+      <!-- Inscription Fee Payment Info -->
+<div class="form-section inscription-fee-info" *ngIf="data.component === 'inscriptionFee'">
+  <div class="section-header">
+    <h4 class="section-title">
+      <span class="section-icon">📋</span>
+      Informations Frais d'Inscription
+    </h4>
+  </div>
+  
+  <div class="inscription-fee-details" *ngIf="data.student.paymentRecord?.inscriptionFee">
+    <div class="inscription-fee-summary">
+      <div class="summary-item">
+        <span class="summary-label">Prix des frais d'inscription:</span>
+        <span class="summary-value">{{ formatCurrency(data.student.paymentRecord?.inscriptionFee?.price || 0) }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Statut:</span>
+        <span class="summary-value">{{ data.student.paymentRecord?.inscriptionFee?.isPaid ? 'Payé' : 'Non payé' }}</span>
+      </div>
+    </div>
+    
+    <div class="form-hint">
+      Les frais d'inscription sont un paiement unique effectué au début de l'année scolaire.
+    </div>
+  </div>
+</div>
 
       <!-- Payment Details Section -->
       <div class="form-section payment-details">

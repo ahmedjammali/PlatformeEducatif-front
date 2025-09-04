@@ -36,9 +36,9 @@ export class LoginComponent implements OnInit, OnDestroy {
     // Fetch school name from service
     this.schoolService.getSchool().subscribe({
       next: (response) => {
-        console.log('School data fetched:', response);
+
         this.schoolName = response.school.name || 'Your School';
-        console.log('School Name:', this.schoolName);
+
       },
       error: (error) => {
         console.error('Error fetching school name:', error);
@@ -90,7 +90,7 @@ export class LoginComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response) => {
-            console.log('Login successful:', response.user.name);
+
             
             // Handle remember me
             if (this.loginForm.get('rememberMe')?.value) {

@@ -1,4 +1,4 @@
-<!-- payment-management.component.html (Complete Implementation with Uniform & Transportation) -->
+<!-- payment-management.component.html (Updated with Inscription Fee Support) -->
 <div class="payment-management-container">
   <!-- Header Section -->
   <header class="header-section">
@@ -9,7 +9,7 @@
           <span class="title-icon">💳</span>
           <div class="title-wrapper">
             <h1 class="title-text">Gestion des Paiements</h1>
-            <p class="subtitle-text">Gérez les frais scolaires, uniformes et transport de manière centralisée</p>
+            <p class="subtitle-text">Gérez les frais scolaires, inscription, uniformes et transport de manière centralisée</p>
           </div>
         </div>
         <div class="academic-year-badge">
@@ -59,7 +59,7 @@
             
             <div class="btn-tooltip">
               <strong>Génération automatique par niveau</strong><br>
-              Crée des dossiers personnalisés selon le niveau de chaque étudiant avec tarifs spécifiques pour frais scolaires, uniforme et transport
+              Crée des dossiers personnalisés selon le niveau de chaque étudiant avec tarifs spécifiques pour frais scolaires, inscription, uniforme et transport
             </div>
           </button>
 
@@ -83,7 +83,7 @@
             
             <div class="btn-tooltip">
               <strong>Mise à jour des tarifs</strong><br>
-              Met à jour tous les dossiers avec les nouveaux tarifs par niveau, uniforme et transport configurés
+              Applique les nouveaux montants configurés pour tous les composants
             </div>
           </button>
 
@@ -118,8 +118,6 @@
       </div>
     </div>
   </header>
-
-
 
   <!-- Updated Filters Section -->
   <section class="filters-section">
@@ -356,7 +354,7 @@
                         </div>
                       </div>
                       
-                      <!-- FIXED: Original tuition amount (if discount applied) -->
+                      <!-- Original tuition amount (if discount applied) -->
                       <div class="amount-row original-amount" *ngIf="hasDiscount(student)">
                         <span class="amount-label">Frais scolaires originaux:</span>
                         <span class="amount-value original">
@@ -416,6 +414,19 @@
                           {{ formatCurrency(getTotalAmounts(student)?.tuition || 0) }}
                         </span>
                       </div>
+
+                      <!-- Inscription Fee Component -->
+                      <div class="component-item inscription-fee" *ngIf="hasInscriptionFee(student)">
+                        <span class="component-icon" title="Frais d'inscription">📋</span>
+                        <span class="component-status" 
+                              [class]="'status-' + getComponentStatus(student, 'inscriptionFee')"
+                              [title]="getComponentStatusLabel(student, 'inscriptionFee')">
+                          {{ getStatusEmoji(getComponentStatus(student, 'inscriptionFee')) }}
+                        </span>
+                        <span class="component-amount">
+                          {{ formatCurrency(getTotalAmounts(student)?.inscriptionFee || 0) }}
+                        </span>
+                      </div>
                       
                       <!-- Uniform Component -->
                       <div class="component-item uniform" *ngIf="hasUniform(student)">
@@ -445,7 +456,7 @@
                       </div>
                       
                       <!-- No Components Message -->
-                      <div class="no-components" *ngIf="!hasUniform(student) && !hasTransportation(student)">
+                      <div class="no-components" *ngIf="!hasInscriptionFee(student) && !hasUniform(student) && !hasTransportation(student)">
                         <span class="no-components-text">Frais scolaires uniquement</span>
                       </div>
                     </div>
@@ -472,6 +483,12 @@
                             <div class="mini-progress-fill" [style.width.%]="getComponentProgress(student, 'tuition')"></div>
                           </div>
                         </div>
+                        <div class="component-progress-item inscription-fee" *ngIf="hasInscriptionFee(student)">
+                          <span class="component-label">📋</span>
+                          <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" [style.width.%]="getComponentProgress(student, 'inscriptionFee')"></div>
+                          </div>
+                        </div>
                         <div class="component-progress-item uniform" *ngIf="hasUniform(student)">
                           <span class="component-label">👔</span>
                           <div class="mini-progress-bar">
@@ -490,122 +507,127 @@
                   </td>
 
                   <!-- Actions Cell -->
-                  <!-- Updated Action Buttons with proper discount functionality -->
-<td class="actions-cell">
-  <div class="action-buttons">
-    <!-- Generate Payment Record -->
-    <button 
-      class="action-btn generate"
-      title="Générer dossier de paiement"
-      *ngIf="!student.hasPaymentRecord"
-      (click)="openGenerateDialog(student)">
-      <span class="btn-icon">➕</span>
-    </button>
+                  <td class="actions-cell">
+                    <div class="action-buttons">
+                      <!-- Generate Payment Record -->
+                      <button 
+                        class="action-btn generate"
+                        title="Générer dossier de paiement"
+                        *ngIf="!student.hasPaymentRecord"
+                        (click)="openGenerateDialog(student)">
+                        <span class="btn-icon">➕</span>
+                      </button>
 
-    <!-- Tuition Payment -->
-    <button 
-      class="action-btn tuition"
-      title="Paiement frais scolaires"
-      *ngIf="student.hasPaymentRecord && canPayComponent(student, 'tuition')"
-      (click)="openPaymentDialog(student, 'tuition_monthly')">
-      <span class="btn-icon">📚</span>
-    </button>
+                      <!-- Inscription Fee Payment -->
+                      <button 
+                        class="action-btn inscription-fee"
+                        title="Paiement frais d'inscription"
+                        *ngIf="student.hasPaymentRecord && canPayComponent(student, 'inscriptionFee')"
+                        (click)="openPaymentDialog(student, 'inscription_fee')">
+                        <span class="btn-icon">📋</span>
+                      </button>
 
-    <!-- Uniform Payment -->
-    <button 
-      class="action-btn uniform"
-      title="Paiement uniforme"
-      *ngIf="student.hasPaymentRecord && canPayComponent(student, 'uniform')"
-      (click)="openPaymentDialog(student, 'uniform')">
-      <span class="btn-icon">👔</span>
-    </button>
+                      <!-- Tuition Payment -->
+                      <button 
+                        class="action-btn tuition"
+                        title="Paiement frais scolaires"
+                        *ngIf="student.hasPaymentRecord && canPayComponent(student, 'tuition')"
+                        (click)="openPaymentDialog(student, 'tuition_monthly')">
+                        <span class="btn-icon">📚</span>
+                      </button>
 
-    <!-- Transportation Payment -->
-    <button 
-      class="action-btn transportation"
-      title="Paiement transport"
-      *ngIf="student.hasPaymentRecord && canPayComponent(student, 'transportation')"
-      (click)="openPaymentDialog(student, 'transportation_monthly')">
-      <span class="btn-icon">🚌</span>
-    </button>
+                      <!-- Uniform Payment -->
+                      <button 
+                        class="action-btn uniform"
+                        title="Paiement uniforme"
+                        *ngIf="student.hasPaymentRecord && canPayComponent(student, 'uniform')"
+                        (click)="openPaymentDialog(student, 'uniform')">
+                        <span class="btn-icon">👔</span>
+                      </button>
 
-    <!-- Annual Payment -->
-    <button 
-      class="action-btn annual"
-      title="Paiement annuel"
-      *ngIf="student.hasPaymentRecord && !student.paymentRecord?.annualTuitionPayment?.isPaid"
-      (click)="openPaymentDialog(student, 'tuition_annual')">
-      <span class="btn-icon">📋</span>
-    </button>
+                      <!-- Transportation Payment -->
+                      <button 
+                        class="action-btn transportation"
+                        title="Paiement transport"
+                        *ngIf="student.hasPaymentRecord && canPayComponent(student, 'transportation')"
+                        (click)="openPaymentDialog(student, 'transportation_monthly')">
+                        <span class="btn-icon">🚌</span>
+                      </button>
 
-<div class="invoice-btn-group" *ngIf="student.hasPaymentRecord">
-  <!-- Default Invoice Button (Cumulative) -->
-  <button 
-    class="action-btn invoice"
-    title="Facture cumulative"
-    (click)="openInvoiceDialog(student, false)">
-    <span class="btn-icon">📄</span>
-  </button>
-  
-  <!-- Monthly Invoice Button (if monthly payments exist) -->
-  <button 
-    class="action-btn invoice-monthly"
-    title="Facture du mois en cours"
-*ngIf="(student.paymentRecord?.tuitionMonthlyPayments?.length ?? 0) > 0"
+                      <!-- Annual Payment -->
+                      <button 
+                        class="action-btn annual"
+                        title="Paiement annuel"
+                        *ngIf="student.hasPaymentRecord && !student.paymentRecord?.annualTuitionPayment?.isPaid"
+                        (click)="openPaymentDialog(student, 'tuition_annual')">
+                        <span class="btn-icon">📋</span>
+                      </button>
 
+                      <div class="invoice-btn-group" *ngIf="student.hasPaymentRecord">
+                        <!-- Default Invoice Button (Cumulative) -->
+                        <button 
+                          class="action-btn invoice"
+                          title="Facture cumulative"
+                          (click)="openInvoiceDialog(student, false)">
+                          <span class="btn-icon">📄</span>
+                        </button>
+                        
+                        <!-- Monthly Invoice Button (if monthly payments exist) -->
+                        <button 
+                          class="action-btn invoice-monthly"
+                          title="Facture du mois en cours"
+                          *ngIf="(student.paymentRecord?.tuitionMonthlyPayments?.length ?? 0) > 0"
+                          (click)="openInvoiceDialog(student, true, getCurrentMonthIndex(student))">
+                          <span class="btn-icon">📅</span>
+                        </button>
+                      </div>
 
-    (click)="openInvoiceDialog(student, true, getCurrentMonthIndex(student))">
-    <span class="btn-icon">📅</span>
-  </button>
-</div>
+                      <!-- View Details -->
+                      <button 
+                        class="action-btn details"
+                        title="Voir détails"
+                        *ngIf="student.hasPaymentRecord"
+                        (click)="toggleExpandRow(student)">
+                        <span class="btn-icon">👁️</span>
+                      </button>
 
-    <!-- View Details -->
-    <button 
-      class="action-btn details"
-      title="Voir détails"
-      *ngIf="student.hasPaymentRecord"
-      (click)="toggleExpandRow(student)">
-      <span class="btn-icon">👁️</span>
-    </button>
+                      <!-- Edit Payment Record -->
+                      <button 
+                        class="action-btn edit" 
+                        title="Modifier les composants"
+                        *ngIf="student.hasPaymentRecord"
+                        (click)="editPaymentRecord(student)">
+                        <span class="btn-icon">✏️</span>
+                      </button>
 
-    <!-- Edit Payment Record -->
-    <button 
-      class="action-btn edit"
-      title="Modifier les composants"
-      *ngIf="student.hasPaymentRecord"
-      (click)="editPaymentRecord(student)">
-      <span class="btn-icon">✏️</span>
-    </button>
+                      <!-- Apply/Edit Discount -->
+                      <button 
+                        class="action-btn discount"
+                        title="Appliquer une remise"
+                        *ngIf="student.hasPaymentRecord && !hasDiscount(student)"
+                        (click)="openDiscountDialog(student)">
+                        <span class="btn-icon">💰</span>
+                      </button>
 
-    <!-- Apply/Edit Discount -->
-    <button 
-      class="action-btn discount"
-      title="Appliquer une remise"
-      *ngIf="student.hasPaymentRecord && !hasDiscount(student)"
-      (click)="openDiscountDialog(student)">
-      <span class="btn-icon">💰</span>
-    </button>
+                      <!-- Remove Discount -->
+                      <button 
+                        class="action-btn remove-discount"
+                        [title]="'Supprimer la remise de ' + getDiscountPercentage(student) + '%'"
+                        *ngIf="student.hasPaymentRecord && hasDiscount(student)"
+                        (click)="removeDiscount(student)">
+                        <span class="btn-icon">❌</span>
+                      </button>
 
-  
-    <!-- Remove Discount -->
-    <button 
-      class="action-btn remove-discount"
-      [title]="'Supprimer la remise de ' + getDiscountPercentage(student) + '%'"
-      *ngIf="student.hasPaymentRecord && hasDiscount(student)"
-      (click)="removeDiscount(student)">
-      <span class="btn-icon">❌</span>
-    </button>
-
-    <!-- Delete Payment Record -->
-    <button 
-      class="action-btn delete"
-      title="Supprimer dossier"
-      *ngIf="student.hasPaymentRecord"
-      (click)="deletePaymentRecord(student)">
-      <span class="btn-icon">🗑️</span>
-    </button>
-  </div>
-</td>
+                      <!-- Delete Payment Record -->
+                      <button 
+                        class="action-btn delete"
+                        title="Supprimer dossier"
+                        *ngIf="student.hasPaymentRecord"
+                        (click)="deletePaymentRecord(student)">
+                        <span class="btn-icon">🗑️</span>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
 
                 <!-- Expanded Detail Row -->
@@ -631,49 +653,51 @@
                             </span>
                           </div>
                         </div>
-<div class="discount-section" *ngIf="hasDiscount(student)">
-  <div class="discount-header">
-    <h4>💰 Remise Appliquée</h4>
-  </div>
-  <div class="discount-details-card">
-    <div class="discount-summary">
-      <div class="discount-item">
-        <span class="label">Type:</span>
-        <span class="value">{{ getDiscountType(student) === 'monthly' ? 'Mensuelle' : 'Annuelle' }}</span>
-      </div>
-      <div class="discount-item">
-        <span class="label">Pourcentage:</span>
-        <span class="value discount-percentage">{{ getDiscountPercentage(student) }}%</span>
-      </div>
-      <div class="discount-item">
-        <span class="label">Montant de la remise:</span>
-        <span class="value discount-amount">{{ formatCurrency(getDiscountAmount(student)) }}</span>
-      </div>
-      <div class="discount-item total-after-discount">
-        <span class="label">Total après remise:</span>
-        <span class="value final-amount">{{ formatCurrency(getDiscountedAmount(student)) }}</span>
-      </div>
-      <div class="discount-item" *ngIf="student.paymentRecord?.discount?.notes">
-        <span class="label">Notes:</span>
-        <span class="value">{{ student.paymentRecord.discount.notes }}</span>
-      </div>
-      <div class="discount-item" *ngIf="student.paymentRecord?.discount?.appliedDate">
-        <span class="label">Appliquée le:</span>
-        <span class="value">{{ safeFormatDate(student.paymentRecord.discount.appliedDate) }}</span>
-      </div>
-    </div>
-    
- <div class="discount-actions">
-      <button 
-        class="btn btn-danger btn-small"
-        (click)="removeDiscount(student)"
-        title="Supprimer la remise">
-        <span class="btn-icon">❌</span>
-        Supprimer la remise
-      </button>
-    </div>
-  </div>
-</div>
+
+                        <div class="discount-section" *ngIf="hasDiscount(student)">
+                          <div class="discount-header">
+                            <h4>💰 Remise Appliquée</h4>
+                          </div>
+                          <div class="discount-details-card">
+                            <div class="discount-summary">
+                              <div class="discount-item">
+                                <span class="label">Type:</span>
+                                <span class="value">{{ getDiscountType(student) === 'monthly' ? 'Mensuelle' : 'Annuelle' }}</span>
+                              </div>
+                              <div class="discount-item">
+                                <span class="label">Pourcentage:</span>
+                                <span class="value discount-percentage">{{ getDiscountPercentage(student) }}%</span>
+                              </div>
+                              <div class="discount-item">
+                                <span class="label">Montant de la remise:</span>
+                                <span class="value discount-amount">{{ formatCurrency(getDiscountAmount(student)) }}</span>
+                              </div>
+                              <div class="discount-item total-after-discount">
+                                <span class="label">Total après remise:</span>
+                                <span class="value final-amount">{{ formatCurrency(getDiscountedAmount(student)) }}</span>
+                              </div>
+                              <div class="discount-item" *ngIf="student.paymentRecord?.discount?.notes">
+                                <span class="label">Notes:</span>
+                                <span class="value">{{ student.paymentRecord.discount.notes }}</span>
+                              </div>
+                              <div class="discount-item" *ngIf="student.paymentRecord?.discount?.appliedDate">
+                                <span class="label">Appliquée le:</span>
+                                <span class="value">{{ safeFormatDate(student.paymentRecord.discount.appliedDate) }}</span>
+                              </div>
+                            </div>
+                            
+                            <div class="discount-actions">
+                              <button 
+                                class="btn btn-danger btn-small"
+                                (click)="removeDiscount(student)"
+                                title="Supprimer la remise">
+                                <span class="btn-icon">❌</span>
+                                Supprimer la remise
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
                         <!-- Component Summary Cards -->
                         <div class="component-summary-grid">
                           <!-- Tuition Component -->
@@ -699,28 +723,30 @@
                             </div>
                           </div>
 
-                          <!-- Uniform Component -->
-                          <div class="component-summary-card uniform" *ngIf="hasUniform(student)">
+                          <!-- Inscription Fee Component -->
+                          <div class="component-summary-card inscription-fee" *ngIf="hasInscriptionFee(student)">
                             <div class="component-header">
-                              <span class="component-icon">👔</span>
-                              <h4>Uniforme</h4>
+                              <span class="component-icon">📋</span>
+                              <h4>Frais d'Inscription</h4>
                               <span class="component-status-badge" 
-                                    [class]="'status-' + getComponentStatus(student, 'uniform')">
-                                {{ getStatusEmoji(getComponentStatus(student, 'uniform')) }}
+                                    [class]="'status-' + getComponentStatus(student, 'inscriptionFee')">
+                                {{ getStatusEmoji(getComponentStatus(student, 'inscriptionFee')) }}
                               </span>
                             </div>
                             <div class="component-amounts">
                               <div class="amount-line">
-                                <span>Total: {{ formatCurrency(getTotalAmounts(student)?.uniform || 0) }}</span>
+                                <span>Total: {{ formatCurrency(getTotalAmounts(student)?.inscriptionFee || 0) }}</span>
                               </div>
                               <div class="amount-line">
-                                <span>Payé: {{ formatCurrency(getPaidAmounts(student)?.uniform || 0) }}</span>
+                                <span>Payé: {{ formatCurrency(getPaidAmounts(student)?.inscriptionFee || 0) }}</span>
                               </div>
                               <div class="amount-line remaining">
-                                <span>Restant: {{ formatCurrency(getRemainingAmounts(student)?.uniform || 0) }}</span>
+                                <span>Restant: {{ formatCurrency(getRemainingAmounts(student)?.inscriptionFee || 0) }}</span>
                               </div>
                             </div>
                           </div>
+
+
 
                           <!-- Transportation Component -->
                           <div class="component-summary-card transportation" *ngIf="hasTransportation(student)">
@@ -746,6 +772,58 @@
                           </div>
                         </div>
                         
+                       <div class="inscription-payment-section" *ngIf="hasInscriptionFee(student)">
+  <h4>📋 Paiement des Frais d'Inscription</h4>
+  <div class="inscription-payment-info">
+    <div class="inscription-details" *ngIf="student.paymentRecord && student.paymentRecord.inscriptionFee && student.paymentRecord.inscriptionFee.isPaid">
+      <div class="payment-success-card">
+        <div class="success-header">
+          <span class="success-icon">✅</span>
+          <span class="success-title">Frais d'inscription payés</span>
+        </div>
+        <div class="payment-details-grid">
+          <span><strong>Date:</strong> {{ safeFormatDate(student.paymentRecord.inscriptionFee.paymentDate) }}</span>
+          <span><strong>Méthode:</strong> {{ getPaymentMethodLabel(student.paymentRecord.inscriptionFee.paymentMethod) }}</span>
+          <span><strong>Montant:</strong> {{ formatCurrency(student.paymentRecord.inscriptionFee.price || 0) }}</span>
+          <span *ngIf="student.paymentRecord.inscriptionFee.receiptNumber">
+            <strong>Reçu:</strong> {{ student.paymentRecord.inscriptionFee.receiptNumber }}
+          </span>
+          <span *ngIf="student.paymentRecord.inscriptionFee.notes">
+            <strong>Notes:</strong> {{ student.paymentRecord.inscriptionFee.notes }}
+          </span>
+        </div>
+        <!-- NEW: Extract Invoice Button for Inscription Fee -->
+        <div class="payment-actions">
+          <button 
+            class="btn btn-primary btn-small"
+            (click)="openInscriptionFeeInvoice(student)"
+            title="Extraire facture frais d'inscription">
+            <span class="btn-icon">📄</span>
+            Extraire facture
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="inscription-pending" *ngIf="student.paymentRecord && student.paymentRecord.inscriptionFee && !student.paymentRecord.inscriptionFee.isPaid">
+      <div class="pending-card">
+        <div class="pending-header">
+          <span class="pending-icon">⏳</span>
+          <span class="pending-title">Paiement en attente</span>
+        </div>
+        <div class="pending-content">
+          <span class="pending-amount">Montant: {{ formatCurrency(student.paymentRecord.inscriptionFee.price || 0) }}</span>
+          <button 
+            class="btn btn-primary btn-small"
+            (click)="openPaymentDialog(student, 'inscription_fee')">
+            <span class="btn-icon">📋</span>
+            Payer les frais d'inscription
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
                         <!-- Tuition Monthly Payments Section -->
                         <div class="monthly-payments-section" 
                             *ngIf="student.paymentRecord && student.paymentRecord.tuitionMonthlyPayments && student.paymentRecord.tuitionMonthlyPayments.length > 0">
@@ -788,12 +866,13 @@
                                     Reçu: {{ payment.receiptNumber }}
                                   </span>
                                   <button 
-                                  *ngIf="payment.status === 'paid' || payment.status === 'partial'"
-                                  class="btn btn-small invoice-btn"
-                                  title="Facture pour ce mois"
-                                  (click)="openInvoiceDialog(student, true, idx)">
-                                  <span class="btn-icon">Facture pour ce mois📄</span>
-                                </button>
+                                    *ngIf="payment.status === 'paid' || payment.status === 'partial'"
+                                    class="btn btn-small invoice-btn"
+                                    title="Facture pour ce mois"
+                                    (click)="openInvoiceDialog(student, true, idx)">
+                                    <span class="btn-icon">📄</span>
+                                    Facture pour ce mois
+                                  </button>
                                 </div>
                               </div>
 
@@ -806,9 +885,6 @@
                                   <span class="btn-icon">💳</span>
                                   {{ payment.status === 'partial' ? 'Compléter' : 'Payer' }}
                                 </button>
-                                
-                                <!-- Invoice button - only show for paid or partial months -->
-                                
                               </div>
                             </div>
                           </div>
@@ -855,75 +931,82 @@
                                   <span class="receipt-number" *ngIf="payment.receiptNumber">
                                     Reçu: {{ payment.receiptNumber }}
                                   </span>
-                                   <button 
-                                *ngIf="payment.status === 'paid' || payment.status === 'partial'"
-                                class="btn btn-small invoice-btn"
-                                title="Facture transport pour ce mois"
-                                (click)="openInvoiceDialog(student, true, idx)">
-                                <span class="btn-icon">Facture transport pour ce mois📄</span>
-                              </button>
-                                </div>
-                              </div>
-
-                             <div class="month-actions">
-                              <!-- Pay button - only show for unpaid transportation months -->
-                              <button 
-                                *ngIf="payment.status !== 'paid'"
-                                class="btn btn-small pay-btn transportation"
-                                (click)="openPaymentDialog(student, 'transportation_monthly', idx)">
-                                <span class="btn-icon">🚌</span>
-                                {{ payment.status === 'partial' ? 'Compléter' : 'Payer' }}
-                              </button>
-                              
-                              <!-- Invoice button - only show for paid or partial transportation months -->
-                             
-                            </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Uniform Payment Section -->
-                        <div class="uniform-payment-section" *ngIf="hasUniform(student)">
-                          <h4>👔 Paiement de l'Uniforme</h4>
-                          <div class="uniform-payment-info">
-                            <div class="uniform-details" *ngIf="student.paymentRecord && student.paymentRecord.uniform && student.paymentRecord.uniform.isPaid">
-                              <div class="payment-success-card">
-                                <div class="success-header">
-                                  <span class="success-icon">✅</span>
-                                  <span class="success-title">Uniforme payé</span>
-                                </div>
-                                <div class="payment-details-grid">
-                                  <span><strong>Date:</strong> {{ safeFormatDate(student.paymentRecord.uniform.paymentDate) }}</span>
-                                  <span><strong>Méthode:</strong> {{ getPaymentMethodLabel(student.paymentRecord.uniform.paymentMethod) }}</span>
-                                  <span><strong>Montant:</strong> {{ formatCurrency(student.paymentRecord.uniform.price || 0) }}</span>
-                                  <span *ngIf="student.paymentRecord.uniform.receiptNumber">
-                                    <strong>Reçu:</strong> {{ student.paymentRecord.uniform.receiptNumber }}
-                                  </span>
-                                  <span *ngIf="student.paymentRecord.uniform.notes">
-                                    <strong>Notes:</strong> {{ student.paymentRecord.uniform.notes }}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="uniform-pending" *ngIf="student.paymentRecord && student.paymentRecord.uniform && !student.paymentRecord.uniform.isPaid">
-                              <div class="pending-card">
-                                <div class="pending-header">
-                                  <span class="pending-icon">⏳</span>
-                                  <span class="pending-title">Paiement en attente</span>
-                                </div>
-                                <div class="pending-content">
-                                  <span class="pending-amount">Montant: {{ formatCurrency(student.paymentRecord.uniform.price || 0) }}</span>
                                   <button 
-                                    class="btn btn-primary btn-small"
-                                    (click)="openPaymentDialog(student, 'uniform')">
-                                    <span class="btn-icon">👔</span>
-                                    Payer l'uniforme
+                                    *ngIf="payment.status === 'paid' || payment.status === 'partial'"
+                                    class="btn btn-small invoice-btn"
+                                    title="Facture transport pour ce mois"
+                                    (click)="openInvoiceDialog(student, true, idx)">
+                                    <span class="btn-icon">📄</span>
+                                    Facture transport
                                   </button>
                                 </div>
                               </div>
+
+                              <div class="month-actions">
+                                <!-- Pay button - only show for unpaid transportation months -->
+                                <button 
+                                  *ngIf="payment.status !== 'paid'"
+                                  class="btn btn-small pay-btn transportation"
+                                  (click)="openPaymentDialog(student, 'transportation_monthly', idx)">
+                                  <span class="btn-icon">🚌</span>
+                                  {{ payment.status === 'partial' ? 'Compléter' : 'Payer' }}
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
+
+                          <div class="uniform-payment-section" *ngIf="hasUniform(student)">
+  <h4>👔 Paiement de l'Uniforme</h4>
+  <div class="uniform-payment-info">
+    <div class="uniform-details" *ngIf="student.paymentRecord && student.paymentRecord.uniform && student.paymentRecord.uniform.isPaid">
+      <div class="payment-success-card">
+        <div class="success-header">
+          <span class="success-icon">✅</span>
+          <span class="success-title">Uniforme payé</span>
+        </div>
+        <div class="payment-details-grid">
+          <span><strong>Date:</strong> {{ safeFormatDate(student.paymentRecord.uniform.paymentDate) }}</span>
+          <span><strong>Méthode:</strong> {{ getPaymentMethodLabel(student.paymentRecord.uniform.paymentMethod) }}</span>
+          <span><strong>Montant:</strong> {{ formatCurrency(student.paymentRecord.uniform.price || 0) }}</span>
+          <span *ngIf="student.paymentRecord.uniform.receiptNumber">
+            <strong>Reçu:</strong> {{ student.paymentRecord.uniform.receiptNumber }}
+          </span>
+          <span *ngIf="student.paymentRecord.uniform.notes">
+            <strong>Notes:</strong> {{ student.paymentRecord.uniform.notes }}
+          </span>
+        </div>
+        <!-- NEW: Extract Invoice Button for Uniform -->
+        <div class="payment-actions">
+          <button 
+            class="btn btn-primary btn-small"
+            (click)="openUniformInvoice(student)"
+            title="Extraire facture uniforme">
+            <span class="btn-icon">📄</span>
+            Extraire facture
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="uniform-pending" *ngIf="student.paymentRecord && student.paymentRecord.uniform && !student.paymentRecord.uniform.isPaid">
+      <div class="pending-card">
+        <div class="pending-header">
+          <span class="pending-icon">⏳</span>
+          <span class="pending-title">Paiement en attente</span>
+        </div>
+        <div class="pending-content">
+          <span class="pending-amount">Montant: {{ formatCurrency(student.paymentRecord.uniform.price || 0) }}</span>
+          <button 
+            class="btn btn-primary btn-small"
+            (click)="openPaymentDialog(student, 'uniform')">
+            <span class="btn-icon">👔</span>
+            Payer l'uniforme
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
                         <!-- Annual Payment Section -->
                         <div class="annual-payment-section" *ngIf="student.paymentRecord && student.paymentRecord.annualTuitionPayment && student.paymentRecord.annualTuitionPayment.isPaid">
@@ -983,7 +1066,6 @@
                             <div 
                               class="payment-history-item" 
                               *ngFor="let historyItem of getPaymentHistory(student); trackBy: trackByHistoryItem">
-
                               <div class="history-content">
                                 <div class="history-main">
                                   <span class="history-amount">{{ formatCurrency(historyItem.amount) }}</span>
@@ -1085,6 +1167,21 @@
             </div>
           </div>
 
+          <!-- ADD this section to show inscription fee is automatically included -->
+<div class="form-section inscription-automatic" *ngIf="isInscriptionFeeEnabled()">
+  <h5>📋 Frais d'Inscription</h5>
+  <div class="automatic-inclusion-notice">
+    <div class="inclusion-badge">
+      <span class="badge-icon">✅</span>
+      <span class="badge-text">Inclus automatiquement</span>
+    </div>
+    <div class="inscription-fee-info">
+      <span>Prix: {{ formatCurrency(getInscriptionFeeForStudent(selectedStudent)) }}</span>
+      <p class="info-text">{{ getInscriptionFeeDescription() }}</p>
+    </div>
+  </div>
+</div>
+
           <div class="form-section">
             <h5>👔 Uniforme</h5>
             <div class="checkbox-group">
@@ -1148,16 +1245,20 @@
               <h5>💸 Total Estimé</h5>
               <div class="calculation-breakdown">
                 <div class="calc-line">
-                  <span>Montant des frais scolaires:</span>
-                  <span>{{ formatCurrency(getTotalAmounts(selectedStudent)?.tuition || 0) }}</span>
+                  <span>Frais scolaires:</span>
+                  <span>{{ formatCurrency(getTuitionAmountForGrade(selectedStudent.grade)) }}</span>
                 </div>
-                <div class="calc-line discount-line">
-                  <span>Remise ({{ discountForm.get('percentage')?.value }}%):</span>
-                  <span class="discount-amount">-{{ formatCurrency((getTotalAmounts(selectedStudent)?.tuition || 0) * (discountForm.get('percentage')?.value || 0) / 100) }}</span>
+                <div class="calc-line" *ngIf="isInscriptionFeeEnabled()">
+                  <span>Frais d'inscription:</span>
+                  <span>{{ formatCurrency(getInscriptionFeeForStudent(selectedStudent)) }}</span>
                 </div>
-                <div class="calc-line total-line">
-                  <strong>Nouveau montant total:</strong>
-                  <strong class="final-amount">{{ formatCurrency((getTotalAmounts(selectedStudent)?.grandTotal || 0) - ((getTotalAmounts(selectedStudent)?.tuition || 0) * (discountForm.get('percentage')?.value || 0) / 100)) }}</strong>
+                <div class="calc-line" *ngIf="generateForm.get('hasUniform')?.value">
+                  <span>Uniforme:</span>
+                  <span>{{ formatCurrency(getUniformPrice()) }}</span>
+                </div>
+                <div class="calc-line" *ngIf="generateForm.get('transportationType')?.value">
+                  <span>Transport ({{ getTransportationMonths() }} mois):</span>
+                  <span>{{ formatCurrency(getTransportationTotal()) }}</span>
                 </div>
                 <div class="calc-line total-line">
                   <strong>Total:</strong>
@@ -1197,175 +1298,215 @@
 
   <!-- Edit Payment Record Modal -->
   <div class="modal-overlay" *ngIf="isEditDialogOpen" (click)="closeEditDialog()">
-  <div class="modal-container edit-dialog" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>Modifier les Composants du Dossier</h3>
-      <button class="close-btn" (click)="closeEditDialog()">✖️</button>
-    </div>
-    
-    <div class="modal-body" *ngIf="selectedStudent">
-      <div class="student-info">
-        <h4>{{ selectedStudent.name }}</h4>
-        <p>{{ getClassGrade(selectedStudent) }} - {{ getClassName(selectedStudent) }}</p>
-        <div class="current-amounts" *ngIf="selectedStudent.paymentRecord">
-          <span class="amount-display">
-            Total actuel: {{ formatCurrency(getTotalAmounts(selectedStudent)?.grandTotal || 0) }}
-          </span>
-        </div>
+    <div class="modal-container edit-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Modifier les Composants du Dossier</h3>
+        <button class="close-btn" (click)="closeEditDialog()">✖️</button>
       </div>
       
-      <form [formGroup]="editForm" (ngSubmit)="onEditFormSubmit()">
-<div class="form-section">
-  <h5>👔 Uniforme</h5>
-  <div class="checkbox-group">
-    <label class="checkbox-label">
-      <input 
-        type="checkbox" 
-        formControlName="hasUniform"
-        class="checkbox-input"
-        [disabled]="isUniformPaid(selectedStudent!)">
-      <span class="checkbox-custom"></span>
-      Inclure l'uniforme
-      <span class="price-info" *ngIf="isUniformEnabled() && editForm.get('hasUniform')?.value">
-        - {{ formatCurrency(getUniformPrice(selectedStudent)) }}
-      </span>
-    </label>
-  </div>
-  
-  <!-- Uniform Status Display -->
-  <div class="component-status-info" *ngIf="selectedStudent && selectedStudent.paymentRecord?.uniform">
-    <div class="status-paid" *ngIf="isUniformPaid(selectedStudent)">
-      <span class="status-icon">✅</span>
-      <span>Uniforme déjà payé le {{ safeFormatDate(getUniformPaymentDate(selectedStudent)) }}</span>
-    </div>
-    <div class="status-pending" *ngIf="isUniformPurchased(selectedStudent) && !isUniformPaid(selectedStudent)">
-      <span class="status-icon">⏳</span>
-      <span>Uniforme commandé - {{ formatCurrency(getUniformPrice(selectedStudent)) }} en attente</span>
-    </div>
-  </div>
-  
-  <!-- Warning for uniform removal -->
-  <div class="warning-message" *ngIf="selectedStudent && isUniformPaid(selectedStudent) && !editForm.get('hasUniform')?.value">
-    <span class="warning-icon">⚠️</span>
-    <span>Impossible de retirer l'uniforme car il a déjà été payé</span>
-  </div>
-</div>
-
-      <div class="form-section">
-  <h5>🚌 Transport</h5>
-  <div class="radio-group">
-    <label class="radio-label">
-      <input 
-        type="radio" 
-        formControlName="transportationType"
-        value=""
-        class="radio-input">
-      <span class="radio-custom"></span>
-      Pas de transport
-    </label>
-    
-    <label class="radio-label" *ngIf="isTransportationCloseEnabled()">
-      <input 
-        type="radio" 
-        formControlName="transportationType"
-        value="close"
-        class="radio-input"
-        [disabled]="selectedStudent && hasTransportationPaymentsForStudent(selectedStudent, 'far')">
-      <span class="radio-custom"></span>
-      Zone proche
-      <span class="price-info">{{ formatCurrency(getTransportationMonthlyPrice('close')) }}/mois</span>
-    </label>
-    
-    <label class="radio-label" *ngIf="isTransportationFarEnabled()">
-      <input 
-        type="radio" 
-        formControlName="transportationType"
-        value="far"
-        class="radio-input"
-        [disabled]="selectedStudent && hasTransportationPaymentsForStudent(selectedStudent, 'close')">
-      <span class="radio-custom"></span>
-      Zone éloignée
-      <span class="price-info">{{ formatCurrency(getTransportationMonthlyPrice('far')) }}/mois</span>
-    </label>
-  </div>
-  
-  <!-- Transportation Status Display -->
-  <div class="component-status-info" *ngIf="selectedStudent && isUsingTransportation(selectedStudent)">
-    <div class="transport-current-info">
-      <span class="status-icon">🚌</span>
-      <span>Type actuel: {{ getTransportationType(selectedStudent) }}</span>
-      <div class="payment-progress" *ngIf="hasTransportationMonthlyPayments(selectedStudent)">
-        <span>Paiements effectués: {{ getTransportationPaidPayments() }} / {{ getTransportationTotalPayments() }}</span>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Warning for transportation type change -->
-  <div class="warning-message" *ngIf="selectedStudent && hasTransportationPaymentsForStudent(selectedStudent) && isChangingTransportationType()">
-    <span class="warning-icon">⚠️</span>
-    <span>Attention: Des paiements de transport ont déjà été effectués</span>
-  </div>
-</div>
-
-        <!-- Estimated Total Changes -->
-        <div class="form-section total-section" *ngIf="hasChanges()">
-          <div class="total-comparison">
-            <h5>💸 Impact des Modifications</h5>
-            <div class="comparison-grid">
-              <div class="comparison-line">
-                <span class="label">Total actuel:</span>
-                <span class="amount current">{{ formatCurrency(getCurrentTotal()) }}</span>
-              </div>
-              <div class="comparison-line">
-                <span class="label">Nouveau total:</span>
-                <span class="amount new">{{ formatCurrency(getNewTotal()) }}</span>
-              </div>
-              <div class="comparison-line difference">
-                <span class="label">Différence:</span>
-                <span class="amount" [class.positive]="getTotalDifference() > 0" [class.negative]="getTotalDifference() < 0">
-                  {{ getTotalDifference() > 0 ? '+' : '' }}{{ formatCurrency(getTotalDifference()) }}
+      <div class="modal-body" *ngIf="selectedStudent">
+        <div class="student-info">
+          <h4>{{ selectedStudent.name }}</h4>
+          <p>{{ getClassGrade(selectedStudent) }} - {{ getClassName(selectedStudent) }}</p>
+          <div class="current-amounts" *ngIf="selectedStudent.paymentRecord">
+            <span class="amount-display">
+              Total actuel: {{ formatCurrency(getTotalAmounts(selectedStudent)?.grandTotal || 0) }}
+            </span>
+          </div>
+        </div>
+        
+        <form [formGroup]="editForm" (ngSubmit)="onEditFormSubmit()">
+          <!-- Inscription Fee Section -->
+          <div class="form-section" *ngIf="isInscriptionFeeEnabled()">
+            <h5>📋 Frais d'Inscription</h5>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  formControlName="hasInscriptionFee"
+                  class="checkbox-input"
+                  [disabled]="isInscriptionFeePaid(selectedStudent!)">
+                <span class="checkbox-custom"></span>
+                Inclure les frais d'inscription
+                <span class="price-info" *ngIf="isInscriptionFeeEnabled() && editForm.get('hasInscriptionFee')?.value">
+                  - {{ formatCurrency(getInscriptionFeeForStudent(selectedStudent)) }}
                 </span>
+              </label>
+            </div>
+            
+            <!-- Inscription Fee Status Display -->
+            <div class="component-status-info" *ngIf="selectedStudent && selectedStudent.paymentRecord?.inscriptionFee">
+              <div class="status-paid" *ngIf="isInscriptionFeePaid(selectedStudent)">
+                <span class="status-icon">✅</span>
+                <span>Frais d'inscription déjà payés le {{ safeFormatDate(getInscriptionFeePaymentDate(selectedStudent)) }}</span>
+              </div>
+              <div class="status-pending" *ngIf="hasInscriptionFee(selectedStudent) && !isInscriptionFeePaid(selectedStudent)">
+                <span class="status-icon">⏳</span>
+                <span>Frais d'inscription requis - {{ formatCurrency(getInscriptionFeeForStudent(selectedStudent)) }} en attente</span>
+              </div>
+            </div>
+            
+            <!-- Warning for inscription fee removal -->
+            <div class="warning-message" *ngIf="selectedStudent && isInscriptionFeePaid(selectedStudent) && !editForm.get('hasInscriptionFee')?.value">
+              <span class="warning-icon">⚠️</span>
+              <span>Impossible de retirer les frais d'inscription car ils ont déjà été payés</span>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h5>👔 Uniforme</h5>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  formControlName="hasUniform"
+                  class="checkbox-input"
+                  [disabled]="isUniformPaid(selectedStudent!)">
+                <span class="checkbox-custom"></span>
+                Inclure l'uniforme
+                <span class="price-info" *ngIf="isUniformEnabled() && editForm.get('hasUniform')?.value">
+                  - {{ formatCurrency(getUniformPrice(selectedStudent)) }}
+                </span>
+              </label>
+            </div>
+            
+            <!-- Uniform Status Display -->
+            <div class="component-status-info" *ngIf="selectedStudent && selectedStudent.paymentRecord?.uniform">
+              <div class="status-paid" *ngIf="isUniformPaid(selectedStudent)">
+                <span class="status-icon">✅</span>
+                <span>Uniforme déjà payé le {{ safeFormatDate(getUniformPaymentDate(selectedStudent)) }}</span>
+              </div>
+              <div class="status-pending" *ngIf="isUniformPurchased(selectedStudent) && !isUniformPaid(selectedStudent)">
+                <span class="status-icon">⏳</span>
+                <span>Uniforme commandé - {{ formatCurrency(getUniformPrice(selectedStudent)) }} en attente</span>
+              </div>
+            </div>
+            
+            <!-- Warning for uniform removal -->
+            <div class="warning-message" *ngIf="selectedStudent && isUniformPaid(selectedStudent) && !editForm.get('hasUniform')?.value">
+              <span class="warning-icon">⚠️</span>
+              <span>Impossible de retirer l'uniforme car il a déjà été payé</span>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h5>🚌 Transport</h5>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input 
+                  type="radio" 
+                  formControlName="transportationType"
+                  value=""
+                  class="radio-input">
+                <span class="radio-custom"></span>
+                Pas de transport
+              </label>
+              
+              <label class="radio-label" *ngIf="isTransportationCloseEnabled()">
+                <input 
+                  type="radio" 
+                  formControlName="transportationType"
+                  value="close"
+                  class="radio-input"
+                  [disabled]="selectedStudent && hasTransportationPaymentsForStudent(selectedStudent, 'far')">
+                <span class="radio-custom"></span>
+                Zone proche
+                <span class="price-info">{{ formatCurrency(getTransportationMonthlyPrice('close')) }}/mois</span>
+              </label>
+              
+              <label class="radio-label" *ngIf="isTransportationFarEnabled()">
+                <input 
+                  type="radio" 
+                  formControlName="transportationType"
+                  value="far"
+                  class="radio-input"
+                  [disabled]="selectedStudent && hasTransportationPaymentsForStudent(selectedStudent, 'close')">
+                <span class="radio-custom"></span>
+                Zone éloignée
+                <span class="price-info">{{ formatCurrency(getTransportationMonthlyPrice('far')) }}/mois</span>
+              </label>
+            </div>
+            
+            <!-- Transportation Status Display -->
+            <div class="component-status-info" *ngIf="selectedStudent && isUsingTransportation(selectedStudent)">
+              <div class="transport-current-info">
+                <span class="status-icon">🚌</span>
+                <span>Type actuel: {{ getTransportationType(selectedStudent) }}</span>
+                <div class="payment-progress" *ngIf="hasTransportationMonthlyPayments(selectedStudent)">
+                  <span>Paiements effectués: {{ getTransportationPaidPayments() }} / {{ getTransportationTotalPayments() }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Warning for transportation type change -->
+            <div class="warning-message" *ngIf="selectedStudent && hasTransportationPaymentsForStudent(selectedStudent) && isChangingTransportationType()">
+              <span class="warning-icon">⚠️</span>
+              <span>Attention: Des paiements de transport ont déjà été effectués</span>
+            </div>
+          </div>
+
+          <!-- Estimated Total Changes -->
+          <div class="form-section total-section" *ngIf="hasChanges()">
+            <div class="total-comparison">
+              <h5>💸 Impact des Modifications</h5>
+              <div class="comparison-grid">
+                <div class="comparison-line">
+                  <span class="label">Total actuel:</span>
+                  <span class="amount current">{{ formatCurrency(getCurrentTotal()) }}</span>
+                </div>
+                <div class="comparison-line">
+                  <span class="label">Nouveau total:</span>
+                  <span class="amount new">{{ formatCurrency(getNewTotal()) }}</span>
+                </div>
+                <div class="comparison-line difference">
+                  <span class="label">Différence:</span>
+                  <span class="amount" [class.positive]="getTotalDifference() > 0" [class.negative]="getTotalDifference() < 0">
+                    {{ getTotalDifference() > 0 ? '+' : '' }}{{ formatCurrency(getTotalDifference()) }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </form>
-    </div>
-    
-    <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="closeEditDialog()">
-        Annuler
-      </button>
-      <button 
-        class="btn btn-primary" 
-        (click)="onEditFormSubmit()"
-        [disabled]="isLoading || !hasChanges() || !editForm.valid">
-        <span *ngIf="isLoading">
-          <span class="spinner-small"></span>
-          Mise à jour...
-        </span>
-        <span *ngIf="!isLoading">
-          Mettre à jour
-        </span>
-      </button>
+        </form>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeEditDialog()">
+          Annuler
+        </button>
+        <button 
+          class="btn btn-primary" 
+          (click)="onEditFormSubmit()"
+          [disabled]="isLoading || !hasChanges() || !editForm.valid">
+          <span *ngIf="isLoading">
+            <span class="spinner-small"></span>
+            Mise à jour...
+          </span>
+          <span *ngIf="!isLoading">
+            Mettre à jour
+          </span>
+        </button>
+      </div>
     </div>
   </div>
-</div>
-<!-- Invoice Dialog Modal -->
+
+  <!-- Invoice Dialog Modal -->
   <div class="modal-overlay" *ngIf="isInvoiceDialogOpen" (click)="closeInvoiceDialog()">
-  <div class="modal-container" (click)="$event.stopPropagation()">
-    <app-invoice-dialog
-      *ngIf="selectedStudentForInvoice"
-      [student]="selectedStudentForInvoice"
-      [academicYear]="currentAcademicYear"
-      [showCurrentMonthOnly]="showCurrentMonthOnlyInInvoice"
-      [currentMonthIndex]="currentMonthIndexForInvoice"
-      [currentPaymentDate]="currentPaymentDateForInvoice"
-      [monthName]="monthNameForInvoice"
-      (dialogClosed)="closeInvoiceDialog()">
-    </app-invoice-dialog>
+    <div class="modal-container" (click)="$event.stopPropagation()">
+<app-invoice-dialog
+  *ngIf="selectedStudentForInvoice"
+  [student]="selectedStudentForInvoice"
+  [academicYear]="currentAcademicYear"
+  [showCurrentMonthOnly]="showCurrentMonthOnlyInInvoice"
+  [currentMonthIndex]="currentMonthIndexForInvoice"
+  [currentPaymentDate]="currentPaymentDateForInvoice"
+  [monthName]="monthNameForInvoice"
+  [componentOnly]="componentOnlyForInvoice"
+  (dialogClosed)="closeInvoiceDialog()">
+</app-invoice-dialog>
+    </div>
   </div>
-</div>
+
   <!-- Confirmation Modal -->
   <div class="modal-overlay" *ngIf="confirmationState.isOpen" [@fadeIn] (click)="onConfirmationCancel()">
     <div class="modal-container" (click)="$event.stopPropagation()" [@slideIn]>
@@ -1443,136 +1584,134 @@
     </div>
   </div>
 
-
+  <!-- Discount Dialog Modal -->
   <div class="modal-overlay" *ngIf="isDiscountDialogOpen" (click)="closeDiscountDialog()">
-  <div class="modal-container discount-dialog" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>Appliquer une Remise</h3>
-      <button class="close-btn" (click)="closeDiscountDialog()">✖️</button>
-    </div>
-    
-    <div class="modal-body" *ngIf="selectedStudent">
-      <div class="student-info">
-        <h4>{{ selectedStudent.name }}</h4>
-        <p>{{ getClassGrade(selectedStudent) }} - {{ getClassName(selectedStudent) }}</p>
-        
-      
+    <div class="modal-container discount-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Appliquer une Remise</h3>
+        <button class="close-btn" (click)="closeDiscountDialog()">✖️</button>
       </div>
       
-      <form [formGroup]="discountForm" (ngSubmit)="applyDiscount()">
-        <!-- Discount Type -->
-        <div class="form-section">
-          <label class="form-label" for="discountType">Type de remise</label>
-          <div class="radio-group">
-            <label class="radio-label">
+      <div class="modal-body" *ngIf="selectedStudent">
+        <div class="student-info">
+          <h4>{{ selectedStudent.name }}</h4>
+          <p>{{ getClassGrade(selectedStudent) }} - {{ getClassName(selectedStudent) }}</p>
+        </div>
+        
+        <form [formGroup]="discountForm" (ngSubmit)="applyDiscount()">
+          <!-- Discount Type -->
+          <div class="form-section">
+            <label class="form-label" for="discountType">Type de remise</label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input 
+                  type="radio" 
+                  formControlName="discountType"
+                  value="monthly"
+                  id="monthly"
+                  class="radio-input">
+                <span class="radio-custom"></span>
+                <div class="radio-content">
+                  <span class="radio-title">Remise mensuelle</span>
+                  <span class="radio-description">Appliquée sur chaque paiement mensuel</span>
+                </div>
+              </label>
+              
+              <label class="radio-label">
+                <input 
+                  type="radio" 
+                  formControlName="discountType"
+                  value="annual"
+                  id="annual"
+                  class="radio-input">
+                <span class="radio-custom"></span>
+                <div class="radio-content">
+                  <span class="radio-title">Remise annuelle</span>
+                  <span class="radio-description">Appliquée sur le montant total annuel</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Discount Percentage -->
+          <div class="form-section">
+            <label class="form-label" for="percentage">Pourcentage de remise</label>
+            <div class="input-group">
               <input 
-                type="radio" 
-                formControlName="discountType"
-                value="monthly"
-                id="monthly"
-                class="radio-input">
-              <span class="radio-custom"></span>
-              <div class="radio-content">
-                <span class="radio-title">Remise mensuelle</span>
-                <span class="radio-description">Appliquée sur chaque paiement mensuel</span>
-              </div>
-            </label>
-            
-            <label class="radio-label">
-              <input 
-                type="radio" 
-                formControlName="discountType"
-                value="annual"
-                id="annual"
-                class="radio-input">
-              <span class="radio-custom"></span>
-              <div class="radio-content">
-                <span class="radio-title">Remise annuelle</span>
-                <span class="radio-description">Appliquée sur le montant total annuel</span>
-              </div>
-            </label>
+                type="number" 
+                formControlName="percentage"
+                id="percentage"
+                class="form-input"
+                [class.error]="discountForm.get('percentage')?.invalid && discountForm.get('percentage')?.touched"
+                placeholder="Entrer le pourcentage"
+                min="1" 
+                max="100" 
+                step="1">
+              <span class="input-suffix">%</span>
+            </div>
+            <div class="form-error" *ngIf="discountForm.get('percentage')?.invalid && discountForm.get('percentage')?.touched">
+              <span *ngIf="discountForm.get('percentage')?.hasError('required')">Le pourcentage est requis</span>
+              <span *ngIf="discountForm.get('percentage')?.hasError('min')">Le pourcentage doit être d'au moins 1%</span>
+              <span *ngIf="discountForm.get('percentage')?.hasError('max')">Le pourcentage ne peut pas dépasser 100%</span>
+            </div>
           </div>
-        </div>
 
-        <!-- Discount Percentage -->
-        <div class="form-section">
-          <label class="form-label" for="percentage">Pourcentage de remise</label>
-          <div class="input-group">
-            <input 
-              type="number" 
-              formControlName="percentage"
-              id="percentage"
-              class="form-input"
-              [class.error]="discountForm.get('percentage')?.invalid && discountForm.get('percentage')?.touched"
-              placeholder="Entrer le pourcentage"
-              min="1" 
-              max="100" 
-              step="1">
-            <span class="input-suffix">%</span>
+          <!-- Notes -->
+          <div class="form-section">
+            <label class="form-label" for="notes">Notes (optionnel)</label>
+            <textarea 
+              formControlName="notes"
+              id="notes"
+              class="form-textarea"
+              placeholder="Raison de la remise, conditions particulières..."
+              rows="3">
+            </textarea>
           </div>
-          <div class="form-error" *ngIf="discountForm.get('percentage')?.invalid && discountForm.get('percentage')?.touched">
-            <span *ngIf="discountForm.get('percentage')?.hasError('required')">Le pourcentage est requis</span>
-            <span *ngIf="discountForm.get('percentage')?.hasError('min')">Le pourcentage doit être d'au moins 1%</span>
-            <span *ngIf="discountForm.get('percentage')?.hasError('max')">Le pourcentage ne peut pas dépasser 100%</span>
-          </div>
-        </div>
 
-        <!-- Notes -->
-        <div class="form-section">
-          <label class="form-label" for="notes">Notes (optionnel)</label>
-          <textarea 
-            formControlName="notes"
-            id="notes"
-            class="form-textarea"
-            placeholder="Raison de la remise, conditions particulières..."
-            rows="3">
-          </textarea>
-        </div>
-
-        <!-- Preview Section -->
-        <div class="form-section preview-section" *ngIf="discountForm.get('percentage')?.value > 0">
-          <div class="preview-card">
-            <h5>💡 Aperçu de la remise</h5>
-            <div class="preview-calculation" *ngIf="selectedStudent">
-              <div class="calc-line">
-                <span>Montant original:</span>
-                <span>{{ formatCurrency(getOriginalAmounts(selectedStudent).tuition) }}</span>
-              </div>
-              <div class="calc-line discount-line">
-                <span>Remise ({{ discountForm.get('percentage')?.value }}%):</span>
-                <span class="discount-amount">-{{ formatCurrency(getOriginalAmounts(selectedStudent).tuition * (discountForm.get('percentage')?.value || 0) / 100) }}</span>
-              </div>
-              <div class="calc-line total-line">
-                <strong>Nouveau montant des frais scolaires:</strong>
-                <strong class="final-amount">{{ formatCurrency(getOriginalAmounts(selectedStudent).tuition - (getOriginalAmounts(selectedStudent).tuition * (discountForm.get('percentage')?.value || 0) / 100)) }}</strong>
-              </div>
-              <div class="calc-line total-line">
-                <strong>Grand total après remise:</strong>
-                <strong class="final-amount">{{ formatCurrency(getOriginalAmounts(selectedStudent).grandTotal - (getOriginalAmounts(selectedStudent).tuition * (discountForm.get('percentage')?.value || 0) / 100)) }}</strong>
+          <!-- Preview Section -->
+          <div class="form-section preview-section" *ngIf="discountForm.get('percentage')?.value > 0">
+            <div class="preview-card">
+              <h5>💡 Aperçu de la remise</h5>
+              <div class="preview-calculation" *ngIf="selectedStudent">
+                <div class="calc-line">
+                  <span>Montant original:</span>
+                  <span>{{ formatCurrency(getOriginalAmounts(selectedStudent).tuition) }}</span>
+                </div>
+                <div class="calc-line discount-line">
+                  <span>Remise ({{ discountForm.get('percentage')?.value }}%):</span>
+                  <span class="discount-amount">-{{ formatCurrency(getOriginalAmounts(selectedStudent).tuition * (discountForm.get('percentage')?.value || 0) / 100) }}</span>
+                </div>
+                <div class="calc-line total-line">
+                  <strong>Nouveau montant des frais scolaires:</strong>
+                  <strong class="final-amount">{{ formatCurrency(getOriginalAmounts(selectedStudent).tuition - (getOriginalAmounts(selectedStudent).tuition * (discountForm.get('percentage')?.value || 0) / 100)) }}</strong>
+                </div>
+                <div class="calc-line total-line">
+                  <strong>Grand total après remise:</strong>
+                  <strong class="final-amount">{{ formatCurrency(getOriginalAmounts(selectedStudent).grandTotal - (getOriginalAmounts(selectedStudent).tuition * (discountForm.get('percentage')?.value || 0) / 100)) }}</strong>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </form>
-    </div>
-    
-    <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="closeDiscountDialog()">
-        Annuler
-      </button>
-      <button 
-        class="btn btn-success" 
-        (click)="applyDiscount()"
-        [disabled]="!isDiscountFormValid() || isLoading">
-        <span *ngIf="isLoading">
-          <span class="spinner-small"></span>
-          Application...
-        </span>
-         <span *ngIf="!isLoading">
-          Appliquer la remise
-        </span>
-      </button>
+        </form>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeDiscountDialog()">
+          Annuler
+        </button>
+        <button 
+          class="btn btn-success" 
+          (click)="applyDiscount()"
+          [disabled]="!isDiscountFormValid() || isLoading">
+          <span *ngIf="isLoading">
+            <span class="spinner-small"></span>
+            Application...
+          </span>
+          <span *ngIf="!isLoading">
+            Appliquer la remise
+          </span>
+        </button>
+      </div>
     </div>
   </div>
-</div>
 </div>

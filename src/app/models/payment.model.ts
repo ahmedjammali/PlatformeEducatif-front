@@ -16,23 +16,21 @@ export type Grade =
   | '1ère année lycée' | '2ème année lycée' | '3ème année lycée' | '4ème année lycée';
 
 // ===== UPDATED PAYMENT CONFIGURATION =====
+// models/payment.model.ts - PaymentConfiguration updates
+
 export interface PaymentConfiguration {
   _id?: string;
   school: School | string;
   academicYear: string;
   
-  // ✅ NEW: Individual grade pricing instead of class groups
   gradeAmounts: {
-    // Maternal
     'Maternal': number;
-    // Primaire
     '1ère année primaire': number;
     '2ème année primaire': number;
     '3ème année primaire': number;
     '4ème année primaire': number;
     '5ème année primaire': number;
     '6ème année primaire': number;
-    // Secondaire
     '7ème année': number;
     '8ème année': number;
     '9ème année': number;
@@ -42,7 +40,6 @@ export interface PaymentConfiguration {
     '4ème année lycée': number;
   };
 
-  // ✅ NEW: Uniform configuration
   uniform: {
     enabled: boolean;
     price: number;
@@ -50,7 +47,6 @@ export interface PaymentConfiguration {
     isOptional?: boolean;
   };
 
-  // ✅ NEW: Transportation configuration
   transportation: {
     enabled: boolean;
     tariffs: {
@@ -66,6 +62,16 @@ export interface PaymentConfiguration {
       };
     };
     isOptional?: boolean;
+  };
+
+  // ✅ NEW: Inscription fee configuration
+  inscriptionFee: {
+    enabled: boolean;
+    prices: {
+      maternelleAndPrimaire: number;
+      collegeAndLycee: number;
+    };
+    description?: string;
   };
 
   paymentSchedule: {
@@ -86,6 +92,16 @@ export interface PaymentConfiguration {
   updatedAt?: Date;
 }
 
+export interface InscriptionFeePayment {
+  applicable: boolean;
+  price: number;
+  isPaid: boolean;
+  paymentDate?: Date | string;
+  paymentMethod?: 'cash' | 'check' | 'bank_transfer' | 'online';
+  receiptNumber?: string;
+  notes?: string;
+  recordedBy?: User | string;
+}
 // ===== UPDATED MONTHLY PAYMENT INTERFACE =====
 export interface MonthlyPayment {
   month: number;
@@ -150,40 +166,37 @@ export interface StudentWithPayment {
   paymentRecord: StudentPayment | null;
   hasPaymentRecord: boolean;
 }
-// ===== UPDATED STUDENT PAYMENT INTERFACE =====
 export interface StudentPayment {
   _id?: string;
   student: User | string;
   school: School | string;
   academicYear: string;
   
-  // ✅ UPDATED: Individual grade instead of class group
   grade: Grade;
   gradeCategory: GradeCategory;
   studentClass: string;
   
   paymentType: 'monthly' | 'annual';
   
-  // ✅ NEW: Tuition fees structure
   tuitionFees: {
     amount: number;
     monthlyAmount: number;
   };
 
-  // ✅ NEW: Uniform payment details
   uniform: UniformPayment;
-
-  // ✅ NEW: Transportation payment details
   transportation: TransportationPayment;
+  
+  // ✅ NEW: Inscription fee payment details
+  inscriptionFee: InscriptionFeePayment;
 
-  // ✅ UPDATED: Renamed from monthlyPayments to tuitionMonthlyPayments
   tuitionMonthlyPayments: MonthlyPayment[];
 
-  // ✅ NEW: Detailed amounts breakdown
+  // ✅ UPDATED: Total amounts with inscription fee
   totalAmounts: {
     tuition: number;
     uniform: number;
     transportation: number;
+    inscriptionFee: number; // ✅ NEW
     grandTotal: number;
   };
 
@@ -191,6 +204,7 @@ export interface StudentPayment {
     tuition: number;
     uniform: number;
     transportation: number;
+    inscriptionFee: number; // ✅ NEW
     grandTotal: number;
   };
 
@@ -198,28 +212,26 @@ export interface StudentPayment {
     tuition: number;
     uniform: number;
     transportation: number;
+    inscriptionFee: number; // ✅ NEW
     grandTotal: number;
   };
 
-  // ✅ UPDATED: Renamed from annualPayment to annualTuitionPayment
   annualTuitionPayment?: AnnualTuitionPayment;
-
   overallStatus: 'pending' | 'partial' | 'completed' | 'overdue';
 
-  // ✅ NEW: Component-specific statuses
+  // ✅ UPDATED: Component statuses with inscription fee
   componentStatus: {
     tuition: 'pending' | 'partial' | 'completed' | 'overdue';
     uniform: 'not_applicable' | 'pending' | 'completed';
     transportation: 'not_applicable' | 'pending' | 'partial' | 'completed' | 'overdue';
+    inscriptionFee: 'not_applicable' | 'pending' | 'completed'; // ✅ NEW
   };
-  discount: StudentDiscount;
 
+  discount: StudentDiscount;
   createdBy: User | string;
   createdAt?: Date;
   updatedAt?: Date;
 }
-
-// ===== UPDATED PAYMENT DASHBOARD =====
 export interface PaymentDashboard {
   overview: {
     totalStudents: number;
@@ -229,24 +241,28 @@ export interface PaymentDashboard {
       tuition: number;
       uniform: number;
       transportation: number;
+      inscriptionFee: number; // ✅ NEW
       grandTotal: number;
     };
     expectedRevenue: {
       tuition: number;
       uniform: number;
       transportation: number;
+      inscriptionFee: number; // ✅ NEW
       grandTotal: number;
     };
     outstandingAmount: {
       tuition: number;
       uniform: number;
       transportation: number;
+      inscriptionFee: number; // ✅ NEW
       grandTotal: number;
     };
     collectionRate: {
       tuition: string;
       uniform: string;
       transportation: string;
+      inscriptionFee: string; // ✅ NEW
       overall: string;
     };
   };
@@ -271,7 +287,6 @@ export interface PaymentDashboard {
       revenue: number;
     };
   };
-  // ✅ NEW: Component usage statistics
   componentStats: {
     uniform: {
       totalStudents: number;
@@ -286,10 +301,15 @@ export interface PaymentDashboard {
       totalRevenue: number;
       expectedRevenue: number;
     };
+    // ✅ NEW: Inscription fee statistics
+    inscriptionFee: {
+      totalStudents: number;
+      paidStudents: number;
+      totalRevenue: number;
+      expectedRevenue: number;
+    };
   };
 }
-
-// ===== UPDATED PAYMENT FILTERS =====
 export interface PaymentFilters {
   search?: string;
   paymentStatus?: 'pending' | 'partial' | 'completed' | 'overdue' | 'no_record';
@@ -297,6 +317,7 @@ export interface PaymentFilters {
   grade?: Grade;
   classId?: string;
   academicYear?: string;
+  component?: 'all' | 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'; // ✅ UPDATED
   page?: number;
   limit?: number;
 }
@@ -312,18 +333,19 @@ export interface RecordPaymentRequest {
   discount?: number;
 }
 
-// ✅ NEW: Generate payment request interface
+// ✅ UPDATED: Generate payment request with inscription fee
 export interface GeneratePaymentRequest {
   academicYear?: string;
   hasUniform?: boolean;
   transportationType?: 'close' | 'far' | null;
+  includeInscriptionFee?: boolean; // ✅ NEW
 }
-
 // ✅ NEW: Bulk generate payment request
 export interface BulkGeneratePaymentRequest {
   academicYear?: string;
   defaultUniform?: boolean;
   defaultTransportation?: 'close' | 'far' | null;
+  defaultInscriptionFee?: boolean; // ✅ NEW
 }
 
 export interface ExportData {
@@ -345,14 +367,14 @@ export interface ExportData {
     'Uniform Status'?: string;
     'Transportation Used'?: string;
     'Transportation Status'?: string;
+    'Inscription Fee Applicable'?: string;      // ✅ NEW
+    'Inscription Fee Status'?: string;          // ✅ NEW
     'Payment Type'?: string;
     'Academic Year': string;
     'Created Date': string;
     'Created By': string;
   }>;
 }
-
-// ===== UPDATED BULK UPDATE RESULT =====
 export interface BulkUpdateResult {
   message: string;
   results: {
@@ -379,6 +401,14 @@ export interface BulkUpdateResult {
         far: { enabled: boolean; monthlyPrice: number; };
       };
     };
+    // ✅ NEW: Inscription fee configuration
+    inscriptionFee: {
+      enabled: boolean;
+      prices: {
+        maternelleAndPrimaire: number;
+        collegeAndLycee: number;
+      };
+    };
   };
 }
 
@@ -403,9 +433,9 @@ export interface PaymentHistoryItem {
   amount: number;
   method: string;
   receiptNumber?: string;
-  type: 'tuition_monthly' | 'tuition_annual' | 'uniform' | 'transportation_monthly';
+  type: 'tuition_monthly' | 'tuition_annual' | 'uniform' | 'transportation_monthly' | 'inscription_fee'; // ✅ UPDATED
   month?: string;
-  component: 'tuition' | 'uniform' | 'transportation';
+  component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'; // ✅ UPDATED
 }
 
 // ===== VALIDATION INTERFACES =====
@@ -472,40 +502,44 @@ export interface AvailableGradesResponse {
   };
 }
 
+// In your models/payment.model.ts file, update this interface:
 
 export interface PaymentDialogData {
   student: StudentWithPayment;
   type: 'monthly' | 'annual';
   monthIndex?: number;
   academicYear: string;
-  component?: 'tuition' | 'uniform' | 'transportation';
+  component?: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'; // ✅ Add inscriptionFee here
 }
 
 
-// ===== FINANCIAL SUMMARY =====
 export interface FinancialSummary {
   totalExpected: {
     tuition: number;
     uniform: number;
     transportation: number;
+    inscriptionFee: number; // ✅ NEW
     grandTotal: number;
   };
   totalCollected: {
     tuition: number;
     uniform: number;
     transportation: number;
+    inscriptionFee: number; // ✅ NEW
     grandTotal: number;
   };
   totalOutstanding: {
     tuition: number;
     uniform: number;
     transportation: number;
+    inscriptionFee: number; // ✅ NEW
     grandTotal: number;
   };
   collectionRate: {
     tuition: number;
     uniform: number;
     transportation: number;
+    inscriptionFee: number; // ✅ NEW
     overall: number;
   };
   averagePaymentAmount: number;
@@ -523,8 +557,8 @@ export interface UpdatePaymentRecordRequest {
   academicYear: string;
   hasUniform: boolean;
   transportationType: 'close' | 'far' | null;
+  hasInscriptionFee?: boolean; // ✅ NEW
 }
-
   export interface StudentDiscount {
     enabled: boolean;
     type?: 'monthly' | 'annual';

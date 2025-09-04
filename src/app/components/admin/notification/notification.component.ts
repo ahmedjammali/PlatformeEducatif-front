@@ -203,7 +203,7 @@ private dateRangeValidator(formGroup: FormGroup): { [key: string]: any } | null 
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('Notifications loaded:', response);
+
           this.notifications = response.notifications || [];
           this.pagination = response.pagination;
           
@@ -401,7 +401,7 @@ viewNotification(notification: Notification): void {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response) => {
-            console.log('Notification marked as read successfully');
+
             // The UI is already updated, so no need to do anything else
           },
           error: (error) => {
@@ -453,7 +453,7 @@ viewNotification(notification: Notification): void {
       .subscribe({
         next: () => {
           this.isMarkingAllRead = false;
-          console.log('All notifications marked as read successfully');
+
           // UI is already updated, no need to reload
         },
         error: (error) => {
@@ -630,7 +630,7 @@ viewNotification(notification: Notification): void {
           .pipe(takeUntil(this.destroy$))
           .subscribe({
             next: (event) => {
-              console.log('Upload event:', event);
+
               if (event.type === HttpEventType.UploadProgress) {
                 this.uploadProgress = Math.round(100 * event.loaded / event.total!);
               } else if (event.type === HttpEventType.Response) {

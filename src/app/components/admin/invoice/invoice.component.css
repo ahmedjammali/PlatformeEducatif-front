@@ -1,15 +1,15 @@
-/* invoice.component.css */
+/* invoice.component.css - Enhanced for larger format with bigger text */
 
 .invoice-container {
-  max-width: 210mm;
-  min-height: 297mm;
+  max-width: 250mm; /* Increased from 210mm */
+  min-height: 350mm; /* Increased from 297mm */
   margin: 0 auto;
   background: white;
-  padding: 20mm;
+  padding: 20mm; /* Increased padding */
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   font-family: Arial, sans-serif;
-  font-size: 11px;
-  line-height: 1.4;
+  font-size: 14px; /* Increased from 10px */
+  line-height: 1.4; /* Slightly increased */
   color: #000;
 }
 
@@ -18,7 +18,7 @@
   ==================================== */
 .invoice-actions {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   padding: 1rem;
   background: #f8f9fa;
   border-radius: 8px;
@@ -28,9 +28,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 12px 24px;
+  padding: 12px 24px; /* Increased padding */
   border-radius: 6px;
-  font-size: 16px;
+  font-size: 16px; /* Increased font size */
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -74,20 +74,20 @@
 }
 
 /* ====================================
-  INVOICE CONTENT
+  INVOICE CONTENT - ENHANCED FORMAT
   ==================================== */
 .invoice-content {
   background: white;
   position: relative;
 }
 
-/* Header Section */
+/* Header Section - Enhanced spacing */
 .invoice-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #000;
-  padding-bottom: 15px;
+  margin-bottom: 25px; /* Increased from 15px */
+  border-bottom: 2px solid #000; /* Thicker border */
+  padding-bottom: 15px; /* Increased padding */
 }
 
 .school-info {
@@ -95,16 +95,16 @@
 }
 
 .school-name {
-  font-size: 16px;
+  font-size: 20px; /* Increased from 14px */
   font-weight: bold;
-  margin-bottom: 5px;
+  margin-bottom: 8px; /* Increased spacing */
   margin-top: 0;
   text-transform: uppercase;
 }
 
 .school-details p {
-  margin: 2px 0;
-  font-size: 10px;
+  margin: 3px 0; /* Increased from 1px */
+  font-size: 13px; /* Increased from 9px */
 }
 
 .invoice-meta {
@@ -113,36 +113,37 @@
 }
 
 .code-tva {
-  font-size: 10px;
-  margin-bottom: 10px;
+  font-size: 13px; /* Increased from 9px */
+  margin-bottom: 12px; /* Increased spacing */
 }
 
-/* Student Info Box */
+/* Student Info Box - Enhanced */
 .student-box {
   border: 2px solid #000;
-  padding: 10px;
-  margin-bottom: 20px;
+  padding: 15px; /* Increased from 8px */
+  margin-bottom: 25px; /* Increased from 15px */
 }
 
 .student-row {
   display: flex;
-  margin: 3px 0;
+  margin: 5px 0; /* Increased from 2px */
+  font-size: 13px; /* Added explicit font size */
 }
 
 .student-label {
-  min-width: 120px;
+  min-width: 150px; /* Increased from 120px */
   font-weight: bold;
 }
 
-/* Invoice Details Box */
+/* Invoice Details Box - Enhanced */
 .invoice-details-box {
   border: 2px solid #000;
-  margin-bottom: 20px;
+  margin-bottom: 25px; /* Increased from 15px */
 }
 
 .invoice-details-header {
   background: #f0f0f0;
-  padding: 8px;
+  padding: 10px; /* Increased from 6px */
   border-bottom: 1px solid #000;
   display: flex;
   justify-content: space-between;
@@ -151,49 +152,50 @@
 
 .facture-title {
   font-weight: bold;
-  font-size: 14px;
+  font-size: 16px; /* Increased from 12px */
 }
 
 .page-info {
-  font-size: 10px;
+  font-size: 12px; /* Increased from 9px */
 }
 
 .invoice-details-content {
-  padding: 10px;
+  padding: 15px; /* Increased from 8px */
 }
 
 .details-row {
   display: flex;
-  margin: 3px 0;
+  margin: 5px 0; /* Increased from 2px */
+  font-size: 13px; /* Added explicit font size */
 }
 
 .details-label {
-  min-width: 100px;
+  min-width: 120px; /* Increased from 100px */
   font-weight: bold;
 }
 
-/* Main Table */
+/* Main Table - Enhanced format */
 .main-table {
   width: 100%;
   border-collapse: collapse;
   border: 2px solid #000;
-  margin-bottom: 20px;
+  margin-bottom: 25px; /* Increased from 15px */
 }
 
 .main-table th {
   border: 1px solid #000;
-  padding: 8px 5px;
+  padding: 12px 8px; /* Increased padding */
   text-align: center;
   font-weight: bold;
   background: #f0f0f0;
-  font-size: 10px;
+  font-size: 13px; /* Increased from 9px */
 }
 
 .main-table td {
   border: 1px solid #000;
-  padding: 8px 5px;
+  padding: 12px 8px; /* Increased padding */
   text-align: center;
-  font-size: 10px;
+  font-size: 12px; /* Increased from 9px */
   vertical-align: top;
 }
 
@@ -225,15 +227,36 @@
   text-align: right;
 }
 
-/* Payment rows in table */
+/* Payment rows in table - Enhanced height */
 .payment-row td {
-  height: 25px;
+  height: 35px; /* Increased from 20px */
+}
+
+/* Hide empty rows - only show rows with actual payments */
+.payment-row:empty,
+.payment-row td:empty {
+  display: none;
+}
+
+/* Hide rows where all cells are empty */
+.payment-row:has(td:empty):has(td:not(:empty)) {
+  display: table-row;
+}
+
+/* More specific: hide rows that are completely empty */
+.main-table tbody tr:empty {
+  display: none !important;
+}
+
+/* Hide empty table rows that contain only empty cells */
+.main-table tbody tr:not(:has(td:not(:empty))) {
+  display: none !important;
 }
 
 /* Service icons styling */
 .service-icon {
-  font-size: 14px;
-  margin-right: 5px;
+  font-size: 16px; /* Increased from 12px */
+  margin-right: 6px; /* Increased spacing */
 }
 
 .amount-positive {
@@ -246,17 +269,17 @@
   font-weight: bold;
 }
 
-/* Totals Section */
+/* Totals Section - Enhanced */
 .totals-section {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 25px; /* Increased from 15px */
 }
 
 .tva-box {
   border: 2px solid #000;
-  padding: 10px;
-  width: 200px;
+  padding: 15px; /* Increased from 8px */
+  width: 220px; /* Increased from 180px */
 }
 
 .tva-table {
@@ -267,9 +290,9 @@
 .tva-table th,
 .tva-table td {
   border: 1px solid #000;
-  padding: 5px;
+  padding: 8px; /* Increased from 4px */
   text-align: center;
-  font-size: 10px;
+  font-size: 12px; /* Increased from 9px */
 }
 
 .tva-table th {
@@ -279,28 +302,29 @@
 
 .totals-box {
   text-align: right;
-  width: 200px;
+  width: 220px; /* Increased from 180px */
 }
 
 .total-line {
-  margin: 5px 0;
-  padding: 5px 0;
+  margin: 6px 0; /* Increased from 4px */
+  padding: 6px 0; /* Increased from 4px */
   display: flex;
   justify-content: space-between;
+  font-size: 13px; /* Increased from 9px */
 }
 
 .total-ht {
   border-top: 1px solid #000;
-  padding-top: 5px;
+  padding-top: 6px; /* Increased from 4px */
   font-weight: bold;
 }
 
 .total-ttc {
   border-top: 2px solid #000;
   border-bottom: 2px solid #000;
-  padding: 8px 0;
+  padding: 10px 0; /* Increased from 6px */
   font-weight: bold;
-  font-size: 12px;
+  font-size: 15px; /* Increased from 10px */
   background: #f9f9f9;
 }
 
@@ -308,115 +332,124 @@
   font-weight: bold;
 }
 
-/* Payment History Section (Optional) */
-.payment-history-section {
-  margin: 20px 0;
-  border: 1px solid #000;
-  padding: 10px;
+/* Component-specific and Current Month Summary - Enhanced */
+.component-summary,
+.current-month-summary {
+  margin: 20px 0; /* Increased from 15px */
+  padding: 15px; /* Increased from 10px */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
 }
 
-.payment-history-section h3 {
-  margin: 0 0 10px 0;
-  font-size: 12px;
+.component-summary h4,
+.current-month-summary h4 {
+  margin: 0 0 15px 0; /* Increased bottom margin */
+  color: #333;
+  font-size: 15px; /* Increased from 11px */
   font-weight: bold;
   text-align: center;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px; /* Increased from 8px */
+  align-items: center;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0; /* Increased from 3px */
+  border-bottom: 1px dotted #ccc;
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-item.summary-total {
+  grid-column: 1 / -1;
+  margin-top: 12px; /* Increased from 8px */
+  padding-top: 12px; /* Increased from 8px */
+  border-top: 2px solid #333;
+  border-bottom: none;
+}
+
+.summary-label {
+  font-size: 12px; /* Increased from 9px */
+  color: #555;
+}
+
+.summary-amount {
+  font-size: 12px; /* Increased from 9px */
+  font-weight: bold;
   color: #333;
 }
 
-.payment-history-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 9px;
+.summary-total .summary-label,
+.summary-total .summary-amount {
+  font-size: 14px; /* Increased from 10px */
+  color: #000;
 }
 
-.payment-history-table th,
-.payment-history-table td {
-  border: 1px solid #000;
-  padding: 4px 2px;
-  text-align: center;
+/* Discount info styling improvements */
+.discount-info {
+  margin-top: 6px; /* Increased from 3px */
+  padding: 6px; /* Increased from 3px */
+  background-color: #e8f5e8;
+  border-radius: 3px;
+  border-left: 3px solid #4caf50; /* Thicker border */
 }
 
-.payment-history-table th {
-  background: #f0f0f0;
-  font-weight: bold;
-  font-size: 8px;
+.discount-info small {
+  display: block;
+  line-height: 1.3;
+  font-size: 10px; /* Increased from 8px */
 }
 
-.payment-history-table td {
-  font-size: 8px;
-}
-
-/* Column widths for payment history table */
-.payment-history-table th:nth-child(1),
-.payment-history-table td:nth-child(1) {
-  width: 12%; /* Date */
-}
-
-.payment-history-table th:nth-child(2),
-.payment-history-table td:nth-child(2) {
-  width: 18%; /* Service */
-  text-align: left;
-}
-
-.payment-history-table th:nth-child(3),
-.payment-history-table td:nth-child(3) {
-  width: 15%; /* Montant HT */
-  text-align: right;
-}
-
-.payment-history-table th:nth-child(4),
-.payment-history-table td:nth-child(4) {
-  width: 12%; /* TVA */
-  text-align: right;
-}
-
-.payment-history-table th:nth-child(5),
-.payment-history-table td:nth-child(5) {
-  width: 15%; /* Montant TTC */
-  text-align: right;
+/* Enhanced payment row styling for better visibility */
+.payment-row .amount-col.amount-positive {
+  background-color: #e8f5e8;
   font-weight: bold;
 }
 
-.payment-history-table th:nth-child(6),
-.payment-history-table td:nth-child(6) {
-  width: 15%; /* Méthode */
+.payment-row .amount-col.amount-pending {
+  background-color: #fff3cd;
+  font-style: italic;
 }
 
-.payment-history-table th:nth-child(7),
-.payment-history-table td:nth-child(7) {
-  width: 13%; /* N° Reçu */
-}
-
-/* Footer */
+/* Footer - Enhanced */
 .footer-section {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-top: 30px;
+  margin-top: 30px; /* Increased from 20px */
 }
 
 .amount-words {
   flex: 1;
-  font-size: 10px;
-  margin-right: 20px;
+  font-size: 12px; /* Increased from 9px */
+  margin-right: 20px; /* Increased from 15px */
   line-height: 1.3;
 }
 
 .signature-section {
   text-align: center;
-  width: 150px;
+  width: 150px; /* Increased from 120px */
 }
 
 .signature-box {
-  border: 1px solid #000;
-  height: 80px;
-  margin-top: 10px;
+  border: 2px solid #000; /* Thicker border */
+  height: 80px; /* Increased from 60px */
+  margin-top: 12px; /* Increased from 8px */
   position: relative;
 }
 
 .signature-label {
-  font-size: 10px;
-  margin-bottom: 5px;
+  font-size: 12px; /* Increased from 9px */
+  margin-bottom: 6px; /* Increased from 4px */
 }
 
 /* TVA Highlighting */
@@ -427,7 +460,7 @@
 }
 
 /* ====================================
-  PRINT STYLES
+  PRINT STYLES - OPTIMIZED FOR LARGER FORMAT
   ==================================== */
 @media print {
   .no-print {
@@ -437,39 +470,103 @@
   .invoice-container {
     max-width: none;
     margin: 0;
-    padding: 15mm;
+    padding: 15mm; /* Adjusted for print */
     box-shadow: none;
     background: white;
     min-height: auto;
+    font-size: 12px; /* Larger print font size */
+    line-height: 1.3;
   }
   
   .invoice-header {
-    margin-bottom: 15px;
-    padding-bottom: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+  }
+  
+  .school-name {
+    font-size: 18px; /* Larger in print */
+  }
+  
+  .school-details p {
+    font-size: 11px;
   }
   
   .student-box {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    padding: 12px;
   }
   
   .invoice-details-box {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .facture-title {
+    font-size: 14px;
   }
   
   .main-table {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .main-table th,
+  .main-table td {
+    padding: 8px 6px; /* Larger padding in print */
+    font-size: 11px; /* Larger font in print */
+  }
+  
+  .payment-row td {
+    height: 30px; /* Taller rows in print */
+  }
+  
+  .service-icon {
+    font-size: 14px;
   }
   
   .totals-section {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .total-line {
+    font-size: 11px;
+  }
+  
+  .total-ttc {
+    font-size: 13px;
   }
   
   .footer-section {
-    margin-top: 20px;
+    margin-top: 25px;
   }
   
-  .payment-history-section {
+  .component-summary,
+  .current-month-summary {
     margin: 15px 0;
+    padding: 10px;
+    background-color: transparent !important;
+    border: 1px solid #000 !important;
+  }
+  
+  .component-summary h4,
+  .current-month-summary h4 {
+    font-size: 13px;
+  }
+  
+  .summary-label,
+  .summary-amount {
+    font-size: 10px;
+  }
+  
+  .discount-info {
+    background-color: transparent !important;
+    border-left: 2px solid #000 !important;
+  }
+  
+  .signature-box {
+    height: 70px;
+  }
+  
+  .amount-words {
+    font-size: 10px;
   }
   
   /* Ensure proper page breaks */
@@ -477,7 +574,8 @@
   .invoice-details-box,
   .totals-section,
   .footer-section,
-  .payment-history-section {
+  .component-summary,
+  .current-month-summary {
     page-break-inside: avoid;
   }
   
@@ -493,37 +591,19 @@
     page-break-inside: avoid;
   }
 
-  .payment-history-table {
-    page-break-inside: auto;
-  }
-
-  .payment-history-table thead {
-    display: table-header-group;
-  }
-
   @page {
-    size: A4;
-    margin: 0;
-  }
-
-  /* Print-specific font adjustments */
-  .payment-history-table {
-    font-size: 8px;
-  }
-
-  .payment-history-table th,
-  .payment-history-table td {
-    padding: 3px 2px;
+    size: A4 portrait; /* Changed back to portrait for better fit */
+    margin: 8mm; /* Minimal margins for maximum space */
   }
 }
 
 /* ====================================
-  RESPONSIVE DESIGN
+  RESPONSIVE DESIGN - Enhanced
   ==================================== */
 @media (max-width: 768px) {
   .invoice-container {
     padding: 1rem;
-    font-size: 10px;
+    font-size: 12px; /* Larger mobile font */
   }
   
   .invoice-header {
@@ -537,7 +617,7 @@
   }
   
   .school-name {
-    font-size: 14px;
+    font-size: 16px; /* Larger mobile header */
   }
   
   .totals-section {
@@ -557,31 +637,22 @@
   
   .amount-words {
     margin-right: 0;
+    font-size: 11px;
   }
   
   .signature-section {
     width: 100%;
-  }
-
-  /* Mobile payment history adjustments */
-  .payment-history-table {
-    font-size: 8px;
-  }
-
-  .payment-history-table th,
-  .payment-history-table td {
-    padding: 2px 1px;
   }
 }
 
 @media (max-width: 480px) {
   .invoice-container {
     padding: 0.5rem;
-    font-size: 9px;
+    font-size: 10px;
   }
   
   .school-name {
-    font-size: 12px;
+    font-size: 14px;
   }
   
   .facture-title {
@@ -590,144 +661,18 @@
   
   .main-table th,
   .main-table td {
-    padding: 4px 2px;
-    font-size: 8px;
+    padding: 6px 3px;
+    font-size: 9px;
   }
   
   .student-box,
   .invoice-details-box {
-    padding: 8px;
+    padding: 10px;
   }
   
   .student-label,
   .details-label {
-    min-width: 80px;
+    min-width: 100px;
     font-size: 9px;
-  }
-
-  /* Very small screen payment history */
-  .payment-history-table {
-    font-size: 7px;
-  }
-
-  .payment-history-table th,
-  .payment-history-table td {
-    padding: 1px;
-  }
-
-  /* Consider hiding some columns on very small screens */
-  .payment-history-table th:nth-child(4),
-  .payment-history-table td:nth-child(4) {
-    display: none; /* Hide TVA column on very small screens */
-  }
-}
-/* Additional CSS for current month invoice features */
-
-/* Current Month Summary Section */
-.current-month-summary {
-  margin: 20px 0;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-}
-
-.current-month-summary h4 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 14px;
-  font-weight: bold;
-  text-align: center;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  align-items: center;
-}
-
-.summary-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 5px 0;
-  border-bottom: 1px dotted #ccc;
-}
-
-.summary-item:last-child {
-  border-bottom: none;
-}
-
-.summary-item.summary-total {
-  grid-column: 1 / -1;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 2px solid #333;
-  border-bottom: none;
-}
-
-.summary-label {
-  font-size: 12px;
-  color: #555;
-}
-
-.summary-amount {
-  font-size: 12px;
-  font-weight: bold;
-  color: #333;
-}
-
-.summary-total .summary-label,
-.summary-total .summary-amount {
-  font-size: 14px;
-  color: #000;
-}
-
-/* Discount info styling improvements */
-.discount-info {
-  margin-top: 5px;
-  padding: 5px;
-  background-color: #e8f5e8;
-  border-radius: 3px;
-  border-left: 3px solid #4caf50;
-}
-
-.discount-info small {
-  display: block;
-  line-height: 1.3;
-}
-
-/* Enhanced payment row styling for better visibility */
-.payment-row .amount-col.amount-positive {
-  background-color: #e8f5e8;
-  font-weight: bold;
-}
-
-.payment-row .amount-col.amount-pending {
-  background-color: #fff3cd;
-  font-style: italic;
-}
-
-/* Print and PDF specific styles */
-@media print {
-  .current-month-summary {
-    background-color: transparent !important;
-    border: 1px solid #000 !important;
-  }
-  
-  .discount-info {
-    background-color: transparent !important;
-    border-left: 2px solid #000 !important;
-  }
-}
-
-/* Responsive adjustments for smaller screens */
-@media (max-width: 768px) {
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .summary-item.summary-total {
-    grid-column: 1;
   }
 }

@@ -16,10 +16,10 @@ export class FooterComponent implements OnInit, OnDestroy {
   schoolName: string = "";
 
   socialLinks = [
-    { icon: '📘', name: 'Facebook', url: 'https://www.facebook.com/soutienscolaiire' },
-    { icon: '📷', name: 'Instagram', url: 'https://instagram.com/hibaschool' },
-    { icon: '🐦', name: 'Twitter', url: 'https://twitter.com/hibaschool' },
-    { icon: '💼', name: 'LinkedIn', url: 'https://linkedin.com/company/hibaschool' }
+    { icon: '📘', name: 'Facebook', url: 'https://www.facebook.com/profile.php?id=100063506409441' },
+    // { icon: '📷', name: 'Instagram', url: 'https://instagram.com/hibaschool' },
+    // { icon: '🐦', name: 'Twitter', url: 'https://twitter.com/hibaschool' },
+    // { icon: '💼', name: 'LinkedIn', url: 'https://linkedin.com/company/hibaschool' }
   ];
 
   quickLinks = [
@@ -46,9 +46,9 @@ export class FooterComponent implements OnInit, OnDestroy {
     // Fetch school name from service
     this.schoolService.getSchool().subscribe({
       next: (response) => {
-        console.log('School data fetched:', response);
+
         this.schoolName = response.school.name || 'Your School';
-        console.log('School Name:', this.schoolName);
+
       },
       error: (error) => {
         console.error('Error fetching school name:', error);

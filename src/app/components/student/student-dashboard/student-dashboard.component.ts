@@ -52,7 +52,7 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
 
   private initializeStudent(): void {
     this.currentUser = this.authService.getCurrentUser();
-    console.log('Current user:', this.currentUser);
+
     if (this.currentUser) {
       this.studentName = this.currentUser.name;
       this.studentId = this.currentUser.id || '';
@@ -92,7 +92,7 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
     const filters = {
       academicYear: this.currentAcademicYear
     };
-    console.log('Loading grades for statistics:', this.studentId, 'with filters:', filters);
+
     
     this.gradeService.getGradesByStudent(this.studentId, filters)
       .pipe(takeUntil(this.destroy$))

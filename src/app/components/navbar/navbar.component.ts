@@ -60,7 +60,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     // Fetch school name from service
     this.schoolService.getSchool().subscribe({
       next: (response) => {
-        console.log('School data fetched:', response);
+
         this.schoolName = response.school?.name || 'École';
         this.isLoading = false;
         this.cdr.detectChanges();

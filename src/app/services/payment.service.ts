@@ -305,24 +305,26 @@ export class PaymentService extends BaseService {
     return iconMap[gradeCategory] || 'help_outline';
   }
 
-  // ✅ NEW: Component colors and icons
-  getComponentColor(component: string): string {
-    const colorMap: { [key: string]: string } = {
-      'tuition': '#2196F3',      // Blue
-      'uniform': '#FF9800',      // Orange
-      'transportation': '#4CAF50' // Green
-    };
-    return colorMap[component] || '#666666';
-  }
+getComponentColor(component: string): string {
+  const colorMap: { [key: string]: string } = {
+    'tuition': '#2196F3',        // Blue
+    'uniform': '#FF9800',        // Orange
+    'transportation': '#4CAF50', // Green
+    'inscriptionFee': '#9C27B0'  // Purple ✅ NEW
+  };
+  return colorMap[component] || '#666666';
+}
 
-  getComponentIcon(component: string): string {
-    const iconMap: { [key: string]: string } = {
-      'tuition': 'school',
-      'uniform': 'checkroom',
-      'transportation': 'directions_bus'
-    };
-    return iconMap[component] || 'help_outline';
-  }
+
+getComponentIcon(component: string): string {
+  const iconMap: { [key: string]: string } = {
+    'tuition': 'school',
+    'uniform': 'checkroom',
+    'transportation': 'directions_bus',
+    'inscriptionFee': 'assignment'  // ✅ NEW
+  };
+  return iconMap[component] || 'help_outline';
+}
 
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('fr-TN', {
@@ -377,67 +379,82 @@ export class PaymentService extends BaseService {
 
 
 
+getPaymentHistory(paymentRecord: StudentPayment): any[] {
+  const history: any[] = [];
 
-  getPaymentHistory(paymentRecord: StudentPayment): any[] {
-    const history: any[] = [];
-
-    // Add tuition payments
-    paymentRecord.tuitionMonthlyPayments?.forEach(payment => {
-      if (payment.paymentDate && payment.paidAmount > 0) {
-        history.push({
-          date: payment.paymentDate,
-          amount: payment.paidAmount,
-          method: payment.paymentMethod,
-          receiptNumber: payment.receiptNumber,
-          type: 'tuition_monthly',
-          month: payment.monthName,
-          component: 'tuition'
-        });
-      }
-    });
-
-    // Add annual tuition payment
-    if (paymentRecord.annualTuitionPayment?.isPaid && paymentRecord.annualTuitionPayment.paymentDate) {
+  // Add tuition payments
+  paymentRecord.tuitionMonthlyPayments?.forEach(payment => {
+    if (payment.paymentDate && payment.paidAmount > 0) {
       history.push({
-        date: paymentRecord.annualTuitionPayment.paymentDate,
-        amount: paymentRecord.tuitionFees.amount - (paymentRecord.annualTuitionPayment.discount || 0),
-        method: paymentRecord.annualTuitionPayment.paymentMethod,
-        receiptNumber: paymentRecord.annualTuitionPayment.receiptNumber,
-        type: 'tuition_annual',
+        date: payment.paymentDate,
+        amount: payment.paidAmount,
+        method: payment.paymentMethod,
+        receiptNumber: payment.receiptNumber,
+        type: 'tuition_monthly',
+        month: payment.monthName,
         component: 'tuition'
       });
     }
+  });
 
-    // Add uniform payment
-    if (paymentRecord.uniform?.isPaid && paymentRecord.uniform.paymentDate) {
+  // Add annual tuition payment
+  if (paymentRecord.annualTuitionPayment?.isPaid && paymentRecord.annualTuitionPayment.paymentDate) {
+    history.push({
+      date: paymentRecord.annualTuitionPayment.paymentDate,
+      amount: paymentRecord.tuitionFees.amount - (paymentRecord.annualTuitionPayment.discount || 0),
+      method: paymentRecord.annualTuitionPayment.paymentMethod,
+      receiptNumber: paymentRecord.annualTuitionPayment.receiptNumber,
+      type: 'tuition_annual',
+      component: 'tuition'
+    });
+  }
+
+  // Add uniform payment
+  if (paymentRecord.uniform?.isPaid && paymentRecord.uniform.paymentDate) {
+    history.push({
+      date: paymentRecord.uniform.paymentDate,
+      amount: paymentRecord.uniform.price,
+      method: paymentRecord.uniform.paymentMethod,
+      receiptNumber: paymentRecord.uniform.receiptNumber,
+      type: 'uniform',
+      component: 'uniform'
+    });
+  }
+
+  // ✅ NEW: Add inscription fee payment
+  if (paymentRecord.inscriptionFee?.isPaid && paymentRecord.inscriptionFee.paymentDate) {
+    history.push({
+      date: paymentRecord.inscriptionFee.paymentDate,
+      amount: paymentRecord.inscriptionFee.price,
+      method: paymentRecord.inscriptionFee.paymentMethod,
+      receiptNumber: paymentRecord.inscriptionFee.receiptNumber,
+      type: 'inscription_fee',
+      component: 'inscriptionFee'
+    });
+  }
+
+  // Add transportation payments
+  paymentRecord.transportation?.monthlyPayments?.forEach(payment => {
+    if (payment.paymentDate && payment.paidAmount > 0) {
       history.push({
-        date: paymentRecord.uniform.paymentDate,
-        amount: paymentRecord.uniform.price,
-        method: paymentRecord.uniform.paymentMethod,
-        receiptNumber: paymentRecord.uniform.receiptNumber,
-        type: 'uniform',
-        component: 'uniform'
+        date: payment.paymentDate,
+        amount: payment.paidAmount,
+        method: payment.paymentMethod,
+        receiptNumber: payment.receiptNumber,
+        type: 'transportation_monthly',
+        month: payment.monthName,
+        component: 'transportation'
       });
     }
+  });
 
-    // Add transportation payments
-    paymentRecord.transportation?.monthlyPayments?.forEach(payment => {
-      if (payment.paymentDate && payment.paidAmount > 0) {
-        history.push({
-          date: payment.paymentDate,
-          amount: payment.paidAmount,
-          method: payment.paymentMethod,
-          receiptNumber: payment.receiptNumber,
-          type: 'transportation_monthly',
-          month: payment.monthName,
-          component: 'transportation'
-        });
-      }
-    });
-
-    // Sort by date (most recent first)
-    return history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }
+  // Sort by date (most recent first)
+  return history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+// ✅ NEW: Helper method to get inscription fee label
+getInscriptionFeeLabel(): string {
+  return 'Frais d\'inscription';
+}
 
   // ===== GRADE LABEL HELPERS =====
   
@@ -517,6 +534,20 @@ removeStudentDiscount(
   );
 }
 
+
+recordInscriptionFeePayment(
+  studentId: string,
+  payment: Omit<RecordPaymentRequest, 'monthIndex' | 'amount'>,
+  academicYear?: string
+): Observable<StudentPayment> {
+  const params = academicYear ? this.buildParams({ academicYear }) : undefined;
+  return this.http.post<{ message: string; paymentRecord: StudentPayment }>(
+    `${this.apiUrl}${this.endpoint}/student/${studentId}/payment/inscription`,
+    payment,
+    { params }  
+  ).pipe(map(response => response.paymentRecord));
+}
+
 // ✅ UTILITY: Check if student has discount
 hasDiscount(paymentRecord: StudentPayment): boolean {
   return paymentRecord?.discount?.enabled || false;
@@ -534,6 +565,33 @@ getDiscountDisplayText(discount: StudentDiscount): string {
 calculateDiscountAmount(originalAmount: number, percentage: number): number {
   return (originalAmount * percentage) / 100;
 }
+isInscriptionFeeApplicableForGrade(gradeCategory: GradeCategory, config: PaymentConfiguration): boolean {
+  if (!config?.inscriptionFee?.enabled) return false;
+  
+  if (gradeCategory === 'maternelle' || gradeCategory === 'primaire') {
+    return config.inscriptionFee.prices.maternelleAndPrimaire > 0;
+  }
+  
+  if (gradeCategory === 'secondaire') {
+    return config.inscriptionFee.prices.collegeAndLycee > 0;
+  }
+  
+  return false;
+}
 
+// ✅ NEW: Helper method to get inscription fee amount for grade category
+getInscriptionFeeForGradeCategory(gradeCategory: GradeCategory, config: PaymentConfiguration): number {
+  if (!config?.inscriptionFee?.enabled) return 0;
+  
+  if (gradeCategory === 'maternelle' || gradeCategory === 'primaire') {
+    return config.inscriptionFee.prices.maternelleAndPrimaire || 0;
+  }
+  
+  if (gradeCategory === 'secondaire') {
+    return config.inscriptionFee.prices.collegeAndLycee || 0;
+  }
+  
+  return 0;
+}
 
 }

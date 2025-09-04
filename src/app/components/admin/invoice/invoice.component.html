@@ -1,4 +1,4 @@
-<!-- invoice.component.html - Updated for current month display -->
+<!-- invoice.component.html - Updated to show only payment rows -->
 <div class="invoice-container" *ngIf="invoiceData">
   <div class="invoice-actions no-print">
     <button 
@@ -49,7 +49,6 @@
     <!-- Invoice Details Box -->
     <div class="invoice-details-box">
       <div class="invoice-details-header">
-        <!-- ✅ UPDATED: Dynamic title based on context -->
         <span class="facture-title">{{ getInvoiceTitle() }}</span>
         <span class="page-info">Page 1/1</span>
       </div>
@@ -66,7 +65,6 @@
           <span class="details-label">Échéance :</span>
           <span>{{ formatDateShort(invoiceData.generatedDate) }}</span>
         </div>
-        <!-- ✅ NEW: Show period info for current month invoices -->
         <div class="details-row" *ngIf="showCurrentMonthOnly && invoiceData.currentMonthInfo">
           <span class="details-label">Période :</span>
           <span>{{ invoiceData.currentMonthInfo.monthName }}</span>
@@ -87,14 +85,12 @@
         </tr>
       </thead>
       <tbody>
-        <!-- Tuition Fee Row - Only show if there's a payment for current period -->
-        <tr class="payment-row" *ngIf="getHTAmount('tuition') > 0">
+        <!-- Tuition Fee Row - Only display if amount > 0 -->
+        <tr class="payment-row" *ngIf="!componentOnly && getHTAmount('tuition') > 0">
           <td>001</td>
           <td class="designation-col">
             <span class="service-icon">📚</span>
-            <!-- ✅ UPDATED: Dynamic description based on context -->
             {{ getTuitionPeriodDescription() }}
-            <!-- ✅ UPDATED: Show discount info if applicable for current context -->
             <div *ngIf="hasDiscount()" class="discount-info">
               <small style="color: #666; font-style: italic;">
                 Montant original: {{ formatCurrencyTable(getOriginalTuitionAmount()) }} DT<br>
@@ -104,7 +100,6 @@
           </td>
           <td>1,00</td>
           <td class="price-col">
-            <!-- ✅ UPDATED: Show appropriate original amount based on context -->
             {{ formatCurrencyTable(hasDiscount() ? getOriginalTuitionAmount() : getOriginalAmountForCurrentMonth('tuition')) }}
           </td>
           <td class="amount-col" [class.amount-positive]="getHTAmount('tuition') > 0">
@@ -113,14 +108,16 @@
           <td>{{ formatCurrencyTable(getTVAAmount('tuition')) }}</td>
         </tr>
 
-        <!-- Uniform Row - Only show if purchased and (for current month view) paid this month -->
-        <tr class="payment-row" *ngIf="hasUniformForCurrentInvoice()">
-          <td>{{ getHTAmount('tuition') > 0 ? '002' : '001' }}</td>
+        <!-- Uniform Row - Only display if has uniform payment -->
+        <tr class="payment-row" *ngIf="hasUniformForCurrentInvoice() && getHTAmount('uniform') > 0">
+          <td>{{ (!componentOnly && getHTAmount('tuition') > 0) ? '002' : '001' }}</td>
           <td class="designation-col">
             <span class="service-icon">👔</span>
             UNIFORME SCOLAIRE
-            <!-- ✅ NEW: Show period context for current month view -->
-            <div *ngIf="showCurrentMonthOnly && invoiceData.currentMonthInfo" style="font-size: 9px; color: #666;">
+            <div *ngIf="componentOnly === 'uniform'" style="font-size: 9px; color: #666;">
+              Payé le {{ formatDateShort(invoiceData.student.paymentRecord?.uniform?.paymentDate || invoiceData.generatedDate) }}
+            </div>
+            <div *ngIf="showCurrentMonthOnly && invoiceData.currentMonthInfo && componentOnly !== 'uniform'" style="font-size: 9px; color: #666;">
               Payé le {{ formatDateShort(invoiceData.currentMonthInfo.paymentDate || invoiceData.generatedDate) }}
             </div>
           </td>
@@ -132,12 +129,11 @@
           <td>{{ formatCurrencyTable(getTVAAmount('uniform')) }}</td>
         </tr>
 
-        <!-- Transportation Row - Only show if using and (for current month view) paid this month -->
-        <tr class="payment-row" *ngIf="hasTransportationForCurrentInvoice()">
-          <td>{{ (getHTAmount('tuition') > 0 ? 1 : 0) + (hasUniformForCurrentInvoice() ? 1 : 0) + 1 | number:'3.0-0' }}</td>
+        <!-- Transportation Row - Only display if amount > 0 -->
+        <tr class="payment-row" *ngIf="!componentOnly && hasTransportationForCurrentInvoice() && getHTAmount('transportation') > 0">
+          <td>{{ getNextReferenceNumber() }}</td>
           <td class="designation-col">
             <span class="service-icon">🚌</span>
-            <!-- ✅ UPDATED: Dynamic description with period context -->
             {{ getTransportationPeriodDescription() }}
           </td>
           <td>1,00</td>
@@ -148,17 +144,28 @@
           <td>{{ formatCurrencyTable(getTVAAmount('transportation')) }}</td>
         </tr>
 
-        <!-- Empty rows for spacing -->
-        <ng-container *ngFor="let i of getEmptyRows()">
-          <tr class="payment-row">
-            <td></td>
-            <td class="designation-col"></td>
-            <td></td>
-            <td class="price-col"></td>
-            <td class="amount-col"></td>
-            <td></td>
-          </tr>
-        </ng-container>
+        <!-- Inscription Fee Row - Only display if amount > 0 -->
+        <tr class="payment-row" *ngIf="hasInscriptionFeeForCurrentInvoice() && getHTAmount('inscriptionFee') > 0">
+          <td>{{ getNextReferenceNumber() }}</td>
+          <td class="designation-col">
+            <span class="service-icon">📝</span>
+            FRAIS D'INSCRIPTION
+            <div *ngIf="componentOnly === 'inscriptionFee'" style="font-size: 9px; color: #666;">
+              Payé le {{ formatDateShort(invoiceData.student.paymentRecord?.inscriptionFee?.paymentDate || invoiceData.generatedDate) }}
+            </div>
+            <div *ngIf="showCurrentMonthOnly && invoiceData.currentMonthInfo && componentOnly !== 'inscriptionFee'" style="font-size: 9px; color: #666;">
+              Payé le {{ formatDateShort(invoiceData.currentMonthInfo.paymentDate || invoiceData.generatedDate) }}
+            </div>
+          </td>
+          <td>1,00</td>
+          <td class="price-col">{{ formatCurrencyTable(getOriginalAmountForCurrentMonth('inscriptionFee')) }}</td>
+          <td class="amount-col" [class.amount-positive]="getHTAmount('inscriptionFee') > 0">
+            {{ formatCurrencyTable(getHTAmount('inscriptionFee')) }}
+          </td>
+          <td>{{ formatCurrencyTable(getTVAAmount('inscriptionFee')) }}</td>
+        </tr>
+
+        <!-- NO EMPTY ROWS - Removed the empty rows section completely -->
       </tbody>
     </table>
 
@@ -203,8 +210,28 @@
       </div>
     </div>
 
-    <!-- ✅ NEW: Current Month Summary (for current month invoices only) -->
-    <div class="current-month-summary" *ngIf="showCurrentMonthOnly && invoiceData.currentMonthInfo">
+    <!-- Component-specific Summary -->
+    <div class="component-summary" *ngIf="componentOnly">
+      <h4 *ngIf="componentOnly === 'uniform'">Résumé du Paiement - Uniforme Scolaire</h4>
+      <h4 *ngIf="componentOnly === 'inscriptionFee'">Résumé du Paiement - Frais d'Inscription</h4>
+      <div class="summary-grid">
+        <div class="summary-item summary-total">
+          <span class="summary-label"><strong>Montant Payé:</strong></span>
+          <span class="summary-amount"><strong>{{ formatCurrencyTable(invoiceData.totalsWithTVA.totalTTC) }} DT</strong></span>
+        </div>
+        <div class="summary-item" *ngIf="componentOnly === 'uniform'">
+          <span class="summary-label">Date de paiement:</span>
+          <span class="summary-amount">{{ formatDateShort(invoiceData.student.paymentRecord?.uniform?.paymentDate || invoiceData.generatedDate) }}</span>
+        </div>
+        <div class="summary-item" *ngIf="componentOnly === 'inscriptionFee'">
+          <span class="summary-label">Date de paiement:</span>
+          <span class="summary-amount">{{ formatDateShort(invoiceData.student.paymentRecord?.inscriptionFee?.paymentDate || invoiceData.generatedDate) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Current Month Summary (for current month invoices only) -->
+    <div class="current-month-summary" *ngIf="!componentOnly && showCurrentMonthOnly && invoiceData.currentMonthInfo">
       <h4>Résumé du Paiement - {{ invoiceData.currentMonthInfo.monthName }}</h4>
       <div class="summary-grid">
         <div class="summary-item" *ngIf="getHTAmount('tuition') > 0">
@@ -219,40 +246,15 @@
           <span class="summary-label">Transport:</span>
           <span class="summary-amount">{{ formatCurrencyTable(getHTAmount('transportation')) }} DT</span>
         </div>
+        <div class="summary-item" *ngIf="getHTAmount('inscriptionFee') > 0">
+          <span class="summary-label">Frais d'inscription:</span>
+          <span class="summary-amount">{{ formatCurrencyTable(getHTAmount('inscriptionFee')) }} DT</span>
+        </div>
         <div class="summary-item summary-total">
           <span class="summary-label"><strong>Total Payé:</strong></span>
           <span class="summary-amount"><strong>{{ formatCurrencyTable(invoiceData.totalsWithTVA.totalTTC) }} DT</strong></span>
         </div>
       </div>
-    </div>
-
-    <!-- Payment History Section (if needed) -->
-    <div class="payment-history-section" *ngIf="showPaymentHistory && invoiceData.payments.length > 0">
-      <h3>Détail des Paiements</h3>
-      <table class="payment-history-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Service</th>
-            <th>Montant HT</th>
-            <th>TVA</th>
-            <th>Montant TTC</th>
-            <th>Méthode</th>
-            <th>N° Reçu</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let payment of invoiceData.payments">
-            <td>{{ formatDateShort(payment.date) }}</td>
-            <td>{{ getComponentLabel(payment.component) }}</td>
-            <td>{{ formatCurrencyTable(payment.amount) }}</td>
-            <td>{{ formatCurrencyTable(payment.amount * invoiceData.tva.rate / 100) }}</td>
-            <td>{{ formatCurrencyTable(payment.amount * (1 + invoiceData.tva.rate / 100)) }}</td>
-            <td>{{ getPaymentMethodLabel(payment.method) }}</td>
-            <td>{{ payment.receiptNumber || '-' }}</td>
-          </tr>
-        </tbody>
-      </table>
     </div>
 
     <!-- Footer -->

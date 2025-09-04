@@ -1,4 +1,4 @@
-// Enhanced invoice-dialog.component.ts - Updated for monthly payments
+// Enhanced invoice-dialog.component.ts - Updated for component-specific invoices
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { StudentWithPayment } from '../../../models/payment.model';
 
@@ -13,15 +13,19 @@ import { StudentWithPayment } from '../../../models/payment.model';
             <div class="header-text">
               <h2>
                 Facture - {{ student?.name }}
-                <!-- ✅ NEW: Show month context in header -->
                 <span *ngIf="showCurrentMonthOnly && monthName" class="month-badge">
                   {{ monthName }}
                 </span>
+                <span *ngIf="componentOnly === 'uniform'" class="component-badge uniform-badge">
+                  Uniforme
+                </span>
+                <span *ngIf="componentOnly === 'inscriptionFee'" class="component-badge inscription-badge">
+                  Frais d'inscription
+                </span>
               </h2>
               <p>{{ academicYear }}</p>
-              <!-- ✅ NEW: Show invoice type indicator -->
               <small class="invoice-type">
-                {{ showCurrentMonthOnly ? 'Facture mensuelle' : 'Facture cumulative' }}
+                {{ getInvoiceTypeDescription() }}
               </small>
             </div>
           </div>
@@ -31,21 +35,20 @@ import { StudentWithPayment } from '../../../models/payment.model';
         </div>
         
         <div class="invoice-dialog-content">
-          <!-- ✅ UPDATED: Pass the new parameters to invoice component -->
           <app-invoice 
             [student]="student" 
             [academicYear]="academicYear"
             [showCurrentMonthOnly]="showCurrentMonthOnly"
             [currentMonthIndex]="currentMonthIndex"
             [currentPaymentDate]="currentPaymentDate"
-            [showPaymentHistory]="!showCurrentMonthOnly">
+            [componentOnly]="componentOnly"
+            [showPaymentHistory]="!showCurrentMonthOnly && !componentOnly">
           </app-invoice>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    /* Base styles remain the same as your original component */
     .invoice-dialog-overlay {
       position: fixed;
       top: 0;
@@ -98,6 +101,30 @@ import { StudentWithPayment } from '../../../models/payment.model';
       }
     }
 
+    @keyframes slideOutScale {
+      from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+      }
+    }
+
+    @keyframes fadeOutBackdrop {
+      from {
+        opacity: 1;
+        backdrop-filter: blur(15px);
+        background: rgba(255, 255, 255, 0.85);
+      }
+      to {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+        background: rgba(255, 255, 255, 0);
+      }
+    }
+
     .invoice-dialog-header {
       background: var(--gradient-primary, linear-gradient(135deg, #4A628A, #7AB2D3));
       color: var(--color-white, white);
@@ -143,6 +170,7 @@ import { StudentWithPayment } from '../../../models/payment.model';
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
     .header-text p {
@@ -152,7 +180,6 @@ import { StudentWithPayment } from '../../../models/payment.model';
       font-weight: 500;
     }
 
-    /* ✅ NEW: Month badge styling */
     .month-badge {
       background: rgba(255, 255, 255, 0.2);
       padding: 4px 8px;
@@ -162,7 +189,24 @@ import { StudentWithPayment } from '../../../models/payment.model';
       border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
-    /* ✅ NEW: Invoice type indicator */
+    .component-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .uniform-badge {
+      background: rgba(255, 152, 0, 0.2);
+      color: white;
+    }
+
+    .inscription-badge {
+      background: rgba(156, 39, 176, 0.2);
+      color: white;
+    }
+
     .invoice-type {
       display: block;
       margin-top: 2px;
@@ -236,17 +280,36 @@ import { StudentWithPayment } from '../../../models/payment.model';
         background: white !important;
       }
     }
+
+    @media (max-width: 768px) {
+      .header-text h2 {
+        font-size: 1rem;
+      }
+      
+      .component-badge,
+      .month-badge {
+        font-size: 0.65rem;
+        padding: 3px 6px;
+      }
+      
+      .header-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+      }
+    }
   `]
 })
 export class InvoiceDialogComponent implements OnInit, OnDestroy {
   @Input() student!: StudentWithPayment;
   @Input() academicYear!: string;
-  
-  // ✅ NEW: Add inputs for monthly payment context
   @Input() showCurrentMonthOnly: boolean = false;
   @Input() currentMonthIndex?: number;
   @Input() currentPaymentDate?: Date;
-  @Input() monthName?: string; // Display name for the month
+  @Input() monthName?: string;
+  
+  // NEW: Component-specific invoice inputs
+  @Input() componentOnly?: 'uniform' | 'inscriptionFee';
   
   @Output() dialogClosed = new EventEmitter<void>();
 
@@ -297,5 +360,18 @@ export class InvoiceDialogComponent implements OnInit, OnDestroy {
 
   onOverlayClick(event: Event): void {
     this.closeDialog();
+  }
+
+  getInvoiceTypeDescription(): string {
+    if (this.componentOnly === 'uniform') {
+      return 'Facture uniforme scolaire';
+    }
+    if (this.componentOnly === 'inscriptionFee') {
+      return 'Facture frais d\'inscription';
+    }
+    if (this.showCurrentMonthOnly && this.monthName) {
+      return `Facture mensuelle - ${this.monthName}`;
+    }
+    return 'Facture cumulative';
   }
 }

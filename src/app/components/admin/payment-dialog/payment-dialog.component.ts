@@ -17,8 +17,8 @@ export interface PaymentDialogData {
   type: 'monthly' | 'annual';
   monthIndex?: number;
   academicYear: string;
-  component?: 'tuition' | 'uniform' | 'transportation';
-}
+  component?: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'; // ✅ Add inscriptionFee
+} 
 
 @Component({
   selector: 'app-payment-dialog',
@@ -85,13 +85,28 @@ export class PaymentDialogComponent implements OnInit, OnDestroy {
 
   private setupFormDefaults(): void {
     // For uniform payments, we don't need month selection
-    if (this.data.component === 'uniform') {
-      const uniformPrice = this.data.student.paymentRecord?.uniform?.price || 0;
-      this.paymentForm.patchValue({
-        amount: uniformPrice
-      });
-      return;
-    }
+   if (this.data.component === 'uniform') {
+    const uniformPrice = this.data.student.paymentRecord?.uniform?.price || 0;
+    this.paymentForm.patchValue({
+      amount: uniformPrice
+    });
+    // Remove month validators for uniform
+    this.paymentForm.get('monthIndex')?.clearValidators();
+    this.paymentForm.get('monthIndex')?.updateValueAndValidity();
+    return;
+  }
+
+  // ✅ FIX: For inscription fee payments, set the fee amount
+  if (this.data.component === 'inscriptionFee') {
+    const inscriptionFeePrice = this.data.student.paymentRecord?.inscriptionFee?.price || 0;
+    this.paymentForm.patchValue({
+      amount: inscriptionFeePrice
+    });
+    // Remove month validators for inscription fee
+    this.paymentForm.get('monthIndex')?.clearValidators();
+    this.paymentForm.get('monthIndex')?.updateValueAndValidity();
+    return;
+  }
 
     if (this.data.type === 'monthly' && this.data.monthIndex !== undefined) {
       // Pre-select specific month for tuition or transportation
@@ -191,77 +206,92 @@ export class PaymentDialogComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  private validateDataInput(): boolean {
-    if (!this.data) {
-      console.error('PaymentDialogComponent: Missing required data input');
-      return false;
-    }
-
-    if (!this.data.student) {
-      console.error('PaymentDialogComponent: Missing student data');
-      return false;
-    }
-
-    if (!this.data.student._id) {
-      console.error('PaymentDialogComponent: Missing student ID');
-      return false;
-    }
-
-    if (!this.data.academicYear) {
-      console.error('PaymentDialogComponent: Missing academic year');
-      return false;
-    }
-
-    if (!['monthly', 'annual'].includes(this.data.type)) {
-      console.error('PaymentDialogComponent: Invalid payment type');
-      return false;
-    }
-
-    if (this.data.component && !['tuition', 'uniform', 'transportation'].includes(this.data.component)) {
-      console.error('PaymentDialogComponent: Invalid payment component');
-      return false;
-    }
-
-    return true;
+  // Line 129 - Update the validation check to include inscriptionFee
+private validateDataInput(): boolean {
+  if (!this.data) {
+    console.error('PaymentDialogComponent: Missing required data input');
+    return false;
   }
 
-  private initializeComponentDefaults(): void {
-    // Set default component based on payment type if not specified
-    if (!this.data.component) {
-      this.data.component = 'tuition'; // Default to tuition
-    }
+  if (!this.data.student) {
+    console.error('PaymentDialogComponent: Missing student data');
+    return false;
+  }
 
-    // Validate component compatibility with type
-    if (this.data.component === 'uniform') {
-      // Uniform payments are always considered as one-time payments (not monthly/annual in the traditional sense)
-      // But we keep the type as provided for consistency
-      console.log('Uniform payment - one-time payment');
-    }
+  if (!this.data.student._id) {
+    console.error('PaymentDialogComponent: Missing student ID');
+    return false;
+  }
 
-    if (this.data.component === 'transportation' && this.data.type === 'annual') {
-      console.warn('PaymentDialogComponent: Transportation payments are typically not annual, adjusting to monthly');
+  if (!this.data.academicYear) {
+    console.error('PaymentDialogComponent: Missing academic year');
+    return false;
+  }
+
+  if (!['monthly', 'annual'].includes(this.data.type)) {
+    console.error('PaymentDialogComponent: Invalid payment type');
+    return false;
+  }
+
+  // ✅ FIX: Add inscriptionFee to the valid components list
+  if (this.data.component && !['tuition', 'uniform', 'transportation', 'inscriptionFee'].includes(this.data.component)) {
+    console.error('PaymentDialogComponent: Invalid payment component');
+    return false;
+  }
+
+  return true;
+}
+
+private initializeComponentDefaults(): void {
+  // Set default component based on payment type if not specified
+  if (!this.data.component) {
+    this.data.component = 'tuition'; // Default to tuition
+  }
+
+  // Validate component compatibility with type
+  if (this.data.component === 'uniform') {
+    // Uniform is always a one-time payment
+    if (this.data.type === 'annual') {
+      console.warn('PaymentDialogComponent: Uniform payments are one-time, adjusting to monthly');
       this.data.type = 'monthly';
     }
   }
 
-  // ===== DATA HELPER METHODS =====
-
-  getUnpaidMonths(): MonthlyPayment[] {
-    if (!this.data.student.paymentRecord || this.data.component === 'uniform') return [];
-    
-    let monthlyPayments: MonthlyPayment[] = [];
-    
-    if (this.data.component === 'tuition') {
-      monthlyPayments = this.data.student.paymentRecord.tuitionMonthlyPayments || [];
-    } else if (this.data.component === 'transportation') {
-      monthlyPayments = this.data.student.paymentRecord.transportation?.monthlyPayments || [];
+  // ✅ FIX: Inscription fee is always a one-time payment
+  if (this.data.component === 'inscriptionFee') {
+    if (this.data.type === 'annual') {
+      console.warn('PaymentDialogComponent: Inscription fee payments are one-time, adjusting to monthly');
+      this.data.type = 'monthly';
     }
-    
-    return monthlyPayments
-      .filter(m => m.status !== 'paid')
-      .sort((a, b) => a.month - b.month);
   }
 
+  if (this.data.component === 'transportation' && this.data.type === 'annual') {
+    console.warn('PaymentDialogComponent: Transportation payments are typically not annual, adjusting to monthly');
+    this.data.type = 'monthly';
+  }
+}
+  // ===== DATA HELPER METHODS =====
+
+getUnpaidMonths(): MonthlyPayment[] {
+  // ✅ FIX: Add inscriptionFee to the exclusion list
+  if (!this.data.student.paymentRecord || 
+      this.data.component === 'uniform' || 
+      this.data.component === 'inscriptionFee') {
+    return [];
+  }
+  
+  let monthlyPayments: MonthlyPayment[] = [];
+  
+  if (this.data.component === 'tuition') {
+    monthlyPayments = this.data.student.paymentRecord.tuitionMonthlyPayments || [];
+  } else if (this.data.component === 'transportation') {
+    monthlyPayments = this.data.student.paymentRecord.transportation?.monthlyPayments || [];
+  }
+  
+  return monthlyPayments
+    .filter(m => m.status !== 'paid')
+    .sort((a, b) => a.month - b.month);
+}
   getMonthByIndex(index: number): MonthlyPayment | null {
     if (!this.data.student.paymentRecord || this.data.component === 'uniform') return null;
     
@@ -291,9 +321,14 @@ export class PaymentDialogComponent implements OnInit, OnDestroy {
   }
 
   getMaxPayableAmount(): number {
-    if (this.data.component === 'uniform') {
-      return this.data.student.paymentRecord?.uniform?.price || 0;
-    }
+     if (this.data.component === 'uniform') {
+    return this.data.student.paymentRecord?.uniform?.price || 0;
+  }
+  
+  // ✅ NEW: Handle inscription fee
+  if (this.data.component === 'inscriptionFee') {
+    return this.data.student.paymentRecord?.inscriptionFee?.price || 0;
+  }
     
     if (this.data.type === 'monthly' && this.selectedMonth) {
       return this.selectedMonth.amount - this.selectedMonth.paidAmount;
@@ -339,31 +374,33 @@ export class PaymentDialogComponent implements OnInit, OnDestroy {
   }
 
   getComponentLabel(): string {
-    switch (this.data.component) {
-      case 'tuition': return 'Frais Scolaires';
-      case 'uniform': return 'Uniforme';
-      case 'transportation': return 'Transport';
-      default: return 'Paiement';
-    }
+  switch (this.data.component) {
+    case 'tuition': return 'Frais Scolaires';
+    case 'uniform': return 'Uniforme';
+    case 'transportation': return 'Transport';
+    case 'inscriptionFee': return 'Frais d\'Inscription'; // ✅ NEW
+    default: return 'Paiement';
   }
+}
 
-  getComponentIcon(): string {
-    switch (this.data.component) {
-      case 'tuition': return '📚';
-      case 'uniform': return '👔';
-      case 'transportation': return '🚌';
-      default: return '💳';
-    }
+ getComponentIcon(): string {
+  switch (this.data.component) {
+    case 'tuition': return '📚';
+    case 'uniform': return '👔';
+    case 'transportation': return '🚌';
+    case 'inscriptionFee': return '📋'; // ✅ NEW
+    default: return '💳';
   }
-
-  getComponentColor(): string {
-    switch (this.data.component) {
-      case 'tuition': return '#2196F3';
-      case 'uniform': return '#FF9800';
-      case 'transportation': return '#4CAF50';
-      default: return '#666666';
-    }
+}
+getComponentColor(): string {
+  switch (this.data.component) {
+    case 'tuition': return '#2196F3';
+    case 'uniform': return '#FF9800';
+    case 'transportation': return '#4CAF50';
+    case 'inscriptionFee': return '#9C27B0'; // ✅ NEW - purple color
+    default: return '#666666';
   }
+}
 
   getPaymentTypeLabel(): string {
     if (this.data.component === 'uniform') {
@@ -394,19 +431,20 @@ export class PaymentDialogComponent implements OnInit, OnDestroy {
     return this.data.student.paymentRecord?.transportation?.type || '';
   }
 
-  getSubmitButtonText(): string {
-    switch (this.data.component) {
-      case 'tuition': 
-        return this.data.type === 'annual' ? 'Enregistrer Paiement Annuel' : 'Enregistrer Paiement Mensuel';
-      case 'uniform': 
-        return 'Enregistrer Paiement Uniforme';
-      case 'transportation': 
-        return 'Enregistrer Paiement Transport';
-      default: 
-        return 'Enregistrer Paiement';
-    }
+getSubmitButtonText(): string {
+  switch (this.data.component) {
+    case 'tuition': 
+      return this.data.type === 'annual' ? 'Enregistrer Paiement Annuel' : 'Enregistrer Paiement Mensuel';
+    case 'uniform': 
+      return 'Enregistrer Paiement Uniforme';
+    case 'transportation': 
+      return 'Enregistrer Paiement Transport';
+    case 'inscriptionFee': 
+      return 'Enregistrer Paiement Frais d\'Inscription'; // ✅ NEW
+    default: 
+      return 'Enregistrer Paiement';
   }
-
+}
   getMaxPaymentDate(): string {
     return this.formatDateForInput(new Date());
   }
@@ -473,28 +511,31 @@ export class PaymentDialogComponent implements OnInit, OnDestroy {
     return Math.max(0, amount - discount);
   }
 
-  calculateNewBalance(): number {
-    if (!this.data.student.paymentRecord) return 0;
-    
-    const paymentAmount = this.calculateTotal();
-    let currentRemaining = 0;
-    
-    switch (this.data.component) {
-      case 'tuition':
-        currentRemaining = this.data.student.paymentRecord.remainingAmounts?.tuition || 0;
-        break;
-      case 'uniform':
-        currentRemaining = this.data.student.paymentRecord.uniform?.price || 0;
-        break;
-      case 'transportation':
-        currentRemaining = this.data.student.paymentRecord.remainingAmounts?.transportation || 0;
-        break;
-      default:
-        currentRemaining = 0;
-    }
-    
-    return Math.max(0, currentRemaining - paymentAmount);
+calculateNewBalance(): number {
+  if (!this.data.student.paymentRecord) return 0;
+  
+  const paymentAmount = this.calculateTotal();
+  let currentRemaining = 0;
+  
+  switch (this.data.component) {
+    case 'tuition':
+      currentRemaining = this.data.student.paymentRecord.remainingAmounts?.tuition || 0;
+      break;
+    case 'uniform':
+      currentRemaining = this.data.student.paymentRecord.uniform?.price || 0;
+      break;
+    case 'transportation':
+      currentRemaining = this.data.student.paymentRecord.remainingAmounts?.transportation || 0;
+      break;
+    case 'inscriptionFee': // ✅ NEW
+      currentRemaining = this.data.student.paymentRecord.inscriptionFee?.price || 0;
+      break;
+    default:
+      currentRemaining = 0;
   }
+  
+  return Math.max(0, currentRemaining - paymentAmount);
+}
 
   calculateNewTotalBalance(): number {
     if (!this.data.student.paymentRecord) return 0;
@@ -547,54 +588,58 @@ export class PaymentDialogComponent implements OnInit, OnDestroy {
 
   // ===== VALIDATION AND SUBMISSION =====
 
-  canSubmit(): boolean {
-    if (this.paymentForm.invalid) return false;
-    
-    // Uniform payment validation - no month selection required
-    if (this.data.component === 'uniform') {
-      const amount = this.paymentForm.get('amount')?.value || 0;
-      const maxAmount = this.getMaxPayableAmount();
-      return amount > 0 && amount <= maxAmount;
-    }
-    
-    // For monthly payments of tuition or transportation, month selection is required
-    if (this.data.type === 'monthly' && (this.data.component === 'tuition' || this.data.component === 'transportation')) {
-      if (!this.selectedMonth) return false;
-    }
-    
-    // Check if amount is within limits
+canSubmit(): boolean {
+  if (this.paymentForm.invalid) return false;
+  
+  // ✅ FIX: Add inscription fee validation
+  if (this.data.component === 'uniform' || this.data.component === 'inscriptionFee') {
     const amount = this.paymentForm.get('amount')?.value || 0;
     const maxAmount = this.getMaxPayableAmount();
-    
     return amount > 0 && amount <= maxAmount;
   }
-
-  getValidationMessages(): string[] {
-    const messages: string[] = [];
-    
-    // Only require month selection for tuition and transportation monthly payments
-    if (this.data.type === 'monthly' && this.data.component !== 'uniform' && !this.selectedMonth) {
-      messages.push('Veuillez sélectionner un mois à payer');
-    }
-    
-    const amount = this.paymentForm.get('amount')?.value || 0;
-    const maxAmount = this.getMaxPayableAmount();
-    
-    if (amount <= 0) {
-      messages.push('Le montant doit être supérieur à zéro');
-    }
-    
-    if (amount > maxAmount) {
-      messages.push(`Le montant ne peut pas dépasser ${this.formatCurrency(maxAmount)}`);
-    }
-    
-    const discount = this.paymentForm.get('discount')?.value || 0;
-    if (discount > amount) {
-      messages.push('La remise ne peut pas être supérieure au montant');
-    }
-    
-    return messages;
+  
+  // For monthly payments of tuition or transportation, month selection is required
+  if (this.data.type === 'monthly' && 
+      (this.data.component === 'tuition' || this.data.component === 'transportation')) {
+    if (!this.selectedMonth) return false;
   }
+  
+  // Check if amount is within limits
+  const amount = this.paymentForm.get('amount')?.value || 0;
+  const maxAmount = this.getMaxPayableAmount();
+  
+  return amount > 0 && amount <= maxAmount;
+}
+
+getValidationMessages(): string[] {
+  const messages: string[] = [];
+  
+  // ✅ FIX: Exclude inscription fee from month selection requirement
+  if (this.data.type === 'monthly' && 
+      this.data.component !== 'uniform' && 
+      this.data.component !== 'inscriptionFee' &&
+      !this.selectedMonth) {
+    messages.push('Veuillez sélectionner un mois à payer');
+  }
+  
+  const amount = this.paymentForm.get('amount')?.value || 0;
+  const maxAmount = this.getMaxPayableAmount();
+  
+  if (amount <= 0) {
+    messages.push('Le montant doit être supérieur à zéro');
+  }
+  
+  if (amount > maxAmount) {
+    messages.push(`Le montant ne peut pas dépasser ${this.formatCurrency(maxAmount)}`);
+  }
+  
+  const discount = this.paymentForm.get('discount')?.value || 0;
+  if (discount > amount) {
+    messages.push('La remise ne peut pas être supérieure au montant');
+  }
+  
+  return messages;
+}
 
   private performFinalValidation(): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
@@ -621,6 +666,14 @@ export class PaymentDialogComponent implements OnInit, OnDestroy {
         errors.push('L\'uniforme a déjà été payé');
       }
     }
+
+    if (this.data.component === 'inscriptionFee') {
+    if (!this.data.student.paymentRecord?.inscriptionFee?.applicable) {
+      errors.push('Les frais d\'inscription ne sont pas applicables pour cet étudiant');
+    } else if (this.data.student.paymentRecord?.inscriptionFee?.isPaid) {
+      errors.push('Les frais d\'inscription ont déjà été payés');
+    }
+  }
 
     if (this.data.component === 'transportation') {
       if (!this.data.student.paymentRecord?.transportation?.using) {
@@ -687,7 +740,27 @@ export class PaymentDialogComponent implements OnInit, OnDestroy {
           this.handleSuccess(result, 'uniform');
         }
         
-      } else if (this.data.component === 'tuition') {
+      } 
+      else if (this.data.component === 'inscriptionFee') { // ✅ NEW
+      // Inscription fee payment
+      const inscriptionFeeRequest = {
+        paymentMethod: paymentRequest.paymentMethod,
+        paymentDate: paymentRequest.paymentDate,
+        notes: paymentRequest.notes,
+        receiptNumber: paymentRequest.receiptNumber
+      };
+      
+      result = await this.paymentService.recordInscriptionFeePayment(
+        studentId, 
+        inscriptionFeeRequest, 
+        this.data.academicYear
+      ).toPromise();
+      
+      if (result) {
+        this.handleSuccess(result, 'inscription_fee');
+      }
+    }
+      else if (this.data.component === 'tuition') {
         if (this.data.type === 'monthly') {
           // Monthly tuition payment
           paymentRequest.monthIndex = formValue.monthIndex;
@@ -871,7 +944,7 @@ export class PaymentDialogComponent implements OnInit, OnDestroy {
   // ===== MESSAGE HANDLING =====
 
   private showMessage(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
-    console.log(`${type.toUpperCase()}: ${message}`);
+
     
     if (type === 'error') {
       this.createNotification(message, type, '❌');

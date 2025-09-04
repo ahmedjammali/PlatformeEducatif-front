@@ -58,7 +58,7 @@ export class StudentGradesPageComponent implements OnInit, OnDestroy {
 
   private initializeStudent(): void {
     this.currentUser = this.authService.getCurrentUser();
-    console.log('Current user:', this.currentUser);
+
     if (this.currentUser) {
       this.studentId = this.currentUser.id || '';
       // Get current class ID from user's studentClass property
@@ -126,7 +126,7 @@ export class StudentGradesPageComponent implements OnInit, OnDestroy {
     });
     
     this.allStudentClasses = Array.from(classMap.values());
-    console.log('Extracted classes from grades:', this.allStudentClasses);
+
   }
 
   private loadSubjects(): void {
@@ -148,7 +148,7 @@ export class StudentGradesPageComponent implements OnInit, OnDestroy {
       // We'll filter by selected class in filterGrades()
     };
     
-    console.log('Loading grades for student:', this.studentId, 'with filters:', filters);
+
     
     this.gradeService.getGradesByStudent(this.studentId, filters)
       .pipe(takeUntil(this.destroy$))
@@ -164,8 +164,7 @@ export class StudentGradesPageComponent implements OnInit, OnDestroy {
           this.calculateStatisticsForSelectedClass();
           this.filterGrades();
           this.loading = false;
-          
-          console.log('Loaded grades from all classes:', this.grades.length);
+
         },
         error: (error) => {
           this.error = 'Erreur lors du chargement des notes';

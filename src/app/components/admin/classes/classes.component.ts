@@ -97,7 +97,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('Classes loaded:', response);
+
           this.classes = response.classes;
           this.applyFilters();
           this.isLoading = false;
@@ -230,7 +230,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
     const formValue = this.classForm.value;
-    console.log('Saving class with form value:', formValue);
+
     const isEditing = this.editingClass !== null; // Store the editing state before the API call
     
     const saveObservable = this.editingClass
@@ -288,7 +288,7 @@ export class ClassesComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('Class details loaded:', response);
+
           this.classDetails = response;
           this.showDetailsModal = true;
         },
