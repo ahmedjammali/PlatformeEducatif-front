@@ -528,16 +528,18 @@ getCurrentInscriptionFeeStatus(student: StudentWithPayment): boolean {
   loadStudents(): void {
     this.isLoading = true;
     
-    const filters: PaymentFilters = {
-      search: this.searchControl.value?.trim() || undefined,
-      paymentStatus: this.filterForm.get('paymentStatus')?.value || undefined,
-      gradeCategory: this.filterForm.get('gradeCategory')?.value || undefined,
-      grade: this.filterForm.get('grade')?.value || undefined,
-      classId: this.filterForm.get('classId')?.value || undefined,
-      academicYear: this.filterForm.get('academicYear')?.value,
-      page: this.currentPage,
-      limit: this.pageSize
-    };
+    // In the loadStudents method, modify the filters object:
+const filters: PaymentFilters = {
+  search: this.searchControl.value?.trim() || undefined,
+  paymentStatus: this.filterForm.get('paymentStatus')?.value || undefined,
+  gradeCategory: this.filterForm.get('gradeCategory')?.value || undefined,
+  grade: this.filterForm.get('grade')?.value || undefined,
+  classId: this.filterForm.get('classId')?.value || undefined,
+  academicYear: this.filterForm.get('academicYear')?.value,
+  page: this.currentPage,
+  // Increase page size when filtering to show more results
+  limit: this.hasActiveFilters() ? 500 : this.pageSize
+};
 
     this.paymentService.getAllStudentsWithPayments(filters).subscribe({
       next: (response) => {
