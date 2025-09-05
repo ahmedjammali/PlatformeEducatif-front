@@ -1,4 +1,4 @@
-<!-- invoice.component.html - Updated to show only payment rows -->
+<!-- invoice.component.html - Updated with single full-page watermark -->
 <div class="invoice-container" *ngIf="invoiceData">
   <div class="invoice-actions no-print">
     <button 
@@ -11,8 +11,11 @@
     </button>
   </div>
 
-  <!-- Invoice Content -->
+  <!-- Invoice Content with Single Full-Page Watermark -->
   <div class="invoice-content">
+    <!-- Single Full-Page Background Watermark -->
+    <div class="watermark-fullpage">ONS SCHOOL</div>
+    
     <!-- Header -->
     <div class="invoice-header">
       <div class="school-info">
@@ -24,8 +27,27 @@
         </div>
       </div>
       <div class="invoice-meta">
-        <div class="code-tva">
-          <strong>Code TVA :</strong> 1641042J
+        <!-- Logo replacing Code TVA -->
+        <div class="school-logo">
+          <svg width="80" height="80" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <style>
+                .shield-outline { fill: none; stroke: #2c5282; stroke-width: 6; }
+                .shield-fill { fill: #f7fafc; }
+                .text { font-family: Arial, sans-serif; font-weight: bold; fill: #2c5282; text-anchor: middle; }
+                .ons-text { font-size: 42px; }
+                .school-text { font-size: 28px; }
+              </style>
+            </defs>
+            
+            <!-- Shield shape -->
+            <path class="shield-fill" d="M100 20 C140 20, 170 32, 170 55 L170 110 C170 140, 140 170, 100 185 C60 170, 30 140, 30 110 L30 55 C30 32, 60 20, 100 20 Z"/>
+            <path class="shield-outline" d="M100 20 C140 20, 170 32, 170 55 L170 110 C170 140, 140 170, 100 185 C60 170, 30 140, 30 110 L30 55 C30 32, 60 20, 100 20 Z"/>
+            
+            <!-- Text -->
+            <text x="100" y="85" class="text ons-text">ONS</text>
+            <text x="100" y="115" class="text school-text">SCHOOL</text>
+          </svg>
         </div>
       </div>
     </div>
@@ -164,8 +186,6 @@
           </td>
           <td>{{ formatCurrencyTable(getTVAAmount('inscriptionFee')) }}</td>
         </tr>
-
-        <!-- NO EMPTY ROWS - Removed the empty rows section completely -->
       </tbody>
     </table>
 

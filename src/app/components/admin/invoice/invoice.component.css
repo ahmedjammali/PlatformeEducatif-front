@@ -1,16 +1,18 @@
-/* invoice.component.css - Enhanced for larger format with bigger text */
+/* invoice.component.css - Enhanced with single full-page watermark overlay */
 
 .invoice-container {
-  max-width: 250mm; /* Increased from 210mm */
-  min-height: 350mm; /* Increased from 297mm */
+  max-width: 250mm;
+  min-height: 350mm;
   margin: 0 auto;
   background: white;
-  padding: 20mm; /* Increased padding */
+  padding: 20mm;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   font-family: Arial, sans-serif;
-  font-size: 14px; /* Increased from 10px */
-  line-height: 1.4; /* Slightly increased */
+  font-size: 14px;
+  line-height: 1.4;
   color: #000;
+  position: relative;
+  overflow: hidden; /* Important: Hide overflow to prevent scrollbars */
 }
 
 /* ====================================
@@ -28,9 +30,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 12px 24px; /* Increased padding */
+  padding: 12px 24px;
   border-radius: 6px;
-  font-size: 16px; /* Increased font size */
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -74,20 +76,63 @@
 }
 
 /* ====================================
-  INVOICE CONTENT - ENHANCED FORMAT
+  SINGLE FULL-PAGE WATERMARK OVERLAY
   ==================================== */
+.watermark-fullpage {
+  position: fixed; /* Use fixed positioning for better control */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 90px; /* Reduced size to fit full text */
+  font-weight: bold;
+  color: rgba(44, 82, 130, 0.08); /* Light transparency */
+  z-index: 9999; /* Above all content */
+  pointer-events: none; /* Click through watermark */
+  user-select: none;
+  white-space: nowrap;
+  font-family: Arial, sans-serif;
+  letter-spacing: 15px;
+  text-transform: uppercase;
+  text-align: center;
+  min-width: 200%; /* Ensure it's wide enough */
+}
+
+/* Alternative approach for invoice-content container */
 .invoice-content {
   background: white;
   position: relative;
+  z-index: 1; /* Below watermark */
+  overflow: visible; /* Allow watermark to be visible */
 }
 
-/* Header Section - Enhanced spacing */
+/* For better watermark display within the invoice container */
+.invoice-container .watermark-fullpage {
+  position: absolute; /* Absolute within container */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 80px; /* Optimized size for A4 */
+  font-weight: 900; /* Extra bold */
+  color: rgba(44, 82, 130, 0.07); /* Light but visible */
+  z-index: 9999;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  font-family: 'Arial Black', Arial, sans-serif;
+  letter-spacing: 12px;
+  text-transform: uppercase;
+  width: auto;
+  height: auto;
+}
+
+/* Header Section */
 .invoice-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 25px; /* Increased from 15px */
-  border-bottom: 2px solid #000; /* Thicker border */
-  padding-bottom: 15px; /* Increased padding */
+  margin-bottom: 25px;
+  border-bottom: 2px solid #000;
+  padding-bottom: 15px;
+  position: relative;
 }
 
 .school-info {
@@ -95,55 +140,74 @@
 }
 
 .school-name {
-  font-size: 20px; /* Increased from 14px */
+  font-size: 20px;
   font-weight: bold;
-  margin-bottom: 8px; /* Increased spacing */
+  margin-bottom: 8px;
   margin-top: 0;
   text-transform: uppercase;
 }
 
 .school-details p {
-  margin: 3px 0; /* Increased from 1px */
-  font-size: 13px; /* Increased from 9px */
+  margin: 3px 0;
+  font-size: 13px;
 }
 
 .invoice-meta {
   text-align: right;
   flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
 }
 
-.code-tva {
-  font-size: 13px; /* Increased from 9px */
-  margin-bottom: 12px; /* Increased spacing */
+/* Logo styling */
+.school-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  background: rgba(248, 250, 252, 0.9);
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
-/* Student Info Box - Enhanced */
+.school-logo svg {
+  width: 80px;
+  height: 80px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Student Info Box */
 .student-box {
   border: 2px solid #000;
-  padding: 15px; /* Increased from 8px */
-  margin-bottom: 25px; /* Increased from 15px */
+  padding: 15px;
+  margin-bottom: 25px;
+  position: relative;
+  background: white;
 }
 
 .student-row {
   display: flex;
-  margin: 5px 0; /* Increased from 2px */
-  font-size: 13px; /* Added explicit font size */
+  margin: 5px 0;
+  font-size: 13px;
 }
 
 .student-label {
-  min-width: 150px; /* Increased from 120px */
+  min-width: 150px;
   font-weight: bold;
 }
 
-/* Invoice Details Box - Enhanced */
+/* Invoice Details Box */
 .invoice-details-box {
   border: 2px solid #000;
-  margin-bottom: 25px; /* Increased from 15px */
+  margin-bottom: 25px;
+  position: relative;
+  background: white;
 }
 
 .invoice-details-header {
   background: #f0f0f0;
-  padding: 10px; /* Increased from 6px */
+  padding: 10px;
   border-bottom: 1px solid #000;
   display: flex;
   justify-content: space-between;
@@ -152,51 +216,54 @@
 
 .facture-title {
   font-weight: bold;
-  font-size: 16px; /* Increased from 12px */
+  font-size: 16px;
 }
 
 .page-info {
-  font-size: 12px; /* Increased from 9px */
+  font-size: 12px;
 }
 
 .invoice-details-content {
-  padding: 15px; /* Increased from 8px */
+  padding: 15px;
 }
 
 .details-row {
   display: flex;
-  margin: 5px 0; /* Increased from 2px */
-  font-size: 13px; /* Added explicit font size */
+  margin: 5px 0;
+  font-size: 13px;
 }
 
 .details-label {
-  min-width: 120px; /* Increased from 100px */
+  min-width: 120px;
   font-weight: bold;
 }
 
-/* Main Table - Enhanced format */
+/* Main Table */
 .main-table {
   width: 100%;
   border-collapse: collapse;
   border: 2px solid #000;
-  margin-bottom: 25px; /* Increased from 15px */
+  margin-bottom: 25px;
+  position: relative;
+  background: white;
 }
 
 .main-table th {
   border: 1px solid #000;
-  padding: 12px 8px; /* Increased padding */
+  padding: 12px 8px;
   text-align: center;
   font-weight: bold;
   background: #f0f0f0;
-  font-size: 13px; /* Increased from 9px */
+  font-size: 13px;
 }
 
 .main-table td {
   border: 1px solid #000;
-  padding: 12px 8px; /* Increased padding */
+  padding: 12px 8px;
   text-align: center;
-  font-size: 12px; /* Increased from 9px */
+  font-size: 12px;
   vertical-align: top;
+  background: white;
 }
 
 .main-table .designation-col {
@@ -227,36 +294,33 @@
   text-align: right;
 }
 
-/* Payment rows in table - Enhanced height */
+/* Payment rows in table */
 .payment-row td {
-  height: 35px; /* Increased from 20px */
+  height: 35px;
 }
 
-/* Hide empty rows - only show rows with actual payments */
+/* Hide empty rows */
 .payment-row:empty,
 .payment-row td:empty {
   display: none;
 }
 
-/* Hide rows where all cells are empty */
 .payment-row:has(td:empty):has(td:not(:empty)) {
   display: table-row;
 }
 
-/* More specific: hide rows that are completely empty */
 .main-table tbody tr:empty {
   display: none !important;
 }
 
-/* Hide empty table rows that contain only empty cells */
 .main-table tbody tr:not(:has(td:not(:empty))) {
   display: none !important;
 }
 
 /* Service icons styling */
 .service-icon {
-  font-size: 16px; /* Increased from 12px */
-  margin-right: 6px; /* Increased spacing */
+  font-size: 16px;
+  margin-right: 6px;
 }
 
 .amount-positive {
@@ -269,17 +333,19 @@
   font-weight: bold;
 }
 
-/* Totals Section - Enhanced */
+/* Totals Section */
 .totals-section {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 25px; /* Increased from 15px */
+  margin-bottom: 25px;
+  position: relative;
 }
 
 .tva-box {
   border: 2px solid #000;
-  padding: 15px; /* Increased from 8px */
-  width: 220px; /* Increased from 180px */
+  padding: 15px;
+  width: 220px;
+  background: white;
 }
 
 .tva-table {
@@ -290,9 +356,10 @@
 .tva-table th,
 .tva-table td {
   border: 1px solid #000;
-  padding: 8px; /* Increased from 4px */
+  padding: 8px;
   text-align: center;
-  font-size: 12px; /* Increased from 9px */
+  font-size: 12px;
+  background: white;
 }
 
 .tva-table th {
@@ -302,29 +369,32 @@
 
 .totals-box {
   text-align: right;
-  width: 220px; /* Increased from 180px */
+  width: 220px;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
 }
 
 .total-line {
-  margin: 6px 0; /* Increased from 4px */
-  padding: 6px 0; /* Increased from 4px */
+  margin: 6px 0;
+  padding: 6px 0;
   display: flex;
   justify-content: space-between;
-  font-size: 13px; /* Increased from 9px */
+  font-size: 13px;
 }
 
 .total-ht {
   border-top: 1px solid #000;
-  padding-top: 6px; /* Increased from 4px */
+  padding-top: 6px;
   font-weight: bold;
 }
 
 .total-ttc {
   border-top: 2px solid #000;
   border-bottom: 2px solid #000;
-  padding: 10px 0; /* Increased from 6px */
+  padding: 10px 0;
   font-weight: bold;
-  font-size: 15px; /* Increased from 10px */
+  font-size: 15px;
   background: #f9f9f9;
 }
 
@@ -332,21 +402,22 @@
   font-weight: bold;
 }
 
-/* Component-specific and Current Month Summary - Enhanced */
+/* Component-specific and Current Month Summary */
 .component-summary,
 .current-month-summary {
-  margin: 20px 0; /* Increased from 15px */
-  padding: 15px; /* Increased from 10px */
+  margin: 20px 0;
+  padding: 15px;
   border: 1px solid #ddd;
   border-radius: 4px;
   background-color: #f9f9f9;
+  position: relative;
 }
 
 .component-summary h4,
 .current-month-summary h4 {
-  margin: 0 0 15px 0; /* Increased bottom margin */
+  margin: 0 0 15px 0;
   color: #333;
-  font-size: 15px; /* Increased from 11px */
+  font-size: 15px;
   font-weight: bold;
   text-align: center;
 }
@@ -354,14 +425,14 @@
 .summary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px; /* Increased from 8px */
+  gap: 12px;
   align-items: center;
 }
 
 .summary-item {
   display: flex;
   justify-content: space-between;
-  padding: 6px 0; /* Increased from 3px */
+  padding: 6px 0;
   border-bottom: 1px dotted #ccc;
 }
 
@@ -371,45 +442,45 @@
 
 .summary-item.summary-total {
   grid-column: 1 / -1;
-  margin-top: 12px; /* Increased from 8px */
-  padding-top: 12px; /* Increased from 8px */
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 2px solid #333;
   border-bottom: none;
 }
 
 .summary-label {
-  font-size: 12px; /* Increased from 9px */
+  font-size: 12px;
   color: #555;
 }
 
 .summary-amount {
-  font-size: 12px; /* Increased from 9px */
+  font-size: 12px;
   font-weight: bold;
   color: #333;
 }
 
 .summary-total .summary-label,
 .summary-total .summary-amount {
-  font-size: 14px; /* Increased from 10px */
+  font-size: 14px;
   color: #000;
 }
 
-/* Discount info styling improvements */
+/* Discount info styling */
 .discount-info {
-  margin-top: 6px; /* Increased from 3px */
-  padding: 6px; /* Increased from 3px */
+  margin-top: 6px;
+  padding: 6px;
   background-color: #e8f5e8;
   border-radius: 3px;
-  border-left: 3px solid #4caf50; /* Thicker border */
+  border-left: 3px solid #4caf50;
 }
 
 .discount-info small {
   display: block;
   line-height: 1.3;
-  font-size: 10px; /* Increased from 8px */
+  font-size: 10px;
 }
 
-/* Enhanced payment row styling for better visibility */
+/* Enhanced payment row styling */
 .payment-row .amount-col.amount-positive {
   background-color: #e8f5e8;
   font-weight: bold;
@@ -420,36 +491,41 @@
   font-style: italic;
 }
 
-/* Footer - Enhanced */
+/* Footer */
 .footer-section {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-top: 30px; /* Increased from 20px */
+  margin-top: 30px;
+  position: relative;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
 }
 
 .amount-words {
   flex: 1;
-  font-size: 12px; /* Increased from 9px */
-  margin-right: 20px; /* Increased from 15px */
+  font-size: 12px;
+  margin-right: 20px;
   line-height: 1.3;
 }
 
 .signature-section {
   text-align: center;
-  width: 150px; /* Increased from 120px */
+  width: 150px;
 }
 
 .signature-box {
-  border: 2px solid #000; /* Thicker border */
-  height: 80px; /* Increased from 60px */
-  margin-top: 12px; /* Increased from 8px */
+  border: 2px solid #000;
+  height: 80px;
+  margin-top: 12px;
   position: relative;
+  background: white;
 }
 
 .signature-label {
-  font-size: 12px; /* Increased from 9px */
-  margin-bottom: 6px; /* Increased from 4px */
+  font-size: 12px;
+  margin-bottom: 6px;
 }
 
 /* TVA Highlighting */
@@ -460,7 +536,7 @@
 }
 
 /* ====================================
-  PRINT STYLES - OPTIMIZED FOR LARGER FORMAT
+  PRINT STYLES - OPTIMIZED FOR A4
   ==================================== */
 @media print {
   .no-print {
@@ -468,105 +544,162 @@
   }
   
   .invoice-container {
-    max-width: none;
+    max-width: 210mm; /* A4 width */
+    min-height: 297mm; /* A4 height */
     margin: 0;
-    padding: 15mm; /* Adjusted for print */
+    padding: 10mm;
     box-shadow: none;
     background: white;
-    min-height: auto;
-    font-size: 12px; /* Larger print font size */
+    font-size: 11px;
     line-height: 1.3;
+    overflow: visible !important;
+    position: relative;
+  }
+  
+  /* Watermark for print - optimized for A4 */
+  .watermark-fullpage {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) rotate(-45deg) !important;
+    font-size: 70px !important; /* Perfect size for A4 to show full text */
+    font-weight: 900 !important;
+    color: rgba(44, 82, 130, 0.10) !important; /* Visible but light in print */
+    opacity: 1 !important;
+    z-index: 9999 !important;
+    white-space: nowrap !important;
+    letter-spacing: 10px !important;
+    width: auto !important;
+    pointer-events: none !important;
+  }
+  
+  /* Ensure content is below watermark */
+  .invoice-content {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  
+  /* Keep backgrounds white for better print contrast */
+  .student-box,
+  .invoice-details-box,
+  .main-table,
+  .main-table td,
+  .main-table th,
+  .tva-table th,
+  .tva-table td,
+  .totals-box,
+  .component-summary,
+  .current-month-summary,
+  .footer-section,
+  .signature-box,
+  .discount-info,
+  .payment-row .amount-col.amount-positive,
+  .payment-row .amount-col.amount-pending,
+  .tva-highlight {
+    background: white !important;
+  }
+  
+  .total-ttc {
+    background: #f0f0f0 !important;
+  }
+  
+  .school-logo {
+    background: white !important;
+    border: 1px solid #ccc !important;
   }
   
   .invoice-header {
-    margin-bottom: 20px;
-    padding-bottom: 12px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
   }
   
   .school-name {
-    font-size: 18px; /* Larger in print */
+    font-size: 16px;
   }
   
   .school-details p {
-    font-size: 11px;
+    font-size: 10px;
+  }
+  
+  .school-logo svg {
+    width: 60px;
+    height: 60px;
   }
   
   .student-box {
-    margin-bottom: 20px;
-    padding: 12px;
+    margin-bottom: 15px;
+    padding: 10px;
   }
   
   .invoice-details-box {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
   }
   
   .facture-title {
-    font-size: 14px;
+    font-size: 13px;
   }
   
   .main-table {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
   }
   
   .main-table th,
   .main-table td {
-    padding: 8px 6px; /* Larger padding in print */
-    font-size: 11px; /* Larger font in print */
+    padding: 6px 5px;
+    font-size: 10px;
   }
   
   .payment-row td {
-    height: 30px; /* Taller rows in print */
+    height: 25px;
   }
   
   .service-icon {
-    font-size: 14px;
+    font-size: 12px;
   }
   
   .totals-section {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
   }
   
   .total-line {
-    font-size: 11px;
+    font-size: 10px;
   }
   
   .total-ttc {
-    font-size: 13px;
+    font-size: 12px;
   }
   
   .footer-section {
-    margin-top: 25px;
+    margin-top: 20px;
   }
   
   .component-summary,
   .current-month-summary {
-    margin: 15px 0;
-    padding: 10px;
-    background-color: transparent !important;
+    margin: 12px 0;
+    padding: 8px;
     border: 1px solid #000 !important;
   }
   
   .component-summary h4,
   .current-month-summary h4 {
-    font-size: 13px;
+    font-size: 12px;
   }
   
   .summary-label,
   .summary-amount {
-    font-size: 10px;
+    font-size: 9px;
   }
   
   .discount-info {
-    background-color: transparent !important;
     border-left: 2px solid #000 !important;
   }
   
   .signature-box {
-    height: 70px;
+    height: 60px;
   }
   
   .amount-words {
-    font-size: 10px;
+    font-size: 9px;
   }
   
   /* Ensure proper page breaks */
@@ -592,18 +725,23 @@
   }
 
   @page {
-    size: A4 portrait; /* Changed back to portrait for better fit */
-    margin: 8mm; /* Minimal margins for maximum space */
+    size: A4 portrait;
+    margin: 0; /* No margin for full page coverage */
   }
 }
 
 /* ====================================
-  RESPONSIVE DESIGN - Enhanced
+  RESPONSIVE DESIGN
   ==================================== */
 @media (max-width: 768px) {
   .invoice-container {
     padding: 1rem;
-    font-size: 12px; /* Larger mobile font */
+    font-size: 12px;
+  }
+  
+  .watermark-fullpage {
+    font-size: 50px; /* Smaller for tablet */
+    letter-spacing: 8px;
   }
   
   .invoice-header {
@@ -614,10 +752,16 @@
   
   .invoice-meta {
     text-align: center;
+    justify-content: center;
   }
   
   .school-name {
-    font-size: 16px; /* Larger mobile header */
+    font-size: 16px;
+  }
+  
+  .school-logo svg {
+    width: 60px;
+    height: 60px;
   }
   
   .totals-section {
@@ -643,12 +787,33 @@
   .signature-section {
     width: 100%;
   }
+  
+  .main-table {
+    font-size: 10px;
+  }
+  
+  .main-table th,
+  .main-table td {
+    padding: 8px 4px;
+    font-size: 10px;
+  }
+  
+  .student-label,
+  .details-label {
+    min-width: 120px;
+  }
 }
 
 @media (max-width: 480px) {
   .invoice-container {
     padding: 0.5rem;
     font-size: 10px;
+    overflow-x: hidden;
+  }
+  
+  .watermark-fullpage {
+    font-size: 50px; /* Increased from 35px */
+    letter-spacing: 8px;
   }
   
   .school-name {
@@ -675,4 +840,101 @@
     min-width: 100px;
     font-size: 9px;
   }
+  
+  .school-logo svg {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .service-icon {
+    font-size: 12px;
+  }
+  
+  .totals-box {
+    padding: 8px;
+  }
+  
+  .total-line {
+    font-size: 10px;
+  }
+  
+  .total-ttc {
+    font-size: 12px;
+  }
+  
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-label,
+  .summary-amount {
+    font-size: 10px;
+  }
+  
+  .discount-info small {
+    font-size: 8px;
+  }
+  
+  .amount-words {
+    font-size: 9px;
+  }
+  
+  .signature-box {
+    height: 60px;
+  }
+}
+
+/* ====================================
+  UTILITY CLASSES
+  ==================================== */
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.font-bold {
+  font-weight: bold;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.p-1 {
+  padding: 0.25rem;
+}
+
+.p-2 {
+  padding: 0.5rem;
+}
+
+.p-3 {
+  padding: 1rem;
 }
