@@ -1674,8 +1674,8 @@
               <h5>💡 Aperçu de la remise</h5>
               <div class="preview-calculation" *ngIf="selectedStudent">
                 <div class="calc-line">
-                  <span>Montant original:</span>
-                  <span>{{ formatCurrency(getOriginalAmounts(selectedStudent).tuition) }}</span>
+                  <span>Montant original (avec tous les composants):</span>
+                  <span>{{ formatCurrency(getOriginalAmounts(selectedStudent).grandTotal) }}</span>
                 </div>
                 <div class="calc-line discount-line">
                   <span>Remise ({{ discountForm.get('percentage')?.value }}%):</span>

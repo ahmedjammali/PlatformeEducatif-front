@@ -22,7 +22,12 @@ import {
   AvailableGradesResponse,
   Grade,
   GradeCategory , 
-  UpdatePaymentRecordRequest
+  UpdatePaymentRecordRequest,
+  PaymentAnalytics,
+  AnalyticsFilters,
+  ChartData,
+  EnhancedReportResponse,
+  FinancialSummaryResponse
 } from '../models/payment.model';
 
 @Injectable({
@@ -592,6 +597,299 @@ getInscriptionFeeForGradeCategory(gradeCategory: GradeCategory, config: PaymentC
   }
   
   return 0;
+}
+
+getPaymentAnalytics(filters?: AnalyticsFilters): Observable<{
+  academicYear: string;
+  filters: any;
+  totalStudents: number;
+  analytics: PaymentAnalytics;
+}> {
+  const params = this.buildParams(filters || {});
+  return this.http.get<{
+    academicYear: string;
+    filters: any;
+    totalStudents: number;
+    analytics: PaymentAnalytics;
+  }>(
+    `${this.apiUrl}${this.endpoint}/analytics`,
+    { params }
+  );
+}
+
+/**
+ * Get financial summary dashboard
+ */
+getFinancialSummary(academicYear?: string): Observable<FinancialSummaryResponse> {
+  const params = academicYear ? this.buildParams({ academicYear }) : undefined;
+  return this.http.get<FinancialSummaryResponse>(
+    `${this.apiUrl}${this.endpoint}/financial-summary`,
+    { params }
+  );
+}
+
+/**
+ * Get enhanced payment reports with better filtering
+ */
+getEnhancedPaymentReports(filters?: {
+  academicYear?: string;
+  reportType?: 'detailed' | 'summary' | 'financial' | 'outstanding';
+  gradeCategory?: GradeCategory;
+  grade?: Grade;
+  component?: 'all' | 'tuition' | 'uniform' | 'transportation' | 'inscription';
+  paymentStatus?: string;
+  includeDiscounts?: boolean;
+  format?: 'json' | 'csv';
+}): Observable<EnhancedReportResponse> {
+  const params = this.buildParams(filters || {});
+  return this.http.get<EnhancedReportResponse>(
+    `${this.apiUrl}${this.endpoint}/reports/enhanced`,
+    { params }
+  );
+}
+
+// ✅ UTILITY: Analytics Helper Methods
+
+/**
+ * Calculate collection rate percentage
+ */
+calculateCollectionRate(collected: number, expected: number): number {
+  if (expected === 0) return 0;
+  return Math.round((collected / expected) * 100);
+}
+
+/**
+ * Get analytics color by grade category
+ */
+getAnalyticsColor(gradeCategory: string, index: number = 0): string {
+  const colors = {
+    maternelle: ['#E91E63', '#F48FB1', '#FCE4EC'],
+    primaire: ['#2196F3', '#64B5F6', '#E3F2FD'],
+    secondaire: ['#4CAF50', '#81C784', '#E8F5E9']
+  };
+  
+  const categoryColors = colors[gradeCategory as keyof typeof colors] || ['#666666'];
+  return categoryColors[index % categoryColors.length];
+}
+formatAnalyticsChartData(analytics: PaymentAnalytics): {
+  collectionRateChart: ChartData;
+  componentBreakdownChart: ChartData;
+  gradeCategoryChart: ChartData;
+} {
+  return {
+    collectionRateChart: {
+      labels: ['Collecté', 'En attente'],
+      datasets: [{
+        label: 'Taux de collecte',
+        data: [
+          parseFloat(analytics.collectionRate.percentage),
+          100 - parseFloat(analytics.collectionRate.percentage)
+        ],
+        backgroundColor: ['#4CAF50', '#FF5722'],
+        borderWidth: 0
+      }]
+    },
+    componentBreakdownChart: {
+      labels: ['Scolarité', 'Uniforme', 'Transport', 'Inscription'],
+      datasets: [{
+        label: 'Montants collectés',
+        data: [
+          analytics.byComponent.tuition.collected,
+          analytics.byComponent.uniform.collected,
+          analytics.byComponent.transportation.collected,
+          analytics.byComponent.inscription.collected
+        ],
+        backgroundColor: ['#2196F3', '#FF9800', '#4CAF50', '#9C27B0'],
+        borderWidth: 0
+      }]
+    },
+    gradeCategoryChart: {
+      labels: ['Maternelle', 'Primaire', 'Secondaire'],
+      datasets: [{
+        label: 'Attendu',
+        data: [
+          analytics.byGradeCategory.maternelle.expected,
+          analytics.byGradeCategory.primaire.expected,
+          analytics.byGradeCategory.secondaire.expected
+        ],
+        backgroundColor: '#E3F2FD',
+        borderColor: '#2196F3',
+        borderWidth: 1
+      }, {
+        label: 'Collecté',
+        data: [
+          analytics.byGradeCategory.maternelle.collected,
+          analytics.byGradeCategory.primaire.collected,
+          analytics.byGradeCategory.secondaire.collected
+        ],
+        backgroundColor: '#4CAF50',
+        borderColor: '#2E7D32',
+        borderWidth: 1
+      }]
+    }
+  };
+}
+
+
+/**
+ * Get analytics summary text
+ */
+getAnalyticsSummary(analytics: PaymentAnalytics): {
+  totalStudents: string;
+  collectionRate: string;
+  outstandingAmount: string;
+  discountImpact: string;
+} {
+  const collectionRate = parseFloat(analytics.collectionRate.percentage);
+  const outstandingAmount = this.formatCurrency(analytics.collectionRate.outstanding);
+  
+  let collectionStatus = 'Excellent';
+  if (collectionRate < 50) collectionStatus = 'Critique';
+  else if (collectionRate < 70) collectionStatus = 'Faible';
+  else if (collectionRate < 85) collectionStatus = 'Moyen';
+  else if (collectionRate < 95) collectionStatus = 'Bon';
+  
+  const discountImpact = analytics.discountAnalysis 
+    ? `${analytics.discountAnalysis.totalDiscounts} remises appliquées (${this.formatCurrency(analytics.discountAnalysis.totalDiscountAmount)})`
+    : 'Aucune remise appliquée';
+  
+  return {
+    totalStudents: `${analytics.overview.totalStudents} élèves`,
+    collectionRate: `${collectionRate}% - ${collectionStatus}`,
+    outstandingAmount: `${outstandingAmount} en attente`,
+    discountImpact
+  };
+}
+
+/**
+ * Export analytics data to CSV format
+ */
+exportAnalyticsData(analytics: PaymentAnalytics, filters: AnalyticsFilters): any[] {
+  const csvData: any[] = [];
+  
+  // Grade category summary
+  Object.entries(analytics.byGradeCategory).forEach(([category, data]) => {
+    csvData.push({
+      'Type': 'Catégorie',
+      'Nom': this.getGradeCategoryLabel(category as GradeCategory),
+      'Nombre d\'élèves': data.count,
+      'Montant attendu': data.expected,
+      'Montant collecté': data.collected,
+      'Montant en attente': data.outstanding,
+      'Taux de collecte': `${data.collectionRate}%`,
+      'Composant': filters.component || 'Tous'
+    });
+  });
+  
+  // Grade level summary
+  Object.entries(analytics.byGrade).forEach(([grade, data]) => {
+    csvData.push({
+      'Type': 'Niveau',
+      'Nom': this.getGradeLabel(grade as Grade),
+      'Nombre d\'élèves': data.count,
+      'Montant attendu': data.expected,
+      'Montant collecté': data.collected,
+      'Montant en attente': data.outstanding,
+      'Taux de collecte': `${data.collectionRate}%`,
+      'Composant': filters.component || 'Tous'
+    });
+  });
+  
+  return csvData;
+}
+
+/**
+ * Get financial health score based on analytics
+ */
+getFinancialHealthScore(analytics: PaymentAnalytics): {
+  score: number;
+  level: 'Critique' | 'Faible' | 'Moyen' | 'Bon' | 'Excellent';
+  recommendations: string[];
+} {
+  const collectionRate = parseFloat(analytics.collectionRate.percentage);
+  const outstandingRatio = analytics.collectionRate.outstanding / analytics.collectionRate.expected;
+  const discountImpact = analytics.discountAnalysis 
+    ? analytics.discountAnalysis.totalDiscountAmount / analytics.collectionRate.expected 
+    : 0;
+  
+  // Calculate score (0-100)
+  let score = collectionRate;
+  
+  // Adjust for outstanding ratio
+  if (outstandingRatio > 0.3) score -= 10;
+  else if (outstandingRatio > 0.2) score -= 5;
+  
+  // Adjust for discount impact
+  if (discountImpact > 0.15) score -= 5;
+  else if (discountImpact > 0.1) score -= 2;
+  
+  // Determine level
+  let level: 'Critique' | 'Faible' | 'Moyen' | 'Bon' | 'Excellent';
+  if (score >= 95) level = 'Excellent';
+  else if (score >= 85) level = 'Bon';
+  else if (score >= 70) level = 'Moyen';
+  else if (score >= 50) level = 'Faible';
+  else level = 'Critique';
+  
+  // Generate recommendations
+  const recommendations: string[] = [];
+  
+  if (collectionRate < 80) {
+    recommendations.push('Améliorer le suivi des paiements en retard');
+  }
+  
+  if (analytics.outstandingAnalysis.studentsWithOutstanding > analytics.overview.totalStudents * 0.3) {
+    recommendations.push('Mettre en place un plan de recouvrement');
+  }
+  
+  if (analytics.discountAnalysis && analytics.discountAnalysis.totalDiscounts > analytics.overview.totalStudents * 0.2) {
+    recommendations.push('Réviser la politique de remises');
+  }
+  
+  if (recommendations.length === 0) {
+    recommendations.push('Maintenir les bonnes pratiques actuelles');
+  }
+  
+  return { score: Math.round(score), level, recommendations };
+}
+
+/**
+ * Generate trend analysis
+ */
+analyzeTrends(analytics: PaymentAnalytics): {
+  trend: 'Amélioration' | 'Stable' | 'Dégradation';
+  insights: string[];
+} {
+  const trends = analytics.paymentTrends || [];
+  
+  if (trends.length < 2) {
+    return {
+      trend: 'Stable',
+      insights: ['Données insuffisantes pour analyser les tendances']
+    };
+  }
+  
+  const recent = trends[trends.length - 1];
+  const previous = trends[trends.length - 2];
+  
+  const collectionDiff = parseFloat(recent.collectionRate) - parseFloat(previous.collectionRate);
+  
+  let trend: 'Amélioration' | 'Stable' | 'Dégradation';
+  if (collectionDiff > 5) trend = 'Amélioration';
+  else if (collectionDiff < -5) trend = 'Dégradation';
+  else trend = 'Stable';
+  
+  const insights: string[] = [];
+  
+  if (trend === 'Amélioration') {
+    insights.push(`Amélioration de ${collectionDiff.toFixed(1)}% du taux de collecte`);
+  } else if (trend === 'Dégradation') {
+    insights.push(`Baisse de ${Math.abs(collectionDiff).toFixed(1)}% du taux de collecte`);
+  } else {
+    insights.push('Taux de collecte stable');
+  }
+  
+  return { trend, insights };
 }
 
 }

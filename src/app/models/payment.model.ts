@@ -317,9 +317,12 @@ export interface PaymentFilters {
   grade?: Grade;
   classId?: string;
   academicYear?: string;
-  component?: 'all' | 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'; // ✅ UPDATED
+  component?: 'all' | 'tuition' | 'uniform' | 'transportation' | 'inscription'; // ✅ UPDATED
   page?: number;
   limit?: number;
+  includeDiscounts?: boolean; // ✅ NEW
+  dateFrom?: string; // ✅ NEW
+  dateTo?: string; // ✅ NEW
 }
 
 // ===== UPDATED RECORD PAYMENT REQUEST =====
@@ -587,3 +590,194 @@ export interface UpdatePaymentRecordRequest {
     };
     paymentRecord: StudentPayment;
   }
+
+
+  export interface PaymentAnalytics {
+  overview: {
+    totalStudents: number;
+    totalExpected: number;
+    totalCollected: number;
+    totalOutstanding: number;
+    averagePerStudent: string;
+  };
+  byGrade: {
+    [grade: string]: {
+      count: number;
+      expected: number;
+      collected: number;
+      outstanding: number;
+      collectionRate: string;
+    };
+  };
+  byGradeCategory: {
+    maternelle: GradeCategoryAnalytics;
+    primaire: GradeCategoryAnalytics;
+    secondaire: GradeCategoryAnalytics;
+  };
+  byComponent: ComponentAnalytics;
+  paymentTrends: PaymentTrendAnalytics[];
+  discountAnalysis: DiscountAnalytics | null;
+  collectionRate: CollectionRateAnalytics;
+  outstandingAnalysis: OutstandingAnalytics;
+}
+
+export interface GradeCategoryAnalytics {
+  count: number;
+  expected: number;
+  collected: number;
+  outstanding: number;
+  collectionRate: string;
+}
+
+export interface ComponentAnalytics {
+  tuition: {
+    expected: number;
+    collected: number;
+    studentsCount: number;
+  };
+  uniform: {
+    expected: number;
+    collected: number;
+    studentsCount: number;
+  };
+  transportation: {
+    expected: number;
+    collected: number;
+    studentsCount: number;
+  };
+  inscription: {
+    expected: number;
+    collected: number;
+    studentsCount: number;
+  };
+}
+
+export interface PaymentTrendAnalytics {
+  month: string;
+  expected: number;
+  collected: number;
+  collectionRate: string;
+}
+
+export interface DiscountAnalytics {
+  totalDiscounts: number;
+  totalDiscountAmount: number;
+  averageDiscountPercentage: string;
+  byType: {
+    monthly: number;
+    annual: number;
+  };
+  byGradeCategory: {
+    maternelle: number;
+    primaire: number;
+    secondaire: number;
+  };
+}
+
+export interface CollectionRateAnalytics {
+  percentage: string;
+  expected: number;
+  collected: number;
+  outstanding: number;
+}
+
+export interface OutstandingAnalytics {
+  studentsWithOutstanding: number;
+  totalOutstandingAmount: number;
+  averageOutstandingPerStudent: string;
+  byGradeCategory: {
+    maternelle: number;
+    primaire: number;
+    secondaire: number;
+  };
+}
+
+// ✅ NEW: Financial Summary Interface
+export interface FinancialSummaryResponse {
+  academicYear: string;
+  financial: {
+    revenue: ComponentAmounts;
+    expected: ComponentAmounts;
+    outstanding: ComponentAmounts;
+    collectionRate: ComponentRates;
+    discounts: {
+      totalApplied: number;
+      totalAmount: number;
+      byType: {
+        monthly: number;
+        annual: number;
+      };
+    };
+  };
+}
+
+export interface ComponentAmounts {
+  total: number;
+  tuition: number;
+  uniform: number;
+  transportation: number;
+  inscription: number;
+}
+
+export interface ComponentRates {
+  overall: string;
+  tuition: string;
+  uniform: string;
+  transportation: string;
+  inscription: string;
+}
+
+// ✅ NEW: Enhanced Report Response
+export interface EnhancedReportResponse {
+  reportType: string;
+  academicYear: string;
+  filters: {
+    gradeCategory?: string;
+    grade?: string;
+    component?: string;
+    paymentStatus?: string;
+  };
+  report: {
+    totalRecords: number;
+    data: EnhancedReportData[];
+  };
+}
+
+export interface EnhancedReportData {
+  student: {
+    name: string;
+    email: string;
+    grade: string;
+    gradeCategory: string;
+  };
+  amounts: {
+    expected: number;
+    paid: number;
+    outstanding: number;
+  };
+  status: string;
+  paymentType: string;
+  discount?: {
+    type: string;
+    percentage: number;
+    amount: string;
+  } | null;
+  components: {
+    tuition: string;
+    uniform: string;
+    transportation: string;
+    inscription: string;
+  };
+}
+
+// ✅ NEW: Analytics Filters
+export interface AnalyticsFilters {
+  academicYear?: string;
+  gradeCategory?: GradeCategory;
+  grade?: Grade;
+  component?: 'all' | 'tuition' | 'uniform' | 'transportation' | 'inscription';
+  paymentStatus?: 'pending' | 'partial' | 'completed' | 'overdue';
+  dateFrom?: string;
+  dateTo?: string;
+  includeDiscounts?: boolean;
+}

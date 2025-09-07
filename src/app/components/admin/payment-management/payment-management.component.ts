@@ -1328,13 +1328,31 @@ getTotalAmounts(student: StudentWithPayment): any {
   if (!student.paymentRecord?.totalAmounts) {
     return {
       tuition: 0,
-      inscriptionFee: 0, // ✅ NEW
+      inscriptionFee: 0,
       uniform: 0,
       transportation: 0,
       grandTotal: 0
     };
   }
   
+  // If student has a discount, recalculate the correct totals
+  if (this.hasDiscount(student)) {
+    const originalAmounts = this.getOriginalAmounts(student);
+    const discountAmount = this.getDiscountAmount(student);
+    
+    // Apply discount only to tuition
+    const discountedTuition = originalAmounts.tuition - discountAmount;
+    
+    return {
+      tuition: discountedTuition,
+      inscriptionFee: originalAmounts.inscriptionFee,
+      uniform: originalAmounts.uniform,
+      transportation: originalAmounts.transportation,
+      grandTotal: discountedTuition + originalAmounts.inscriptionFee + originalAmounts.uniform + originalAmounts.transportation
+    };
+  }
+  
+  // If no discount, return stored amounts
   return student.paymentRecord.totalAmounts;
 }
 
@@ -1352,20 +1370,54 @@ getPaidAmounts(student: StudentWithPayment): any {
   return student.paymentRecord.paidAmounts;
 }
 getRemainingAmounts(student: StudentWithPayment): any {
-  if (!student.paymentRecord?.remainingAmounts) {
-    const total = this.getTotalAmounts(student);
-    const paid = this.getPaidAmounts(student);
-    
+  // If no payment record, return zeros
+  if (!student.paymentRecord) {
     return {
-      tuition: Math.max(0, total.tuition - paid.tuition),
-      inscriptionFee: Math.max(0, total.inscriptionFee - paid.inscriptionFee), // ✅ NEW
-      uniform: Math.max(0, total.uniform - paid.uniform),
-      transportation: Math.max(0, total.transportation - paid.transportation),
-      grandTotal: Math.max(0, total.grandTotal - paid.grandTotal)
+      tuition: 0,
+      inscriptionFee: 0,
+      uniform: 0,
+      transportation: 0,
+      grandTotal: 0
     };
   }
   
-  return student.paymentRecord.remainingAmounts;
+  // If the student has a discount, we need to recalculate from original amounts
+  if (this.hasDiscount(student)) {
+    const originalAmounts = this.getOriginalAmounts(student);
+    const paidAmounts = this.getPaidAmounts(student);
+    const discountAmount = this.getDiscountAmount(student);
+    
+    // Apply discount only to tuition
+    const discountedTuition = originalAmounts.tuition - discountAmount;
+    
+    return {
+      tuition: Math.max(0, discountedTuition - paidAmounts.tuition),
+      inscriptionFee: Math.max(0, originalAmounts.inscriptionFee - paidAmounts.inscriptionFee),
+      uniform: Math.max(0, originalAmounts.uniform - paidAmounts.uniform),
+      transportation: Math.max(0, originalAmounts.transportation - paidAmounts.transportation),
+      grandTotal: Math.max(0, 
+        (discountedTuition + originalAmounts.inscriptionFee + originalAmounts.uniform + originalAmounts.transportation) - 
+        paidAmounts.grandTotal
+      )
+    };
+  }
+  
+  // If no discount, use the stored remaining amounts
+  if (student.paymentRecord.remainingAmounts) {
+    return student.paymentRecord.remainingAmounts;
+  }
+  
+  // Fallback: calculate from total and paid amounts
+  const total = this.getTotalAmounts(student);
+  const paid = this.getPaidAmounts(student);
+  
+  return {
+    tuition: Math.max(0, total.tuition - paid.tuition),
+    inscriptionFee: Math.max(0, total.inscriptionFee - paid.inscriptionFee),
+    uniform: Math.max(0, total.uniform - paid.uniform),
+    transportation: Math.max(0, total.transportation - paid.transportation),
+    grandTotal: Math.max(0, total.grandTotal - paid.grandTotal)
+  };
 }
 validatePaymentDialog(student: StudentWithPayment, component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'): string | null {
   if (!student.paymentRecord) {
@@ -1444,13 +1496,19 @@ getComponentStatus(student: StudentWithPayment, component: 'tuition' | 'uniform'
   
   return student.paymentRecord.componentStatus[component] || 'pending';
 }
-  getOriginalAmounts(student: StudentWithPayment): any {
+getOriginalAmounts(student: StudentWithPayment): any {
   if (!student.paymentRecord) {
-    return { tuition: 0, uniform: 0, transportation: 0, grandTotal: 0 };
+    return { tuition: 0, inscriptionFee: 0, uniform: 0, transportation: 0, grandTotal: 0 };
   }
 
   // Calculate original tuition from grade configuration
   const originalTuition = this.getTuitionAmountForGrade(student.grade);
+  
+  // ✅ ADD: Get original inscription fee
+  let originalInscriptionFee = 0;
+  if (student.paymentRecord.inscriptionFee?.applicable) {
+    originalInscriptionFee = this.getInscriptionFeeForStudent(student);
+  }
   
   // Get uniform price from config or stored value
   let originalUniform = 0;
@@ -1467,10 +1525,12 @@ getComponentStatus(student: StudentWithPayment, component: 'tuition' | 'uniform'
     originalTransportation = monthlyPrice * months;
   }
 
-  const originalGrandTotal = originalTuition + originalUniform + originalTransportation;
+  // ✅ FIX: Include inscription fee in grand total
+  const originalGrandTotal = originalTuition + originalInscriptionFee + originalUniform + originalTransportation;
 
   return {
     tuition: originalTuition,
+    inscriptionFee: originalInscriptionFee, // ✅ ADD this
     uniform: originalUniform,
     transportation: originalTransportation,
     grandTotal: originalGrandTotal
@@ -1952,10 +2012,11 @@ getDiscountAmount(student: StudentWithPayment): number {
   return Math.round(originalTuition * percentage / 100);
 }
 getDiscountedAmount(student: StudentWithPayment): number {
-  const originalTotalAmount = this.getOriginalAmounts(student).grandTotal;
+  const originalAmounts = this.getOriginalAmounts(student);
   const discountAmount = this.getDiscountAmount(student);
   
-  return originalTotalAmount - discountAmount;
+  // The discount only applies to tuition, so we subtract it from the grand total
+  return originalAmounts.grandTotal - discountAmount;
 }
 // ===== FORM VALIDATION =====
 isDiscountFormValid(): boolean {
