@@ -153,7 +153,8 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   currentAcademicYear: string;
 
   // Add this property to your class
-componentOnlyForInvoice?: 'uniform' | 'inscriptionFee';
+// In payment-management.component.ts, update this property:
+componentOnlyForInvoice?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD 'tuition'
   
   // ===== PAGINATION =====
   currentPage = 1;
@@ -828,7 +829,7 @@ generatePaymentRecord(): void {
       this.showSuccess(`Dossier de paiement généré pour ${this.selectedStudent?.name}`);
       this.loadStudents();
       this.loadDashboard();
-      this.closeGenerateDialog();
+      this.closeGenerateDialog(); 
       this.isLoading = false;
     },
     error: (error) => {
@@ -882,22 +883,26 @@ editPaymentRecord(student: StudentWithPayment): void {
     this.selectedStudent = null;
     document.body.style.overflow = 'auto';
   }
-
 updatePaymentRecord(): void {
   if (!this.selectedStudent?._id || !this.selectedStudent.paymentRecord) {
     this.showError('Dossier de paiement introuvable');
     return;
   }
 
-  const formValues = this.editForm.value;
+  // ✅ CORRECTION: Utiliser getRawValue() pour inclure les champs disabled
+  const formValues = this.editForm.getRawValue();
+  console.log('Update Payment Record - Form Raw Values:', formValues);
+  
   const academicYear = this.filterForm.get('academicYear')?.value;
   
   const updateRequest: UpdatePaymentRecordRequest = {
     academicYear,
-    hasInscriptionFee: formValues.hasInscriptionFee || false, // ✅ FIXED: Add this field
+    hasInscriptionFee: formValues.hasInscriptionFee || false,
     hasUniform: formValues.hasUniform || false,
     transportationType: formValues.transportationType || null
   };
+
+  console.log('Update request:', updateRequest);
 
   this.isLoading = true;
   
@@ -923,34 +928,83 @@ updatePaymentRecord(): void {
     }
   });
 }
-
-
-// UPDATE validateEditForm method:
 validateEditForm(): string[] {
   const errors: string[] = [];
   
+  console.log('=== DEBUT VALIDATION EDIT FORM ===');
+  
   if (!this.selectedStudent) {
+    console.log('ERROR: Aucun étudiant sélectionné');
     errors.push('Aucun étudiant sélectionné');
     return errors;
   }
   
-  const formValues = this.editForm.value;
+  console.log('Selected Student:', this.selectedStudent.name);
   
-  // ✅ ADD: Inscription fee validation
-  if (!formValues.hasInscriptionFee && this.isInscriptionFeePaid(this.selectedStudent)) {
+  // ✅ CORRECTION: Utiliser getRawValue() pour inclure les champs disabled
+  const formValues = this.editForm.getRawValue();
+  console.log('Form Raw Values (includes disabled):', formValues);
+  
+  // DEBUG: Inscription Fee
+  const currentHasInscriptionFee = this.hasInscriptionFee(this.selectedStudent);
+  const newHasInscriptionFee = formValues.hasInscriptionFee;
+  const isInscriptionFeePaid = this.isInscriptionFeePaid(this.selectedStudent);
+  
+  console.log('=== INSCRIPTION FEE DEBUG ===');
+  console.log('currentHasInscriptionFee:', currentHasInscriptionFee);
+  console.log('newHasInscriptionFee:', newHasInscriptionFee);
+  console.log('isInscriptionFeePaid:', isInscriptionFeePaid);
+  
+  // Erreur seulement si: avait inscription fee ET maintenant on l'enlève ET elle est déjà payée
+  if (currentHasInscriptionFee && !newHasInscriptionFee && isInscriptionFeePaid) {
+    console.log('ERROR: Tentative de retirer inscription fee payée');
     errors.push('Impossible de retirer les frais d\'inscription car ils ont déjà été payés');
+  } else {
+    console.log('INSCRIPTION FEE: Validation passée - pas de tentative de retrait');
   }
   
-  if (!formValues.hasUniform && this.isUniformPaid(this.selectedStudent)) {
+  // DEBUG: Uniform
+  const currentHasUniform = this.hasUniform(this.selectedStudent);
+  const newHasUniform = formValues.hasUniform;
+  const isUniformPaid = this.isUniformPaid(this.selectedStudent);
+  
+  console.log('=== UNIFORM DEBUG ===');
+  console.log('currentHasUniform:', currentHasUniform);
+  console.log('newHasUniform:', newHasUniform);
+  console.log('isUniformPaid:', isUniformPaid);
+  
+  // Erreur seulement si: avait uniforme ET maintenant on l'enlève ET il est déjà payé
+  if (currentHasUniform && !newHasUniform && isUniformPaid) {
+    console.log('ERROR: Tentative de retirer uniforme payé');
     errors.push('Impossible de retirer l\'uniforme car il a déjà été payé');
+  } else {
+    console.log('UNIFORM: Validation passée');
   }
   
-  if (this.hasTransportationPaymentsForStudent(this.selectedStudent)) {
-    const currentType = this.getTransportationTypeForStudent(this.selectedStudent);
-    if (formValues.transportationType !== currentType) {
+  // DEBUG: Transportation
+  const hasTransportPayments = this.hasTransportationPaymentsForStudent(this.selectedStudent);
+  const currentTransportType = this.getTransportationTypeForStudent(this.selectedStudent);
+  const newTransportType = formValues.transportationType;
+  
+  console.log('=== TRANSPORTATION DEBUG ===');
+  console.log('hasTransportPayments:', hasTransportPayments);
+  console.log('currentTransportType:', currentTransportType);
+  console.log('newTransportType:', newTransportType);
+  
+  if (hasTransportPayments) {
+    if (currentTransportType && newTransportType && currentTransportType !== newTransportType) {
+      console.log('ERROR: Tentative de changer type transport avec paiements existants');
       errors.push('Impossible de changer le type de transport car des paiements ont déjà été effectués');
     }
+    
+    if (currentTransportType && !newTransportType) {
+      console.log('ERROR: Tentative de retirer transport avec paiements existants');
+      errors.push('Impossible de retirer le transport car des paiements ont déjà été effectués');
+    }
   }
+  
+  console.log('Validation Errors:', errors);
+  console.log('=== FIN VALIDATION EDIT FORM ===');
   
   return errors;
 }
@@ -1322,8 +1376,6 @@ openPaymentDialog(student: StudentWithPayment, type: 'tuition_monthly' | 'tuitio
     return total - withoutRecord;
   }
 
-  // ===== COMPONENT-SPECIFIC HELPERS =====
-
 getTotalAmounts(student: StudentWithPayment): any {
   if (!student.paymentRecord?.totalAmounts) {
     return {
@@ -1343,19 +1395,21 @@ getTotalAmounts(student: StudentWithPayment): any {
     // Apply discount only to tuition
     const discountedTuition = originalAmounts.tuition - discountAmount;
     
+    // Include inscription fee in grand total calculation
+    const grandTotal = discountedTuition + originalAmounts.inscriptionFee + originalAmounts.uniform + originalAmounts.transportation;
+    
     return {
       tuition: discountedTuition,
       inscriptionFee: originalAmounts.inscriptionFee,
       uniform: originalAmounts.uniform,
       transportation: originalAmounts.transportation,
-      grandTotal: discountedTuition + originalAmounts.inscriptionFee + originalAmounts.uniform + originalAmounts.transportation
+      grandTotal: grandTotal
     };
   }
   
   // If no discount, return stored amounts
   return student.paymentRecord.totalAmounts;
 }
-
 getPaidAmounts(student: StudentWithPayment): any {
   if (!student.paymentRecord?.paidAmounts) {
     return {
@@ -1368,6 +1422,34 @@ getPaidAmounts(student: StudentWithPayment): any {
   }
   
   return student.paymentRecord.paidAmounts;
+}
+
+
+openMonthlyTuitionInvoice(student: StudentWithPayment, monthIndex: number): void {
+  if (!student.hasPaymentRecord) {
+    this.showWarning('Aucun dossier de paiement trouvé pour cet étudiant');
+    return;
+  }
+
+  const monthPayment = student.paymentRecord?.tuitionMonthlyPayments?.[monthIndex];
+  if (!monthPayment || monthPayment.status !== 'paid') {
+    this.showWarning('Ce mois n\'a pas encore été payé');
+    return;
+  }
+
+  this.selectedStudentForInvoice = student;
+  
+  // Set monthly context for TUITION ONLY
+  this.showCurrentMonthOnlyInInvoice = true;
+  this.currentMonthIndexForInvoice = monthIndex;
+  this.monthNameForInvoice = monthPayment.monthName;
+  this.currentPaymentDateForInvoice = new Date(monthPayment.paymentDate || monthPayment.dueDate);
+  
+  // ✅ KEY CHANGE: Set component to tuition only
+  this.componentOnlyForInvoice = 'tuition'; // Add this line
+
+  this.isInvoiceDialogOpen = true;
+  document.body.style.overflow = 'hidden';
 }
 getRemainingAmounts(student: StudentWithPayment): any {
   // If no payment record, return zeros
@@ -1390,15 +1472,21 @@ getRemainingAmounts(student: StudentWithPayment): any {
     // Apply discount only to tuition
     const discountedTuition = originalAmounts.tuition - discountAmount;
     
+    // Calculate remaining amounts for each component
+    const remainingTuition = Math.max(0, discountedTuition - paidAmounts.tuition);
+    const remainingInscriptionFee = Math.max(0, originalAmounts.inscriptionFee - paidAmounts.inscriptionFee);
+    const remainingUniform = Math.max(0, originalAmounts.uniform - paidAmounts.uniform);
+    const remainingTransportation = Math.max(0, originalAmounts.transportation - paidAmounts.transportation);
+    
+    // ✅ FIXED: Calculate grand total correctly including inscription fee
+    const remainingGrandTotal = remainingTuition + remainingInscriptionFee + remainingUniform + remainingTransportation;
+    
     return {
-      tuition: Math.max(0, discountedTuition - paidAmounts.tuition),
-      inscriptionFee: Math.max(0, originalAmounts.inscriptionFee - paidAmounts.inscriptionFee),
-      uniform: Math.max(0, originalAmounts.uniform - paidAmounts.uniform),
-      transportation: Math.max(0, originalAmounts.transportation - paidAmounts.transportation),
-      grandTotal: Math.max(0, 
-        (discountedTuition + originalAmounts.inscriptionFee + originalAmounts.uniform + originalAmounts.transportation) - 
-        paidAmounts.grandTotal
-      )
+      tuition: remainingTuition,
+      inscriptionFee: remainingInscriptionFee,
+      uniform: remainingUniform,
+      transportation: remainingTransportation,
+      grandTotal: remainingGrandTotal
     };
   }
   
@@ -1766,14 +1854,38 @@ hasChanges(): boolean {
     return false;
   }
   
-  const formValues = this.editForm.value;
-  const currentInscriptionFee = this.getCurrentInscriptionFeeStatus(this.selectedStudent); // ✅ USE NEW METHOD
-  const currentUniform = this.selectedStudent.paymentRecord.uniform?.purchased || false;
-  const currentTransport = this.selectedStudent.paymentRecord.transportation?.type || '';
+  // ✅ CORRECTION: Utiliser getRawValue() pour inclure les champs disabled
+  const formValues = this.editForm.getRawValue();
   
-  return formValues.hasInscriptionFee !== currentInscriptionFee || // ✅ ADD THIS
-         formValues.hasUniform !== currentUniform || 
-         formValues.transportationType !== currentTransport;
+  console.log('=== CHECKING CHANGES ===');
+  console.log('Form Raw Values:', formValues);
+  
+  // Utiliser les méthodes existantes pour obtenir l'état actuel
+  const currentInscriptionFee = this.hasInscriptionFee(this.selectedStudent);
+  const currentUniform = this.hasUniform(this.selectedStudent);
+  const currentTransport = this.getTransportationTypeForStudent(this.selectedStudent);
+  
+  console.log('Current values:', {
+    currentInscriptionFee,
+    currentUniform,
+    currentTransport
+  });
+  
+  // Comparer avec les nouvelles valeurs
+  const inscriptionFeeChanged = formValues.hasInscriptionFee !== currentInscriptionFee;
+  const uniformChanged = formValues.hasUniform !== currentUniform;
+  const transportChanged = formValues.transportationType !== currentTransport;
+  
+  console.log('Changes detected:', {
+    inscriptionFeeChanged,
+    uniformChanged,
+    transportChanged
+  });
+  
+  const hasChanges = inscriptionFeeChanged || uniformChanged || transportChanged;
+  console.log('Has changes overall:', hasChanges);
+  
+  return hasChanges;
 }
 
 
@@ -1878,7 +1990,6 @@ async applyDiscount(): Promise<void> {
     return;
   }
 
-  // CHANGE: Block if student already has a discount
   if (this.hasDiscount(this.selectedStudent)) {
     this.showError('Cet étudiant a déjà une remise. Supprimez-la d\'abord pour en créer une nouvelle.');
     return;
@@ -1886,6 +1997,13 @@ async applyDiscount(): Promise<void> {
 
   const formValues = this.discountForm.value;
   const academicYear = this.filterForm.get('academicYear')?.value;
+
+  // ===== BEFORE DISCOUNT =====
+  console.log('\n🔍 BEFORE DISCOUNT:');
+  console.log('Student:', this.selectedStudent.name);
+  console.log('Total Amount (stored):', this.selectedStudent.paymentRecord?.totalAmounts?.grandTotal);
+  console.log('Has discount:', this.hasDiscount(this.selectedStudent));
+  console.log('getTotalAmounts():', this.getTotalAmounts(this.selectedStudent).grandTotal);
 
   const discountRequest: ApplyDiscountRequest = {
     discountType: formValues.discountType,
@@ -1897,12 +2015,7 @@ async applyDiscount(): Promise<void> {
   
   this.paymentService.applyStudentDiscount(this.selectedStudent._id, discountRequest, academicYear).subscribe({
     next: (response) => {
-      this.showSuccess(
-        `Remise de ${response.discount.percentage}% appliquée avec succès`,
-        'Remise appliquée'
-      );
-      
-      // Update the selected student immediately
+      // Update the student with response data
       if (this.selectedStudent && this.selectedStudent.paymentRecord) {
         this.selectedStudent.paymentRecord.discount = {
           enabled: true,
@@ -1911,8 +2024,36 @@ async applyDiscount(): Promise<void> {
           appliedDate: new Date(),
           notes: discountRequest.notes
         };
+        
+        if (response.paymentRecord) {
+          this.selectedStudent.paymentRecord = response.paymentRecord;
+        }
       }
       
+      // ===== AFTER DISCOUNT =====
+      console.log('\n✅ AFTER DISCOUNT:');
+      if (this.selectedStudent) {
+        console.log('Student:', this.selectedStudent.name);
+        console.log('Discount %:', response.discount.percentage);
+        console.log('Has discount:', this.hasDiscount(this.selectedStudent));
+        console.log('Total Amount (stored):', this.selectedStudent.paymentRecord?.totalAmounts?.grandTotal);
+        console.log('getTotalAmounts():', this.getTotalAmounts(this.selectedStudent).grandTotal);
+        console.log('getOriginalAmounts():', this.getOriginalAmounts(this.selectedStudent).grandTotal);
+        console.log('getDiscountAmount():', this.getDiscountAmount(this.selectedStudent));
+        console.log('getDiscountedAmount():', this.getDiscountedAmount(this.selectedStudent));
+        
+        // Show the calculation breakdown
+        const original = this.getOriginalAmounts(this.selectedStudent);
+        const discount = this.getDiscountAmount(this.selectedStudent);
+        console.log('\n📊 CALCULATION BREAKDOWN:');
+        console.log('Original tuition:', original.tuition);
+        console.log('Original inscription fee:', original.inscriptionFee);
+        console.log('Discount amount:', discount);
+        console.log('Final tuition:', original.tuition - discount);
+        console.log('Final total:', (original.tuition - discount) + original.inscriptionFee + original.uniform + original.transportation);
+      }
+      
+      this.showSuccess(`Remise de ${response.discount.percentage}% appliquée avec succès`);
       this.loadStudents();
       this.loadDashboard();
       this.closeDiscountDialog();
@@ -2012,12 +2153,20 @@ getDiscountAmount(student: StudentWithPayment): number {
   return Math.round(originalTuition * percentage / 100);
 }
 getDiscountedAmount(student: StudentWithPayment): number {
+  if (!this.hasDiscount(student)) {
+    // If no discount, return the regular grand total
+    return this.getTotalAmounts(student).grandTotal;
+  }
+  
   const originalAmounts = this.getOriginalAmounts(student);
   const discountAmount = this.getDiscountAmount(student);
   
-  // The discount only applies to tuition, so we subtract it from the grand total
-  return originalAmounts.grandTotal - discountAmount;
-}
+  // ✅ FIXED: Apply discount only to tuition, but include all components in final total
+  const discountedTuition = originalAmounts.tuition - discountAmount;
+  const finalTotal = discountedTuition + originalAmounts.inscriptionFee + originalAmounts.uniform + originalAmounts.transportation;
+  
+  return finalTotal;
+} 
 // ===== FORM VALIDATION =====
 isDiscountFormValid(): boolean {
   return this.discountForm.valid;

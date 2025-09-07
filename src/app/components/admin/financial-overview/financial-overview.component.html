@@ -21,10 +21,10 @@
               <line x1="12" y1="1" x2="12" y2="23"/>
               <path d="m17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
             </svg>
-            Aperçu Financier
+            Aperçu Financier Complet
             <span class="academic-year-badge">{{ academicYear }}</span>
           </h1>
-          <p class="header-subtitle">Suivi complet des revenus et taux de collecte</p>
+          <p class="header-subtitle">Analyse complète des revenus et performances financières</p>
         </div>
       </div>
     </div>
@@ -34,13 +34,11 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
           <polyline points="14,2 14,8 20,8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/>
-          <line x1="16" y1="17" x2="8" y2="17"/>
-          <polyline points="10,9 9,9 8,9"/>
         </svg>
         Gestion des Paiements
       </button>
-      <button class="btn-secondary" (click)="refreshDashboard()" [disabled]="isLoading">
+      
+      <button class="btn-secondary" (click)="refreshData()" [disabled]="isLoading">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
           <path d="M21 3v5h-5"/>
@@ -61,219 +59,123 @@
     </div>
   </div>
 
-  <!-- Financial Overview Content -->
-  <div class="financial-content" *ngIf="dashboard && !isLoading">
-    <!-- Overall Collection Rate Section -->
-    <div class="collection-rate-section">
-      <div class="section-header">
-        <h2>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-          </svg>
-          Taux de collecte global
-        </h2>
-      </div>
-      
-      <div class="rate-display">
-        <div class="rate-content">
-          <span class="rate-label">Progression générale</span>
-          <span 
-            class="rate-value" 
-            [class]="getCollectionRateClass(dashboard.overview.collectionRate.overall)">
-            {{ dashboard.overview.collectionRate.overall }}%
-          </span>
+  <!-- Simplified Filters Section -->
+  <div class="filters-section" *ngIf="hasValidData()">
+    <div class="filters-header">
+      <h3>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"/>
+        </svg>
+        Filtres d'analyse
+      </h3>
+    </div>
+
+    <form [formGroup]="filterForm" class="filters-form">
+      <div class="filters-row">
+        <div class="filter-group">
+          <label for="gradeCategory">Catégorie de niveau</label>
+          <select formControlName="gradeCategory" (change)="onGradeCategoryChange()">
+            <option value="">Toutes les catégories</option>
+            <option value="maternelle">Maternelle</option>
+            <option value="primaire">Primaire</option>
+            <option value="secondaire">Secondaire</option>
+          </select>
         </div>
+
+        <div class="filter-group">
+          <label for="grade">Niveau spécifique</label>
+          <select formControlName="grade">
+            <option value="">Tous les niveaux</option>
+            <option *ngFor="let option of getGradeOptionsForCategory()" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="component">Composant</label>
+          <select formControlName="component">
+            <option value="all">Tous les composants</option>
+            <option value="tuition">Frais scolaires</option>
+            <option value="uniform">Uniforme</option>
+            <option value="transportation">Transport</option>
+            <option value="inscription">Frais d'inscription</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="paymentStatus">Statut de paiement</label>
+          <select formControlName="paymentStatus">
+            <option value="">Tous les statuts</option>
+            <option value="pending">En attente</option>
+            <option value="partial">Partiel</option>
+            <option value="completed">Terminé</option>
+            <option value="overdue">En retard</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" class="btn-secondary btn-sm" (click)="clearFilters()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18"/>
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+          </svg>
+          Effacer
+        </button>
         
-        <div class="progress-section">
-          <div class="progress-bar">
-            <div 
-              class="progress-fill" 
-              [style.width.%]="getCollectionRateNumber(dashboard.overview.collectionRate.overall)">
-            </div>
-          </div>
-          <span class="progress-text">{{ getCollectionRateNumber(dashboard.overview.collectionRate.overall) }}% collecté</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Component Collection Rates -->
-    <div class="component-rates-section">
-      <div class="section-header">
-        <h2>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 11H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h4m6-6h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-4m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m-6 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+        <button type="button" class="btn-secondary btn-sm" (click)="refreshAnalytics()" [disabled]="isAnalyticsLoading">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
           </svg>
-          Taux de collecte par composant
-        </h2>
+          {{ isAnalyticsLoading ? 'Actualisation...' : 'Actualiser' }}
+        </button>
       </div>
+    </form>
+  </div>
 
-      <div class="component-rates-grid">
-        <div class="component-rate-card tuition">
-          <div class="component-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-            </svg>
-          </div>
-          <div class="component-info">
-            <span class="component-label">Frais Scolaires</span>
-            <span class="component-rate" [class]="getCollectionRateClass(dashboard.overview.collectionRate.tuition)">
-              {{ dashboard.overview.collectionRate.tuition }}%
-            </span>
-            <div class="component-progress">
-              <div class="progress-bar-small">
-                <div class="progress-fill" [style.width.%]="getCollectionRateNumber(dashboard.overview.collectionRate.tuition)"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+  <!-- Analytics Loading -->
+  <div class="analytics-loading" *ngIf="isAnalyticsLoading">
+    <div class="spinner-small"></div>
+    <span>Mise à jour des analyses...</span>
+  </div>
 
-        <div class="component-rate-card uniform">
-          <div class="component-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M6 11c0-3.5 1.5-6.5 6-6.5s6 3 6 6.5"/>
-              <path d="M12 2v20"/>
-              <path d="M6 11v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-9"/>
-            </svg>
-          </div>
-          <div class="component-info">
-            <span class="component-label">Uniforme</span>
-            <span class="component-rate" [class]="getCollectionRateClass(dashboard.overview.collectionRate.uniform)">
-              {{ dashboard.overview.collectionRate.uniform }}%
-            </span>
-            <div class="component-progress">
-              <div class="progress-bar-small">
-                <div class="progress-fill" [style.width.%]="getCollectionRateNumber(dashboard.overview.collectionRate.uniform)"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+  <!-- Tab Navigation (Removed trends and reports) -->
+  <div class="tab-navigation" *ngIf="hasValidData()">
+    <button class="tab-button" 
+            [class.active]="activeTab === 'overview'"
+            (click)="setActiveTab('overview')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3v18h18"/>
+        <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+      </svg>
+      Vue d'ensemble
+    </button>
+    
+    <button class="tab-button" 
+            [class.active]="activeTab === 'analytics'"
+            (click)="setActiveTab('analytics')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <rect x="7" y="7" width="3" height="9"/>
+        <rect x="14" y="7" width="3" height="5"/>
+      </svg>
+      Analyses
+    </button>
+  </div>
 
-        <div class="component-rate-card transportation">
-          <div class="component-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M8 6v6h8V6"/>
-              <path d="M4 12h16l2 6H2l2-6z"/>
-              <circle cx="8" cy="19" r="2"/>
-              <circle cx="16" cy="19" r="2"/>
-            </svg>
-          </div>
-          <div class="component-info">
-            <span class="component-label">Transport</span>
-            <span class="component-rate" [class]="getCollectionRateClass(dashboard.overview.collectionRate.transportation)">
-              {{ dashboard.overview.collectionRate.transportation }}%
-            </span>
-            <div class="component-progress">
-              <div class="progress-bar-small">
-                <div class="progress-fill" [style.width.%]="getCollectionRateNumber(dashboard.overview.collectionRate.transportation)"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Revenue Cards Grid -->
-    <div class="revenue-cards-grid">
-      <div class="revenue-card collected">
-        <div class="card-header">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2v20m8-10a8 8 0 1 1-16 0 8 8 0 0 1 16 0z"/>
-          </svg>
-          <span class="card-title">Total Collecté</span>
-        </div>
-        <div class="card-content">
-          <span class="amount">{{ formatCurrency(dashboard.overview.totalRevenue.grandTotal) }}</span>
-          <div class="amount-breakdown">
-            <div class="breakdown-item">
-              <span class="breakdown-label">Frais scolaires:</span>
-              <span class="breakdown-value">{{ formatCurrency(dashboard.overview.totalRevenue.tuition) }}</span>
-            </div>
-            <div class="breakdown-item">
-              <span class="breakdown-label">Uniforme:</span>
-              <span class="breakdown-value">{{ formatCurrency(dashboard.overview.totalRevenue.uniform) }}</span>
-            </div>
-            <div class="breakdown-item">
-              <span class="breakdown-label">Transport:</span>
-              <span class="breakdown-value">{{ formatCurrency(dashboard.overview.totalRevenue.transportation) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="revenue-card expected">
-        <div class="card-header">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="20" x2="12" y2="10"/>
-            <line x1="18" y1="20" x2="18" y2="4"/>
-            <line x1="6" y1="20" x2="6" y2="16"/>
-          </svg>
-          <span class="card-title">Total Attendu</span>
-        </div>
-        <div class="card-content">
-          <span class="amount">{{ formatCurrency(dashboard.overview.expectedRevenue.grandTotal) }}</span>
-          <div class="amount-breakdown">
-            <div class="breakdown-item">
-              <span class="breakdown-label">Frais scolaires:</span>
-              <span class="breakdown-value">{{ formatCurrency(dashboard.overview.expectedRevenue.tuition) }}</span>
-            </div>
-            <div class="breakdown-item">
-              <span class="breakdown-label">Uniforme:</span>
-              <span class="breakdown-value">{{ formatCurrency(dashboard.overview.expectedRevenue.uniform) }}</span>
-            </div>
-            <div class="breakdown-item">
-              <span class="breakdown-label">Transport:</span>
-              <span class="breakdown-value">{{ formatCurrency(dashboard.overview.expectedRevenue.transportation) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="revenue-card outstanding">
-        <div class="card-header">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12,6 12,12 16,14"/>
-          </svg>
-          <span class="card-title">Total Restant</span>
-        </div>
-        <div class="card-content">
-          <span class="amount">{{ formatCurrency(dashboard.overview.outstandingAmount.grandTotal) }}</span>
-          <div class="amount-breakdown">
-            <div class="breakdown-item">
-              <span class="breakdown-label">Frais scolaires:</span>
-              <span class="breakdown-value">{{ formatCurrency(dashboard.overview.outstandingAmount.tuition) }}</span>
-            </div>
-            <div class="breakdown-item">
-              <span class="breakdown-label">Uniforme:</span>
-              <span class="breakdown-value">{{ formatCurrency(dashboard.overview.outstandingAmount.uniform) }}</span>
-            </div>
-            <div class="breakdown-item">
-              <span class="breakdown-label">Transport:</span>
-              <span class="breakdown-value">{{ formatCurrency(dashboard.overview.outstandingAmount.transportation) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Financial Summary Stats -->
-    <div class="financial-summary">
-      <div class="section-header">
-        <h2>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="8.5" cy="7" r="4"/>
-            <line x1="20" y1="8" x2="20" y2="14"/>
-            <line x1="23" y1="11" x2="17" y2="11"/>
-          </svg>
-          Statistiques générales
-        </h2>
-      </div>
-
-      <div class="summary-grid">
-        <div class="summary-stat">
-          <div class="stat-icon">
+  <!-- Tab Content -->
+  <div class="tab-content" *ngIf="hasValidData()">
+    
+    <!-- Overview Tab -->
+    <div class="tab-pane" *ngIf="activeTab === 'overview'">
+      
+      <!-- Quick Summary Cards -->
+      <div class="summary-cards-grid">
+        <div class="summary-card total-students" (click)="navigateToFilteredView({})">
+          <div class="card-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
               <circle cx="9" cy="7" r="4"/>
@@ -281,270 +183,629 @@
               <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
           </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ dashboard.overview.totalStudents }}</span>
-            <span class="stat-label">Total Étudiants</span>
+          <div class="card-content">
+            <h3>Total Étudiants</h3>
+            <div class="card-value">{{ analytics?.overview?.totalStudents || dashboard?.overview?.totalStudents || 0 }}</div>
+            <div class="card-subtitle">Base d'analyse</div>
           </div>
         </div>
 
-        <div class="summary-stat">
-          <div class="stat-icon">
+        <div class="summary-card collection-rate" [class]="getCollectionRateClass(analytics?.collectionRate?.percentage || dashboard?.overview?.collectionRate?.overall || '0')">
+          <div class="card-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 12l2 2 4-4"/>
-              <circle cx="12" cy="12" r="10"/>
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
             </svg>
           </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ dashboard.overview.studentsWithPayments }}</span>
-            <span class="stat-label">Avec Dossiers</span>
+          <div class="card-content">
+            <h3>Taux de Collecte</h3>
+            <div class="card-value">{{ analytics?.collectionRate?.percentage || dashboard?.overview?.collectionRate?.overall || '0' }}%</div>
+            <div class="card-subtitle">Performance globale</div>
           </div>
         </div>
 
-        <div class="summary-stat">
-          <div class="stat-icon">
+        <div class="summary-card revenue-collected" (click)="navigateToFilteredView({ paymentStatus: 'completed' })">
+          <div class="card-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
+              <path d="M12 2v20m8-10a8 8 0 1 1-16 0 8 8 0 0 1 16 0z"/>
             </svg>
           </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ dashboard.overview.studentsWithoutPayments }}</span>
-            <span class="stat-label">Sans Dossiers</span>
+          <div class="card-content">
+            <h3>Revenus Collectés</h3>
+            <div class="card-value">{{ formatCurrency(analytics?.overview?.totalCollected || dashboard?.overview?.totalRevenue?.grandTotal || 0) }}</div>
+            <div class="card-subtitle">Montant encaissé</div>
           </div>
         </div>
 
-        <div class="summary-stat">
-          <div class="stat-icon">
+        <div class="summary-card revenue-outstanding" (click)="navigateToFilteredView({ paymentStatus: 'overdue' })">
+          <div class="card-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="20" x2="12" y2="10"/>
-              <line x1="18" y1="20" x2="18" y2="4"/>
-              <line x1="6" y1="20" x2="6" y2="16"/>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ getCollectionRateNumber(dashboard.overview.collectionRate.overall) }}%</span>
-            <span class="stat-label">Taux Global</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Payment Status Breakdown -->
-    <div class="payment-status-section">
-      <div class="section-header">
-        <h2>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 3v18h18"/>
-            <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
-          </svg>
-          Répartition des statuts de paiement
-        </h2>
-      </div>
-
-      <div class="status-breakdown-grid">
-        <div class="status-card completed">
-          <div class="status-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 12l2 2 4-4"/>
-              <circle cx="12" cy="12" r="10"/>
-            </svg>
-          </div>
-          <div class="status-info">
-            <span class="status-count">{{ dashboard.statusCounts.completed }}</span>
-            <span class="status-label">Complétés</span>
-          </div>
-        </div>
-
-        <div class="status-card partial">
-          <div class="status-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <polyline points="12,6 12,12 16,14"/>
             </svg>
           </div>
-          <div class="status-info">
-            <span class="status-count">{{ dashboard.statusCounts.partial }}</span>
-            <span class="status-label">Partiels</span>
+          <div class="card-content">
+            <h3>Montant en Attente</h3>
+            <div class="card-value">{{ formatCurrency(analytics?.overview?.totalOutstanding || dashboard?.overview?.outstandingAmount?.grandTotal || 0) }}</div>
+            <div class="card-subtitle">À collecter</div>
           </div>
         </div>
+      </div>
 
-        <div class="status-card pending">
-          <div class="status-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
+      <!-- Component Analysis Grid -->
+      <div class="component-analysis-section">
+        <div class="section-header">
+          <h2>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 11H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h4m6-6h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-4m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m-6 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
             </svg>
-          </div>
-          <div class="status-info">
-            <span class="status-count">{{ dashboard.statusCounts.pending }}</span>
-            <span class="status-label">En attente</span>
-          </div>
+            Analyse par Composant
+          </h2>
         </div>
 
-        <div class="status-card overdue">
-          <div class="status-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="15" y1="9" x2="9" y2="15"/>
-              <line x1="9" y1="9" x2="15" y2="15"/>
-            </svg>
+        <div class="component-cards-grid">
+          <!-- Tuition Component -->
+          <div class="component-card tuition" (click)="navigateToComponent('tuition')">
+            <div class="component-header">
+              <div class="component-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                </svg>
+              </div>
+              <h3>Frais Scolaires</h3>
+            </div>
+            <div class="component-metrics">
+              <div class="metric-row">
+                <span class="metric-label">Attendu:</span>
+                <span class="metric-value">{{ formatCurrency(getComponentAnalytics('tuition')?.expected || 0) }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Collecté:</span>
+                <span class="metric-value success">{{ formatCurrency(getComponentAnalytics('tuition')?.collected || 0) }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Étudiants:</span>
+                <span class="metric-value">{{ getComponentAnalytics('tuition')?.studentsCount || 0 }}</span>
+              </div>
+            </div>
+            <div class="component-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width.%]="getComponentAnalytics('tuition')?.expected > 0 ? 
+                       (getComponentAnalytics('tuition')?.collected / getComponentAnalytics('tuition')?.expected) * 100 : 0">
+                </div>
+              </div>
+              <span class="progress-text">
+                {{ getComponentAnalytics('tuition')?.expected > 0 ? 
+                   roundNumber((getComponentAnalytics('tuition')?.collected / getComponentAnalytics('tuition')?.expected) * 100) : 0 }}%
+              </span>
+            </div>
           </div>
-          <div class="status-info">
-            <span class="status-count">{{ dashboard.statusCounts.overdue }}</span>
-            <span class="status-label">En retard</span>
+
+          <!-- Uniform Component -->
+          <div class="component-card uniform" (click)="navigateToComponent('uniform')">
+            <div class="component-header">
+              <div class="component-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 11c0-3.5 1.5-6.5 6-6.5s6 3 6 6.5"/>
+                  <path d="M12 2v20"/>
+                  <path d="M6 11v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-9"/>
+                </svg>
+              </div>
+              <h3>Uniforme</h3>
+            </div>
+            <div class="component-metrics">
+              <div class="metric-row">
+                <span class="metric-label">Attendu:</span>
+                <span class="metric-value">{{ formatCurrency(getComponentAnalytics('uniform')?.expected || 0) }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Collecté:</span>
+                <span class="metric-value success">{{ formatCurrency(getComponentAnalytics('uniform')?.collected || 0) }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Étudiants:</span>
+                <span class="metric-value">{{ getComponentAnalytics('uniform')?.studentsCount || 0 }}</span>
+              </div>
+            </div>
+            <div class="component-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width.%]="getComponentAnalytics('uniform')?.expected > 0 ? 
+                       (getComponentAnalytics('uniform')?.collected / getComponentAnalytics('uniform')?.expected) * 100 : 0">
+                </div>
+              </div>
+              <span class="progress-text">
+                {{ getComponentAnalytics('uniform')?.expected > 0 ? 
+                   roundNumber((getComponentAnalytics('uniform')?.collected / getComponentAnalytics('uniform')?.expected) * 100) : 0 }}%
+              </span>
+            </div>
+          </div>
+
+          <!-- Transportation Component -->
+          <div class="component-card transportation" (click)="navigateToComponent('transportation')">
+            <div class="component-header">
+              <div class="component-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M8 6v6h8V6"/>
+                  <path d="M4 12h16l2 6H2l2-6z"/>
+                  <circle cx="8" cy="19" r="2"/>
+                  <circle cx="16" cy="19" r="2"/>
+                </svg>
+              </div>
+              <h3>Transport</h3>
+            </div>
+            <div class="component-metrics">
+              <div class="metric-row">
+                <span class="metric-label">Attendu:</span>
+                <span class="metric-value">{{ formatCurrency(getComponentAnalytics('transportation')?.expected || 0) }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Collecté:</span>
+                <span class="metric-value success">{{ formatCurrency(getComponentAnalytics('transportation')?.collected || 0) }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Étudiants:</span>
+                <span class="metric-value">{{ getComponentAnalytics('transportation')?.studentsCount || 0 }}</span>
+              </div>
+            </div>
+            <div class="component-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width.%]="getComponentAnalytics('transportation')?.expected > 0 ? 
+                       (getComponentAnalytics('transportation')?.collected / getComponentAnalytics('transportation')?.expected) * 100 : 0">
+                </div>
+              </div>
+              <span class="progress-text">
+                {{ getComponentAnalytics('transportation')?.expected > 0 ? 
+                   roundNumber((getComponentAnalytics('transportation')?.collected / getComponentAnalytics('transportation')?.expected) * 100) : 0 }}%
+              </span>
+            </div>
+          </div>
+
+          <!-- Inscription Component -->
+          <div class="component-card inscription" (click)="navigateToComponent('inscription')">
+            <div class="component-header">
+              <div class="component-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+              </div>
+              <h3>Frais d'Inscription</h3>
+            </div>
+            <div class="component-metrics">
+              <div class="metric-row">
+                <span class="metric-label">Attendu:</span>
+                <span class="metric-value">{{ formatCurrency(getComponentAnalytics('inscription')?.expected || 0) }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Collecté:</span>
+                <span class="metric-value success">{{ formatCurrency(getComponentAnalytics('inscription')?.collected || 0) }}</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-label">Étudiants:</span>
+                <span class="metric-value">{{ getComponentAnalytics('inscription')?.studentsCount || 0 }}</span>
+              </div>
+            </div>
+            <div class="component-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width.%]="getComponentAnalytics('inscription')?.expected > 0 ? 
+                       (getComponentAnalytics('inscription')?.collected / getComponentAnalytics('inscription')?.expected) * 100 : 0">
+                </div>
+              </div>
+              <span class="progress-text">
+                {{ getComponentAnalytics('inscription')?.expected > 0 ? 
+                   roundNumber((getComponentAnalytics('inscription')?.collected / getComponentAnalytics('inscription')?.expected) * 100) : 0 }}%
+              </span>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div class="status-card no-record">
-          <div class="status-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M8 12h8"/>
+      <!-- Grade Category Analysis -->
+      <div class="grade-category-section">
+        <div class="section-header">
+          <h2>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
             </svg>
+            Analyse par Catégorie de Niveau
+          </h2>
+        </div>
+        
+        <div class="grade-category-grid">
+          <div class="grade-category-card maternelle" (click)="navigateToGradeCategory('maternelle')">
+            <div class="category-header">
+              <div class="category-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="8" r="6"/>
+                  <path d="M2 20c0-6 4-10 10-10s10 4 10 10"/>
+                </svg>
+              </div>
+              <h3>Maternelle</h3>
+            </div>
+            <div class="category-content">
+              <div class="stat-row">
+                <span class="stat-label">Étudiants:</span>
+                <span class="stat-value">{{ getGradeCategoryAnalytics('maternelle')?.count || 0 }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Collecté:</span>
+                <span class="stat-value revenue">{{ formatCurrency(getGradeCategoryAnalytics('maternelle')?.collected || 0) }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Taux:</span>
+                <span class="stat-value rate">{{ getGradeCategoryAnalytics('maternelle')?.collectionRate || '0%' }}</span>
+              </div>
+            </div>
           </div>
-          <div class="status-info">
-            <span class="status-count">{{ dashboard.statusCounts.no_record }}</span>
-            <span class="stat-label">Sans enregistrement</span>
+
+          <div class="grade-category-card primaire" (click)="navigateToGradeCategory('primaire')">
+            <div class="category-header">
+              <div class="category-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+              </div>
+              <h3>Primaire</h3>
+            </div>
+            <div class="category-content">
+              <div class="stat-row">
+                <span class="stat-label">Étudiants:</span>
+                <span class="stat-value">{{ getGradeCategoryAnalytics('primaire')?.count || 0 }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Collecté:</span>
+                <span class="stat-value revenue">{{ formatCurrency(getGradeCategoryAnalytics('primaire')?.collected || 0) }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Taux:</span>
+                <span class="stat-value rate">{{ getGradeCategoryAnalytics('primaire')?.collectionRate || '0%' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grade-category-card secondaire" (click)="navigateToGradeCategory('secondaire')">
+            <div class="category-header">
+              <div class="category-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                </svg>
+              </div>
+              <h3>Secondaire</h3>
+            </div>
+            <div class="category-content">
+              <div class="stat-row">
+                <span class="stat-label">Étudiants:</span>
+                <span class="stat-value">{{ getGradeCategoryAnalytics('secondaire')?.count || 0 }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Collecté:</span>
+                <span class="stat-value revenue">{{ formatCurrency(getGradeCategoryAnalytics('secondaire')?.collected || 0) }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Taux:</span>
+                <span class="stat-value rate">{{ getGradeCategoryAnalytics('secondaire')?.collectionRate || '0%' }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Component Usage Statistics -->
-    <div class="component-usage-section" *ngIf="hasComponentStats()">
-      <div class="section-header">
-        <h2>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <rect x="7" y="7" width="3" height="9"/>
-            <rect x="14" y="7" width="3" height="5"/>
-          </svg>
-          Utilisation des services
-        </h2>
-      </div>
-
-      <div class="component-usage-grid">
-        <!-- Uniform Usage -->
-        <div class="usage-card uniform">
-          <div class="usage-header">
-            <div class="usage-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M6 11c0-3.5 1.5-6.5 6-6.5s6 3 6 6.5"/>
-                <path d="M12 2v20"/>
-                <path d="M6 11v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-9"/>
-              </svg>
-            </div>
-            <span class="usage-title">Uniforme</span>
-          </div>
-          <div class="usage-stats">
-            <div class="usage-stat">
-              <span class="usage-label">Étudiants concernés</span>
-              <span class="usage-value">{{ dashboard.componentStats.uniform.totalStudents }}</span>
-            </div>
-            <div class="usage-stat">
-              <span class="usage-label">Payés</span>
-              <span class="usage-value success">{{ dashboard.componentStats.uniform.paidStudents }}</span>
-            </div>
-            <div class="usage-stat">
-              <span class="usage-label">Revenus collectés</span>
-              <span class="usage-value">{{ formatCurrency(dashboard.componentStats.uniform.totalRevenue) }}</span>
-            </div>
-            <div class="usage-stat">
-              <span class="usage-label">Revenus attendus</span>
-              <span class="usage-value">{{ formatCurrency(dashboard.componentStats.uniform.expectedRevenue) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Transportation Usage -->
-        <div class="usage-card transportation">
-          <div class="usage-header">
-            <div class="usage-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M8 6v6h8V6"/>
-                <path d="M4 12h16l2 6H2l2-6z"/>
-                <circle cx="8" cy="19" r="2"/>
-                <circle cx="16" cy="19" r="2"/>
-              </svg>
-            </div>
-            <span class="usage-title">Transport</span>
-          </div>
-          <div class="usage-stats">
-            <div class="usage-stat">
-              <span class="usage-label">Total utilisateurs</span>
-              <span class="usage-value">{{ dashboard.componentStats.transportation.totalStudents }}</span>
-            </div>
-            <div class="usage-stat">
-              <span class="usage-label">Zone proche</span>
-              <span class="usage-value">{{ dashboard.componentStats.transportation.closeZone }}</span>
-            </div>
-            <div class="usage-stat">
-              <span class="usage-label">Zone éloignée</span>
-              <span class="usage-value">{{ dashboard.componentStats.transportation.farZone }}</span>
-            </div>
-            <div class="usage-stat">
-              <span class="usage-label">Revenus collectés</span>
-              <span class="usage-value">{{ formatCurrency(dashboard.componentStats.transportation.totalRevenue) }}</span>
-            </div>
-            <div class="usage-stat">
-              <span class="usage-label">Revenus attendus</span>
-              <span class="usage-value">{{ formatCurrency(dashboard.componentStats.transportation.expectedRevenue) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Grade Category Statistics -->
-    <div class="grade-category-section" *ngIf="hasGradeCategoryStats()">
-      <div class="section-header">
-        <h2>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-          </svg>
-          Statistiques par catégorie de niveau
-        </h2>
-      </div>
+    <!-- Analytics Tab -->
+    <div class="tab-pane" *ngIf="activeTab === 'analytics'">
       
-      <div class="grade-category-grid">
-        <div 
-          class="grade-category-card" 
-          *ngFor="let item of getGradeCategoryStatsArray()"
-          [class]="'card-' + item.key">
-          
-          <div class="grade-category-header">
-            <div class="grade-category-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-              </svg>
-            </div>
-            <span class="grade-category-label">{{ getGradeCategoryLabel(item.key) }}</span>
+      
+
+      <!-- Report Summary -->
+      <div class="report-summary-section" *ngIf="financialSummary" style="margin-bottom: 3rem;">
+        <div class="section-header">
+          <h3>Résumé Financier</h3>
+        </div>
+        
+        <div class="summary-metrics">
+          <div class="summary-metric total">
+            <h4>Total</h4>
+            <div class="metric-value">{{ formatCurrency(financialSummary?.financial?.revenue?.total || 0) }}</div>
+            <div class="metric-subtitle">Revenus collectés</div>
           </div>
           
-          <div class="grade-category-content">
-            <div class="stat-row">
-              <span class="stat-label">Nombre d'étudiants</span>
-              <span class="stat-value">{{ item.value.count }}</span>
+          <div class="summary-metric expected">
+            <h4>Attendu</h4>
+            <div class="metric-value">{{ formatCurrency(financialSummary?.financial?.expected?.total || 0) }}</div>
+            <div class="metric-subtitle">Revenus prévus</div>
+          </div>
+          
+          <div class="summary-metric outstanding">
+            <h4>En Attente</h4>
+            <div class="metric-value">{{ formatCurrency(financialSummary?.financial?.outstanding?.total || 0) }}</div>
+            <div class="metric-subtitle">À collecter</div>
+          </div>
+          
+          <div class="summary-metric rate">
+            <h4>Taux Global</h4>
+            <div class="metric-value" [class]="getCollectionRateClass(financialSummary?.financial?.collectionRate?.overall || '0')">
+              {{ financialSummary?.financial?.collectionRate?.overall || '0%' }}
             </div>
-            <div class="stat-row">
-              <span class="stat-label">Revenus collectés</span>
-              <span class="stat-value revenue">{{ formatCurrency(item.value.revenue) }}</span>
+            <div class="metric-subtitle">Collecte</div>
+          </div>
+        </div>
+        
+        <div class="component-summary">
+          <h4>Détail par Composant</h4>
+          <div class="component-summary-grid">
+            <div class="component-summary-item tuition">
+              <span class="component-label">Scolarité</span>
+              <span class="component-rate">{{ financialSummary?.financial?.collectionRate?.tuition || '0%' }}</span>
+              <span class="component-amount">{{ formatCurrency(financialSummary?.financial?.revenue?.tuition || 0) }}</span>
             </div>
-            <div class="stat-row">
-              <span class="stat-label">Revenus moyens/étudiant</span>
-              <span class="stat-value average">{{ formatCurrency(getAverageRevenue(item.value)) }}</span>
+            <div class="component-summary-item uniform">
+              <span class="component-label">Uniforme</span>
+              <span class="component-rate">{{ financialSummary?.financial?.collectionRate?.uniform || '0%' }}</span>
+              <span class="component-amount">{{ formatCurrency(financialSummary?.financial?.revenue?.uniform || 0) }}</span>
+            </div>
+            <div class="component-summary-item transportation">
+              <span class="component-label">Transport</span>
+              <span class="component-rate">{{ financialSummary?.financial?.collectionRate?.transportation || '0%' }}</span>
+              <span class="component-amount">{{ formatCurrency(financialSummary?.financial?.revenue?.transportation || 0) }}</span>
+            </div>
+            <div class="component-summary-item inscription">
+              <span class="component-label">Inscription</span>
+              <span class="component-rate">{{ financialSummary?.financial?.collectionRate?.inscription || '0%' }}</span>
+              <span class="component-amount">{{ formatCurrency(financialSummary?.financial?.revenue?.inscription || 0) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <div class="tab-pane" *ngIf="activeTab === 'analytics'">
+      <div class="analytics-content">
+        
+        <!-- Charts Section -->
+        <div class="charts-section">
+          <div class="section-header">
+            <h2>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <rect x="7" y="7" width="3" height="9"/>
+                <rect x="14" y="7" width="3" height="5"/>
+              </svg>
+              Graphiques d'Analyse
+            </h2>
+          </div>
+          
+          <div class="charts-grid">
+            <!-- Collection Rate Chart -->
+            <div class="chart-card">
+              <h4>Taux de Collecte Global</h4>
+              <div class="chart-placeholder">
+                <div class="chart-info" *ngIf="getChartData('collectionRate')">
+                  <div class="chart-metric collected">
+                    <span class="label">Collecté</span>
+                    <span class="value">{{ analytics?.collectionRate?.percentage || '0' }}%</span>
+                  </div>
+                  <div class="chart-metric outstanding">
+                    <span class="label">En attente</span>
+                    <span class="value">{{ getRemainingCollectionPercentage() }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Component Breakdown Chart -->
+            <div class="chart-card">
+              <h4>Répartition par Composant</h4>
+              <div class="chart-placeholder">
+                <div class="components-chart" *ngIf="analytics">
+                  <div class="component-bar tuition">
+                    <span class="component-label">Scolarité</span>
+                    <div class="bar-container">
+                      <div class="bar-fill" 
+                           [style.width.%]="getComponentProgressWidth('tuition')">
+                      </div>
+                    </div>
+                    <span class="component-value">{{ formatCurrency(analytics?.byComponent?.tuition?.collected || 0) }}</span>
+                  </div>
+                  <div class="component-bar uniform">
+                    <span class="component-label">Uniforme</span>
+                    <div class="bar-container">
+                      <div class="bar-fill" 
+                           [style.width.%]="getComponentProgressWidth('uniform')">
+                      </div>
+                    </div>
+                    <span class="component-value">{{ formatCurrency(analytics?.byComponent?.uniform?.collected || 0) }}</span>
+                  </div>
+                  <div class="component-bar transportation">
+                    <span class="component-label">Transport</span>
+                    <div class="bar-container">
+                      <div class="bar-fill" 
+                           [style.width.%]="getComponentProgressWidth('transportation')">
+                      </div>
+                    </div>
+                    <span class="component-value">{{ formatCurrency(analytics?.byComponent?.transportation?.collected || 0) }}</span>
+                  </div>
+                  <div class="component-bar inscription">
+                    <span class="component-label">Inscription</span>
+                    <div class="bar-container">
+                      <div class="bar-fill" 
+                           [style.width.%]="getComponentProgressWidth('inscription')">
+                      </div>
+                    </div>
+                    <span class="component-value">{{ formatCurrency(analytics?.byComponent?.inscription?.collected || 0) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Grade Category Performance -->
+            <div class="chart-card">
+              <h4>Performance par Catégorie</h4>
+              <div class="chart-placeholder">
+                <div class="grade-chart" *ngIf="analytics">
+                  <div class="grade-bar maternelle">
+                    <span class="grade-label">Maternelle</span>
+                    <div class="bar-container">
+                      <div class="bar-expected"></div>
+                      <div class="bar-collected" 
+                           [style.width.%]="getGradeCategoryProgressWidth('maternelle')">
+                      </div>
+                    </div>
+                    <span class="grade-value">{{ analytics?.byGradeCategory?.maternelle?.collectionRate || '0%' }}</span>
+                  </div>
+                  <div class="grade-bar primaire">
+                    <span class="grade-label">Primaire</span>
+                    <div class="bar-container">
+                      <div class="bar-expected"></div>
+                      <div class="bar-collected" 
+                           [style.width.%]="getGradeCategoryProgressWidth('primaire')">
+                      </div>
+                    </div>
+                    <span class="grade-value">{{ analytics?.byGradeCategory?.primaire?.collectionRate || '0%' }}</span>
+                  </div>
+                  <div class="grade-bar secondaire">
+                    <span class="grade-label">Secondaire</span>
+                    <div class="bar-container">
+                      <div class="bar-expected"></div>
+                      <div class="bar-collected" 
+                           [style.width.%]="getGradeCategoryProgressWidth('secondaire')">
+                      </div>
+                    </div>
+                    <span class="grade-value">{{ analytics?.byGradeCategory?.secondaire?.collectionRate || '0%' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Analytics Tables -->
+        <div class="analytics-tables">
+          <div class="section-header">
+            <h2>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18"/>
+                <path d="M3 12h18"/>
+                <path d="M3 18h18"/>
+              </svg>
+              Analyse Détaillée
+            </h2>
+          </div>
+
+          <!-- Grade Level Breakdown -->
+          <div class="analytics-table-card">
+            <h4>Analyse par Niveau</h4>
+            <div class="table-responsive">
+              <table class="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Niveau</th>
+                    <th>Étudiants</th>
+                    <th>Attendu</th>
+                    <th>Collecté</th>
+                    <th>En Attente</th>
+                    <th>Taux</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let grade of analytics?.byGrade | keyvalue">
+                    <td>{{ getGradeLabel(grade.key) }}</td>
+                    <td>{{ grade.value.count }}</td>
+                    <td>{{ formatCurrency(grade.value.expected) }}</td>
+                    <td class="success">{{ formatCurrency(grade.value.collected) }}</td>
+                    <td class="warning">{{ formatCurrency(grade.value.outstanding) }}</td>
+                    <td>
+                      <span class="badge" [class]="getCollectionRateClass(grade.value.collectionRate)">
+                        {{ grade.value.collectionRate }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <!-- Enhanced Report Preview -->
+      <div class="report-preview-section" *ngIf="hasEnhancedReportData()" style="margin-top: 3rem;">
+        <div class="section-header">
+          <h3>Aperçu du Rapport Détaillé</h3>
+          <p class="section-subtitle">{{ enhancedReport?.report?.totalRecords || 0 }} enregistrements trouvés</p>
+        </div>
+        
+        <div class="report-filters-summary" *ngIf="hasActiveFilters()">
+          <h4>Filtres Appliqués:</h4>
+          <div class="filter-tags">
+            <span class="filter-tag" *ngIf="filterForm.value.gradeCategory">
+              Catégorie: {{ getGradeCategoryLabel(filterForm.value.gradeCategory) }}
+            </span>
+            <span class="filter-tag" *ngIf="filterForm.value.grade">
+              Niveau: {{ getGradeLabel(filterForm.value.grade) }}
+            </span>
+            <span class="filter-tag" *ngIf="filterForm.value.component && filterForm.value.component !== 'all'">
+              Composant: {{ getComponentLabel(filterForm.value.component) }}
+            </span>
+            <span class="filter-tag" *ngIf="filterForm.value.paymentStatus">
+              Statut: {{ getPaymentStatusLabel(filterForm.value.paymentStatus) }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="report-table-preview">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Étudiant</th>
+                <th>Niveau</th>
+                <th>Attendu</th>
+                <th>Payé</th>
+                <th>Restant</th>
+                <th>Statut</th>
+                <th>Remise</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of enhancedReport?.report?.data?.slice(0, 10)">
+                <td>
+                  <div class="student-info">
+                    <span class="student-name">{{ row.student.name }}</span>
+                    <span class="student-email">{{ row.student.email }}</span>
+                  </div>
+                </td>
+                <td>{{ getGradeLabel(row.student.grade || '') }}</td>
+                <td>{{ formatCurrency(row.amounts.expected) }}</td>
+                <td class="success">{{ formatCurrency(row.amounts.paid) }}</td>
+                <td class="warning">{{ formatCurrency(row.amounts.outstanding) }}</td>
+                <td>
+                  <span class="badge" [class]="row.status">{{ getStatusLabel(row.status) }}</span>
+                </td>
+                <td>
+                  <span *ngIf="row.discount" class="discount-info">
+                    {{ row.discount.percentage }}% 
+                  </span>
+                  <span *ngIf="!row.discount" class="no-discount">Aucune</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div class="table-footer" *ngIf="(enhancedReport?.report?.totalRecords || 0) > 10">
+            <p>Affichage de 10 sur {{ enhancedReport?.report?.totalRecords || 0 }} enregistrements.</p>
+          </div>
+        </div>
+      </div>
   </div>
 
   <!-- Error State -->
-  <div class="error-state" *ngIf="!dashboard && !isLoading">
+  <div class="error-state" *ngIf="!hasValidData() && !isLoading">
     <div class="error-content">
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -554,7 +815,7 @@
       <h3>Erreur de chargement</h3>
       <p>Impossible de charger les données financières. Veuillez réessayer.</p>
       <div class="error-actions">
-        <button class="btn-primary" (click)="refreshDashboard()">
+        <button class="btn-primary" (click)="refreshData()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
             <path d="M21 3v5h-5"/>

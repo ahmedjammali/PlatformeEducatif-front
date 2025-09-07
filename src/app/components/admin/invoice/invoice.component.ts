@@ -81,7 +81,8 @@ export class InvoiceComponent implements OnInit {
   @Input() currentPaymentDate?: Date;
   @Input() showCurrentMonthOnly: boolean = false;
   // NEW: Component-specific invoice inputs
-  @Input() componentOnly?: 'uniform' | 'inscriptionFee';
+  // NEW: Component-specific invoice inputs
+@Input() componentOnly?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD 'tuition'
   
   invoiceData!: InvoiceData;
   isLoading = false;
@@ -135,11 +136,11 @@ export class InvoiceComponent implements OnInit {
     const totalsWithTVA = this.calculateTotalsWithTVA(currentMonthAmounts, tva);
     const discount = this.calculateDiscountInfo();
     const currentMonthInfo = this.getCurrentMonthInfo();
-
+     const invoiceDate = this.getInvoiceDate();
     this.invoiceData = {
       student: this.student,
       academicYear: this.academicYear,
-      generatedDate: new Date(),
+         generatedDate: invoiceDate, // ✅ Changed from new Date()
       invoiceNumber,
       payments,
       currentMonthAmounts,
@@ -157,92 +158,145 @@ export class InvoiceComponent implements OnInit {
     };
   }
 
+  private getInvoiceDate(): Date {
+  // For component-specific invoices, use the component's payment date
+  if (this.componentOnly === 'uniform' && this.student.paymentRecord?.uniform?.paymentDate) {
+    return new Date(this.student.paymentRecord.uniform.paymentDate);
+  }
+  
+  if (this.componentOnly === 'inscriptionFee' && this.student.paymentRecord?.inscriptionFee?.paymentDate) {
+    return new Date(this.student.paymentRecord.inscriptionFee.paymentDate);
+  }
+  
+  // For monthly invoices, use the specific month's payment date
+  if (this.showCurrentMonthOnly && this.currentMonthIndex !== undefined) {
+    const monthPayment = this.student.paymentRecord?.tuitionMonthlyPayments?.[this.currentMonthIndex];
+    if (monthPayment?.paymentDate) {
+      return new Date(monthPayment.paymentDate);
+    }
+  }
+  
+  // For cumulative invoices, use the most recent payment date
+  if (!this.showCurrentMonthOnly && !this.componentOnly) {
+    const payments = this.paymentService.getPaymentHistory(this.student.paymentRecord!);
+    if (payments.length > 0) {
+      // Sort by date and get the most recent
+      const sortedPayments = payments.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      return new Date(sortedPayments[0].date);
+    }
+  }
+  
+  // Fallback to current date if no payment dates found
+  return new Date();
+}
+
   private calculateCurrentMonthAmounts(): any {
-    // Component-specific invoice logic
-    if (this.componentOnly === 'uniform') {
-      const uniformAmount = this.hasUniform() && this.student.paymentRecord?.uniform?.isPaid ? 
-                            (this.student.paymentRecord.uniform.price || 0) : 0;
-      return {
-        tuition: 0,
-        uniform: uniformAmount,
-        transportation: 0,
-        inscriptionFee: 0,
-        grandTotal: uniformAmount
-      };
-    }
-
-    if (this.componentOnly === 'inscriptionFee') {
-      const inscriptionAmount = this.hasInscriptionFee() && this.student.paymentRecord?.inscriptionFee?.isPaid ? 
-                               (this.student.paymentRecord.inscriptionFee.price || 0) : 0;
-      return {
-        tuition: 0,
-        uniform: 0,
-        transportation: 0,
-        inscriptionFee: inscriptionAmount,
-        grandTotal: inscriptionAmount
-      };
-    }
-
-    if (!this.showCurrentMonthOnly) {
-      const paidAmounts = this.student.paymentRecord?.paidAmounts || {
-        tuition: 0,
-        uniform: 0,
-        transportation: 0,
-        inscriptionFee: 0,
-        grandTotal: 0
-      };
-      return paidAmounts;
-    }
-
-    let tuitionAmount = 0;
-    let uniformAmount = 0;
-    let transportationAmount = 0;
-    let inscriptionFeeAmount = 0;
-
-    if (this.currentMonthIndex !== undefined && this.student.paymentRecord?.tuitionMonthlyPayments) {
-      const monthPayment = this.student.paymentRecord.tuitionMonthlyPayments[this.currentMonthIndex];
-      if (monthPayment && monthPayment.status === 'paid') {
-        tuitionAmount = monthPayment.paidAmount || 0;
-      }
-    }
-
-    if (this.hasUniform() && this.student.paymentRecord?.uniform?.isPaid) {
-      const uniformPaymentDate = new Date(this.student.paymentRecord.uniform.paymentDate || '');
-      const currentDate = this.currentPaymentDate || new Date();
-      
-      if (this.isSameMonth(uniformPaymentDate, currentDate)) {
-        uniformAmount = this.student.paymentRecord.uniform.price || 0;
-      }
-    }
-
-    if (this.hasInscriptionFee() && this.student.paymentRecord?.inscriptionFee?.isPaid) {
-      const inscriptionPaymentDate = new Date(this.student.paymentRecord.inscriptionFee.paymentDate || '');
-      const currentDate = this.currentPaymentDate || new Date();
-      
-      if (this.isSameMonth(inscriptionPaymentDate, currentDate)) {
-        inscriptionFeeAmount = this.student.paymentRecord.inscriptionFee.price || 0;
-      }
-    }
-
-    if (this.hasTransportation() && this.currentMonthIndex !== undefined) {
-      const transportPayments = this.student.paymentRecord?.transportation?.monthlyPayments || [];
-      const monthTransportPayment = transportPayments[this.currentMonthIndex];
-      if (monthTransportPayment && monthTransportPayment.status === 'paid') {
-        transportationAmount = monthTransportPayment.paidAmount || 0;
-      }
-    }
-
-    const grandTotal = tuitionAmount + uniformAmount + transportationAmount + inscriptionFeeAmount;
-
+  // Component-specific invoice logic
+  if (this.componentOnly === 'uniform') {
+    const uniformAmount = this.hasUniform() && this.student.paymentRecord?.uniform?.isPaid ? 
+                          (this.student.paymentRecord.uniform.price || 0) : 0;
     return {
-      tuition: tuitionAmount,
+      tuition: 0,
       uniform: uniformAmount,
-      transportation: transportationAmount,
-      inscriptionFee: inscriptionFeeAmount,
-      grandTotal
+      transportation: 0,
+      inscriptionFee: 0,
+      grandTotal: uniformAmount
     };
   }
 
+  if (this.componentOnly === 'inscriptionFee') {
+    const inscriptionAmount = this.hasInscriptionFee() && this.student.paymentRecord?.inscriptionFee?.isPaid ? 
+                             (this.student.paymentRecord.inscriptionFee.price || 0) : 0;
+    return {
+      tuition: 0,
+      uniform: 0,
+      transportation: 0,
+      inscriptionFee: inscriptionAmount,
+      grandTotal: inscriptionAmount
+    };
+  }
+
+  // Handle tuition-only invoices
+  if (this.componentOnly === 'tuition') {
+    let tuitionAmount = 0;
+    
+    if (this.showCurrentMonthOnly && this.currentMonthIndex !== undefined) {
+      // For monthly tuition invoices, get the full monthly amount (not just paid amount)
+      const monthPayment = this.student.paymentRecord?.tuitionMonthlyPayments?.[this.currentMonthIndex];
+      tuitionAmount = monthPayment?.amount || 0; // Full monthly amount
+    } else {
+      // For cumulative tuition invoices, get total paid tuition
+      tuitionAmount = this.student.paymentRecord?.paidAmounts?.tuition || 0;
+    }
+    
+    return {
+      tuition: tuitionAmount,
+      uniform: 0,
+      transportation: 0,
+      inscriptionFee: 0,
+      grandTotal: tuitionAmount
+    };
+  }
+
+  if (!this.showCurrentMonthOnly) {
+    const paidAmounts = this.student.paymentRecord?.paidAmounts || {
+      tuition: 0,
+      uniform: 0,
+      transportation: 0,
+      inscriptionFee: 0,
+      grandTotal: 0
+    };
+    return paidAmounts;
+  }
+
+  let tuitionAmount = 0;
+  let uniformAmount = 0;
+  let transportationAmount = 0;
+  let inscriptionFeeAmount = 0;
+
+  if (this.currentMonthIndex !== undefined && this.student.paymentRecord?.tuitionMonthlyPayments) {
+    const monthPayment = this.student.paymentRecord.tuitionMonthlyPayments[this.currentMonthIndex];
+    if (monthPayment && monthPayment.status === 'paid') {
+      tuitionAmount = monthPayment.paidAmount || 0;
+    }
+  }
+
+  if (this.hasUniform() && this.student.paymentRecord?.uniform?.isPaid) {
+    const uniformPaymentDate = new Date(this.student.paymentRecord.uniform.paymentDate || '');
+    const currentDate = this.currentPaymentDate || new Date();
+    
+    if (this.isSameMonth(uniformPaymentDate, currentDate)) {
+      uniformAmount = this.student.paymentRecord.uniform.price || 0;
+    }
+  }
+
+  if (this.hasInscriptionFee() && this.student.paymentRecord?.inscriptionFee?.isPaid) {
+    const inscriptionPaymentDate = new Date(this.student.paymentRecord.inscriptionFee.paymentDate || '');
+    const currentDate = this.currentPaymentDate || new Date();
+    
+    if (this.isSameMonth(inscriptionPaymentDate, currentDate)) {
+      inscriptionFeeAmount = this.student.paymentRecord.inscriptionFee.price || 0;
+    }
+  }
+
+  if (this.hasTransportation() && this.currentMonthIndex !== undefined) {
+    const transportPayments = this.student.paymentRecord?.transportation?.monthlyPayments || [];
+    const monthTransportPayment = transportPayments[this.currentMonthIndex];
+    if (monthTransportPayment && monthTransportPayment.status === 'paid') {
+      transportationAmount = monthTransportPayment.paidAmount || 0;
+    }
+  }
+
+  const grandTotal = tuitionAmount + uniformAmount + transportationAmount + inscriptionFeeAmount;
+
+  return {
+    tuition: tuitionAmount,
+    uniform: uniformAmount,
+    transportation: transportationAmount,
+    inscriptionFee: inscriptionFeeAmount,
+    grandTotal
+  };
+}
   private isSameMonth(date1: Date, date2: Date): boolean {
     return date1.getFullYear() === date2.getFullYear() && 
            date1.getMonth() === date2.getMonth();
@@ -308,22 +362,33 @@ export class InvoiceComponent implements OnInit {
     }
   }
 
-  getHTAmount(component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'): number {
-    if (!this.invoiceData) return 0;
-    
-    switch (component) {
-      case 'tuition':
-        return this.invoiceData.currentMonthAmounts.tuition;
-      case 'uniform':
-        return this.invoiceData.currentMonthAmounts.uniform;
-      case 'transportation':
-        return this.invoiceData.currentMonthAmounts.transportation;
-      case 'inscriptionFee':
-        return this.invoiceData.currentMonthAmounts.inscriptionFee;
-      default:
-        return 0;
-    }
+getHTAmount(component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'): number {
+  if (!this.invoiceData) return 0;
+  
+  switch (component) {
+    case 'tuition':
+      // ✅ CHANGE: For monthly invoices, show the full monthly amount
+      if (this.showCurrentMonthOnly && this.currentMonthIndex !== undefined) {
+        const monthPayment = this.student.paymentRecord?.tuitionMonthlyPayments?.[this.currentMonthIndex];
+        return monthPayment?.amount || 0; // Show full amount, not just paid amount
+      }
+      return this.invoiceData.currentMonthAmounts.tuition;
+    case 'uniform':
+      return this.invoiceData.currentMonthAmounts.uniform;
+    case 'transportation':
+      // ✅ CHANGE: For monthly invoices, show the full monthly amount
+      if (this.showCurrentMonthOnly && this.currentMonthIndex !== undefined) {
+        const transportPayments = this.student.paymentRecord?.transportation?.monthlyPayments || [];
+        const monthTransport = transportPayments[this.currentMonthIndex];
+        return monthTransport?.amount || 0; // Show full amount, not just paid amount
+      }
+      return this.invoiceData.currentMonthAmounts.transportation;
+    case 'inscriptionFee':
+      return this.invoiceData.currentMonthAmounts.inscriptionFee;
+    default:
+      return 0;
   }
+}
 
   getTTCAmount(component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'): number {
     const htAmount = this.getHTAmount(component);
@@ -331,46 +396,48 @@ export class InvoiceComponent implements OnInit {
     return htAmount + tvaAmount;
   }
 
-  getOriginalAmountForCurrentMonth(component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'): number {
-    if (this.componentOnly) {
-      if (component === 'uniform' && this.componentOnly === 'uniform') {
-        return this.student.paymentRecord?.uniform?.price || 0;
-      }
-      if (component === 'inscriptionFee' && this.componentOnly === 'inscriptionFee') {
-        return this.student.paymentRecord?.inscriptionFee?.price || 0;
-      }
-      return 0;
+getOriginalAmountForCurrentMonth(component: 'tuition' | 'uniform' | 'transportation' | 'inscriptionFee'): number {
+  if (this.componentOnly) {
+    if (component === 'uniform' && this.componentOnly === 'uniform') {
+      return this.student.paymentRecord?.uniform?.price || 0;
     }
-
-    if (!this.showCurrentMonthOnly || this.currentMonthIndex === undefined) {
-      const totalAmounts = this.student.paymentRecord?.totalAmounts;
-      switch (component) {
-        case 'tuition': return totalAmounts?.tuition || 0;
-        case 'uniform': return totalAmounts?.uniform || 0;
-        case 'transportation': return totalAmounts?.transportation || 0;
-        case 'inscriptionFee': return totalAmounts?.inscriptionFee || 0;
-        default: return 0;
-      }
+    if (component === 'inscriptionFee' && this.componentOnly === 'inscriptionFee') {
+      return this.student.paymentRecord?.inscriptionFee?.price || 0;
     }
+    return 0;
+  }
 
+  if (!this.showCurrentMonthOnly || this.currentMonthIndex === undefined) {
+    const totalAmounts = this.student.paymentRecord?.totalAmounts;
     switch (component) {
-      case 'tuition':
-        const monthPayment = this.student.paymentRecord?.tuitionMonthlyPayments?.[this.currentMonthIndex];
-        return monthPayment?.amount || 0;
-      case 'uniform':
-        return this.invoiceData.currentMonthAmounts.uniform > 0 ? 
-               (this.student.paymentRecord?.uniform?.price || 0) : 0;
-      case 'transportation':
-        const transportPayments = this.student.paymentRecord?.transportation?.monthlyPayments || [];
-        const monthTransport = transportPayments[this.currentMonthIndex];
-        return monthTransport?.amount || 0;
-      case 'inscriptionFee':
-        return this.invoiceData.currentMonthAmounts.inscriptionFee > 0 ? 
-               (this.student.paymentRecord?.inscriptionFee?.price || 0) : 0;
-      default:
-        return 0;
+      case 'tuition': return totalAmounts?.tuition || 0;
+      case 'uniform': return totalAmounts?.uniform || 0;
+      case 'transportation': return totalAmounts?.transportation || 0;
+      case 'inscriptionFee': return totalAmounts?.inscriptionFee || 0;
+      default: return 0;
     }
   }
+
+  switch (component) {
+    case 'tuition':
+      const monthPayment = this.student.paymentRecord?.tuitionMonthlyPayments?.[this.currentMonthIndex];
+      // ✅ CHANGE: Always return the full monthly amount, not just paid amount
+      return monthPayment?.amount || 0; // Changed from monthPayment?.paidAmount
+    case 'uniform':
+      return this.invoiceData.currentMonthAmounts.uniform > 0 ? 
+             (this.student.paymentRecord?.uniform?.price || 0) : 0;
+    case 'transportation':
+      const transportPayments = this.student.paymentRecord?.transportation?.monthlyPayments || [];
+      const monthTransport = transportPayments[this.currentMonthIndex];
+      // ✅ CHANGE: Always return the full monthly amount, not just paid amount
+      return monthTransport?.amount || 0; // Changed from monthTransport?.paidAmount
+    case 'inscriptionFee':
+      return this.invoiceData.currentMonthAmounts.inscriptionFee > 0 ? 
+             (this.student.paymentRecord?.inscriptionFee?.price || 0) : 0;
+    default:
+      return 0;
+  }
+}
 
   formatCurrencyTable(amount: number): string {
     return amount.toFixed(3).replace('.', ',');
@@ -444,7 +511,7 @@ export class InvoiceComponent implements OnInit {
     return Array(emptyRowsCount).fill(0).map((_, i) => i);
   }
 
-  private getUsedRowsCount(): number {
+private getUsedRowsCount(): number {
     let count = 0;
     
     if (this.componentOnly === 'uniform') {
@@ -455,6 +522,11 @@ export class InvoiceComponent implements OnInit {
       return this.hasInscriptionFeeForCurrentInvoice() ? 1 : 0;
     }
     
+    // ✅ ADD: Handle tuition-only invoices
+    if (this.componentOnly === 'tuition') {
+      return this.getHTAmount('tuition') > 0 ? 1 : 0;
+    }
+    
     if (this.getHTAmount('tuition') > 0) count++;
     if (this.hasUniformForCurrentInvoice()) count++;
     if (this.hasTransportationForCurrentInvoice()) count++;
@@ -463,43 +535,47 @@ export class InvoiceComponent implements OnInit {
     return count;
   }
 
-  hasUniformForCurrentInvoice(): boolean {
-    if (this.componentOnly === 'inscriptionFee') return false;
-    if (this.componentOnly === 'uniform') return this.hasUniform() && (this.student.paymentRecord?.uniform?.isPaid || false);
-    
-    if (!this.hasUniform()) return false;
-    
-    if (this.showCurrentMonthOnly) {
-      return (this.invoiceData?.currentMonthAmounts?.uniform || 0) > 0;
-    }
-    
-    return true;
+hasUniformForCurrentInvoice(): boolean {
+  if (this.componentOnly === 'tuition') return false; // ✅ ADD: Block uniform for tuition-only invoices
+  if (this.componentOnly === 'inscriptionFee') return false;
+  if (this.componentOnly === 'uniform') return this.hasUniform() && (this.student.paymentRecord?.uniform?.isPaid || false);
+  
+  if (!this.hasUniform()) return false;
+  
+  if (this.showCurrentMonthOnly) {
+    return (this.invoiceData?.currentMonthAmounts?.uniform || 0) > 0;
   }
+  
+  return true;
+}
 
-  hasTransportationForCurrentInvoice(): boolean {
-    if (this.componentOnly) return false;
-    if (!this.hasTransportation()) return false;
-    
-    if (this.showCurrentMonthOnly) {
-      return (this.invoiceData?.currentMonthAmounts?.transportation || 0) > 0;
-    }
-    
-    return true;
+hasTransportationForCurrentInvoice(): boolean {
+  if (this.componentOnly === 'tuition') return false; // ✅ ADD: Block transportation for tuition-only invoices
+  if (this.componentOnly) return false;
+  if (!this.hasTransportation()) return false;
+  
+  if (this.showCurrentMonthOnly) {
+    return (this.invoiceData?.currentMonthAmounts?.transportation || 0) > 0;
   }
+  
+  return true;
+}
 
-  hasInscriptionFeeForCurrentInvoice(): boolean {
-    if (this.componentOnly === 'uniform') return false;
-    if (this.componentOnly === 'inscriptionFee') return this.hasInscriptionFee() && (this.student.paymentRecord?.inscriptionFee?.isPaid || false);
-    
-    if (!this.hasInscriptionFee()) return false;
-    
-    if (this.showCurrentMonthOnly) {
-      return (this.invoiceData?.currentMonthAmounts?.inscriptionFee || 0) > 0;
-    }
-    
-    return true;
+
+
+hasInscriptionFeeForCurrentInvoice(): boolean {
+  if (this.componentOnly === 'tuition') return false; // ✅ ADD: Block inscription fee for tuition-only invoices
+  if (this.componentOnly === 'uniform') return false;
+  if (this.componentOnly === 'inscriptionFee') return this.hasInscriptionFee() && (this.student.paymentRecord?.inscriptionFee?.isPaid || false);
+  
+  if (!this.hasInscriptionFee()) return false;
+  
+  if (this.showCurrentMonthOnly) {
+    return (this.invoiceData?.currentMonthAmounts?.inscriptionFee || 0) > 0;
   }
-
+  
+  return true;
+}
   printInvoice(): void {
     window.print();
   }
@@ -762,18 +838,22 @@ export class InvoiceComponent implements OnInit {
     return this.invoiceData?.discount?.percentage || 0;
   }
 
-  getInvoiceTitle(): string {
-    if (this.componentOnly === 'uniform') {
-      return 'FACTURE - UNIFORME SCOLAIRE';
-    }
-    if (this.componentOnly === 'inscriptionFee') {
-      return 'FACTURE - FRAIS D\'INSCRIPTION';
-    }
-    if (this.showCurrentMonthOnly && this.invoiceData?.currentMonthInfo) {
-      return `FACTURE - ${this.invoiceData.currentMonthInfo.monthName.toUpperCase()}`;
-    }
-    return 'B.L. FACTURE';
+getInvoiceTitle(): string {
+  if (this.componentOnly === 'uniform') {
+    return 'FACTURE - UNIFORME SCOLAIRE';
   }
+  if (this.componentOnly === 'inscriptionFee') {
+    return 'FACTURE - FRAIS D\'INSCRIPTION';
+  }
+  // Add this new condition:
+  if (this.componentOnly === 'tuition' && this.showCurrentMonthOnly && this.invoiceData?.currentMonthInfo) {
+    return `FACTURE - FRAIS SCOLAIRES ${this.invoiceData.currentMonthInfo.monthName.toUpperCase()}`;
+  }
+  if (this.showCurrentMonthOnly && this.invoiceData?.currentMonthInfo) {
+    return `FACTURE - ${this.invoiceData.currentMonthInfo.monthName.toUpperCase()}`;
+  }
+  return 'B.L. FACTURE';
+}
 
   getTuitionPeriodDescription(): string {
     if (this.showCurrentMonthOnly && this.invoiceData?.currentMonthInfo) {

@@ -76,15 +76,7 @@
       </div>
       <div class="invoice-details-content">
         <div class="details-row">
-          <span class="details-label">Numéro :</span>
-          <span>{{ invoiceData.invoiceNumber.split('-')[2] || '0001156' }}</span>
-        </div>
-        <div class="details-row">
           <span class="details-label">Date :</span>
-          <span>{{ formatDateShort(invoiceData.generatedDate) }}</span>
-        </div>
-        <div class="details-row">
-          <span class="details-label">Échéance :</span>
           <span>{{ formatDateShort(invoiceData.generatedDate) }}</span>
         </div>
         <div class="details-row" *ngIf="showCurrentMonthOnly && invoiceData.currentMonthInfo">
@@ -108,7 +100,9 @@
       </thead>
       <tbody>
         <!-- Tuition Fee Row - Only display if amount > 0 -->
-        <tr class="payment-row" *ngIf="!componentOnly && getHTAmount('tuition') > 0">
+        <!-- Tuition Fee Row for tuition-only invoices -->
+        <!-- Tuition Fee Row - Display for regular invoices and tuition-only invoices -->
+        <tr class="payment-row" *ngIf="((componentOnly === 'tuition') || (!componentOnly)) && getHTAmount('tuition') > 0">
           <td>001</td>
           <td class="designation-col">
             <span class="service-icon">📚</span>
@@ -129,19 +123,12 @@
           </td>
           <td>{{ formatCurrencyTable(getTVAAmount('tuition')) }}</td>
         </tr>
-
         <!-- Uniform Row - Only display if has uniform payment -->
         <tr class="payment-row" *ngIf="hasUniformForCurrentInvoice() && getHTAmount('uniform') > 0">
           <td>{{ (!componentOnly && getHTAmount('tuition') > 0) ? '002' : '001' }}</td>
           <td class="designation-col">
             <span class="service-icon">👔</span>
             UNIFORME SCOLAIRE
-            <div *ngIf="componentOnly === 'uniform'" style="font-size: 9px; color: #666;">
-              Payé le {{ formatDateShort(invoiceData.student.paymentRecord?.uniform?.paymentDate || invoiceData.generatedDate) }}
-            </div>
-            <div *ngIf="showCurrentMonthOnly && invoiceData.currentMonthInfo && componentOnly !== 'uniform'" style="font-size: 9px; color: #666;">
-              Payé le {{ formatDateShort(invoiceData.currentMonthInfo.paymentDate || invoiceData.generatedDate) }}
-            </div>
           </td>
           <td>1,00</td>
           <td class="price-col">{{ formatCurrencyTable(getOriginalAmountForCurrentMonth('uniform')) }}</td>
@@ -172,12 +159,7 @@
           <td class="designation-col">
             <span class="service-icon">📝</span>
             FRAIS D'INSCRIPTION
-            <div *ngIf="componentOnly === 'inscriptionFee'" style="font-size: 9px; color: #666;">
-              Payé le {{ formatDateShort(invoiceData.student.paymentRecord?.inscriptionFee?.paymentDate || invoiceData.generatedDate) }}
-            </div>
-            <div *ngIf="showCurrentMonthOnly && invoiceData.currentMonthInfo && componentOnly !== 'inscriptionFee'" style="font-size: 9px; color: #666;">
-              Payé le {{ formatDateShort(invoiceData.currentMonthInfo.paymentDate || invoiceData.generatedDate) }}
-            </div>
+            
           </td>
           <td>1,00</td>
           <td class="price-col">{{ formatCurrencyTable(getOriginalAmountForCurrentMonth('inscriptionFee')) }}</td>

@@ -327,7 +327,7 @@ export interface PaymentFilters {
 
 // ===== UPDATED RECORD PAYMENT REQUEST =====
 export interface RecordPaymentRequest {
-  monthIndex?: number;
+  monthIndex?: number;  
   amount?: number;
   paymentMethod: 'cash' | 'check' | 'bank_transfer' | 'online';
   paymentDate?: Date | string;

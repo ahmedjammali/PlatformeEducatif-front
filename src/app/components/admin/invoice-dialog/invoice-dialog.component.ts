@@ -309,7 +309,8 @@ export class InvoiceDialogComponent implements OnInit, OnDestroy {
   @Input() monthName?: string;
   
   // NEW: Component-specific invoice inputs
-  @Input() componentOnly?: 'uniform' | 'inscriptionFee';
+// NEW: Component-specific invoice inputs
+@Input() componentOnly?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD 'tuition'
   
   @Output() dialogClosed = new EventEmitter<void>();
 
@@ -362,16 +363,20 @@ export class InvoiceDialogComponent implements OnInit, OnDestroy {
     this.closeDialog();
   }
 
-  getInvoiceTypeDescription(): string {
-    if (this.componentOnly === 'uniform') {
-      return 'Facture uniforme scolaire';
-    }
-    if (this.componentOnly === 'inscriptionFee') {
-      return 'Facture frais d\'inscription';
-    }
-    if (this.showCurrentMonthOnly && this.monthName) {
-      return `Facture mensuelle - ${this.monthName}`;
-    }
-    return 'Facture cumulative';
+getInvoiceTypeDescription(): string {
+  if (this.componentOnly === 'uniform') {
+    return 'Facture uniforme scolaire';
   }
+  if (this.componentOnly === 'inscriptionFee') {
+    return 'Facture frais d\'inscription';
+  }
+  // ✅ ADD: Handle tuition-only monthly invoices
+  if (this.componentOnly === 'tuition' && this.showCurrentMonthOnly && this.monthName) {
+    return `Facture frais scolaires - ${this.monthName}`;
+  }
+  if (this.showCurrentMonthOnly && this.monthName) {
+    return `Facture mensuelle - ${this.monthName}`;
+  }
+  return 'Facture cumulative';
+}
 }
