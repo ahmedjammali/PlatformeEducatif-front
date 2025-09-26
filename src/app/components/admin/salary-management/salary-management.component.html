@@ -1,0 +1,1009 @@
+<!-- salary-management.component.html -->
+
+<!-- Toaster Component -->
+<app-toaster></app-toaster>
+
+<div class="salary-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestion des Salaires</h1>
+      <p class="header-subtitle">Gérer les salaires des enseignants et administrateurs</p>
+    </div>
+
+    <div class="header-actions">
+      <div class="academic-year-selector">
+        <label>Année académique</label>
+        <select [(ngModel)]="selectedAcademicYear" (ngModelChange)="onAcademicYearChange()">
+          <option value="2025-2026">2025-2026</option>
+          <option value="2024-2025">2024-2025</option>
+          <option value="2023-2024">2023-2024</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards" *ngIf="salarySummary">
+    <div class="summary-card">
+      <div class="card-icon success">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg>
+      </div>
+      <div class="card-content">
+        <h3>Total Programmé</h3>
+        <p class="card-value">{{ formatCurrency(salarySummary.totalScheduled) }}</p>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-icon paid">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20,6 9,17 4,12" />
+        </svg>
+      </div>
+      <div class="card-content">
+        <h3>Total Payé</h3>
+        <p class="card-value">{{ formatCurrency(salarySummary.totalPaid) }}</p>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-icon pending">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12,6 12,12 16,14" />
+        </svg>
+      </div>
+      <div class="card-content">
+        <h3>En Attente</h3>
+        <p class="card-value">{{ formatCurrency(salarySummary.totalPending) }}</p>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-icon overdue">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="15" y1="9" x2="9" y2="15" />
+          <line x1="9" y1="9" x2="15" y2="15" />
+        </svg>
+      </div>
+      <div class="card-content">
+        <h3>En Retard</h3>
+        <p class="card-value">{{ salarySummary.overdue }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-header">
+      <h3>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46" />
+        </svg>
+        Filtres
+      </h3>
+    </div>
+
+    <div class="filters-form">
+      <div class="filters-row">
+        <div class="filter-group">
+          <label for="search">Rechercher</label>
+          <div class="search-input">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input type="text" id="search" placeholder="Nom, email..." [(ngModel)]="searchTerm"
+              (ngModelChange)="onSearchChange()" />
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label for="role">Rôle</label>
+          <select id="role" [(ngModel)]="selectedRole" (ngModelChange)="onFilterChange()">
+            <option value="">Tous les rôles</option>
+            <option value="teacher">Enseignants</option>
+            <option value="admin">Administrateurs</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="configStatus">Configuration</label>
+          <select id="configStatus" [(ngModel)]="selectedConfigStatus" (ngModelChange)="onFilterChange()">
+            <option value="">Tous les utilisateurs</option>
+            <option value="hasConfig">Avec configuration</option>
+            <option value="noConfig">Sans configuration</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" class="btn-secondary btn-sm" (click)="clearFilters()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18" />
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+          </svg>
+          Effacer
+        </button>
+
+        <button type="button" class="btn-secondary btn-sm" (click)="loadData()" [disabled]="loading">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M3 21v-5h5" />
+          </svg>
+          {{ loading ? 'Actualisation...' : 'Actualiser' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Salary Management Table -->
+  <div class="section">
+    <div class="section-header">
+      <h2>Gestion des Salaires - Enseignants et Administrateurs</h2>
+      <span class="section-subtitle">Créer des configurations ou gérer les paiements mensuels</span>
+    </div>
+
+    <div class="table-container">
+      <div class="salary-table" *ngIf="!loadingUsers; else loadingTemplate">
+        <div class="table-header">
+          <div class="col-user">Utilisateur</div>
+          <div class="col-details">Détails</div>
+          <div class="col-config-status">Actions</div>
+          <div class="col-payment-type">Type de Paiement</div>
+          <div class="col-total">Total Programmé</div>
+          <div class="col-paid">Total Payé</div>
+          <div class="col-pending">En Attente</div>
+          <div class="col-actions">Payment</div>
+        </div>
+
+        <ng-container *ngFor="let user of filteredUsers">
+          <div class="table-row">
+            <div class="col-user" data-label="Utilisateur">
+              <div class="user-info">
+                <div class="user-name-row">
+                  <span class="user-name">{{ user.name }}</span> |
+                  <span class="badge role-badge" [class]="'role-' + user.role">
+                    {{ getRoleDisplay(user.role) }}
+                  </span>
+                </div>
+                <div class="user-email">{{ user.email }}</div>
+              </div>
+            </div>
+
+            <div class="col-details" data-label="Détails">
+              <button class="btn-view-user" (click)="viewUserDetails(user)" title="Voir les détails de l'utilisateur">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="col-config-status" data-label="Configuration">
+              <!-- Show See Configuration button if has config -->
+              <button *ngIf="hasConfiguration(user._id!)" class="btn-see-config-small"
+                (click)="openConfigDetailsModal(user._id!)" title="Voir la configuration">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                Voir Config
+              </button>
+
+              <!-- Show Create Configuration button if no config -->
+              <button *ngIf="!hasConfiguration(user._id!)" class="btn-create-config-small"
+                (click)="openCreateConfigModal(user)" title="Créer une configuration">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Créer
+              </button>
+            </div>
+
+            <!-- Show payment details if user has configuration -->
+            <ng-container *ngIf="hasConfiguration(user._id!); else noConfigColumns">
+              <ng-container *ngFor="let record of salaryRecords">
+                <ng-container *ngIf="getUserId(record.user) === user._id">
+                  <div class="col-payment-type" data-label="Type de Paiement">
+                    <span class="badge" [class]="getPaymentType(record)">
+                      {{ getPaymentTypeDisplay(record) }}
+                    </span>
+                  </div>
+                  <div class="col-total" data-label="Total Programmé">{{ formatCurrency(record.totalScheduledAmount) }}
+                  </div>
+                  <div class="col-paid" data-label="Total Payé">{{ formatCurrency(record.totalPaidAmount) }}</div>
+                  <div class="col-pending" data-label="En Attente">{{ formatCurrency(record.totalPendingAmount) }}</div>
+                </ng-container>
+              </ng-container>
+            </ng-container>
+
+            <!-- Show empty columns if no configuration -->
+            <ng-template #noConfigColumns>
+
+            </ng-template>
+
+            <div class="col-actions" data-label="Actions">
+              <!-- Show View Details button if has config -->
+              <button *ngIf="hasConfiguration(user._id!)" class="btn-view-details"
+                (click)="toggleUserDetails(user._id!)" [class.active]="expandedUser === user._id">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+                Payment
+              </button>
+
+              <!-- Show message if no config -->
+              <span *ngIf="!hasConfiguration(user._id!)" class="no-config-message">-</span>
+            </div>
+          </div>
+
+          <!-- Expanded User Details - Directly under each user row -->
+          <div *ngIf="expandedUser === user._id && hasConfiguration(user._id!)" class="expanded-user-details">
+            <div class="user-payment-details">
+              <ng-container *ngFor="let record of salaryRecords">
+                <div *ngIf="getUserId(record.user) === user._id" class="payment-schedule">
+                  <div class="payment-schedule-header">
+                    <h4>Calendrier des Paiements - {{ user.name }}</h4>
+                    <button class="btn-delete-config" (click)="deleteConfigurationFromRecord(record)"
+                      title="Supprimer la configuration">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                      Supprimer Config
+                    </button>
+                  </div>
+                  <div class="payment-cards-container">
+                    <div class="payment-card" *ngFor="let payment of record.paymentSchedule"
+                      [class.paid]="payment.paymentStatus === 'paid'"
+                      [class.pending]="payment.paymentStatus === 'pending'"
+                      [class.overdue]="payment.paymentStatus === 'overdue'">
+
+                      <div class="payment-card-header">
+                        <div class="payment-month-info">
+                          <h5 class="payment-month-name">{{ payment.monthName }}</h5>
+                          <span class="payment-status-badge" [class]="getStatusClass(payment.paymentStatus)">
+                            {{ getStatusDisplay(payment.paymentStatus) }}
+                          </span>
+                        </div>
+                        <div class="payment-amounts-info">
+                          <div class="amount-row">
+                            <span class="amount-label">Total</span>
+                            <span class="amount-value">{{
+                              payment.paymentType === 'hourly' ?
+                              formatCurrency(calculateTotalForHoursCard(payment, payment.actualHoursWorked ||
+                              payment.regularHours || 0)) :
+                              formatCurrency(payment.totalAmount)
+                              }}</span>
+                          </div>
+                          <div class="amount-row"
+                            *ngIf="payment.paymentStatus === 'paid' || payment.paymentStatus === 'partial'">
+                            <span class="amount-label">Payé</span>
+                            <span class="amount-value paid">{{ formatCurrency(payment.paidAmount || 0) }}</span>
+                          </div>
+                          <div class="amount-row" *ngIf="payment.paymentStatus === 'partial'">
+                            <span class="amount-label">Restant</span>
+                            <span class="amount-value remaining">{{
+                              payment.paymentType === 'hourly' ?
+                              formatCurrency(calculateTotalForHoursCard(payment, payment.actualHoursWorked ||
+                              payment.regularHours || 0) - (payment.paidAmount || 0)) :
+                              formatCurrency(payment.totalAmount - (payment.paidAmount || 0))
+                              }}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="payment-card-body">
+                        <div class="payment-detail-item">
+                          <div class="detail-label">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                              stroke-width="2">
+                              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                            </svg>
+                            Montant de Base
+                          </div>
+                          <div class="detail-value">
+                            {{ payment.paymentType === 'monthly' ?
+                            formatCurrency(payment.baseSalaryAmount) :
+                            payment.regularHours + 'h × ' + formatCurrency(payment.hourlyRate)
+                            }}
+                          </div>
+                        </div>
+
+                        <!-- Extra Amount for hourly payments -->
+                        <div class="payment-detail-item"
+                          *ngIf="payment.paymentType === 'hourly' && (payment.extraHours || 0) > 0">
+                          <div class="detail-label">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                              stroke-width="2">
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="M12 6v6l4 2" />
+                            </svg>
+                            Montant Supplémentaire
+                          </div>
+                          <div class="detail-value extra-amount">
+                            {{ (payment.extraHours || 0) + 'h × ' + formatCurrency(getEffectiveExtraHourlyRate(payment))
+                            + ' = ' + formatCurrency((payment.extraHours || 0) * getEffectiveExtraHourlyRate(payment))
+                            }}
+                          </div>
+                        </div>
+
+                        <!-- Hours worked input for hourly payments -->
+                        <div class="payment-detail-item" *ngIf="payment.paymentType === 'hourly'">
+                          <div class="detail-label">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                              stroke-width="2">
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12,6 12,12 16,14" />
+                            </svg>
+                            Heures Travaillées
+                          </div>
+                          <div class="detail-value hours-input-section">
+                            <input type="number" class="hours-input"
+                              [value]="payment.actualHoursWorked || payment.regularHours || 0"
+                              (input)="onCardHoursChange(record, payment, $event)"
+                              [disabled]="payment.paymentStatus === 'paid'" min="0" step="0.5" placeholder="0">
+                            <span class="hours-label">h</span>
+                            <small class="hours-help">
+                              Taux: {{ formatCurrency(payment.hourlyRate) }}/h
+                            </small>
+                          </div>
+                        </div>
+
+                        <div class="payment-detail-item" *ngIf="getSalaryConfiguration(record)?.allowExtraHours">
+                          <div class="detail-label">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                              stroke-width="2">
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12,6 12,12 16,14" />
+                            </svg>
+                            Heures Supplémentaires
+                          </div>
+                          <div class="detail-value extra-hours-input-section">
+                            <input type="number" class="extra-hours-input" [value]="payment.extraHours || 0"
+                              (input)="onCardExtraHoursChange(record, payment, $event)"
+                              [disabled]="payment.paymentStatus === 'paid'" min="0" step="0.5" placeholder="0">
+                            <span class="hours-label">h</span>
+                            <small class="hours-help">
+                              Taux: {{ formatCurrency(getEffectiveExtraHourlyRate(payment)) }}/h
+                            </small>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="payment-card-footer">
+                        <!-- Show different buttons based on payment status -->
+                        <ng-container *ngIf="payment.paymentStatus === 'paid'">
+                          <!-- Preview Receipt button for paid months -->
+                          <button class="btn-preview-receipt" (click)="openReceiptPreview(record, payment)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                              stroke-width="2">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            Voir Reçu
+                          </button>
+                          <button class="btn-paid-status" disabled>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                              stroke-width="2">
+                              <polyline points="20,6 9,17 4,12" />
+                            </svg>
+                            Payé
+                          </button>
+                        </ng-container>
+
+                        <!-- Show save and payment buttons for unpaid months -->
+                        <ng-container *ngIf="payment.paymentStatus !== 'paid'">
+                          <button class="btn-save-hours" (click)="saveHoursForPayment(record, payment)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                              stroke-width="2">
+                              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                              <polyline points="17,21 17,13 7,13 7,21" />
+                              <polyline points="7,3 7,8 15,8" />
+                            </svg>
+                            Sauvegarder
+                          </button>
+                          <button class="btn-pay-card" (click)="openPaymentModal(record, payment.month)"
+                            [class.partial]="payment.paymentStatus === 'partial'">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                              stroke-width="2">
+                              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                            </svg>
+                            {{ payment.paymentStatus === 'partial' ? 'Paiement Partiel - Continuer' :
+                            'Enregistrer Paiement' }}
+                          </button>
+                        </ng-container>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Configuration Modal -->
+  <div class="modal-overlay" *ngIf="showCreateConfigModal" (click)="closeCreateConfigModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Créer Configuration Salariale</h3>
+        <button class="btn-close" (click)="closeCreateConfigModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Utilisateur</label>
+          <select [(ngModel)]="createConfigForm.userId" [disabled]="isSelectedUserSet()">
+            <option value="">Sélectionner un utilisateur</option>
+            <option *ngFor="let user of users" [value]="user._id">
+              {{ user.name }} ({{ getRoleDisplay(user.role) }})
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Type de Paiement</label>
+          <select [(ngModel)]="createConfigForm.paymentType" (ngModelChange)="onPaymentTypeChange()">
+            <option value="monthly">Mensuel</option>
+            <option value="hourly">Horaire</option>
+          </select>
+        </div>
+
+        <div class="form-group" *ngIf="createConfigForm.paymentType === 'monthly'">
+          <label>Salaire de Base (TND)</label>
+          <input type="number" [(ngModel)]="createConfigForm.baseSalary" placeholder="0">
+        </div>
+
+        <div class="form-group" *ngIf="createConfigForm.paymentType === 'hourly'">
+          <label>Taux Horaire (TND)</label>
+          <input type="number" [(ngModel)]="createConfigForm.hourlyRate" placeholder="0">
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="createConfigForm.allowExtraHours">
+            <span class="checkmark"></span>
+            Autoriser les heures supplémentaires
+          </label>
+        </div>
+
+        <div class="form-group" *ngIf="createConfigForm.allowExtraHours">
+          <label>Taux Horaire Supplémentaire (TND)</label>
+          <input type="number" [(ngModel)]="createConfigForm.extraHourlyRate" placeholder="0">
+        </div>
+
+        <div class="calendar-section">
+          <h4>Calendrier de Paiement</h4>
+          <div class="month-range-grid">
+            <div class="form-group">
+              <label>Mois de Début</label>
+              <select [(ngModel)]="createConfigForm.paymentCalendar.startMonth">
+                <option *ngFor="let month of monthNames; let i = index" [value]="i + 1">
+                  {{ month }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Mois de Fin</label>
+              <select [(ngModel)]="createConfigForm.paymentCalendar.endMonth">
+                <option *ngFor="let month of monthNames; let i = index" [value]="i + 1">
+                  {{ month }}
+                </option>
+              </select>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeCreateConfigModal()">Annuler</button>
+        <button class="btn-primary" (click)="createConfiguration()" [disabled]="loading">
+          {{ loading ? 'Création...' : 'Créer Configuration' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div class="modal-overlay" *ngIf="showPaymentModal" (click)="closePaymentModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Enregistrer Paiement</h3>
+        <button class="btn-close" (click)="closePaymentModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Mois</label>
+          <input type="text" [value]="monthNames[paymentForm.month - 1]" readonly>
+        </div>
+
+        <!-- Show payment summary -->
+        <div class="payment-summary" *ngIf="selectedSalaryRecord">
+          <div class="summary-item">
+            <label>Montant Total</label>
+            <span class="amount">{{ formatCurrency(getCurrentTotalAmount(getPaymentForMonth(selectedSalaryRecord,
+              paymentForm.month))) }}</span>
+          </div>
+
+          <!-- Show breakdown for hourly payments with extra hours -->
+          <ng-container *ngIf="getPaymentForMonth(selectedSalaryRecord, paymentForm.month) as payment">
+            <div class="payment-breakdown" *ngIf="payment?.paymentType === 'hourly'">
+              <div class="summary-item breakdown-item">
+                <label>Heures Travaillées</label>
+                <span class="amount">{{ payment.actualHoursWorked || payment.regularHours || 0 }}h</span>
+              </div>
+              <div class="summary-item breakdown-item" *ngIf="payment.extraHours && payment.extraHours > 0">
+                <label>Heures Supplémentaires</label>
+                <span class="amount">{{ payment.extraHours }}h</span>
+              </div>
+              <div class="summary-item breakdown-item" *ngIf="payment.extraHours && payment.extraHours > 0">
+                <label>Montant Supplémentaire</label>
+                <span class="amount">{{ formatCurrency((payment.extraHours || 0) * getEffectiveExtraHourlyRate(payment))
+                  }}</span>
+              </div>
+            </div>
+          </ng-container>
+
+          <div class="summary-item"
+            *ngIf="getPaymentForMonth(selectedSalaryRecord, paymentForm.month)?.paymentStatus === 'partial'">
+            <label>Déjà Payé</label>
+            <span class="amount">{{ formatCurrency(getPaymentForMonth(selectedSalaryRecord,
+              paymentForm.month)?.paidAmount
+              || 0) }}</span>
+          </div>
+          <div class="summary-item"
+            *ngIf="getPaymentForMonth(selectedSalaryRecord, paymentForm.month)?.paymentStatus === 'partial'">
+            <label>Montant Restant</label>
+            <span class="amount remaining">{{
+              formatCurrency(getCurrentTotalAmount(getPaymentForMonth(selectedSalaryRecord,
+              paymentForm.month)) - (getPaymentForMonth(selectedSalaryRecord,
+              paymentForm.month)?.paidAmount || 0)) }}</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Montant Payé (TND)</label>
+          <input type="number" [(ngModel)]="paymentForm.paidAmount"
+            [placeholder]="selectedSalaryRecord ? formatCurrency(getCurrentTotalAmount(getPaymentForMonth(selectedSalaryRecord, paymentForm.month))) : '0'"
+            min="0">
+          <small class="form-help" *ngIf="selectedSalaryRecord">
+            Montant total: {{ formatCurrency(getCurrentTotalAmount(getPaymentForMonth(selectedSalaryRecord,
+            paymentForm.month))) }}
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label>Date de Paiement</label>
+          <input type="date" [(ngModel)]="paymentForm.paymentDate" required>
+          <small class="form-help">Date à laquelle le paiement a été effectué</small>
+        </div>
+
+        <div class="form-group">
+          <label>Méthode de Paiement</label>
+          <select [(ngModel)]="paymentForm.paymentMethod">
+            <option value="cash">Espèces</option>
+            <option value="bank_transfer">Virement Bancaire</option>
+            <option value="check">Chèque</option>
+            <option value="digital_wallet">Portefeuille Numérique</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Référence de Paiement</label>
+          <input type="text" [(ngModel)]="paymentForm.paymentReference" placeholder="Référence optionnelle">
+        </div>
+
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea [(ngModel)]="paymentForm.notes" placeholder="Notes optionnelles"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closePaymentModal()">Annuler</button>
+        <button class="btn-primary" (click)="recordPayment()" [disabled]="loading">
+          {{ loading ? 'Enregistrement...' : 'Enregistrer Paiement' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Extra Hours Modal -->
+  <div class="modal-overlay" *ngIf="showExtraHoursModal" (click)="closeExtraHoursModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Modifier Heures Supplémentaires</h3>
+        <button class="btn-close" (click)="closeExtraHoursModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Mois</label>
+          <input type="text" [value]="monthNames[extraHoursForm.month - 1]" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Heures Supplémentaires</label>
+          <input type="number" [(ngModel)]="extraHoursForm.extraHours" placeholder="0" min="0">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeExtraHoursModal()">Annuler</button>
+        <button class="btn-primary" (click)="updateExtraHours()" [disabled]="loading">
+          {{ loading ? 'Mise à jour...' : 'Mettre à Jour' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" *ngIf="showDeleteConfirmModal" (click)="closeDeleteConfirmModal()">
+    <div class="modal-content confirmation-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Confirmer la suppression</h3>
+        <button class="btn-close" (click)="closeDeleteConfirmModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="confirmation-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+        </div>
+        <h4>Êtes-vous sûr de vouloir supprimer cette configuration salariale ?</h4>
+        <p>Cette action est irréversible. Tous les paiements associés à cette configuration seront également supprimés.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeDeleteConfirmModal()">Annuler</button>
+        <button class="btn-danger" (click)="confirmDeleteConfiguration()" [disabled]="loading">
+          {{ loading ? 'Suppression...' : 'Supprimer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config Details Modal -->
+  <div class="modal-overlay" *ngIf="showConfigDetailsModal" (click)="closeConfigDetailsModal()">
+    <div class="modal-content config-details-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Détails de la Configuration Salariale</h3>
+        <button class="btn-close" (click)="closeConfigDetailsModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedConfiguration">
+        <div class="config-details-grid">
+          <div class="config-section">
+            <h4>Informations Générales</h4>
+            <div class="config-detail-item">
+              <label>Utilisateur</label>
+              <span>{{ getUserName(selectedConfiguration.user) }}</span>
+            </div>
+            <div class="config-detail-item">
+              <label>Année Académique</label>
+              <span>{{ selectedConfiguration.academicYear }}</span>
+            </div>
+            <div class="config-detail-item">
+              <label>Type de Paiement</label>
+              <span class="badge" [class]="selectedConfiguration.paymentType">
+                {{ selectedConfiguration.paymentType === 'monthly' ? 'Mensuel' : 'Horaire' }}
+              </span>
+            </div>
+            <div class="config-detail-item">
+              <label>Statut</label>
+              <span class="badge" [class]="selectedConfiguration.isActive ? 'active' : 'inactive'">
+                {{ selectedConfiguration.isActive ? 'Actif' : 'Inactif' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <h4>Paramètres de Rémunération</h4>
+            <div class="config-detail-item" *ngIf="selectedConfiguration.baseSalary">
+              <label>Salaire de Base</label>
+              <span class="amount">{{ formatCurrency(selectedConfiguration.baseSalary) }}</span>
+            </div>
+            <div class="config-detail-item" *ngIf="selectedConfiguration.hourlyRate">
+              <label>Taux Horaire</label>
+              <span class="amount">{{ formatCurrency(selectedConfiguration.hourlyRate) }}/h</span>
+            </div>
+            <div class="config-detail-item">
+              <label>Heures Supplémentaires</label>
+              <span class="badge" [class]="selectedConfiguration.allowExtraHours ? 'active' : 'inactive'">
+                {{ selectedConfiguration.allowExtraHours ? 'Autorisées' : 'Non autorisées' }}
+              </span>
+            </div>
+            <div class="config-detail-item" *ngIf="selectedConfiguration.extraHourlyRate">
+              <label>Taux Horaire Supplémentaire</label>
+              <span class="amount">{{ formatCurrency(selectedConfiguration.extraHourlyRate) }}/h</span>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <h4>Période de Paiement</h4>
+            <div class="config-detail-item">
+              <label>Mois de Début</label>
+              <span>{{ monthNames[selectedConfiguration.paymentCalendar.startMonth - 1] }}</span>
+            </div>
+            <div class="config-detail-item">
+              <label>Mois de Fin</label>
+              <span>{{ monthNames[selectedConfiguration.paymentCalendar.endMonth - 1] }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeConfigDetailsModal()">Fermer</button>
+        <button class="btn-confirm" (click)="deleteConfigurationFromModal()" [disabled]="loading">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+            <line x1="10" y1="11" x2="10" y2="17" />
+            <line x1="14" y1="11" x2="14" y2="17" />
+          </svg>
+          {{ loading ? 'Suppression...' : 'Supprimer Configuration' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Details Modal -->
+  <div class="modal-overlay" *ngIf="showUserDetailsModal" (click)="closeUserDetailsModal()">
+    <div class="modal-content view-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Détails de l'Utilisateur</h2>
+        <button class="close-btn" (click)="closeUserDetailsModal()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedUserForDetails">
+        <div class="user-details">
+          <div class="user-profile">
+            <div class="user-avatar-large" [style.background-color]="getAvatarColor(selectedUserForDetails.name)">
+              {{ selectedUserForDetails.name.charAt(0).toUpperCase() }}
+            </div>
+            <div class="user-basic-info">
+              <h3>{{ selectedUserForDetails.name }}</h3>
+              <p class="user-email">{{ selectedUserForDetails.email }}</p>
+              <span class="role-badge" [class]="selectedUserForDetails.role">
+                {{ getRoleLabel(selectedUserForDetails.role) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="user-info-cards">
+            <!-- General Info -->
+            <div class="info-card">
+              <h4>Informations Générales</h4>
+              <div class="info-row">
+                <span class="label">Nom complet:</span>
+                <span class="value">{{ selectedUserForDetails.name }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Email:</span>
+                <span class="value">{{ selectedUserForDetails.email }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Rôle:</span>
+                <span class="value">
+                  <span class="role-badge" [class]="selectedUserForDetails.role">
+                    {{ getRoleLabel(selectedUserForDetails.role) }}
+                  </span>
+                </span>
+              </div>
+              <div class="info-row" *ngIf="selectedUserForDetails.phoneNumber">
+                <span class="label">Téléphone:</span>
+                <span class="value">{{ selectedUserForDetails.phoneNumber }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Date de création:</span>
+                <span class="value">{{ selectedUserForDetails.createdAt ? formatDate(selectedUserForDetails.createdAt) :
+                  'Non disponible' }}</span>
+              </div>
+            </div>
+
+            <!-- Student-specific info -->
+            <div class="info-card" *ngIf="selectedUserForDetails.role === 'student'">
+              <h4>Information Étudiant</h4>
+              <div class="info-row" *ngIf="selectedUserForDetails.studentClass">
+                <span class="label">Classe:</span>
+                <span class="value">
+                  {{ getClassName(selectedUserForDetails.studentClass) }}
+                </span>
+              </div>
+              <div class="info-row" *ngIf="selectedUserForDetails.parentName">
+                <span class="label">Nom du parent:</span>
+                <span class="value">{{ selectedUserForDetails.parentName }}</span>
+              </div>
+              <div class="info-row" *ngIf="selectedUserForDetails.parentCin">
+                <span class="label">CIN du parent:</span>
+                <span class="value">{{ selectedUserForDetails.parentCin }}</span>
+              </div>
+              <div class="info-row" *ngIf="selectedUserForDetails.parentPhoneNumber">
+                <span class="label">Téléphone du parent:</span>
+                <span class="value">{{ selectedUserForDetails.parentPhoneNumber }}</span>
+              </div>
+            </div>
+
+            <!-- Teacher-specific info -->
+            <div class="info-card" *ngIf="selectedUserForDetails.role === 'teacher'">
+              <h4>Information Enseignant</h4>
+              <div class="info-row" *ngIf="selectedUserForDetails.phoneNumber">
+                <span class="label">Téléphone:</span>
+                <span class="value">{{ selectedUserForDetails.phoneNumber }}</span>
+              </div>
+              <div class="teaching-assignments"
+                *ngIf="selectedUserForDetails.teachingClasses && selectedUserForDetails.teachingClasses.length > 0">
+                <div class="info-row">
+                  <span class="label">Classes enseignées:</span>
+                  <div class="value">
+                    <div *ngFor="let tc of selectedUserForDetails.teachingClasses" class="assignment-detail">
+                      <div class="class-name">{{ getClassName(tc.class) }}</div>
+                      <div class="subjects">
+                        <span *ngFor="let subject of getSubjectsArray(tc.subjects); let last = last"
+                          class="subject-tag">
+                          {{ getSubjectName(subject) }}<span *ngIf="!last">, </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                *ngIf="!selectedUserForDetails.teachingClasses || selectedUserForDetails.teachingClasses.length === 0"
+                class="info-row">
+                <span class="label">Classes assignées:</span>
+                <span class="value text-muted">Aucune classe assignée</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeUserDetailsModal()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt Preview Modal -->
+  <div class="modal-overlay" *ngIf="showReceiptPreviewModal" (click)="closeReceiptPreview()">
+    <div class="modal-content receipt-preview-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Aperçu du Reçu de Salaire</h3>
+        <button class="btn-close" (click)="closeReceiptPreview()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body receipt-preview-body">
+        <div class="receipt-preview-container" *ngIf="selectedPrintData">
+          <!-- Receipt Preview Content -->
+          <div class="receipt-part">
+            <div class="receipt-header">
+              <h2>REÇU POUR PAIEMENT DE SALAIRE EN ESPÈCES</h2>
+            </div>
+
+            <div class="receipt-content">
+              <p class="receipt-paragraph">
+                Je soussigné, <span class="field-value">{{ getEmployeeName(selectedPrintData.record) }}</span>
+                , certifie avoir reçu la somme de <span class="field-value">{{
+                  convertAmountToWords(selectedPrintData.payment.totalAmount) }}</span> TND (en toutes lettres), soit en
+                chiffre : <span class="field-value">{{ formatCurrency(selectedPrintData.payment.totalAmount) }}</span>
+                TND. Montant de salaire pour la période du <span class="field-value">{{
+                  formatDateRange(selectedPrintData.payment.month, selectedPrintData.year) }}</span>, comme salaire pour
+                le mois de <span class="field-value">{{ monthNames[selectedPrintData.payment.month - 1] }}</span>, de la
+                part de <span class="field-value">Ons School</span>.
+              </p>
+
+              <p class="receipt-paragraph">
+                Fait à <span class="field-value">....................</span>, le <span class="field-value">{{
+                  formatDate(selectedPrintData.payment.paidDate) || getCurrentDate() }}</span>.
+              </p>
+
+              <div class="receipt-signatures">
+                <div class="signature-section">
+                  <p>« Lu et approuvé »</p>
+                  <p>Signature de l'école</p>
+                  <div class="signature-space"></div>
+                </div>
+                <div class="signature-section">
+                  <p>« Lu et approuvé »</p>
+                  <p>Signature de l'employé</p>
+                  <div class="signature-space"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeReceiptPreview()">Fermer</button>
+        <button class="btn-download" (click)="downloadReceipt()" [disabled]="loading">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            *ngIf="!loading">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7,10 12,15 17,10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+
+          {{ loading ? 'Génération' : 'Télécharger PDF' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates -->
+  <ng-template #loadingTemplate>
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+  </ng-template>
+
+  <ng-template #noSalaryRecords>
+    <div class="empty-state">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      </svg>
+      <h3>Aucun registre de salaire</h3>
+      <p>Créez d'abord des configurations salariales pour les utilisateurs</p>
+    </div>
+  </ng-template>
+
+
+</div>

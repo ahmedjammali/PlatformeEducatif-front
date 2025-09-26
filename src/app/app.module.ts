@@ -19,6 +19,11 @@ import { GradeService } from './services/grade.service';
 import { ProgressService } from './services/progress.service';
 import { ContactService } from './services/contact.service';
 import { PaymentService } from './services/payment.service'; // Added PaymentService
+import { ChargeService } from './services/charge.service';
+import { SalaryService } from './services/salary.service';
+import { IncomeAnalyticsService } from './services/income-analytics.service';
+import { OutcomeAnalyticsService } from './services/outcome-analytics.service';
+import { ExportService } from './services/export.service';
 
 // Guards
 import { AuthGuard } from './guards/auth.guard';
@@ -105,6 +110,12 @@ import { PaymentConfigComponent } from './components/admin/payment-config/paymen
 import { FinancialOverviewComponent } from './components/admin/financial-overview/financial-overview.component';
 import { InvoiceComponent } from './components/admin/invoice/invoice.component';
 import { InvoiceDialogComponent } from './components/admin/invoice-dialog/invoice-dialog.component';
+import { ChargesComponent } from './components/admin/charges/charges.component';
+import { SalaryManagementComponent } from './components/admin/salary-management/salary-management.component';
+import { IncomeAnalyticsComponent } from './components/admin/income-analytics/income-analytics.component';
+import { OutcomeAnalyticsComponent } from './components/admin/outcome-analytics/outcome-analytics.component';
+import { FinancialAnalyticsComponent } from './components/admin/financial-analytics/financial-analytics.component';
+import { CombinedExportComponent } from './components/admin/combined-export/combined-export.component';
 
 
 const MaterialModules = [
@@ -180,7 +191,13 @@ const MaterialModules = [
     PaymentConfigComponent,
     FinancialOverviewComponent,
     InvoiceComponent,
-    InvoiceDialogComponent
+    InvoiceDialogComponent,
+    ChargesComponent,
+    SalaryManagementComponent,
+    IncomeAnalyticsComponent,
+    OutcomeAnalyticsComponent,
+    FinancialAnalyticsComponent,
+    CombinedExportComponent
   ],
   imports: [
     BrowserModule,
@@ -205,7 +222,12 @@ const MaterialModules = [
     ProgressService,
     ContactService,
     PaymentService, // Added PaymentService
-    
+    ChargeService,
+    SalaryService,
+    IncomeAnalyticsService,
+    OutcomeAnalyticsService,
+    ExportService,
+
     // Guards
     AuthGuard,
     RoleGuard,
@@ -213,7 +235,7 @@ const MaterialModules = [
     AdminGuard,
     TeacherGuard,
     StudentGuard,
-    
+
     // Interceptors
     {
       provide: HTTP_INTERCEPTORS,

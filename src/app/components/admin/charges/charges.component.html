@@ -1,0 +1,325 @@
+<!-- charges.component.html -->
+<app-toaster></app-toaster>
+
+<div class="charges-container">
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Chargement des données...</p>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestion des Charges</h1>
+      <p class="header-subtitle">Gérer les charges et dépenses de votre établissement</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="refreshData()" [disabled]="isLoading">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+          <path d="M21 3v5h-5" />
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+          <path d="M3 21v-5h5" />
+        </svg>
+        Actualiser
+      </button>
+
+      <button class="btn-primary" (click)="openCreateChargeModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v20" />
+          <path d="M2 12h20" />
+        </svg>
+        <span>Nouvelle Charge</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Simplified Filters Section -->
+  <div class="filters-section">
+    <div class="filters-header">
+      <h3>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46" />
+        </svg>
+        Filtres
+      </h3>
+    </div>
+
+    <div class="filters-form">
+      <div class="filters-row">
+        <div class="filter-group">
+          <label for="category">Catégorie</label>
+          <select id="category" [(ngModel)]="selectedCategory" (change)="onFilterChange()">
+            <option value="">Toutes les catégories</option>
+            <option *ngFor="let category of categories" [value]="category">
+              {{ category }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="startDate">Date de début</label>
+          <input type="date" id="startDate" [(ngModel)]="startDate" (change)="onFilterChange()">
+        </div>
+
+        <div class="filter-group">
+          <label for="endDate">Date de fin</label>
+          <input type="date" id="endDate" [(ngModel)]="endDate" (change)="onFilterChange()">
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" class="btn-secondary btn-sm" (click)="clearFilters()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18" />
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+          </svg>
+          Effacer
+        </button>
+
+        <button type="button" class="btn-secondary btn-sm" (click)="refreshData()" [disabled]="isLoading">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+          </svg>
+          {{ isLoading ? 'Actualisation...' : 'Actualiser' }}
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Summary Cards -->
+  <div class="summary-cards" *ngIf="chargeSummary">
+    <div class="summary-card">
+      <div class="card-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14,2 14,8 20,8" />
+        </svg>
+      </div>
+      <div class="card-content">
+        <h3>{{ chargeSummary.totalCharges }}</h3>
+        <p>Total des charges</p>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="1" x2="12" y2="23" />
+          <path d="m17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg>
+      </div>
+      <div class="card-content">
+        <h3>{{ formatCurrency(chargeSummary.totalAmount) }}</h3>
+        <p>Montant total</p>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      </div>
+      <div class="card-content">
+        <h3>{{ formatCurrency(chargeSummary.monthlyTotal) }}</h3>
+        <p>Total ce mois</p>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Charges Section Header -->
+  <div class="section-header">
+    <h2>Liste des Charges</h2>
+  </div>
+
+  <!-- Charges Table -->
+  <div class="table-container">
+    <table class="charges-table" *ngIf="charges.length > 0; else noCharges">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Catégorie</th>
+          <th>Description</th>
+          <th>Montant</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let charge of paginatedCharges; trackBy: trackByChargeId">
+          <td>{{ formatDate(charge.date) }}</td>
+          <td>
+            <span class="category-badge" [style.background-color]="getCategoryColor(charge.categorie)">
+              {{ charge.categorie }}
+            </span>
+          </td>
+          <td>{{ charge.description }}</td>
+          <td class="amount-cell">{{ formatCurrency(charge.montant) }}</td>
+          <td class="actions-cell">
+            <button class="btn-action edit" (click)="editCharge(charge)" title="Modifier">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+              </svg>
+            </button>
+            <button class="btn-action delete" (click)="confirmDeleteCharge(charge)" title="Supprimer">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3,6 5,6 21,6" />
+                <path d="m19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2-2h4a2,2 0 0,1,2,2v2" />
+              </svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #noCharges>
+      <div class="empty-state">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14,2 14,8 20,8" />
+        </svg>
+        <h3>Aucune charge trouvée</h3>
+        <p>Commencez par ajouter votre première charge</p>
+        <button class="btn-primary" (click)="openCreateChargeModal()">
+          Nouvelle Charge
+        </button>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button class="pagination-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+      Précédent
+    </button>
+
+    <span class="pagination-info">
+      Page {{ currentPage }} sur {{ totalPages }}
+    </span>
+
+    <button class="pagination-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
+      Suivant
+    </button>
+  </div>
+</div>
+
+<!-- Charge Modal -->
+<div class="modal-overlay" *ngIf="showChargeModal" (click)="closeChargeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ editingCharge ? 'Modifier' : 'Nouvelle' }} Charge</h2>
+      <button class="modal-close" (click)="closeChargeModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="chargeForm" (ngSubmit)="saveCharge()" class="modal-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="categorie">Catégorie *</label>
+          <select id="categorie" formControlName="categorie" class="form-control"
+            [class.error]="chargeForm.get('categorie')?.invalid && chargeForm.get('categorie')?.touched">
+            <option value="">Sélectionner une catégorie</option>
+            <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+          </select>
+          <span class="error-message"
+            *ngIf="chargeForm.get('categorie')?.invalid && chargeForm.get('categorie')?.touched">
+            Veuillez sélectionner une catégorie
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="date">Date *</label>
+          <input type="date" id="date" formControlName="date" class="form-control"
+            [class.error]="chargeForm.get('date')?.invalid && chargeForm.get('date')?.touched">
+          <span class="error-message" *ngIf="chargeForm.get('date')?.invalid && chargeForm.get('date')?.touched">
+            Veuillez sélectionner une date
+          </span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description *</label>
+        <textarea id="description" formControlName="description" class="form-control" rows="3"
+          placeholder="Décrivez la charge..."
+          [class.error]="chargeForm.get('description')?.invalid && chargeForm.get('description')?.touched"></textarea>
+        <span class="error-message"
+          *ngIf="chargeForm.get('description')?.invalid && chargeForm.get('description')?.touched">
+          La description doit contenir au moins 3 caractères
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="montant">Montant (DT) *</label>
+        <input type="number" id="montant" formControlName="montant" class="form-control" placeholder="0.00" step="0.01"
+          min="0" [class.error]="chargeForm.get('montant')?.invalid && chargeForm.get('montant')?.touched">
+        <span class="error-message" *ngIf="chargeForm.get('montant')?.invalid && chargeForm.get('montant')?.touched">
+          Veuillez saisir un montant valide (supérieur à 0)
+        </span>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeChargeModal()" [disabled]="isSaving">
+          Annuler
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="chargeForm.invalid || isSaving">
+          <span *ngIf="isSaving">Enregistrement...</span>
+          <span *ngIf="!isSaving">{{ editingCharge ? 'Modifier' : 'Créer' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Confirmer la suppression</h2>
+      <button class="modal-close" (click)="closeDeleteModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="delete-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3,6 5,6 21,6" />
+          <path d="m19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2-2h4a2,2 0 0,1,2,2v2" />
+        </svg>
+      </div>
+
+      <div *ngIf="chargeToDelete" class="delete-content">
+        <p>Êtes-vous sûr de vouloir supprimer cette charge ?</p>
+        <div class="delete-details">
+          <strong>{{ chargeToDelete.description }}</strong><br>
+          <span>{{ formatCurrency(chargeToDelete.montant) }} - {{ formatDate(chargeToDelete.date) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" (click)="closeDeleteModal()" [disabled]="isSaving">
+        Annuler
+      </button>
+      <button type="button" class="btn-danger" (click)="confirmDelete()" [disabled]="isSaving">
+        <span *ngIf="isSaving">Suppression...</span>
+        <span *ngIf="!isSaving">Supprimer</span>
+      </button>
+    </div>
+  </div>
+</div>

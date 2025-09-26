@@ -21,11 +21,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
   activeRoute = 'dashboard';
   isSuperAdmin = false;
   unreadNotificationCount = 0;
-  
+
   // Logout modal state
   showLogoutModal = false;
   isLoggingOut = false;
-  
+
   private destroy$ = new Subject<void>();
   private isMobile = false; // Track current mobile state
 
@@ -34,7 +34,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
     private schoolService: SchoolService,
     private notificationService: NotificationService,
     private router: Router
-  ) {}
+  ) { }
 
   // Listen for window resize to handle responsive behavior
   @HostListener('window:resize', ['$event'])
@@ -56,22 +56,22 @@ export class LayoutComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
     this.isSuperAdmin = this.authService.isSuperAdmin();
-    
+
     // Load school info
     this.loadSchoolInfo();
-    
+
     // Subscribe to unread notification count
     this.subscribeToNotifications();
-    
+
     // Listen for route changes
     this.subscribeToRouteChanges();
-    
+
     // Set initial active route
     this.setActiveRoute();
-    
+
     // Initialize responsive state
     this.initializeResponsiveState();
-    
+
     // Listen for messages from child components
     this.setupMessageListener();
   }
@@ -93,15 +93,15 @@ export class LayoutComponent implements OnInit, OnDestroy {
       this.sidebarCollapsed = !this.sidebarCollapsed;
       // Save preference for desktop
       localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed.toString());
-      
+
       // Force a reflow to ensure proper layout calculation
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
       }, 50);
-      
+
       // Trigger a custom event for other components that might need to know about sidebar state
-      window.dispatchEvent(new CustomEvent('sidebarToggle', { 
-        detail: { collapsed: this.sidebarCollapsed } 
+      window.dispatchEvent(new CustomEvent('sidebarToggle', {
+        detail: { collapsed: this.sidebarCollapsed }
       }));
     }
   }
@@ -125,7 +125,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
     if (this.mobileMenuOpen) {
       this.mobileMenuOpen = false;
       this.updateBodyScrollLock();
-      
+
       // Focus management for accessibility
       const menuButton = document.querySelector('.mobile-menu-toggle') as HTMLElement;
       if (menuButton) {
@@ -140,7 +140,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   navigateTo(route: string): void {
     this.activeRoute = route;
-    
+
     const routeMap: { [key: string]: string } = {
       'dashboard': '/admin/dashboard',
       'users': '/admin/users',
@@ -151,7 +151,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'contact': '/admin/contact',
       'schools': '/superadmin/schools',
       'payments': '/admin/payments',
-      'financialOverview': '/admin/payments/financial-overview', // FIXED: Use consistent key
+      'financialOverview': '/admin/financial-overview', // FIXED: Use consistent key
+      'charges': '/admin/charges',
+      'salary': '/admin/salary',
     };
 
     const targetRoute = routeMap[route];
@@ -182,8 +184,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'schools': 'Gestion de l\'École',
       'payments': 'Gestion des Paiements',
       'financialOverview': 'Aperçu Financier', // FIXED: Use consistent key
+      'charges': 'Gestion des Charges',
+      'salary': 'Gestion des Salaires',
     };
-    
+
     return titles[this.activeRoute] || 'Tableau de Bord';
   }
 
@@ -194,7 +198,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'teacher': 'Enseignant',
       'student': 'Étudiant'
     };
-    
+
     return roleLabels[this.currentUser?.role || ''] || 'Utilisateur';
   }
 
@@ -207,7 +211,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
     if (this.isMobileView() && this.mobileMenuOpen) {
       this.closeMobileSidebar();
     }
-    
+
     // Navigate to notifications page
     setTimeout(() => {
       this.navigateTo('notifications');
@@ -232,7 +236,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   closeLogoutModal(): void {
     this.showLogoutModal = false;
     this.isLoggingOut = false;
-    
+
     // Return focus to logout button
     const logoutButton = document.querySelector('.logout-btn') as HTMLElement;
     if (logoutButton) {
@@ -242,13 +246,13 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   confirmLogout(): void {
     this.isLoggingOut = true;
-    
+
     // Enhanced logout with proper cleanup
     setTimeout(() => {
       try {
         // Clean up state before logout
         this.cleanup();
-        
+
         // Perform logout
         this.authService.logout();
         this.closeLogoutModal();
@@ -277,7 +281,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   private handleWindowResize(): void {
     const wasMobile = this.isMobile;
     this.isMobile = this.isMobileView();
-    
+
     // Handle transition between mobile and desktop
     if (wasMobile && !this.isMobile) {
       // Switching from mobile to desktop
@@ -321,7 +325,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   private initializeResponsiveState(): void {
     this.isMobile = this.isMobileView();
-    
+
     if (this.isMobile) {
       this.prepareMobileState();
     } else {
@@ -364,7 +368,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
           console.error('Error loading notification count:', error);
         }
       });
-    
+
     // Initial unread count load
     this.notificationService.getUnreadNotificationsCount()
       .pipe(takeUntil(this.destroy$))
@@ -392,12 +396,15 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   private setActiveRoute(): void {
     const currentUrl = this.router.url;
-    
+
     // More robust route detection with proper hierarchy
     const routes = [
       // Order matters: more specific routes first
-      { path: '/admin/payments/financial-overview', route: 'financialOverview' },
+      { path: '/admin/financial-overview', route: 'financialOverview' },
       { path: '/admin/payments', route: 'payments' },
+      { path: '/admin/charges', route: 'charges' },
+      { path: '/admin/charges', route: 'charges' },
+      { path: '/admin/salary', route: 'salary' },
       { path: '/admin/users', route: 'users' },
       { path: '/admin/classes', route: 'classes' },
       { path: '/admin/subjects', route: 'subjects' },
@@ -409,11 +416,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
     ];
 
     // Find the most specific matching route
-    const activeRoute = routes.find(r => currentUrl === r.path || 
+    const activeRoute = routes.find(r => currentUrl === r.path ||
       (currentUrl.startsWith(r.path) && currentUrl.charAt(r.path.length) === '/') ||
       currentUrl === r.path + '/'
     );
-    
+
     this.activeRoute = activeRoute ? activeRoute.route : 'dashboard';
   }
 
@@ -430,12 +437,12 @@ export class LayoutComponent implements OnInit, OnDestroy {
   private cleanup(): void {
     // Clean up mobile menu state
     this.closeMobileSidebar();
-    
+
     // Clean up body styles
     document.body.style.overflow = '';
     document.body.style.position = '';
     document.body.style.width = '';
-    
+
     // Remove event listeners
     window.removeEventListener('message', this.handleMessage.bind(this));
   }

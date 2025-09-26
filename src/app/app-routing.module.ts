@@ -36,7 +36,9 @@ import { StudentNotificationsComponent } from './components/student/student-noti
 import { StudentChatComponent } from './components/student/student-chat/student-chat.component';
 import { PaymentManagementComponent } from './components/admin/payment-management/payment-management.component';
 import { PaymentConfigComponent } from './components/admin/payment-config/payment-config.component';
-import { FinancialOverviewComponent } from './components/admin/financial-overview/financial-overview.component';
+import { ChargesComponent } from './components/admin/charges/charges.component';
+import { SalaryManagementComponent } from './components/admin/salary-management/salary-management.component';
+import { FinancialAnalyticsComponent } from './components/admin/financial-analytics/financial-analytics.component';
 
 const routes: Routes = [
   { path: '', component: LandingPageComponent },
@@ -57,22 +59,34 @@ const routes: Routes = [
       { path: 'notifications', component: NotificationComponent },
       { path: 'contact', component: ContactComponent },
       { path: 'grades', component: GradesComponent },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' } , 
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       // Payment Routes (Added)
-      { 
-        path: 'payments', 
+      {
+        path: 'payments',
         component: PaymentManagementComponent,
         data: { title: 'Payment Management' }
       },
+
       {
-            path: 'payments/financial-overview',
-            component: FinancialOverviewComponent
-      },
-      { 
-        path: 'payments/config', 
+        path: 'payments/config',
         component: PaymentConfigComponent,
         data: { title: 'Payment Configuration' }
-      }
+      },
+      {
+        path: 'charges',
+        component: ChargesComponent,
+        data: { title: 'Charges Management' }
+      },
+      // Salary Routes (Added)
+      {
+        path: 'salary',
+        component: SalaryManagementComponent,
+        data: { title: 'Salary Management' }
+      },
+      {
+        path: 'financial-overview',
+        component: FinancialAnalyticsComponent
+      },
     ]
   },
 
@@ -113,4 +127,4 @@ const routes: Routes = [
   imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

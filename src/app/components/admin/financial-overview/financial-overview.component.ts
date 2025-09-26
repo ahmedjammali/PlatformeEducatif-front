@@ -5,9 +5,9 @@ import { Subject, combineLatest } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { PaymentService } from '../../../services/payment.service';
-import { 
-  PaymentDashboard, 
-  PaymentAnalytics, 
+import {
+  PaymentDashboard,
+  PaymentAnalytics,
   FinancialSummaryResponse,
   AnalyticsFilters,
   GradeCategory,
@@ -37,7 +37,7 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
   // Filter form and options
   filterForm!: FormGroup;
   availableGrades: { categorizedGrades: any } | null = null;
-  
+
   // Chart data
   chartData: {
     collectionRateChart: ChartData;
@@ -45,9 +45,9 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
     gradeCategoryChart: ChartData;
   } | null = null;
 
-  // UI state - Removed trends and reports tabs
-  activeTab: 'overview' | 'analytics' = 'overview';
-  
+  // UI state - Single income tab only
+  activeTab: 'overview' = 'overview';
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -61,7 +61,7 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadAvailableGrades();
-    
+
     // Get academic year from query params
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.academicYear = params['academicYear'] || this.paymentService.getCurrentAcademicYear();
@@ -123,9 +123,9 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
 
   private loadAllData(): void {
     this.isLoading = true;
-    
+
     const filters = this.getAnalyticsFilters();
-    
+
     // Load all data in parallel
     combineLatest([
       this.paymentService.getPaymentDashboard(this.academicYear),
@@ -136,12 +136,15 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
         this.dashboard = dashboard;
         this.analytics = analyticsResponse.analytics;
         this.financialSummary = financial;
-        
+
         // Generate chart data
         if (this.analytics) {
           this.chartData = this.paymentService.formatAnalyticsChartData(this.analytics);
         }
-        
+
+        // Load enhanced report since everything is in one tab now
+        this.loadEnhancedReport();
+
         this.isLoading = false;
       },
       error: (error) => {
@@ -166,10 +169,10 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
   // Filter and navigation methods
   applyFilters(): void {
     if (this.isLoading) return;
-    
+
     const filters = this.getAnalyticsFilters();
     this.isAnalyticsLoading = true;
-    
+
     // Update URL with filter params
     this.router.navigate([], {
       relativeTo: this.route,
@@ -189,12 +192,10 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
           if (this.analytics) {
             this.chartData = this.paymentService.formatAnalyticsChartData(this.analytics);
           }
-          
-          // Reload enhanced report if analytics tab is active
-          if (this.activeTab === 'analytics') {
-            this.loadEnhancedReport();
-          }
-          
+
+          // Load enhanced report since everything is in one tab now
+          this.loadEnhancedReport();
+
           this.isAnalyticsLoading = false;
         },
         error: (error) => {
@@ -211,7 +212,7 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
       component: 'all',
       paymentStatus: ''
     });
-    
+
     // Clear enhanced report when filters are cleared
     this.enhancedReport = null;
   }
@@ -221,15 +222,8 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
     this.filterForm.patchValue({ grade: '' });
   }
 
-  // Tab management - Load enhanced report when switching to analytics
-  setActiveTab(tab: 'overview' | 'analytics'): void {
-    this.activeTab = tab;
-    
-    // Load enhanced report data when switching to analytics tab
-    if (tab === 'analytics' && !this.enhancedReport) {
-      this.loadEnhancedReport();
-    }
-  }
+  // Tab management is no longer needed since everything is in one tab
+  // Removed setActiveTab method
 
   private loadEnhancedReport(): void {
     const filters = {
@@ -257,7 +251,7 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
   refreshAnalytics(): void {
     const filters = this.getAnalyticsFilters();
     this.isAnalyticsLoading = true;
-    
+
     this.paymentService.getPaymentAnalytics(filters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -266,12 +260,10 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
           if (this.analytics) {
             this.chartData = this.paymentService.formatAnalyticsChartData(this.analytics);
           }
-          
-          // Reload enhanced report if analytics tab is active
-          if (this.activeTab === 'analytics') {
-            this.loadEnhancedReport();
-          }
-          
+
+          // Reload enhanced report since everything is in one tab now
+          this.loadEnhancedReport();
+
           this.isAnalyticsLoading = false;
         },
         error: (error) => {
@@ -287,7 +279,7 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
   }
 
   navigateToPaymentManagement(): void {
-    this.router.navigate(['../'], { 
+    this.router.navigate(['../'], {
       relativeTo: this.route,
       queryParams: { academicYear: this.academicYear }
     });
@@ -375,9 +367,9 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
   hasActiveFilters(): boolean {
     const formValue = this.filterForm.value;
     return !!(
-      formValue.gradeCategory || 
-      formValue.grade || 
-      (formValue.component && formValue.component !== 'all') || 
+      formValue.gradeCategory ||
+      formValue.grade ||
+      (formValue.component && formValue.component !== 'all') ||
       formValue.paymentStatus
     );
   }
@@ -444,7 +436,7 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
   // Chart helper methods
   getChartData(chartType: 'collectionRate' | 'componentBreakdown' | 'gradeCategory'): ChartData | null {
     if (!this.chartData) return null;
-    
+
     switch (chartType) {
       case 'collectionRate':
         return this.chartData.collectionRateChart;
@@ -486,24 +478,24 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
   // For component width calculations
   getComponentProgressWidth(component: 'tuition' | 'uniform' | 'transportation' | 'inscription'): number {
     if (!this.analytics?.byComponent) return 0;
-    
+
     const componentData = this.analytics.byComponent[component];
     if (!componentData || !componentData.expected || componentData.expected === 0) {
       return 0;
     }
-    
+
     return (componentData.collected / componentData.expected) * 100;
   }
 
-  // For grade category width calculations  
+  // For grade category width calculations
   getGradeCategoryProgressWidth(category: 'maternelle' | 'primaire' | 'secondaire'): number {
     if (!this.analytics?.byGradeCategory) return 0;
-    
+
     const categoryData = this.analytics.byGradeCategory[category];
     if (!categoryData || !categoryData.expected || categoryData.expected === 0) {
       return 0;
     }
-    
+
     return (categoryData.collected / categoryData.expected) * 100;
   }
 
@@ -517,9 +509,9 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
       <head>
         <title>Rapport Financier Complet - ${this.academicYear}</title>
         <style>
-          body { 
-            font-family: Arial, sans-serif; 
-            margin: 20px; 
+          body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
             line-height: 1.4;
             color: #333;
           }
@@ -529,8 +521,8 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
             padding-bottom: 20px;
             margin-bottom: 30px;
           }
-          h1 { 
-            color: #4A628A; 
+          h1 {
+            color: #4A628A;
             margin: 0;
             font-size: 24px;
           }
@@ -546,21 +538,21 @@ export class FinancialOverviewComponent implements OnInit, OnDestroy {
             border-bottom: 1px solid #ddd;
             padding-bottom: 5px;
           }
-          .grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-            gap: 20px; 
-            margin: 20px 0; 
+          .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
           }
-          .card { 
-            border: 1px solid #ddd; 
-            padding: 15px; 
+          .card {
+            border: 1px solid #ddd;
+            padding: 15px;
             border-radius: 8px;
             background: #f9f9f9;
           }
-          .metric { 
-            font-size: 1.2em; 
-            font-weight: bold; 
+          .metric {
+            font-size: 1.2em;
+            font-weight: bold;
             color: #2c5aa0;
           }
           .excellent { color: #4CAF50; }

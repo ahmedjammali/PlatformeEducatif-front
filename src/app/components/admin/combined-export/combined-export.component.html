@@ -1,0 +1,232 @@
+<!-- Combined Export Component HTML -->
+<div class="combined-export-container">
+    <!-- Header Section -->
+    <header class="header-section">
+        <div class="header-top">
+            <div class="title-section">
+                <div class="title-content">
+                    <span class="title-icon">📊💰</span>
+                    <div class="title-wrapper">
+                        <h1 class="title-text">Export Financier Combiné</h1>
+                        <p class="subtitle-text">Exportez une analyse financière complète combinant les revenus et les
+                            dépenses</p>
+                    </div>
+                </div>
+                <div class="academic-year-badge">
+                    <span class="year-label">Année Académique</span>
+                    <span class="year-value">{{ currentAcademicYear }}</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filters Section -->
+    <section class="filters-section">
+        <div class="filters-header">
+            <h3 class="filters-title">
+                <span class="filters-icon">🔍</span>
+                Filtres d'Export
+            </h3>
+            <button class="btn-clear-filters" (click)="clearFilters()" type="button">
+                <span class="clear-icon">🗑️</span>
+                Effacer les filtres
+            </button>
+        </div>
+
+        <div class="filters-grid">
+            <!-- General Filters -->
+            <div class="filter-group">
+                <h4 class="filter-group-title">Filtres Généraux</h4>
+
+                <!-- Academic Year -->
+                <div class="filter-item">
+                    <label class="filter-label">Année Académique</label>
+                    <select class="filter-select" [(ngModel)]="activeFilters.academicYear">
+                        <option value="">Toutes les années</option>
+                        <option *ngFor="let year of incomeFilterOptions?.academicYears" [value]="year">
+                            {{ year }}
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Date Range -->
+                <div class="filter-item">
+                    <label class="filter-label">Date de début</label>
+                    <input type="date" class="filter-input" [(ngModel)]="activeFilters.startDate">
+                </div>
+
+                <div class="filter-item">
+                    <label class="filter-label">Date de fin</label>
+                    <input type="date" class="filter-input" [(ngModel)]="activeFilters.endDate">
+                </div>
+            </div>
+
+            <!-- Income Filters -->
+            <div class="filter-group">
+                <h4 class="filter-group-title">Filtres Revenus</h4>
+
+                <!-- Grade -->
+                <div class="filter-item">
+                    <label class="filter-label">Niveau</label>
+                    <select class="filter-select" [(ngModel)]="activeFilters.grade">
+                        <option value="">Tous les niveaux</option>
+                        <option *ngFor="let grade of incomeFilterOptions?.grades" [value]="grade">
+                            {{ grade }}
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Component -->
+                <div class="filter-item">
+                    <label class="filter-label">Composant</label>
+                    <select class="filter-select" [(ngModel)]="activeFilters.component">
+                        <option *ngFor="let comp of components" [value]="comp.value">
+                            {{ comp.label }}
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Category -->
+                <div class="filter-item">
+                    <label class="filter-label">Catégorie</label>
+                    <select class="filter-select" [(ngModel)]="activeFilters.category">
+                        <option *ngFor="let cat of categories" [value]="cat.value">
+                            {{ cat.label }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Outcome Filters -->
+            <div class="filter-group">
+                <h4 class="filter-group-title">Filtres Dépenses</h4>
+
+                <!-- User Role -->
+                <div class="filter-item">
+                    <label class="filter-label">Rôle Utilisateur</label>
+                    <select class="filter-select" [(ngModel)]="activeFilters.userRole">
+                        <option value="">Tous les rôles</option>
+                        <option *ngFor="let role of outcomeFilterOptions?.userRoles" [value]="role">
+                            {{ getRoleDisplayName(role) }}
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Charge Category -->
+                <div class="filter-item">
+                    <label class="filter-label">Catégorie de Charge</label>
+                    <select class="filter-select" [(ngModel)]="activeFilters.chargeCategory">
+                        <option value="">Toutes les catégories</option>
+                        <option *ngFor="let category of outcomeFilterOptions?.chargeCategories" [value]="category">
+                            {{ category }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Export Actions Section -->
+    <section class="export-actions-section">
+        <div class="export-actions-header">
+            <h3 class="export-title">
+                <span class="export-icon">📥</span>
+                Actions d'Export
+            </h3>
+            <p class="export-description">
+                Téléchargez votre analyse financière complète dans le format de votre choix
+            </p>
+        </div>
+
+        <div class="export-buttons">
+            <button class="btn-export btn-export-excel" (click)="exportToExcel()" [disabled]="isLoading"
+                [class.loading]="isLoading">
+                <div class="btn-icon-wrapper">
+                    <span class="btn-icon" *ngIf="!isLoading">📊</span>
+                    <span class="btn-loading" *ngIf="isLoading">⏳</span>
+                </div>
+                <div class="btn-content">
+                    <span class="btn-title">Export Excel</span>
+                    <span class="btn-description">Fichier Excel détaillé avec tous les onglets</span>
+                </div>
+            </button>
+
+            <button class="btn-export btn-export-pdf" (click)="exportToPDF()" [disabled]="isLoading"
+                [class.loading]="isLoading">
+                <div class="btn-icon-wrapper">
+                    <span class="btn-icon" *ngIf="!isLoading">📄</span>
+                    <span class="btn-loading" *ngIf="isLoading">⏳</span>
+                </div>
+                <div class="btn-content">
+                    <span class="btn-title">Export PDF</span>
+                    <span class="btn-description">Rapport PDF avec résumé financier</span>
+                </div>
+            </button>
+        </div>
+    </section>
+
+    <!-- Active Filters Preview -->
+    <section class="active-filters-section" *ngIf="hasActiveFilters()">
+        <div class="active-filters-header">
+            <h4 class="active-filters-title">Filtres Actifs</h4>
+        </div>
+        <div class="active-filters-list">
+            <div class="filter-tag" *ngIf="activeFilters.academicYear">
+                <span class="filter-tag-label">Année:</span>
+                <span class="filter-tag-value">{{ activeFilters.academicYear }}</span>
+            </div>
+            <div class="filter-tag" *ngIf="activeFilters.startDate">
+                <span class="filter-tag-label">Du:</span>
+                <span class="filter-tag-value">{{ formatDate(activeFilters.startDate) }}</span>
+            </div>
+            <div class="filter-tag" *ngIf="activeFilters.endDate">
+                <span class="filter-tag-label">Au:</span>
+                <span class="filter-tag-value">{{ formatDate(activeFilters.endDate) }}</span>
+            </div>
+            <div class="filter-tag" *ngIf="activeFilters.grade">
+                <span class="filter-tag-label">Niveau:</span>
+                <span class="filter-tag-value">{{ activeFilters.grade }}</span>
+            </div>
+            <div class="filter-tag" *ngIf="activeFilters.component">
+                <span class="filter-tag-label">Composant:</span>
+                <span class="filter-tag-value">{{ getComponentDisplayName(activeFilters.component) }}</span>
+            </div>
+            <div class="filter-tag" *ngIf="activeFilters.category">
+                <span class="filter-tag-label">Catégorie:</span>
+                <span class="filter-tag-value">{{ getCategoryDisplayName(activeFilters.category) }}</span>
+            </div>
+            <div class="filter-tag" *ngIf="activeFilters.userRole">
+                <span class="filter-tag-label">Rôle:</span>
+                <span class="filter-tag-value">{{ getRoleDisplayName(activeFilters.userRole) }}</span>
+            </div>
+            <div class="filter-tag" *ngIf="activeFilters.chargeCategory">
+                <span class="filter-tag-label">Charge:</span>
+                <span class="filter-tag-value">{{ activeFilters.chargeCategory }}</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Information Section -->
+    <section class="info-section">
+        <div class="info-card">
+            <div class="info-header">
+                <span class="info-icon">ℹ️</span>
+                <h4 class="info-title">À propos de l'Export Combiné</h4>
+            </div>
+            <div class="info-content">
+                <p>L'export combiné vous permet de télécharger une analyse financière complète incluant :</p>
+                <ul class="info-list">
+                    <li>✅ Analyse détaillée des revenus (par composant, niveau, étudiant)</li>
+                    <li>✅ Analyse des dépenses (charges et salaires)</li>
+                    <li>✅ Résumé financier global avec calcul de la marge</li>
+                    <li>✅ Tendances mensuelles et comparaisons</li>
+                    <li>✅ Tous les filtres appliqués sont respectés</li>
+                </ul>
+                <p class="info-note">
+                    <strong>Format Excel :</strong> Plusieurs onglets avec données détaillées<br>
+                    <strong>Format PDF :</strong> Rapport de synthèse avec graphiques
+                </p>
+            </div>
+        </div>
+    </section>
+</div>

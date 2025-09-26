@@ -1,0 +1,461 @@
+<!-- Outcome Analytics Component HTML -->
+<div class="outcome-analytics-container">
+  <!-- Header Section -->
+  <header class="header-section">
+    <!-- Title and Academic Year Row -->
+    <div class="header-top">
+      <div class="title-section">
+        <div class="title-content">
+          <span class="title-icon">💰</span>
+          <div class="title-wrapper">
+            <h1 class="title-text">Analyse des Dépenses</h1>
+            <p class="subtitle-text">Analyse détaillée des charges et salaires avec vue par catégorie,
+              rôle et tendances mensuelles</p>
+          </div>
+        </div>
+        <div class="academic-year-badge">
+          <span class="year-label">Année Académique</span>
+          <span class="year-value">{{ currentAcademicYear }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions and Quick Stats Row -->
+    <div class="header-bottom">
+      <!-- Enhanced Action Buttons -->
+      <div class="actions-section">
+        <!-- Action Buttons -->
+        <div class="nav-actions">
+          <button class="btn-action btn-export" (click)="exportToExcel()" [disabled]="isExportingExcel"
+            title="Exporter vers Excel">
+            <div class="btn-icon-wrapper">
+              <div class="loading-spinner" *ngIf="isExportingExcel"></div>
+              <span class="btn-icon" *ngIf="!isExportingExcel">📥</span>
+            </div>
+            <div class="btn-content">
+              <span class="btn-title">{{ isExportingExcel ? 'Export...' : 'Excel' }}</span>
+              <span class="btn-description">Fichier Excel</span>
+            </div>
+          </button>
+
+          <button class="btn-action btn-export-pdf" (click)="exportToPDF()" [disabled]="isExportingPDF"
+            title="Exporter vers PDF">
+            <div class="btn-icon-wrapper">
+              <div class="loading-spinner" *ngIf="isExportingPDF"></div>
+              <span class="btn-icon" *ngIf="!isExportingPDF">📄</span>
+            </div>
+            <div class="btn-content">
+              <span class="btn-title">{{ isExportingPDF ? 'Export...' : 'PDF' }}</span>
+              <span class="btn-description">Fichier PDF</span>
+            </div>
+          </button>
+
+          <button class="btn-action btn-refresh" (click)="refreshData()" [disabled]="isLoading"
+            title="Actualiser les données">
+            <div class="btn-icon-wrapper">
+              <div class="loading-spinner" *ngIf="isLoading"></div>
+              <span class="btn-icon" *ngIf="!isLoading">🔄</span>
+            </div>
+            <div class="btn-content">
+              <span class="btn-title">Actualiser</span>
+              <span class="btn-description">Recharger les données</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="quick-stats" *ngIf="analyticsData">
+        <div class="stat-item stat-primary">
+          <div class="stat-icon">🏦</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ formatCurrency(analyticsData.summary.total_charges) }}</div>
+            <div class="stat-label">Total Charges</div>
+          </div>
+        </div>
+
+        <div class="stat-item stat-danger">
+          <div class="stat-icon">👥</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ formatCurrency(analyticsData.summary.total_salaries) }}</div>
+            <div class="stat-label">Total Salaires</div>
+          </div>
+        </div>
+
+        <div class="stat-item stat-warning">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ formatCurrency(analyticsData.summary.pending_salaries) }}</div>
+            <div class="stat-label">Salaires en Attente</div>
+          </div>
+        </div>
+
+        <div class="stat-item stat-info">
+          <div class="stat-icon">💸</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ formatCurrency(analyticsData.summary.total_outcome) }}</div>
+            <div class="stat-label">Total Dépenses</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-header">
+      <h3>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46" />
+        </svg>
+        Filtres d'Analyse des Dépenses
+      </h3>
+    </div>
+
+    <div class="filters-form">
+      <div class="filters-row">
+        <!-- Charge Category Filter -->
+        <div class="filter-group">
+          <label for="chargeCategory">Catégorie de Charge</label>
+          <select id="chargeCategory" [(ngModel)]="activeFilters.chargeCategory" (change)="applyFilters()">
+            <option value="">Toutes les catégories</option>
+            <option *ngFor="let category of filterOptions?.chargeCategories" [value]="category">
+              {{ category }}
+            </option>
+          </select>
+        </div>
+
+        <!-- User Role Filter -->
+        <div class="filter-group">
+          <label for="userRole">Rôle d'Employé</label>
+          <select id="userRole" [(ngModel)]="activeFilters.userRole" (change)="applyFilters()">
+            <option value="">Tous les rôles</option>
+            <option *ngFor="let role of filterOptions?.userRoles" [value]="role">
+              {{ getRoleDisplayName(role) }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Academic Year Filter -->
+        <div class="filter-group">
+          <label for="academicYear">Année Académique</label>
+          <select id="academicYear" [(ngModel)]="activeFilters.academicYear" (change)="applyFilters()">
+            <option value="">Toutes les années</option>
+            <option *ngFor="let year of filterOptions?.academicYears" [value]="year"
+              [selected]="year === currentAcademicYear">{{ year }}</option>
+          </select>
+        </div>
+
+        <!-- Date Range Filters -->
+        <div class="filter-group">
+          <label for="startDate">Date de Début</label>
+          <input type="date" id="startDate" [(ngModel)]="activeFilters.startDate" (change)="applyFilters()">
+        </div>
+
+        <div class="filter-group">
+          <label for="endDate">Date de Fin</label>
+          <input type="date" id="endDate" [(ngModel)]="activeFilters.endDate" (change)="applyFilters()">
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" class="btn-secondary btn-sm" (click)="resetFilters()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18" />
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+          </svg>
+          Effacer
+        </button>
+
+        <button type="button" class="btn-secondary btn-sm" (click)="refreshData()" [disabled]="isLoading">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M3 21v-5h5" />
+          </svg>
+          {{ isLoading ? 'Actualisation...' : 'Actualiser' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Chargement des données d'analyse des dépenses...</p>
+  </div>
+
+  <!-- Content Area -->
+  <div class="content-area" *ngIf="!isLoading && analyticsData">
+
+    <!-- Charge Analysis View -->
+    <div class="analysis-section">
+      <div class="section-header">
+        <h2>🏦 Analyse des Charges par Catégorie</h2>
+        <p>Répartition des charges par catégorie avec totaux et statistiques</p>
+      </div>
+
+      <div class="category-grid">
+        <div class="category-card" *ngFor="let charge of chargeAnalysisArray">
+          <div class="category-header">
+            <h3 class="category-name">{{ charge.categorie }}</h3>
+            <div class="category-icon">🏦</div>
+          </div>
+
+          <div class="category-stats">
+            <div class="stat-box primary">
+              <div class="amount-value">{{ formatCurrency(charge.total_amount) }}</div>
+              <div class="amount-label">Montant Total</div>
+            </div>
+            <div class="stat-box info">
+              <div class="amount-value">{{ charge.count }}</div>
+              <div class="amount-label">Nombre de Charges</div>
+            </div>
+            <div class="stat-box success">
+              <div class="amount-value">{{ formatCurrency(charge.avg_amount) }}</div>
+              <div class="amount-label">Montant Moyen</div>
+            </div>
+            <div class="stat-box warning">
+              <div class="amount-value">{{ formatDate(charge.latest_date) }}</div>
+              <div class="amount-label">Dernière Charge</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charges Table -->
+      <div class="section-header">
+        <h3>Détail des Charges</h3>
+        <div class="search-container">
+          <input type="text" placeholder="Rechercher dans les charges..." [(ngModel)]="chargeSearchTerm"
+            (input)="currentChargesPage = 1" class="search-input">
+          <span>{{ filteredCharges.length }} charge(s) trouvée(s)</span>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Catégorie</th>
+              <th>Description</th>
+              <th>Date</th>
+              <th>Montant</th>
+              <th>Créé par</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let charge of paginatedCharges">
+              <td>
+                <span class="category-badge">{{ charge.categorie }}</span>
+              </td>
+              <td class="charge-description">{{ charge.description }}</td>
+              <td>{{ formatDate(charge.date) }}</td>
+              <td class="amount expected">{{ formatCurrency(charge.montant) }}</td>
+              <td class="created-by">
+                <div *ngIf="charge.createdBy">
+                  {{ charge.createdBy.name }}
+                </div>
+                <div *ngIf="!charge.createdBy">-</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Charges Pagination -->
+      <div class="pagination" *ngIf="totalChargesPages > 1">
+        <button (click)="changeChargesPage(currentChargesPage - 1)" [disabled]="currentChargesPage === 1">
+          Précédent
+        </button>
+        <button *ngFor="let page of [].constructor(totalChargesPages); let i = index" (click)="changeChargesPage(i + 1)"
+          [class.active]="currentChargesPage === i + 1">
+          {{ i + 1 }}
+        </button>
+        <button (click)="changeChargesPage(currentChargesPage + 1)"
+          [disabled]="currentChargesPage === totalChargesPages">
+          Suivant
+        </button>
+      </div>
+    </div>
+
+    <!-- Salary Analysis View -->
+    <div class="analysis-section">
+      <div class="section-header">
+        <h2>👥 Analyse des Salaires par Rôle</h2>
+        <p>Performance des paiements de salaires par rôle et type de paiement</p>
+      </div>
+
+      <div class="category-grid">
+        <div class="category-card" *ngFor="let salary of salaryAnalysisArray">
+          <div class="category-header">
+            <h3 class="category-name">{{ getRoleDisplayName(salary.role) }}</h3>
+            <div class="category-icon">👥</div>
+          </div>
+
+          <div class="category-stats">
+            <div class="stat-box success">
+              <div class="amount-value">{{ formatCurrency(salary.total_paid) }}</div>
+              <div class="amount-label">Salaires Payés</div>
+            </div>
+            <div class="stat-box warning">
+              <div class="amount-value">{{ formatCurrency(salary.total_pending) }}</div>
+              <div class="amount-label">En Attente</div>
+            </div>
+            <div class="stat-box info">
+              <div class="amount-value">{{ salary.employee_count }}</div>
+              <div class="amount-label">Employés</div>
+            </div>
+            <div class="stat-box primary">
+              <div class="amount-value">{{ formatPercentage(salary.payment_rate) }}</div>
+              <div class="amount-label">Taux de Paiement</div>
+            </div>
+          </div>
+
+          <div class="payment-type-info">
+            <span class="payment-type-badge">{{ getPaymentTypeDisplayName(salary.paymentType) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Salaries Table -->
+      <div class="section-header">
+        <h3>Détail des Salaires</h3>
+        <div class="search-container">
+          <input type="text" placeholder="Rechercher dans les salaires..." [(ngModel)]="salarySearchTerm"
+            (input)="currentSalariesPage = 1" class="search-input">
+          <span>{{ filteredSalaries.length }} salaire(s) trouvé(s)</span>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Employé</th>
+              <th>Rôle</th>
+              <th>Année Académique</th>
+              <th>Type de Paiement</th>
+              <th>Total Attendu</th>
+              <th>Payé</th>
+              <th>En Attente</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let salary of paginatedSalaries">
+              <td class="employee-info">
+                <div class="employee-name">{{ salary.user.name }} </div>
+                <div class="employee-email">{{ salary.user.email }}</div>
+              </td>
+              <td>
+                <span class="role-badge">{{ getRoleDisplayName(salary.user.role) }}</span>
+              </td>
+              <td>{{ salary.academicYear }}</td>
+              <td>
+                <span class="payment-type-badge">
+                  {{ getPaymentTypeDisplayName(salary.salaryConfiguration.paymentType) }}
+                </span>
+              </td>
+              <td class="amount expected">{{ formatCurrency(getTotalExpected(salary)) }}</td>
+              <td class="amount collected">{{ formatCurrency(getTotalPaid(salary)) }}</td>
+              <td class="amount pending">{{ formatCurrency(getTotalPending(salary)) }}</td>
+              <td>
+                <span class="status-badge" [class]="getPaymentStatusClass(salary)">
+                  {{ getPaymentStatus(salary) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Salaries Pagination -->
+      <div class="pagination" *ngIf="totalSalariesPages > 1">
+        <button (click)="changeSalariesPage(currentSalariesPage - 1)" [disabled]="currentSalariesPage === 1">
+          Précédent
+        </button>
+        <button *ngFor="let page of [].constructor(totalSalariesPages); let i = index"
+          (click)="changeSalariesPage(i + 1)" [class.active]="currentSalariesPage === i + 1">
+          {{ i + 1 }}
+        </button>
+        <button (click)="changeSalariesPage(currentSalariesPage + 1)"
+          [disabled]="currentSalariesPage === totalSalariesPages">
+          Suivant
+        </button>
+      </div>
+    </div>
+
+    <!-- Monthly Trends View -->
+    <div class="analysis-section">
+      <div class="section-header">
+        <h2>📈 Tendances Mensuelles</h2>
+        <p>Évolution mensuelle des charges et salaires</p>
+      </div>
+
+      <div class="trends-container">
+        <div class="trend-section"
+          *ngIf="analyticsData?.monthlyTrends && analyticsData.monthlyTrends.charges && analyticsData.monthlyTrends.charges.length > 0">
+          <h3>Charges par Mois</h3>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Année</th>
+                  <th>Mois</th>
+                  <th>Total Charges</th>
+                  <th>Nombre</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let trend of analyticsData.monthlyTrends.charges">
+                  <td>{{ trend.year }}</td>
+                  <td>{{ getMonthName(trend.month) }}</td>
+                  <td class="amount">{{ formatCurrency(trend.total_charges) }}</td>
+                  <td>{{ trend.count }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="trend-section"
+          *ngIf="analyticsData?.monthlyTrends && analyticsData.monthlyTrends.salaries && analyticsData.monthlyTrends.salaries.length > 0">
+          <h3>Salaires par Mois</h3>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Année</th>
+                  <th>Mois</th>
+                  <th>Total Salaires</th>
+                  <th>Payés</th>
+                  <th>En Attente</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let trend of analyticsData.monthlyTrends.salaries">
+                  <td>{{ trend.year }}</td>
+                  <td>{{ getMonthName(trend.month) }}</td>
+                  <td class="amount">{{ formatCurrency(trend.total_salaries) }}</td>
+                  <td class="amount collected">{{ formatCurrency(trend.paid_salaries) }}</td>
+                  <td class="amount pending">{{ formatCurrency(trend.pending_salaries) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && !analyticsData">
+    <div class="empty-icon">📊</div>
+    <h3>Aucune donnée disponible</h3>
+    <p>Aucune donnée d'analyse des dépenses n'est disponible pour le moment.</p>
+    <button class="btn-primary" (click)="refreshData()">Actualiser</button>
+  </div>
+</div>

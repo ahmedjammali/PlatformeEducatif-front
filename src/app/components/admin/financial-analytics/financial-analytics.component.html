@@ -1,0 +1,58 @@
+<!-- components/admin/financial-analytics/financial-analytics.component.html -->
+<div class="financial-analytics-container">
+  <!-- Header Section -->
+  <div class="analytics-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1 class="main-title">Analyses Financières</h1>
+        <p class="subtitle">Tableau de bord des revenus et dépenses</p>
+        <div class="year-badge">
+          <span>ANNÉE ACADÉMIQUE 2025-2026</span>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="tab-navigation">
+        <ul class="nav nav-tabs analytics-tabs" role="tablist">
+          <li class="nav-item" *ngFor="let tab of tabs" role="presentation">
+            <button [class]="getTabClasses(tab)" [attr.aria-selected]="isTabActive(tab.id)"
+              [attr.aria-controls]="tab.id + '-panel'" role="tab" type="button" (click)="onTabClick(tab.id, $event)"
+              (keydown)="onTabKeydown($event, tab.id)">
+              <i [class]="tab.icon" class="tab-icon"></i>
+              <span class="tab-label">{{ tab.label }}</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Content Section -->
+  <div class="tab-content-container">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" *ngIf="isLoadingTab">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <p>Chargement...</p>
+      </div>
+    </div>
+
+    <!-- Income Analytics Tab -->
+    <div class="tab-pane" [class.active]="activeTab === 'income'" id="income-panel" role="tabpanel"
+      [attr.aria-labelledby]="'income-tab'" [attr.hidden]="activeTab !== 'income'">
+      <app-income-analytics *ngIf="activeTab === 'income' && !isLoadingTab"></app-income-analytics>
+    </div>
+
+    <!-- Outcome Analytics Tab -->
+    <div class="tab-pane" [class.active]="activeTab === 'outcome'" id="outcome-panel" role="tabpanel"
+      [attr.aria-labelledby]="'outcome-tab'" [attr.hidden]="activeTab !== 'outcome'">
+      <app-outcome-analytics *ngIf="activeTab === 'outcome' && !isLoadingTab"></app-outcome-analytics>
+    </div>
+
+    <!-- Combined Export Tab -->
+    <div class="tab-pane" [class.active]="activeTab === 'combined-export'" id="combined-export-panel" role="tabpanel"
+      [attr.aria-labelledby]="'combined-export-tab'" [attr.hidden]="activeTab !== 'combined-export'">
+      <app-combined-export *ngIf="activeTab === 'combined-export' && !isLoadingTab"></app-combined-export>
+    </div>
+  </div>
+</div>
