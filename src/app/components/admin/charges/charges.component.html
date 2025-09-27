@@ -157,9 +157,9 @@
         <tr *ngFor="let charge of paginatedCharges; trackBy: trackByChargeId">
           <td>{{ formatDate(charge.date) }}</td>
           <td>
-            <span class="category-badge" [style.background-color]="getCategoryColor(charge.categorie)">
-              {{ charge.categorie }}
-            </span>
+            <span class="category-badge" [attr.data-category]="charge.categorie">
+  {{ charge.categorie }}
+</span>
           </td>
           <td>{{ charge.description }}</td>
           <td class="amount-cell">{{ formatCurrency(charge.montant) }}</td>

@@ -354,7 +354,7 @@
                               [value]="payment.actualHoursWorked || payment.regularHours || 0"
                               (input)="onCardHoursChange(record, payment, $event)"
                               [disabled]="payment.paymentStatus === 'paid'" min="0" step="0.5" placeholder="0">
-                            <span class="hours-label">h</span>
+
                             <small class="hours-help">
                               Taux: {{ formatCurrency(payment.hourlyRate) }}/h
                             </small>
@@ -374,7 +374,6 @@
                             <input type="number" class="extra-hours-input" [value]="payment.extraHours || 0"
                               (input)="onCardExtraHoursChange(record, payment, $event)"
                               [disabled]="payment.paymentStatus === 'paid'" min="0" step="0.5" placeholder="0">
-                            <span class="hours-label">h</span>
                             <small class="hours-help">
                               Taux: {{ formatCurrency(getEffectiveExtraHourlyRate(payment)) }}/h
                             </small>
