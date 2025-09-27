@@ -1,0 +1,458 @@
+/* Import the base teacher financial styles */
+@import '../teacher-financial/teacher-financial.component.css';
+
+/* ====================================
+   OUVRIER-SPECIFIC STYLE OVERRIDES
+   ==================================== */
+
+/* Header customization for ouvriers */
+.page-title {
+  color: white;
+}
+
+.page-subtitle {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* ====================================
+   POSITION-SPECIFIC BADGES
+   ==================================== */
+.position-info {
+  margin-bottom: 12px;
+}
+
+.position-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+/* Position-specific colors */
+.position-badge.sécurité {
+  background: rgba(33, 150, 243, 0.1);
+  color: var(--color-info);
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+.position-badge.chef {
+  background: rgba(255, 152, 0, 0.1);
+  color: var(--color-warning);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.position-badge.nettoyeur {
+  background: rgba(76, 175, 80, 0.1);
+  color: var(--color-success);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.position-badge.cuisinier {
+  background: rgba(156, 39, 176, 0.1);
+  color: #9c27b0;
+  border: 1px solid rgba(156, 39, 176, 0.3);
+}
+
+.position-badge.surveillant {
+  background: rgba(255, 87, 34, 0.1);
+  color: #ff5722;
+  border: 1px solid rgba(255, 87, 34, 0.3);
+}
+
+.position-badge.maintenance {
+  background: rgba(96, 125, 139, 0.1);
+  color: #607d8b;
+  border: 1px solid rgba(96, 125, 139, 0.3);
+}
+
+.position-badge.autre {
+  background: rgba(158, 158, 158, 0.1);
+  color: var(--color-gray-dark);
+  border: 1px solid rgba(158, 158, 158, 0.3);
+}
+
+/* Badge styles in detail view */
+.badge.position {
+  backdrop-filter: blur(10px);
+}
+
+.badge.position.sécurité {
+  background: rgba(33, 150, 243, 0.3);
+  color: white;
+  border: 1px solid rgba(33, 150, 243, 0.5);
+}
+
+.badge.position.chef {
+  background: rgba(255, 152, 0, 0.3);
+  color: white;
+  border: 1px solid rgba(255, 152, 0, 0.5);
+}
+
+.badge.position.nettoyeur {
+  background: rgba(76, 175, 80, 0.3);
+  color: white;
+  border: 1px solid rgba(76, 175, 80, 0.5);
+}
+
+.badge.position.cuisinier {
+  background: rgba(156, 39, 176, 0.3);
+  color: white;
+  border: 1px solid rgba(156, 39, 176, 0.5);
+}
+
+.badge.position.surveillant {
+  background: rgba(255, 87, 34, 0.3);
+  color: white;
+  border: 1px solid rgba(255, 87, 34, 0.5);
+}
+
+.badge.position.maintenance {
+  background: rgba(96, 125, 139, 0.3);
+  color: white;
+  border: 1px solid rgba(96, 125, 139, 0.5);
+}
+
+.badge.position.autre {
+  background: rgba(158, 158, 158, 0.3);
+  color: white;
+  border: 1px solid rgba(158, 158, 158, 0.5);
+}
+
+/* ====================================
+   OUVRIER-SPECIFIC FORM ENHANCEMENTS
+   ==================================== */
+
+/* Position selector styling */
+.form-group select option[value="sécurité"]::before {
+  content: "🔒 ";
+}
+
+.form-group select option[value="chef"]::before {
+  content: "👨‍🍳 ";
+}
+
+.form-group select option[value="nettoyeur"]::before {
+  content: "🧹 ";
+}
+
+.form-group select option[value="cuisinier"]::before {
+  content: "🍳 ";
+}
+
+.form-group select option[value="surveillant"]::before {
+  content: "👁️ ";
+}
+
+.form-group select option[value="maintenance"]::before {
+  content: "🔧 ";
+}
+
+.form-group select option[value="autre"]::before {
+  content: "⚙️ ";
+}
+
+/* Enhanced form hints for hourly workers */
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--color-gray-dark);
+  margin-top: 4px;
+  font-style: italic;
+  display: block;
+}
+
+/* ====================================
+   FILTER CHIPS ENHANCEMENTS
+   ==================================== */
+
+/* Enhanced filter chips for positions */
+.filter-chips .filter-chip {
+  transition: var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.filter-chips .filter-chip::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: var(--transition-base);
+}
+
+.filter-chips .filter-chip:hover::before {
+  left: 100%;
+}
+
+.filter-chips .filter-chip.active::before {
+  display: none;
+}
+
+/* ====================================
+   DELETE MODAL CUSTOMIZATION
+   ==================================== */
+
+/* Position info in delete modal */
+.delete-info .position-info {
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* ====================================
+   OUVRIER CARD CUSTOMIZATIONS
+   ==================================== */
+
+/* Enhance teacher cards for ouvrier context */
+.teacher-card {
+  position: relative;
+}
+
+.teacher-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  transition: var(--transition-base);
+}
+
+/* Position-based card top borders */
+.teacher-card:has(.position-badge.sécurité)::before {
+  background: var(--color-info);
+}
+
+.teacher-card:has(.position-badge.chef)::before {
+  background: var(--color-warning);
+}
+
+.teacher-card:has(.position-badge.nettoyeur)::before {
+  background: var(--color-success);
+}
+
+.teacher-card:has(.position-badge.cuisinier)::before {
+  background: #9c27b0;
+}
+
+.teacher-card:has(.position-badge.surveillant)::before {
+  background: #ff5722;
+}
+
+.teacher-card:has(.position-badge.maintenance)::before {
+  background: #607d8b;
+}
+
+.teacher-card:has(.position-badge.autre)::before {
+  background: var(--color-gray-dark);
+}
+
+/* ====================================
+   HOURS WORKED STYLING
+   ==================================== */
+
+/* Enhanced styling for hourly rate display */
+.detail-row .hours-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+.detail-row .hours-info svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+}
+
+/* Calculate amount display */
+.detail-row .calculated-amount {
+  font-family: 'Monaco', 'Menlo', monospace;
+  background: rgba(164, 180, 101, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+/* ====================================
+   NAVIGATION CUSTOMIZATION
+   ==================================== */
+
+/* Update navigation icons for ouvrier context */
+.nav-tab svg {
+  stroke-width: 1.8;
+}
+
+/* ====================================
+   RESPONSIVE OUVRIER ENHANCEMENTS
+   ==================================== */
+
+@media (max-width: 768px) {
+  .position-badge {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+  
+  .filter-chips {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .filter-chip {
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .position-info {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  
+  .position-badge {
+    font-size: 0.65rem;
+    padding: 3px 6px;
+  }
+  
+  .teacher-badges {
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .badge.position {
+    font-size: 0.65rem;
+    padding: 4px 8px;
+  }
+}
+
+/* ====================================
+   ACCESSIBILITY ENHANCEMENTS
+   ==================================== */
+
+/* High contrast mode support for position badges */
+@media (prefers-contrast: high) {
+  .position-badge,
+  .badge.position {
+    border-width: 2px;
+    font-weight: 700;
+  }
+}
+
+/* Focus styles for position-related elements */
+.position-badge:focus,
+.filter-chip:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ====================================
+   PRINT STYLES FOR OUVRIERS
+   ==================================== */
+
+@media print {
+  .position-badge,
+  .badge.position {
+    background: transparent !important;
+    color: var(--color-primary-dark) !important;
+    border: 1px solid var(--color-primary-dark) !important;
+  }
+  
+  .teacher-card::before {
+    display: none;
+  }
+  
+  .filter-chips {
+    display: none;
+  }
+}
+
+/* ====================================
+   DARK MODE CONSIDERATIONS
+   ==================================== */
+
+@media (prefers-color-scheme: dark) {
+  .position-badge {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  .form-hint {
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+/* ====================================
+   ANIMATION ENHANCEMENTS
+   ==================================== */
+
+/* Subtle animations for position badges */
+.position-badge {
+  transition: var(--transition-base);
+}
+
+.position-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Card interaction enhancements */
+.teacher-card:hover::before {
+  height: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading state for position badges */
+.position-badge.loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ====================================
+   UTILITY CLASSES FOR OUVRIERS
+   ==================================== */
+
+.position-sécurité { color: var(--color-info); }
+.position-chef { color: var(--color-warning); }
+.position-nettoyeur { color: var(--color-success); }
+.position-cuisinier { color: #9c27b0; }
+.position-surveillant { color: #ff5722; }
+.position-maintenance { color: #607d8b; }
+.position-autre { color: var(--color-gray-dark); }
+
+/* Text variants */
+.text-position-sécurité { color: var(--color-info); }
+.text-position-chef { color: var(--color-warning); }
+.text-position-nettoyeur { color: var(--color-success); }
+.text-position-cuisinier { color: #9c27b0; }
+.text-position-surveillant { color: #ff5722; }
+.text-position-maintenance { color: #607d8b; }
+.text-position-autre { color: var(--color-gray-dark); }
+
+/* Background variants */
+.bg-position-sécurité { background-color: rgba(33, 150, 243, 0.1); }
+.bg-position-chef { background-color: rgba(255, 152, 0, 0.1); }
+.bg-position-nettoyeur { background-color: rgba(76, 175, 80, 0.1); }
+.bg-position-cuisinier { background-color: rgba(156, 39, 176, 0.1); }
+.bg-position-surveillant { background-color: rgba(255, 87, 34, 0.1); }
+.bg-position-maintenance { background-color: rgba(96, 125, 139, 0.1); }
+.bg-position-autre { background-color: rgba(158, 158, 158, 0.1); }

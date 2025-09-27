@@ -7,7 +7,7 @@ export interface User {
   name: string;
   email: string;
   password?: string;
-  role: 'superadmin' | 'admin' | 'teacher' | 'student';
+  role: 'superadmin' | 'admin' | 'teacher' | 'student' | 'ouvrier';
   school?: School | string;
   teachingClasses?: TeachingClass[];
   studentClass?: Class | string;
@@ -16,7 +16,7 @@ export interface User {
   updatedAt?: Date;
   phoneNumber?: string;
   parentName?: string;
-  parentCin   ?: string;
+  parentCin?: string;
   parentPhoneNumber?: string;
 }
 

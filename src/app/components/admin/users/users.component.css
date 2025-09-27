@@ -475,6 +475,10 @@ select:focus {
   background-color: rgba(240, 187, 120, 0.2);
   color: #e65100;
 }
+.role-badge.ouvrier {
+  background-color: rgba(0, 0, 0, 0.2);
+  color: #ff5900;
+}
 
 .role-badge.teacher {
   background-color: rgba(164, 180, 101, 0.2);

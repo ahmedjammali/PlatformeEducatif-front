@@ -1,4 +1,4 @@
-// admin-layout.component.ts - FIXED VERSION
+// admin-layout.component.ts - FIXED VERSION WITH CHARGES
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil, filter } from 'rxjs';
@@ -151,7 +151,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'contact': '/admin/contact',
       'schools': '/superadmin/schools',
       'payments': '/admin/payments',
-      'financialOverview': '/admin/payments/financial-overview', // FIXED: Use consistent key
+      'financialOverview': '/admin/payments/financial-overview',
+      'teacher-financial': '/admin/teacher-financial',
+      'ouvrier-financial': '/admin/ouvrier-financial',
+      'charges': '/admin/charges' // NEW: Added charges route
     };
 
     const targetRoute = routeMap[route];
@@ -181,7 +184,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'reports': 'Rapports et Statistiques',
       'schools': 'Gestion de l\'École',
       'payments': 'Gestion des Paiements',
-      'financialOverview': 'Aperçu Financier', // FIXED: Use consistent key
+      'financialOverview': 'Aperçu Financier',
+      'teacher-financial': 'Gestion Financière Personnel',
+      'ouvrier-financial': 'Gestion Financière Ouvriers',
+      'charges': 'Gestion des Charges' // NEW: Added charges title
     };
     
     return titles[this.activeRoute] || 'Tableau de Bord';
@@ -405,6 +411,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
       { path: '/admin/grades', route: 'grades' },
       { path: '/admin/contact', route: 'contact' },
       { path: '/admin/reports', route: 'reports' },
+      { path: '/admin/teacher-financial', route: 'teacher-financial' },
+      { path: '/admin/ouvrier-financial', route: 'ouvrier-financial' },
+      { path: '/admin/charges', route: 'charges' }, // NEW: Added charges route detection
       { path: '/superadmin/schools', route: 'schools' },
     ];
 

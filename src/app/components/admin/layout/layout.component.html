@@ -1,4 +1,4 @@
-<!-- admin-layout.component.html - MERGED VERSION -->
+<!-- admin-layout.component.html - MERGED VERSION WITH CHARGES -->
 <div class="dashboard-container">
   
   <!-- Mobile Header - Added for mobile responsiveness -->
@@ -129,6 +129,11 @@
           </a>
         </li>
 
+        <!-- Divider for Financial Section -->
+        <li class="nav-divider">
+          <span>Gestion Financière</span>
+        </li>
+
         <!-- Payments - For all admin types -->
         <li class="nav-item" [class.active]="activeRoute === 'payments'">
           <a (click)="navigateTo('payments')" class="nav-link">
@@ -136,7 +141,44 @@
               <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
               <line x1="1" y1="10" x2="23" y2="10"/>
             </svg>
-            <span class="nav-text">Paiements</span>  
+            <span class="nav-text">Paiements Étudiants</span>  
+          </a>
+        </li>
+
+        <!-- Teacher Financial Management -->
+        <li class="nav-item" [class.active]="activeRoute === 'teacher-financial'">
+          <a (click)="navigateTo('teacher-financial')" class="nav-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+              <path d="M7 15h.01M11 15h.01"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+            <span class="nav-text">Finance Enseignants</span>
+          </a>
+        </li>
+
+        <!-- Worker Financial Management -->
+        <li class="nav-item" [class.active]="activeRoute === 'ouvrier-financial'">
+          <a (click)="navigateTo('ouvrier-financial')" class="nav-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <line x1="8" y1="10" x2="16" y2="10"/>
+              <line x1="8" y1="14" x2="13" y2="14"/>
+              <path d="M7 2L7 5M17 2L17 5"/>
+            </svg>
+            <span class="nav-text">Finance Ouvriers</span>
+          </a>
+        </li>
+
+        <!-- Charges Management -->
+        <li class="nav-item" [class.active]="activeRoute === 'charges'">
+          <a (click)="navigateTo('charges')" class="nav-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            <span class="nav-text">Gestion des Charges</span>
           </a>
         </li>
 
@@ -153,7 +195,15 @@
         </li>
 
         <!-- Contact Page -->
-        <li class="nav-item" [class.active]="activeRoute === 'contact'">
+        
+
+        <!-- Divider -->
+        <li class="nav-divider" *ngIf="isSuperAdmin">
+          <span>Administration</span>
+        </li>
+
+        <!-- SuperAdmin Only Section -->
+         <li class="nav-item" [class.active]="activeRoute === 'contact'">
           <a (click)="navigateTo('contact')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -162,13 +212,6 @@
             <span class="nav-text">Contact</span>
           </a>
         </li>
-
-        <!-- Divider -->
-        <li class="nav-divider" *ngIf="isSuperAdmin">
-          <span>Administration</span>
-        </li>
-
-        <!-- SuperAdmin Only Section -->
         <li class="nav-item" *ngIf="isSuperAdmin" [class.active]="activeRoute === 'schools'">
           <a (click)="navigateTo('schools')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

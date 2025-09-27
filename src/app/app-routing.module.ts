@@ -38,6 +38,11 @@ import { PaymentManagementComponent } from './components/admin/payment-managemen
 import { PaymentConfigComponent } from './components/admin/payment-config/payment-config.component';
 import { FinancialOverviewComponent } from './components/admin/financial-overview/financial-overview.component';
 
+// Financial Management Components
+import { TeacherFinancialComponent } from './components/admin/teacher-financial/teacher-financial.component';
+import { OuvrierFinancialComponent } from './components/admin/ouvrier-financial/ouvrier-financial.component';
+import { ChargesManagementComponent } from './components/admin/charges-management/charges-management.component';
+
 const routes: Routes = [
   { path: '', component: LandingPageComponent },
   { path: 'login', component: LoginComponent },
@@ -57,21 +62,41 @@ const routes: Routes = [
       { path: 'notifications', component: NotificationComponent },
       { path: 'contact', component: ContactComponent },
       { path: 'grades', component: GradesComponent },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' } , 
-      // Payment Routes (Added)
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      
+      // Student Payment Routes
       { 
         path: 'payments', 
         component: PaymentManagementComponent,
-        data: { title: 'Payment Management' }
+        data: { title: 'Student Payment Management' }
       },
       {
-            path: 'payments/financial-overview',
-            component: FinancialOverviewComponent
+        path: 'payments/financial-overview',
+        component: FinancialOverviewComponent
       },
       { 
         path: 'payments/config', 
         component: PaymentConfigComponent,
         data: { title: 'Payment Configuration' }
+      },
+      
+      // Staff Financial Management Routes
+      { 
+        path: 'teacher-financial', 
+        component: TeacherFinancialComponent,
+        data: { title: 'Teacher Financial Management' }
+      },
+      { 
+        path: 'ouvrier-financial', 
+        component: OuvrierFinancialComponent,
+        data: { title: 'Ouvrier Financial Management' }
+      },
+      
+      // Charges Management Routes
+      { 
+        path: 'charges', 
+        component: ChargesManagementComponent,
+        data: { title: 'Charges Management' }
       }
     ]
   },

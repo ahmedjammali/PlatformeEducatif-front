@@ -1,0 +1,1070 @@
+<div class="teacher-financial-container">
+  <!-- Section d'en-tête améliorée -->
+  <header class="header-section">
+    <div class="header-background">
+      <div class="header-pattern"></div>
+    </div>
+    <div class="header-content">
+      <div class="header-main">
+        <div class="icon-wrapper pulse">
+          <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <line x1="8" y1="10" x2="16" y2="10"/>
+            <line x1="8" y1="14" x2="13" y2="14"/>
+            <path d="M7 2L7 5M17 2L17 5"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <h1 class="page-title">Gestion des Paiements des Enseignants</h1>
+          <p class="page-subtitle">Suivre les contrats, salaires et paiements mensuels</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tableau de bord statistiques amélioré -->
+  <section class="stats-section" *ngIf="statistics">
+    <div class="stats-grid">
+      <div class="stat-card total-card" [class.loading]="isLoading">
+        <div class="stat-background"></div>
+        <div class="stat-content">
+          <div class="stat-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 14l2 2 4-4"/>
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+            </svg>
+          </div>
+          <div class="stat-details">
+            <span class="stat-value">{{ statistics.totalDossiers }}</span>
+            <span class="stat-label">Total des Dossiers</span>
+            <span class="stat-amount">{{ formatCurrency(statistics.totalAmount) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card paid-card" [class.loading]="isLoading">
+        <div class="stat-background"></div>
+        <div class="stat-content">
+          <div class="stat-icon-wrapper success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </div>
+          <div class="stat-details">
+            <span class="stat-value">{{ statistics.paidCount }}</span>
+            <span class="stat-label">Payés</span>
+            <span class="stat-amount success">{{ formatCurrency(statistics.paidAmount) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card unpaid-card" [class.loading]="isLoading">
+        <div class="stat-background"></div>
+        <div class="stat-content">
+          <div class="stat-icon-wrapper warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <div class="stat-details">
+            <span class="stat-value">{{ statistics.unpaidCount }}</span>
+            <span class="stat-label">En Attente</span>
+            <span class="stat-amount warning">{{ formatCurrency(statistics.unpaidAmount) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation améliorée -->
+  <nav class="nav-section">
+    <div class="nav-tabs">
+      <button 
+        class="nav-tab" 
+        [class.active]="activeTab === 'overview'"
+        (click)="setActiveTab('overview')">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        <span>Tableau de Bord</span>
+      </button>
+      
+      <button 
+        class="nav-tab" 
+        [class.active]="activeTab === 'teachers'"
+        (click)="setActiveTab('teachers')">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <span>Enseignants ({{ teachers.length }})</span>
+        <span class="nav-badge" *ngIf="teachers.length > 0">{{ teachers.length }}</span>
+      </button>
+      
+      <button 
+        class="nav-tab" 
+        [class.active]="activeTab === 'create'"
+        (click)="setActiveTab('create')">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="16"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        <span>Ajouter Enseignant</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Zone de contenu principal -->
+  <main class="content-area">
+    
+    <!-- Aperçu du tableau de bord -->
+    <section class="tab-panel" *ngIf="activeTab === 'overview'">
+      <div class="dashboard-grid">
+        <!-- Carte d'actions rapides -->
+        <div class="dashboard-card actions-card">
+          <div class="card-header">
+            <h3>Actions Rapides</h3>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <div class="quick-actions-grid">
+              <button class="quick-action-btn primary" (click)="setActiveTab('create')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="8.5" cy="7" r="4"/>
+                  <line x1="20" y1="8" x2="20" y2="14"/>
+                  <line x1="23" y1="11" x2="17" y2="11"/>
+                </svg>
+                <span>Ajouter Enseignant</span>
+              </button>
+              
+              <button class="quick-action-btn secondary" (click)="setActiveTab('teachers')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                </svg>
+                <span>Voir Enseignants</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Résumé général -->
+        <div class="dashboard-card summary-card">
+          <div class="card-header">
+            <h3>Aperçu du Système</h3>
+            <span class="overview-badge">{{ selectedYear }}</span>
+          </div>
+          <div class="card-body">
+            <div class="overview-metrics">
+              <div class="metric-item">
+                <div class="metric-icon primary">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <div class="metric-details">
+                  <span class="metric-value">{{ teachers.length }}</span>
+                  <span class="metric-label">Enseignants Actifs</span>
+                </div>
+              </div>
+              
+              <div class="metric-item">
+                <div class="metric-icon success">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9 12l2 2 4-4"/>
+                  </svg>
+                </div>
+                <div class="metric-details">
+                  <span class="metric-value">{{ getCompletionRate() }}%</span>
+                  <span class="metric-label">Taux de Paiement</span>
+                </div>
+              </div>
+              
+              <div class="metric-item">
+                <div class="metric-icon info">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/>
+                    <line x1="8" y1="10" x2="16" y2="10"/>
+                  </svg>
+                </div>
+                <div class="metric-details">
+                  <span class="metric-value">{{ formatCurrency(getTotalPending()) }}</span>
+                  <span class="metric-label">Montant en Attente</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Liste des enseignants -->
+    <section class="tab-panel" *ngIf="activeTab === 'teachers'">
+      <!-- Recherche et filtres -->
+      <div class="filters-bar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input 
+            type="text" 
+            placeholder="Rechercher des enseignants..." 
+            [(ngModel)]="searchQuery"
+            (input)="filterTeachers()">
+        </div>
+        
+        <div class="filter-chips">
+          <button class="filter-chip" [class.active]="filterContract === 'all'" (click)="setContractFilter('all')">
+            Tous Contrats
+          </button>
+          <button class="filter-chip" [class.active]="filterContract === 'monthly'" (click)="setContractFilter('monthly')">
+            Mensuel
+          </button>
+          <button class="filter-chip" [class.active]="filterContract === 'hourly'" (click)="setContractFilter('hourly')">
+            Horaire
+          </button>
+        </div>
+        
+        <div class="filter-actions">
+          <button class="btn-icon" (click)="sortTeachers()">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
+              <path d="M3 6h18M7 12h10M10 18h4"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Grille des enseignants -->
+      <div class="teachers-grid">
+        <div class="teacher-card" *ngFor="let teacher of filteredTeachers" (click)="viewTeacherDetails(teacher)">
+          <div class="teacher-card-header">
+            <div class="teacher-avatar" [style.background]="getAvatarColor(teacher.teacherInfo.name)">
+              {{ getInitials(teacher.teacherInfo.name) }}
+            </div>
+            <div class="teacher-status" [class]="teacher.isActive ? 'active' : 'inactive'">
+              {{ teacher.isActive ? 'Actif' : 'Inactif' }}
+            </div>
+          </div>
+          
+          <div class="teacher-card-body">
+            <h4 class="teacher-name">{{ teacher.teacherInfo.name }}</h4>
+            <p class="teacher-email">{{ teacher.teacherInfo.email }}</p>
+            
+            <div class="teacher-contract-info">
+              <div class="contract-type-badge" [class]="teacher.contractType">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                  <rect x="3" y="6" width="18" height="12" rx="2"/>
+                  <path d="M3 10h18"/>
+                </svg>
+                Contrat {{ teacher.contractType === 'monthly' ? 'Mensuel' : 'Horaire' }}
+              </div>
+              
+              <div class="salary-info">
+                <span class="salary-label">Salaire:</span>
+                <span class="salary-amount">
+                  <span *ngIf="teacher.contractType === 'monthly'">
+                    {{ formatCurrency(teacher.monthlySalary || 0) }}/mois
+                  </span>
+                  <span *ngIf="teacher.contractType === 'hourly'">
+                    {{ formatCurrency(teacher.hourlyRate || 0) }}/heure
+                  </span>
+                </span>
+              </div>
+
+              <!-- Contract duration and months display -->
+              <div class="contract-duration-info">
+                <div class="duration-item">
+                  <span class="duration-label">Durée:</span>
+                  <span class="duration-value">{{ teacher.contractDuration }} mois</span>
+                </div>
+                <div class="contract-months" *ngIf="teacher.contractMonths && teacher.contractMonths.length > 0">
+                  <span class="months-label">Mois:</span>
+                  <div class="months-display">
+                    <span 
+                      class="month-badge"
+                      *ngFor="let month of teacher.contractMonths.slice(0, 3)">
+                      {{ getMonthShortName(month) }}
+                    </span>
+                    <span class="more-months" *ngIf="teacher.contractMonths.length > 3">
+                      +{{ teacher.contractMonths.length - 3 }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="teacher-meta">
+              <div class="meta-item">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Débuté: {{ teacher.startDate | date:'MMM yyyy' }}
+              </div>
+              <div class="meta-item" *ngIf="teacher.endDate">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                  <path d="M8 14l4-4 4 4"/>
+                </svg>
+                Fin: {{ teacher.endDate | date:'MMM yyyy' }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="teacher-card-footer">
+            <button class="btn-action view" (click)="viewTeacherDetails(teacher); $event.stopPropagation()">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              Voir Paiements
+            </button>
+            
+            <div class="action-menu">
+              <button class="btn-icon" (click)="editTeacher(teacher); $event.stopPropagation()">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- État vide -->
+      <div class="empty-state" *ngIf="filteredTeachers.length === 0">
+        <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="23" y1="23" x2="17" y2="17"/>
+        </svg>
+        <h3>Aucun enseignant trouvé</h3>
+        <p>Essayez d'ajuster vos filtres ou ajoutez un nouvel enseignant</p>
+        <button class="btn-primary" (click)="setActiveTab('create')">
+          Ajouter Enseignant
+        </button>
+      </div>
+    </section>
+
+    <!-- Vue détaillée de l'enseignant avec paiements mensuels -->
+    <section class="tab-panel" *ngIf="activeTab === 'teacher-detail' && selectedTeacher">
+      <!-- Carte d'informations de l'enseignant -->
+      <div class="teacher-detail-card">
+        <div class="detail-card-header">
+          <div class="teacher-profile">
+            <div class="teacher-avatar-large" [style.background]="getAvatarColor(selectedTeacher.teacherInfo.name)">
+              {{ getInitials(selectedTeacher.teacherInfo.name) }}
+            </div>
+            <div class="teacher-info">
+              <h2>{{ selectedTeacher.teacherInfo.name }}</h2>
+              <p>{{ selectedTeacher.teacherInfo.email }}</p>
+              <div class="teacher-badges">
+                <span class="badge" [class]="selectedTeacher.isActive ? 'active' : 'inactive'">
+                  {{ selectedTeacher.isActive ? 'Actif' : 'Inactif' }}
+                </span>
+                <span class="badge contract" [class]="selectedTeacher.contractType">
+                  Contrat {{ selectedTeacher.contractType === 'monthly' ? 'Mensuel' : 'Horaire' }}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-actions">
+            <button class="btn-secondary" (click)="editTeacher(selectedTeacher)">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Modifier
+            </button>
+            <button class="btn-danger" (click)="deleteTeacher(selectedTeacher)">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              Supprimer
+            </button>
+          </div>
+        </div>
+        
+        <div class="contract-summary">
+          <div class="summary-item">
+            <span class="summary-label">Type de Contrat</span>
+            <span class="summary-value">{{ selectedTeacher.contractType === 'monthly' ? 'Mensuel' : 'Horaire' }}</span>
+          </div>
+          <div class="summary-item" *ngIf="selectedTeacher.contractType === 'monthly'">
+            <span class="summary-label">Salaire Mensuel</span>
+            <span class="summary-value highlight">{{ formatCurrency(selectedTeacher.monthlySalary || 0) }}</span>
+          </div>
+          <div class="summary-item" *ngIf="selectedTeacher.contractType === 'hourly'">
+            <span class="summary-label">Taux Horaire</span>
+            <span class="summary-value highlight">{{ formatCurrency(selectedTeacher.hourlyRate || 0) }}/h</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Date de Début</span>
+            <span class="summary-value">{{ selectedTeacher.startDate | date:'dd MMMM yyyy' }}</span>
+          </div>
+          <div class="summary-item" *ngIf="selectedTeacher.endDate">
+            <span class="summary-label">Date de Fin</span>
+            <span class="summary-value">{{ selectedTeacher.endDate | date:'dd MMMM yyyy' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Durée du Contrat</span>
+            <span class="summary-value">{{ selectedTeacher.contractDuration }} mois</span>
+          </div>
+          <div class="summary-item" *ngIf="selectedTeacher.contractMonths && selectedTeacher.contractMonths.length > 0">
+            <span class="summary-label">Mois du Contrat</span>
+            <div class="contract-months-summary">
+              <span 
+                class="month-badge small"
+                *ngFor="let month of selectedTeacher.contractMonths">
+                {{ getMonthShortName(month) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sélecteur d'année scolaire -->
+      <div class="year-selector">
+        <h3>Année Scolaire</h3>
+        <div class="year-tabs">
+          <button 
+            class="year-tab" 
+            *ngFor="let year of academicYears" 
+            [class.active]="selectedYear === year"
+            (click)="selectAcademicYear(year)">
+            {{ year }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Grille de paiements mensuels -->
+      <div class="payment-months-section">
+        <div class="section-header">
+          <h3>Dossiers de Paiement Mensuel - {{ selectedYear }}</h3>
+          <div class="bulk-actions">
+            <button class="btn-secondary" (click)="markAllPaid()" *ngIf="hasUnpaidDossiers()">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+              </svg>
+              Marquer Tout Payé
+            </button>
+          </div>
+        </div>
+        
+        <div class="months-grid" *ngIf="teacherDossiers.length > 0">
+          <div class="month-card" *ngFor="let dossier of teacherDossiers" [class]="'status-' + dossier.status">
+            <div class="month-card-header">
+              <div class="month-icon">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+              <h4>{{ getMonthName(dossier.month) }}</h4>
+              <span class="month-year">{{ dossier.year }}</span>
+            </div>
+            
+            <div class="month-card-body">
+              <div class="payment-status">
+                <span class="status-indicator" [class]="dossier.status">
+                  <svg *ngIf="dossier.status === 'paid'" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                    <path d="M9 12l2 2 4-4"/>
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  <svg *ngIf="dossier.status === 'unpaid'" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="12" y1="4" x2="12" y2="4"/>
+                  </svg>
+                  <svg *ngIf="dossier.status === 'partial'" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                  </svg>
+                </span>
+                <span class="status-text">{{ getStatusLabel(dossier.status) }}</span>
+              </div>
+              
+              <div class="payment-details">
+                <div class="detail-row">
+                  <span>Calculé:</span>
+                  <span class="amount">{{ formatCurrency(dossier.calculatedAmount) }}</span>
+                </div>
+                <div class="detail-row" *ngIf="dossier.hoursWorked">
+                  <span>Heures:</span>
+                  <span>{{ dossier.hoursWorked }}h</span>
+                </div>
+                <div class="detail-row highlight">
+                  <span>Montant Final:</span>
+                  <span class="amount final">{{ formatCurrency(dossier.finalAmount) }}</span>
+                </div>
+                <div class="detail-row" *ngIf="dossier.paymentDate">
+                  <span>Payé le:</span>
+                  <span>{{ dossier.paymentDate | date:'dd MMM' }}</span>
+                </div>
+              </div>
+              
+              <div class="payment-notes" *ngIf="dossier.notes">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                {{ dossier.notes }}
+              </div>
+            </div>
+            
+            <div class="month-card-footer">
+              <button class="btn-month-action" (click)="updatePaymentStatus(dossier)" [disabled]="dossier.status === 'paid'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                  <path d="M9 11l3 3L22 4"/>
+                  <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                </svg>
+                Marquer Payé
+              </button>
+              <button class="btn-icon-small" (click)="editDossier(dossier)">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- État vide pour les dossiers d'enseignant -->
+        <div class="empty-state" *ngIf="teacherDossiers.length === 0 && !isLoading">
+          <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <line x1="8" y1="10" x2="16" y2="10"/>
+            <line x1="8" y1="14" x2="13" y2="14"/>
+          </svg>
+          <h3>Aucun dossier de paiement trouvé</h3>
+          <p>Les dossiers de paiement pour {{ selectedYear }} apparaîtront ici</p>
+        </div>
+        
+        <!-- Résumé des paiements -->
+        <div class="payment-summary" *ngIf="teacherDossiers.length > 0">
+          <div class="summary-card">
+            <h4>Résumé des Paiements pour {{ selectedYear }}</h4>
+            <div class="summary-stats">
+              <div class="stat">
+                <span class="stat-label">Total Dû:</span>
+                <span class="stat-value">{{ formatCurrency(getYearTotal('calculated')) }}</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Payé:</span>
+                <span class="stat-value success">{{ formatCurrency(getYearTotal('paid')) }}</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">En Attente:</span>
+                <span class="stat-value warning">{{ formatCurrency(getYearTotal('pending')) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Formulaire de création d'enseignant -->
+    <section class="tab-panel" *ngIf="activeTab === 'create'">
+      <div class="create-section">
+        <div class="form-card">
+          <div class="form-header">
+            <h2>Ajouter un Nouvel Enseignant</h2>
+            <p>Configurer les informations financières de l'enseignant et générer les dossiers de paiement</p>
+          </div>
+          
+          <form [formGroup]="createTeacherForm" (ngSubmit)="createTeacher()" class="teacher-form">
+            <!-- Sélection d'enseignant -->
+            <div class="form-group">
+              <label for="teacherId">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="8" r="4"/>
+                </svg>
+                Sélectionner un Enseignant *
+              </label>
+              <select id="teacherId" formControlName="teacherId" class="form-select">
+                <option value="">Choisir un enseignant...</option>
+                <option *ngFor="let teacher of availableTeachers" [value]="teacher._id">
+                  {{ teacher.name }} - {{ teacher.email }}
+                </option>
+              </select>
+              <span class="form-error" *ngIf="isFieldInvalid(createTeacherForm, 'teacherId')">
+                {{ getFieldError(createTeacherForm, 'teacherId') }}
+              </span>
+            </div>
+
+            <!-- Type de contrat -->
+            <div class="form-group">
+              <label>Type de Contrat *</label>
+              <div class="radio-group">
+                <label class="radio-card" [class.selected]="createTeacherForm.get('contractType')?.value === 'monthly'">
+                  <input type="radio" formControlName="contractType" value="monthly">
+                  <div class="radio-content">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor">
+                      <rect x="3" y="4" width="18" height="18" rx="2"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                    </svg>
+                    <span>Salaire Mensuel</span>
+                  </div>
+                </label>
+                
+                <label class="radio-card" [class.selected]="createTeacherForm.get('contractType')?.value === 'hourly'">
+                  <input type="radio" formControlName="contractType" value="hourly">
+                  <div class="radio-content">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span>Taux Horaire</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Champ salaire mensuel -->
+            <div class="form-group" *ngIf="createTeacherForm.get('contractType')?.value === 'monthly'">
+              <label for="monthlySalary">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                  <line x1="12" y1="1" x2="12" y2="23"/>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                Salaire Mensuel (TND) *
+              </label>
+              <div class="input-group">
+                <input type="number" id="monthlySalary" formControlName="monthlySalary" placeholder="1500">
+                <span class="input-addon">TND</span>
+              </div>
+              <span class="form-error" *ngIf="isFieldInvalid(createTeacherForm, 'monthlySalary')">
+                {{ getFieldError(createTeacherForm, 'monthlySalary') }}
+              </span>
+            </div>
+
+            <!-- Champs taux horaire -->
+            <div class="form-row" *ngIf="createTeacherForm.get('contractType')?.value === 'hourly'">
+              <div class="form-group">
+                <label for="hourlyRate">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  Taux Horaire (TND) *
+                </label>
+                <div class="input-group">
+                  <input type="number" id="hourlyRate" formControlName="hourlyRate" placeholder="25">
+                  <span class="input-addon">TND/h</span>
+                </div>
+                <span class="form-error" *ngIf="isFieldInvalid(createTeacherForm, 'hourlyRate')">
+                  {{ getFieldError(createTeacherForm, 'hourlyRate') }}
+                </span>
+              </div>
+              
+              <div class="form-group">
+                <label for="contractualHours">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                  Heures Mensuelles *
+                </label>
+                <div class="input-group">
+                  <input type="number" id="contractualHours" formControlName="contractualHoursPerMonth" placeholder="40">
+                  <span class="input-addon">heures</span>
+                </div>
+                <span class="form-error" *ngIf="isFieldInvalid(createTeacherForm, 'contractualHoursPerMonth')">
+                  {{ getFieldError(createTeacherForm, 'contractualHoursPerMonth') }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Dates du contrat -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="startDate">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  Date de Début *
+                </label>
+                <input type="date" id="startDate" formControlName="startDate" class="form-input">
+                <span class="form-error" *ngIf="isFieldInvalid(createTeacherForm, 'startDate')">
+                  {{ getFieldError(createTeacherForm, 'startDate') }}
+                </span>
+              </div>
+
+              <div class="form-group">
+                <label for="endDate">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                    <path d="M8 14l4-4 4 4"/>
+                  </svg>
+                  Date de Fin *
+                </label>
+                <input type="date" id="endDate" formControlName="endDate" class="form-input">
+                <span class="form-error" *ngIf="isFieldInvalid(createTeacherForm, 'endDate')">
+                  {{ getFieldError(createTeacherForm, 'endDate') }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Affichage d'erreur pour la plage de dates -->
+            <div class="form-error" *ngIf="createTeacherForm.errors?.['dateRange']">
+              La date de fin doit être postérieure à la date de début
+            </div>
+
+            <!-- Contract Presets (Optional - for quick selection) -->
+            <div class="form-group">
+              <label>Modèles de Contrat Rapides</label>
+              <div class="preset-buttons">
+                <button 
+                  type="button"
+                  class="preset-btn"
+                  *ngFor="let preset of contractPresets"
+                  (click)="applyContractPreset(preset)"
+                  [title]="preset.description">
+                  {{ preset.name }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Contract Months Selection -->
+            <div class="form-group">
+              <label>Mois du Contrat *</label>
+              <p class="form-help">Sélectionnez les mois que ce contrat couvrira</p>
+              
+              <!-- Academic Year Order Display -->
+              <div class="month-selection-container">
+                <div class="month-selection-card">
+                  <div class="month-selection-header">
+                    <h6>Sélection des Mois (Ordre de l'Année Scolaire)</h6>
+                    <div class="selection-summary">
+                      <span class="selected-count">{{ getSelectedMonthsCount() }} mois sélectionnés</span>
+                      <span class="selected-display" *ngIf="getSelectedMonthsCount() > 0">
+                        {{ getSelectedMonthsDisplay() }}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div class="month-selection-body">
+                    <div class="semester-section">
+                      <h6>Premier Semestre</h6>
+                      <div class="months-grid">
+                        <label class="month-checkbox" *ngFor="let month of getFirstSemesterMonths()">
+                          <input 
+                            type="checkbox" 
+                            [checked]="isMonthSelected(month.value)"
+                            (change)="onMonthToggle(month.value, $event)">
+                          <span class="month-label">{{ month.label }}</span>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div class="semester-section">
+                      <h6>Deuxième Semestre</h6>
+                      <div class="months-grid">
+                        <label class="month-checkbox" *ngFor="let month of getSecondSemesterMonths()">
+                          <input 
+                            type="checkbox" 
+                            [checked]="isMonthSelected(month.value)"
+                            (change)="onMonthToggle(month.value, $event)">
+                          <span class="month-label">{{ month.label }}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Quick Actions -->
+                  <div class="month-selection-footer">
+                    <button 
+                      type="button" 
+                      class="quick-select-btn"
+                      (click)="selectAllMonths()">
+                      Tout Sélectionner
+                    </button>
+                    <button 
+                      type="button" 
+                      class="quick-select-btn"
+                      (click)="clearAllMonths()">
+                      Tout Effacer
+                    </button>
+                    <button 
+                      type="button" 
+                      class="quick-select-btn"
+                      (click)="selectSchoolYearMonths()">
+                      Année Scolaire (Sep-Jun)
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Validation Error -->
+              <span class="form-error" *ngIf="isFieldInvalid(createTeacherForm, 'contractMonths')">
+                {{ getFieldError(createTeacherForm, 'contractMonths') }}
+              </span>
+            </div>
+
+            <!-- Contract Summary (Display selected months nicely) -->
+            <div class="contract-summary-preview" *ngIf="getSelectedMonthsCount() > 0">
+              <div class="summary-header">
+                <h6>Aperçu du Contrat</h6>
+              </div>
+              <div class="summary-content">
+                <div class="summary-row">
+                  <span class="label">Durée:</span>
+                  <span class="value">{{ getSelectedMonthsCount() }} mois</span>
+                </div>
+                <div class="summary-row">
+                  <span class="label">Période:</span>
+                  <span class="value">{{ getContractDateRange() }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="label">Mois sélectionnés:</span>
+                  <div class="selected-months-badges">
+                    <span 
+                      class="month-badge"
+                      *ngFor="let month of getSelectedMonthsInOrder()">
+                      {{ getMonthShortName(month) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions du formulaire -->
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" (click)="resetForm()">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                  <path d="M3 3v5h5"/>
+                </svg>
+                Réinitialiser
+              </button>
+              
+              <button type="submit" class="btn-primary" [disabled]="createTeacherForm.invalid || isLoading">
+                <svg *ngIf="!isLoading" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="8.5" cy="7" r="4"/>
+                  <line x1="20" y1="8" x2="20" y2="14"/>
+                  <line x1="23" y1="11" x2="17" y2="11"/>
+                </svg>
+                <div class="loading-spinner" *ngIf="isLoading">
+                  <div class="spinner-dot"></div>
+                  <div class="spinner-dot"></div>
+                  <div class="spinner-dot"></div>
+                </div>
+                {{ isLoading ? 'Création...' : 'Créer Enseignant' }}
+              </button>
+            </div>
+          </form>
+          
+          <!-- Panneau d'information -->
+          <div class="info-panel">
+            <div class="info-card">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <div class="info-content">
+                <h4>Que se passe-t-il ensuite ?</h4>
+                <ul>
+                  <li>Le profil financier de l'enseignant sera créé</li>
+                  <li>Les dossiers de paiement seront générés pour les mois sélectionnés</li>
+                  <li>Les dossiers couvrent uniquement les mois spécifiés dans votre sélection</li>
+                  <li>Vous serez redirigé vers les détails de l'enseignant</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modales -->
+  <!-- Modale de modification d'enseignant -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Modifier les Informations de l'Enseignant</h2>
+        <button class="btn-close" (click)="closeModal()">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      
+      <form [formGroup]="editTeacherForm" (ngSubmit)="updateTeacher()" class="modal-form">
+        <div class="form-group">
+          <label>Type de Contrat</label>
+          <select formControlName="contractType" class="form-select">
+            <option value="monthly">Mensuel</option>
+            <option value="hourly">Horaire</option>
+          </select>
+        </div>
+        
+        <div class="form-group" *ngIf="editTeacherForm.get('contractType')?.value === 'monthly'">
+          <label>Salaire Mensuel (TND)</label>
+          <input type="number" formControlName="monthlySalary" class="form-input">
+        </div>
+        
+        <div class="form-row" *ngIf="editTeacherForm.get('contractType')?.value === 'hourly'">
+          <div class="form-group">
+            <label>Taux Horaire (TND)</label>
+            <input type="number" formControlName="hourlyRate" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Heures Mensuelles</label>
+            <input type="number" formControlName="contractualHoursPerMonth" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Date de Fin</label>
+          <input type="date" formControlName="endDate" class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label class="toggle-label">
+            <input type="checkbox" formControlName="isActive">
+            <span class="toggle-slider"></span>
+            Contrat Actif
+          </label>
+        </div>
+      </form>
+      
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Annuler</button>
+        <button type="submit" class="btn-primary" (click)="updateTeacher()" [disabled]="editTeacherForm.invalid">Sauvegarder les Modifications</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale de modification de dossier -->
+  <div class="modal-overlay" *ngIf="showDossierModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Modifier le Dossier de Paiement</h2>
+        <button class="btn-close" (click)="closeModal()">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      
+      <form [formGroup]="editDossierForm" (ngSubmit)="updateDossier()" class="modal-form">
+        <div class="form-group" *ngIf="selectedDossier?.financialInfo?.contractType === 'hourly'">
+          <label>Heures Travaillées</label>
+          <input type="number" formControlName="hoursWorked" class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label>Montant Final (TND)</label>
+          <input type="number" formControlName="finalAmount" class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label>Statut de Paiement</label>
+          <select formControlName="status" class="form-select">
+            <option value="unpaid">Non payé</option>
+            <option value="paid">Payé</option>
+            <option value="partial">Partiel</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea formControlName="notes" class="form-textarea" rows="3"></textarea>
+        </div>
+      </form>
+      
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Annuler</button>
+        <button type="submit" class="btn-primary" (click)="updateDossier()" [disabled]="editDossierForm.invalid">Mettre à jour le Paiement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale de confirmation de suppression -->
+  <div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeModal()">
+    <div class="modal modal-delete" (click)="$event.stopPropagation()">
+      <div class="modal-icon warning">
+        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      
+      <h2>Supprimer l'Enseignant ?</h2>
+      <p>Cela supprimera définitivement toutes les informations financières et dossiers de paiement pour :</p>
+      
+      <div class="delete-info" *ngIf="teacherToDelete">
+        <strong>{{ teacherToDelete.teacherInfo.name }}</strong>
+        <span>{{ teacherToDelete.teacherInfo.email }}</span>
+      </div>
+      
+      <p class="warning-text">Cette action ne peut pas être annulée.</p>
+      
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="closeModal()">Annuler</button>
+        <button class="btn-danger" (click)="confirmDelete()">Supprimer Définitivement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast de succès -->
+  <div class="toast" [class.show]="showToast" [class]="toastType">
+    <svg *ngIf="toastType === 'success'" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+    <svg *ngIf="toastType === 'error'" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="15" y1="9" x2="9" y2="15"/>
+      <line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+    <svg *ngIf="toastType === 'warning'" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <span>{{ toastMessage }}</span>
+  </div>
+</div>

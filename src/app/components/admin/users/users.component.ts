@@ -32,7 +32,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   editingUser: User | null = null;
   viewingUser: User | null = null;
   userToDelete: User | null = null;
-  
+  totalOuvriers = 0; // Add this line
   // Filters
   searchTerm = '';
   selectedRole = '';
@@ -184,11 +184,13 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   private updateStats(): void {
-    this.totalUsers = this.users.length;
-    this.totalStudents = this.users.filter(u => u.role === 'student').length;
-    this.totalTeachers = this.users.filter(u => u.role === 'teacher').length;
-    this.totalAdmins = this.users.filter(u => u.role === 'admin').length;
-  }
+  this.totalUsers = this.users.length;
+  this.totalStudents = this.users.filter(u => u.role === 'student').length;
+  this.totalTeachers = this.users.filter(u => u.role === 'teacher').length;
+  this.totalAdmins = this.users.filter(u => u.role === 'admin').length;
+  // Add this line:
+  this.totalOuvriers = this.users.filter(u => u.role === 'ouvrier').length;
+}
 
   filterAndPaginateUsers(): void {
     let filtered = [...this.users];
@@ -309,13 +311,12 @@ private updateFormValidators(role: string): void {
   if (!this.editingUser) {
     if (this.isPasswordRequired()) {
       this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
-    } else {
-      this.userForm.get('password')?.setValidators([Validators.minLength(6)]); // Optional but min length if provided
     }
+    // No password validators for ouvrier - they don't get a password field at all
   }
 
   // Set role-specific validators
-  if (role === 'teacher') {
+  if (role === 'teacher' || role === 'ouvrier') {
     this.userForm.get('phoneNumber')?.setValidators([Validators.required]);
   } else if (role === 'student') {
     this.userForm.get('parentName')?.setValidators([Validators.required]);
@@ -330,7 +331,6 @@ private updateFormValidators(role: string): void {
   this.userForm.get('parentCin')?.updateValueAndValidity();
   this.userForm.get('parentPhoneNumber')?.updateValueAndValidity();
 }
-
   // Modal Methods
   openCreateUserModal(): void {
     this.editingUser = null;
@@ -419,8 +419,7 @@ private updateFormValidators(role: string): void {
       userData.password = formValue.password;
     }
 
-    // Add role-specific fields
-    if (formValue.role === 'teacher') {
+    if (formValue.role === 'teacher' || formValue.role === 'ouvrier') { // Update this line
       userData.phoneNumber = formValue.phoneNumber;
     } else if (formValue.role === 'student') {
       userData.parentName = formValue.parentName;
@@ -579,14 +578,15 @@ private updateFormValidators(role: string): void {
   }
 
   getRoleLabel(role: string): string {
-    const labels: { [key: string]: string } = {
-      'student': 'Étudiant',
-      'teacher': 'Enseignant',
-      'admin': 'Administrateur',
-      'superadmin': 'Super Admin'
-    };
-    return labels[role] || role;
-  }
+  const labels: { [key: string]: string } = {
+    'student': 'Étudiant',
+    'teacher': 'Enseignant',
+    'admin': 'Administrateur',
+    'superadmin': 'Super Admin',
+    'ouvrier': 'Ouvrier' // Add this line
+  };
+  return labels[role] || role;
+}
 
   formatDate(date: any): string {
     if (!date) return '-';
