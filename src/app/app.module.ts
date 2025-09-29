@@ -116,6 +116,10 @@ import { IncomeAnalyticsComponent } from './components/admin/income-analytics/in
 import { OutcomeAnalyticsComponent } from './components/admin/outcome-analytics/outcome-analytics.component';
 import { FinancialAnalyticsComponent } from './components/admin/financial-analytics/financial-analytics.component';
 import { CombinedExportComponent } from './components/admin/combined-export/combined-export.component';
+import { TimetableService } from './services/timetable.service';
+import { ScheduleService } from './services/schedule.service';
+import { ScheduleManagementComponent } from './components/admin/schedule-management/schedule-management.component';
+
 
 
 const MaterialModules = [
@@ -197,7 +201,9 @@ const MaterialModules = [
     IncomeAnalyticsComponent,
     OutcomeAnalyticsComponent,
     FinancialAnalyticsComponent,
-    CombinedExportComponent
+    CombinedExportComponent,
+    ScheduleManagementComponent,
+
   ],
   imports: [
     BrowserModule,
@@ -227,7 +233,8 @@ const MaterialModules = [
     IncomeAnalyticsService,
     OutcomeAnalyticsService,
     ExportService,
-
+    TimetableService,
+    ScheduleService,
     // Guards
     AuthGuard,
     RoleGuard,

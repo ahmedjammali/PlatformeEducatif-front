@@ -46,4 +46,12 @@ export class SubjectService extends BaseService {
       `${this.apiUrl}${this.endpoint}/${id}`
     );
   }
+
+  getSubjectsByIds(ids: string[]): Observable<Subject[]> {
+  const params = this.buildParams({ ids: ids.join(',') });
+  return this.http.get<{ subjects: Subject[] }>(
+    `${this.apiUrl}${this.endpoint}/bulk`,
+    { params }
+  ).pipe(map(response => response.subjects));
+}
 }

@@ -19,6 +19,8 @@ import { ContactComponent } from './components/admin/contact/contact.component';
 import { GradesComponent } from './components/admin/grades/grades.component';
 import { NotificationComponent } from './components/admin/notification/notification.component';
 
+
+
 // Other components
 import { SchoolsComponent } from './components/superadmin/schools/schools.component';
 import { TeacherDashboardComponent } from './components/teacher/teacher-dashboard/teacher-dashboard.component';
@@ -39,6 +41,7 @@ import { PaymentConfigComponent } from './components/admin/payment-config/paymen
 import { ChargesComponent } from './components/admin/charges/charges.component';
 import { SalaryManagementComponent } from './components/admin/salary-management/salary-management.component';
 import { FinancialAnalyticsComponent } from './components/admin/financial-analytics/financial-analytics.component';
+import { ScheduleManagementComponent } from './components/admin/schedule-management/schedule-management.component';
 
 const routes: Routes = [
   { path: '', component: LandingPageComponent },
@@ -59,14 +62,22 @@ const routes: Routes = [
       { path: 'notifications', component: NotificationComponent },
       { path: 'contact', component: ContactComponent },
       { path: 'grades', component: GradesComponent },
+      
+      
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      // Payment Routes (Added)
+      
+      // Payment Routes
       {
         path: 'payments',
         component: PaymentManagementComponent,
         data: { title: 'Payment Management' }
       },
 
+      {
+        path: 'schedule',
+        component: ScheduleManagementComponent,
+        data: { title: 'schedule Management' }
+      },
       {
         path: 'payments/config',
         component: PaymentConfigComponent,
@@ -77,7 +88,8 @@ const routes: Routes = [
         component: ChargesComponent,
         data: { title: 'Charges Management' }
       },
-      // Salary Routes (Added)
+      
+      // Salary Routes
       {
         path: 'salary',
         component: SalaryManagementComponent,
@@ -90,12 +102,13 @@ const routes: Routes = [
     ]
   },
 
-  // SUPER ADMIN ROUTE
+  // SUPER ADMIN ROUTES
   {
     path: 'superadmin/schools',
     component: SchoolsComponent,
     canActivate: [AuthGuard, SuperAdminGuard]
   },
+
 
   // TEACHER ROUTE
   {
@@ -118,6 +131,8 @@ const routes: Routes = [
       { path: 'grades', component: StudentGradesPageComponent },
       { path: 'teachers', component: StudentTeachersComponent },
       { path: 'notifications', component: StudentNotificationsComponent },
+      
+      
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

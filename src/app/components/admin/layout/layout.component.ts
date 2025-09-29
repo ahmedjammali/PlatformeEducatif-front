@@ -1,4 +1,4 @@
-// admin-layout.component.ts - FIXED VERSION
+// admin-layout.component.ts - UPDATED WITH SCHEDULE
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil, filter } from 'rxjs';
@@ -146,12 +146,13 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'users': '/admin/users',
       'classes': '/admin/classes',
       'subjects': '/admin/subjects',
+      'schedule': '/admin/schedule', // ADDED: Schedule route for admin
       'notifications': '/admin/notifications',
       'grades': '/admin/grades',
       'contact': '/admin/contact',
       'schools': '/superadmin/schools',
       'payments': '/admin/payments',
-      'financialOverview': '/admin/financial-overview', // FIXED: Use consistent key
+      'financialOverview': '/admin/financial-overview',
       'charges': '/admin/charges',
       'salary': '/admin/salary',
     };
@@ -177,13 +178,14 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'users': 'Gestion des Utilisateurs',
       'classes': 'Gestion des Classes',
       'subjects': 'Gestion des Matières',
+      'schedule': 'Gestion de l\'Emploi du Temps', // ADDED: Schedule title
       'notifications': 'Gestion des Notifications',
       'grades': 'Notes des Étudiants',
       'contact': 'Contact',
       'reports': 'Rapports et Statistiques',
       'schools': 'Gestion de l\'École',
       'payments': 'Gestion des Paiements',
-      'financialOverview': 'Aperçu Financier', // FIXED: Use consistent key
+      'financialOverview': 'Aperçu Financier',
       'charges': 'Gestion des Charges',
       'salary': 'Gestion des Salaires',
     };
@@ -400,9 +402,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
     // More robust route detection with proper hierarchy
     const routes = [
       // Order matters: more specific routes first
+      { path: '/admin/schedule', route: 'schedule' }, // ADDED: Admin schedule route
       { path: '/admin/financial-overview', route: 'financialOverview' },
       { path: '/admin/payments', route: 'payments' },
-      { path: '/admin/charges', route: 'charges' },
       { path: '/admin/charges', route: 'charges' },
       { path: '/admin/salary', route: 'salary' },
       { path: '/admin/users', route: 'users' },
