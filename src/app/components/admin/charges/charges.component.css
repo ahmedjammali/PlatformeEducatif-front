@@ -476,12 +476,21 @@
   font-size: 0.875rem;
 }
 
-.category-badge[data-category="Transport"] {
+.category-badge[data-category="Transport-Carburant"] {
   background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
 }
 
-.category-badge[data-category="Transport"]::after {
-  content: '🚌';
+.category-badge[data-category="Transport-Carburant"]::after {
+  content: '⛽';
+  font-size: 0.875rem;
+}
+
+.category-badge[data-category="Transport-Maintenance"] {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+}
+
+.category-badge[data-category="Transport-Maintenance"]::after {
+  content: '🔧';
   font-size: 0.875rem;
 }
 

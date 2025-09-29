@@ -289,6 +289,8 @@ export class OutcomeAnalyticsService {
       'marketing': 'Marketing',
       'administration': 'Administration',
       'transport': 'Transport',
+      'Transport-Carburant': 'Transport-Carburant',
+      'Transport-Maintenance': 'Transport-Maintenance',
       'autres': 'Autres'
     };
     return categoryNames[category] || category;

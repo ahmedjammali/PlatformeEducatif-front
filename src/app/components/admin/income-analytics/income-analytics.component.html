@@ -349,9 +349,8 @@
             <tr>
               <th>Étudiant</th>
               <th>Niveau</th>
-              <th>Attendu</th>
-              <th>Payé</th>
-              <th>Restant</th>
+              <th>Total Payé</th>
+              <th>Détail des Paiements</th>
               <th>Statut</th>
               <th>Remise</th>
             </tr>
@@ -367,9 +366,26 @@
                   {{ student.niveau }}
                 </span>
               </td>
-              <td class="amount expected">{{ formatCurrency(student.attendu) }}</td>
-              <td class="amount collected">{{ formatCurrency(student.paye) }}</td>
-              <td class="amount pending">{{ formatCurrency(student.restant) }}</td>
+              <td class="amount collected">{{ formatCurrency(student.totalPaid) }}</td>
+              <td class="payment-breakdown">
+                <div class="breakdown-item" *ngIf="student.paymentBreakdown.inscriptionFee.applicable && student.paymentBreakdown.inscriptionFee.paid > 0">
+                  <span class="breakdown-label">📝 Inscription:</span>
+                  <span class="breakdown-amount">{{ formatCurrency(student.paymentBreakdown.inscriptionFee.paid) }}</span>
+                </div>
+                <div class="breakdown-item" *ngIf="student.paymentBreakdown.fraisScolaires.paid > 0">
+                  <span class="breakdown-label">📚 Frais Scolaires:</span>
+                  <span class="breakdown-amount">{{ formatCurrency(student.paymentBreakdown.fraisScolaires.paid) }}</span>
+                </div>
+                <div class="breakdown-item" *ngIf="student.paymentBreakdown.uniform.applicable && student.paymentBreakdown.uniform.paid > 0">
+                  <span class="breakdown-label">👕 Uniforme:</span>
+                  <span class="breakdown-amount">{{ formatCurrency(student.paymentBreakdown.uniform.paid) }}</span>
+                </div>
+                <div class="breakdown-item" *ngIf="student.paymentBreakdown.transport.applicable && student.paymentBreakdown.transport.paid > 0">
+                  <span class="breakdown-label">🚌 Transport:</span>
+                  <span class="breakdown-amount">{{ formatCurrency(student.paymentBreakdown.transport.paid) }}</span>
+                </div>
+                <div *ngIf="student.totalPaid === 0" class="no-payments">Aucun paiement</div>
+              </td>
               <td>
                 <span class="status-badge" [style.background-color]="getStatusColor(student.statut)"
                   [style.color]="'white'">

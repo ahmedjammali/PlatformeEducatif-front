@@ -941,13 +941,36 @@
               <p class="receipt-paragraph">
                 Je soussigné, <span class="field-value">{{ getEmployeeName(selectedPrintData.record) }}</span>
                 , certifie avoir reçu la somme de <span class="field-value">{{
-                  convertAmountToWords(selectedPrintData.payment.totalAmount) }}</span> TND (en toutes lettres), soit en
-                chiffre : <span class="field-value">{{ formatCurrency(selectedPrintData.payment.totalAmount) }}</span>
+                  convertAmountToWords(getReceiptTotalAmount(selectedPrintData.payment)) }}</span> TND (en toutes lettres), soit en
+                chiffre : <span class="field-value">{{ formatCurrency(getReceiptTotalAmount(selectedPrintData.payment)) }}</span>
                 TND. Montant de salaire pour la période du <span class="field-value">{{
                   formatDateRange(selectedPrintData.payment.month, selectedPrintData.year) }}</span>, comme salaire pour
                 le mois de <span class="field-value">{{ monthNames[selectedPrintData.payment.month - 1] }}</span>, de la
                 part de <span class="field-value">Ons School</span>.
               </p>
+
+              <!-- Salary Breakdown -->
+              <div class="receipt-breakdown" *ngIf="shouldShowSalaryBreakdown(selectedPrintData.payment)">
+                <h4>Détail du Salaire:</h4>
+                <div class="breakdown-items">
+                  <div class="breakdown-item" *ngIf="selectedPrintData.payment.paymentType === 'monthly'">
+                    <span class="breakdown-label">Salaire de base:</span>
+                    <span class="breakdown-value">{{ formatCurrency(selectedPrintData.payment.baseSalaryAmount || 0) }}</span>
+                  </div>
+                  <div class="breakdown-item" *ngIf="selectedPrintData.payment.paymentType === 'hourly'">
+                    <span class="breakdown-label">Salaire régulier ({{ selectedPrintData.payment.actualHoursWorked || selectedPrintData.payment.regularHours || 0 }}h × {{ formatCurrency(selectedPrintData.payment.hourlyRate || 0) }}/h):</span>
+                    <span class="breakdown-value">{{ formatCurrency(selectedPrintData.payment.regularAmount || 0) }}</span>
+                  </div>
+                  <div class="breakdown-item" *ngIf="(selectedPrintData.payment.extraHours || 0) > 0">
+                    <span class="breakdown-label">Heures Supplémentaires ({{ selectedPrintData.payment.extraHours }}h × {{ formatCurrency(selectedPrintData.payment.extraHourlyRate || 0) }}/h):</span>
+                    <span class="breakdown-value">{{ formatCurrency((selectedPrintData.payment.extraHours || 0) * (selectedPrintData.payment.extraHourlyRate || 0)) }}</span>
+                  </div>
+                  <div class="breakdown-total">
+                    <span class="breakdown-label"><strong>Total:</strong></span>
+                    <span class="breakdown-value"><strong>{{ formatCurrency(getReceiptTotalAmount(selectedPrintData.payment)) }}</strong></span>
+                  </div>
+                </div>
+              </div>
 
               <p class="receipt-paragraph">
                 Fait à <span class="field-value">....................</span>, le <span class="field-value">{{

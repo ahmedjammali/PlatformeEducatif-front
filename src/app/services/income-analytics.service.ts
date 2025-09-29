@@ -24,15 +24,42 @@ export interface LevelAnalysis {
   taux: number;
 }
 
+export interface PaymentBreakdown {
+  inscriptionFee: {
+    applicable: boolean;
+    total: number;
+    paid: number;
+    isPaid: boolean;
+  };
+  fraisScolaires: {
+    total: number;
+    paid: number;
+    type: string;
+    monthlyAmount: number;
+  };
+  uniform: {
+    applicable: boolean;
+    total: number;
+    paid: number;
+    isPaid: boolean;
+  };
+  transport: {
+    applicable: boolean;
+    total: number;
+    paid: number;
+    type: string;
+    monthlyAmount: number;
+  };
+}
+
 export interface StudentAnalysis {
   studentId: string;
   nom: string;
   email: string;
   niveau: string;
   categorie: string;
-  attendu: number;
-  paye: number;
-  restant: number;
+  totalPaid: number;
+  paymentBreakdown: PaymentBreakdown;
   statut: string;
   remise: number;
   pourcentage_remise: number;

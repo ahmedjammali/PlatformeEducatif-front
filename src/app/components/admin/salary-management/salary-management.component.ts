@@ -419,15 +419,22 @@ export class SalaryManagementComponent implements OnInit {
     // Update the payment object
     payment.extraHours = extraHours;
 
-    // Recalculate total for hourly payments
+    // Recalculate total amount
     if (payment.paymentType === 'hourly') {
       const actualHours = payment.actualHoursWorked || payment.regularHours || 0;
       const newTotalAmount = this.calculateTotalForHoursCard(payment, actualHours);
       payment.totalAmount = newTotalAmount;
-
-      // Update payment status based on new total
-      this.updatePaymentStatus(payment);
+    } else {
+      // For monthly payments, recalculate total
+      const baseSalary = payment.baseSalaryAmount || 0;
+      const extraHourlyRate = this.getEffectiveExtraHourlyRate(payment);
+      const extraAmount = extraHours * extraHourlyRate;
+      payment.totalAmount = baseSalary + extraAmount;
+      payment.extraAmount = extraAmount;
     }
+
+    // Update payment status based on new total
+    this.updatePaymentStatus(payment);
 
     // Trigger UI update
     this.updatePaymentCalculations();
@@ -585,8 +592,13 @@ export class SalaryManagementComponent implements OnInit {
 
       return baseAmount + extraAmount;
     } else {
-      // For fixed payments, return the original totalAmount
-      return Math.max(0, payment.totalAmount || 0);
+      // For monthly payments, calculate base salary + extra hours
+      const baseSalary = Math.max(0, payment.baseSalaryAmount || 0);
+      const extraHours = Math.max(0, payment.extraHours || 0);
+      const extraHourlyRate = this.getEffectiveExtraHourlyRate(payment);
+      const extraAmount = extraHours * extraHourlyRate;
+
+      return baseSalary + extraAmount;
     }
   }
 
@@ -1112,13 +1124,7 @@ export class SalaryManagementComponent implements OnInit {
 
       .receipt-part {
         padding: 20px;
-        margin-bottom: 30px;
-      }
-
-      .receipt-divider {
-        border-top: 1px dashed #999;
-        margin: 20px 0;
-        page-break-inside: avoid;
+        margin-bottom: 20px;
       }
 
       .receipt-header {
@@ -1178,15 +1184,110 @@ export class SalaryManagementComponent implements OnInit {
         border-bottom: 1px solid #000;
         margin-top: 15px;
       }
+
+      /* Receipt breakdown styles */
+      .receipt-breakdown {
+        margin: 15px 0;
+        padding: 12px;
+        border: 1px solid #000;
+        border-radius: 4px;
+        background-color: white;
+      }
+
+      .receipt-breakdown h4 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #000;
+        border-bottom: 1px solid #333;
+        padding-bottom: 6px;
+      }
+
+      .breakdown-items {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .breakdown-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+        font-size: 12px;
+      }
+
+      .breakdown-label {
+        color: #333;
+        flex: 1;
+      }
+
+      .breakdown-value {
+        font-weight: 500;
+        color: #000;
+        min-width: 70px;
+        text-align: right;
+      }
+
+      .breakdown-total {
+        border-top: 1px solid #333;
+        margin-top: 6px;
+        padding-top: 6px;
+        font-size: 13px;
+      }
+
+      .breakdown-total .breakdown-label,
+      .breakdown-total .breakdown-value {
+        color: #000;
+        font-weight: bold;
+      }
+    `;
+  }
+
+  private generateSalaryBreakdownHTML(payment: any): string {
+    if (!this.shouldShowSalaryBreakdown(payment)) {
+      return '';
+    }
+
+    const extraHoursAmount = (payment.extraHours || 0) * (payment.extraHourlyRate || 0);
+
+    return `
+      <div class="receipt-breakdown">
+        <h4>Détail du Salaire:</h4>
+        <div class="breakdown-items">
+          ${payment.paymentType === 'monthly' ?
+            `<div class="breakdown-item">
+              <span class="breakdown-label">Salaire de base:</span>
+              <span class="breakdown-value">${this.formatCurrency(payment.baseSalaryAmount || 0)}</span>
+            </div>` :
+            `<div class="breakdown-item">
+              <span class="breakdown-label">Salaire régulier (${payment.actualHoursWorked || payment.regularHours || 0}h × ${this.formatCurrency(payment.hourlyRate || 0)}/h):</span>
+              <span class="breakdown-value">${this.formatCurrency(payment.regularAmount || 0)}</span>
+            </div>`
+          }
+          ${(payment.extraHours || 0) > 0 ?
+            `<div class="breakdown-item">
+              <span class="breakdown-label">Heures Supplémentaires (${payment.extraHours}h × ${this.formatCurrency(payment.extraHourlyRate || 0)}/h):</span>
+              <span class="breakdown-value">${this.formatCurrency(extraHoursAmount)}</span>
+            </div>` : ''
+          }
+          <div class="breakdown-total">
+            <span class="breakdown-label"><strong>Total:</strong></span>
+            <span class="breakdown-value"><strong>${this.formatCurrency(this.getReceiptTotalAmount(payment))}</strong></span>
+          </div>
+        </div>
+      </div>
     `;
   }
 
   private generateReceiptHTML(): string {
     if (!this.selectedPrintData) return '';
 
+    const totalAmount = this.getReceiptTotalAmount(this.selectedPrintData.payment);
+    const amountInWords = this.convertAmountToWords(totalAmount);
+
     return `
       <div class="receipt-container">
-        <!-- First Receipt Part -->
         <div class="receipt-part">
           <div class="receipt-header">
             <h2>REÇU POUR PAIEMENT DE SALAIRE EN ESPÈCES</h2>
@@ -1194,44 +1295,13 @@ export class SalaryManagementComponent implements OnInit {
 
           <div class="receipt-content">
             <p class="receipt-paragraph">
-              Je soussigné, <span class="field-value">${this.getEmployeeName(this.selectedPrintData.record)}</span> , certifie avoir reçu la somme de <span class="field-value">${this.convertAmountToWords(this.selectedPrintData.payment.totalAmount)}</span> TND (en toutes lettres), soit en chiffre : <span class="field-value">${this.formatCurrency(this.selectedPrintData.payment.totalAmount)}</span> TND. Montant de salaire pour la période du <span class="field-value">${this.formatDateRange(this.selectedPrintData.payment.month, this.selectedPrintData.year)}</span>, comme salaire pour le mois de <span class="field-value">${this.monthNames[this.selectedPrintData.payment.month - 1]}</span>, de la part de <span class="field-value">Ons School</span>.
+              Je soussigné, <span class="field-value">${this.getEmployeeName(this.selectedPrintData.record)}</span> , certifie avoir reçu la somme de <span class="field-value">${amountInWords}</span> TND (en toutes lettres), soit en chiffre : <span class="field-value">${this.formatCurrency(totalAmount)}</span> TND. Montant de salaire pour la période du <span class="field-value">${this.formatDateRange(this.selectedPrintData.payment.month, this.selectedPrintData.year)}</span>, comme salaire pour le mois de <span class="field-value">${this.monthNames[this.selectedPrintData.payment.month - 1]}</span>, de la part de <span class="field-value">Ons School</span>.
             </p>
+
+            ${this.generateSalaryBreakdownHTML(this.selectedPrintData.payment)}
 
             <p class="receipt-paragraph">
               Fait à <span class="field-value">.....................</span>, le <span class="field-value">${this.formatDate(this.selectedPrintData.payment.paidDate) || this.getCurrentDate()}</span>.
-            </p>
-
-            <div class="receipt-signatures">
-              <div class="signature-section">
-                <p>« Lu et approuvé »</p>
-                <p>Signature de l'école</p>
-                <div class="signature-space"></div>
-              </div>
-              <div class="signature-section">
-                <p>« Lu et approuvé »</p>
-                <p>Signature de l'employé</p>
-                <div class="signature-space"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Divider Line -->
-        <div class="receipt-divider"></div>
-
-        <!-- Second Receipt Part (Identical) -->
-        <div class="receipt-part">
-          <div class="receipt-header">
-            <h2>REÇU POUR PAIEMENT DE SALAIRE EN ESPÈCES</h2>
-          </div>
-
-          <div class="receipt-content">
-            <p class="receipt-paragraph">
-              Je soussigné, <span class="field-value">${this.getEmployeeName(this.selectedPrintData.record)}</span> , certifie avoir reçu la somme de <span class="field-value">${this.convertAmountToWords(this.selectedPrintData.payment.totalAmount)}</span> TND (en toutes lettres), soit en chiffre : <span class="field-value">${this.formatCurrency(this.selectedPrintData.payment.totalAmount)}</span> TND. Montant de salaire pour la période du <span class="field-value">${this.formatDateRange(this.selectedPrintData.payment.month, this.selectedPrintData.year)}</span>, comme salaire pour le mois de <span class="field-value">${this.monthNames[this.selectedPrintData.payment.month - 1]}</span>, de la part de <span class="field-value">Ons School</span>.
-            </p>
-
-            <p class="receipt-paragraph">
-              Fait à <span class="field-value">....................</span>, le <span class="field-value">${this.formatDate(this.selectedPrintData.payment.paidDate) || this.getCurrentDate()}</span>.
             </p>
 
             <div class="receipt-signatures">
@@ -1317,5 +1387,28 @@ export class SalaryManagementComponent implements OnInit {
   getCurrentDate(): string {
     const now = new Date();
     return `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+  }
+
+  // Check if salary breakdown should be shown in receipt
+  shouldShowSalaryBreakdown(payment: any): boolean {
+    // Show breakdown if there are extra hours or if it's an hourly payment with details
+    return (payment.extraHours && payment.extraHours > 0) ||
+           (payment.paymentType === 'hourly' && payment.actualHoursWorked !== payment.regularHours);
+  }
+
+  // Get the correct total amount for receipt display
+  getReceiptTotalAmount(payment: any): number {
+    if (!payment) return 0;
+
+    if (payment.paymentType === 'monthly') {
+      const baseSalary = Math.max(0, payment.baseSalaryAmount || 0);
+      const extraHours = Math.max(0, payment.extraHours || 0);
+      const extraHourlyRate = this.getEffectiveExtraHourlyRate(payment);
+      const extraAmount = extraHours * extraHourlyRate;
+      return baseSalary + extraAmount;
+    } else {
+      // For hourly payments, use the existing calculation
+      return this.getCurrentTotalAmount(payment);
+    }
   }
 }

@@ -1,5 +1,40 @@
 /* Income Analytics Component Styles */
 
+/* ====== PAYMENT BREAKDOWN STYLES ====== */
+.payment-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 200px;
+}
+
+.breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  padding: 2px 0;
+}
+
+.breakdown-label {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+
+.breakdown-amount {
+  font-weight: 600;
+  color: var(--color-success);
+  font-size: 0.85rem;
+}
+
+.no-payments {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
 /* ====== VARIABLES & BASE ====== */
 .income-analytics-container {
   min-height: 100vh;
