@@ -176,11 +176,14 @@ export class ScheduleUtils {
   static getAcademicYearsList(yearsBack: number = 3, yearsForward: number = 2): string[] {
     const currentYear = parseInt(this.getCurrentAcademicYear());
     const years: string[] = [];
-    
-    for (let i = currentYear - yearsBack; i <= currentYear + yearsForward; i++) {
+
+    // Start from 2025 minimum
+    const startYear = Math.max(currentYear - yearsBack, 2025);
+
+    for (let i = startYear; i <= currentYear + yearsForward; i++) {
       years.push(i.toString());
     }
-    
+
     return years;
   }
 

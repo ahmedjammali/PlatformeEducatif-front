@@ -610,4 +610,5 @@ export class ScheduleService extends BaseService {
       }
     );
   }
+
 }

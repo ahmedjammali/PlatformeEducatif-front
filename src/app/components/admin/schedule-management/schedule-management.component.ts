@@ -85,7 +85,7 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
   workDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   timeSlots = [
     '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00',
-    '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00'
+    '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00'
   ];
   sessions: SessionWithMeta[] = [];
   selectedTimeSlot: { day: string; time: string } | null = null;
@@ -294,6 +294,13 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
     this.closeSessionModal();
     this.closeDeleteSessionModal();
     this.closeClearAllModal();
+  }
+
+  onAcademicYearChange(): void {
+    if (this.selectedTeacher) {
+      this.sessions = [];
+      this.loadExistingSchedule();
+    }
   }
 
   // ===============================
@@ -1336,6 +1343,45 @@ getAvailableClassesInfo(): string {
     }
   }
 
+  createScheduleTableData(): any {
+    // Create the table structure with time slots as rows and days as columns
+    const table = {
+      timeSlots: this.timeSlots,
+      workDays: this.workDays.map(day => ({
+        key: day,
+        name: this.getDayDisplayName(day)
+      })),
+      grid: {} as { [timeSlot: string]: { [day: string]: any[] } }
+    };
+
+    // Initialize grid with empty cells
+    this.timeSlots.forEach(timeSlot => {
+      table.grid[timeSlot] = {};
+      this.workDays.forEach(day => {
+        table.grid[timeSlot][day] = [];
+      });
+    });
+
+    // Fill grid with sessions
+    this.sessions.forEach(session => {
+      const timeSlot = session.startTime;
+      const day = session.dayOfWeek;
+
+      if (table.grid[timeSlot] && table.grid[timeSlot][day]) {
+        table.grid[timeSlot][day].push({
+          subject: this.getCleanSubjectName(session),
+          className: session.className,
+          room: session.room || '',
+          weekType: session.weekType,
+          sessionType: this.getSessionTypeDisplay(session.sessionType),
+          duration: session.formattedDuration
+        });
+      }
+    });
+
+    return table;
+  }
+
   downloadSchedulePDF(): void {
     if (!this.selectedTeacher || this.sessions.length === 0) {
       this.showWarning('Aucun emploi du temps à exporter');
@@ -1345,6 +1391,9 @@ getAvailableClassesInfo(): string {
     this.loading = true;
     this.loadingMessage = 'Génération du PDF en cours...';
 
+    // Create schedule table data structure
+    const scheduleTable = this.createScheduleTableData();
+
     // Prepare schedule data for PDF generation
     const scheduleData = {
       teacher: {
@@ -1353,6 +1402,8 @@ getAvailableClassesInfo(): string {
         id: this.selectedTeacher._id
       },
       academicYear: this.selectedAcademicYear,
+      format: 'table', // Specify table format
+      table: scheduleTable,
       sessions: this.sessions.map(session => ({
         date: ScheduleUtils.formatDate(session.sessionDate.date, 'iso'),
         dayOfWeek: this.getDayDisplayName(session.dayOfWeek),

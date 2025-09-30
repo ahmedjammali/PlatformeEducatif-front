@@ -1,97 +1,117 @@
 <!-- teacher-schedule.component.html -->
-<div class="teacher-schedule-container">
+<section class="content-section schedule-section">
   <!-- Header Section -->
-  <div class="header-section">
-    <div class="page-title">
-      <h1>Mon Emploi du Temps</h1>
-      <p>Consultez et téléchargez votre emploi du temps</p>
-    </div>
+  <h2 class="section-title">Mon Emploi du Temps</h2>
+  <p class="section-description">Consultez et téléchargez votre emploi du temps</p>
 
-    <div class="action-buttons">
-      <div class="year-selector">
-        <label for="academicYear">Année Académique:</label>
-        <select
-          id="academicYear"
-          [(ngModel)]="selectedAcademicYear"
-          (ngModelChange)="onAcademicYearChange()"
-          class="form-select">
-          <option *ngFor="let year of academicYears" [value]="year">
-            {{year}}-{{(+year + 1)}}
-          </option>
-        </select>
-      </div>
+  <!-- Schedule Content -->
+  <div class="schedule-content" *ngIf="!loading && sessions.length > 0">
+    <div class="schedule-info">
+      <div class="info-card">
+        <div class="schedule-header-content">
+          <div class="schedule-title-section">
+            <div class="title-with-filter">
+              <h3 class="subsection-title">Année {{selectedAcademicYear}}-{{(+selectedAcademicYear + 1)}}</h3>
+              <div class="year-selector-inline">
+                <select
+                  [(ngModel)]="selectedAcademicYear"
+                  (ngModelChange)="onAcademicYearChange()"
+                  class="form-select-inline">
+                  <option *ngFor="let year of academicYears" [value]="year">
+                    {{year}}-{{(+year + 1)}}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div class="schedule-stats">
+              <div class="stat-item">
+                <span class="stat-icon">📅</span>
+                <span class="stat-label">{{sessions.length}} session(s)</span>
+              </div>
+            </div>
+          </div>
 
-      <button
-        class="btn btn-primary"
-        (click)="downloadPDF()"
-        [disabled]="loading || sessions.length === 0"
-        *ngIf="sessions.length > 0">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        Télécharger PDF
-      </button>
-    </div>
-  </div>
-
-  <!-- Schedule Grid -->
-  <div class="schedule-section" *ngIf="!loading && sessions.length > 0">
-    <div class="schedule-header">
-      <h2>Emploi du Temps - Année {{selectedAcademicYear}}-{{(+selectedAcademicYear + 1)}}</h2>
-      <div class="schedule-stats">
-        <span class="stat-item">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-          {{sessions.length}} session(s)
-        </span>
+          <div class="schedule-actions">
+            <button
+              class="action-btn primary-btn download-btn"
+              (click)="downloadPDF()"
+              [disabled]="loading || sessions.length === 0">
+              <span class="btn-icon">📥</span>
+              Télécharger PDF
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="schedule-grid">
-      <div class="schedule-table">
-        <!-- Header Row -->
-        <div class="schedule-row header-row">
-          <div class="day-header">Jour</div>
-          <div class="time-header" *ngFor="let time of timeSlots">
-            {{time}}
-          </div>
+      <!-- Time Slots Header -->
+      <div class="time-slots-header">
+        <div class="corner-cell"></div>
+        <div class="time-slot" *ngFor="let time of timeSlots">
+          {{time}}
+        </div>
+      </div>
+
+      <!-- Days and Sessions -->
+      <div class="schedule-days" *ngFor="let day of workDays">
+        <div class="day-header">
+          <div class="day-name">{{getDayDisplayName(day)}}</div>
+          <div class="day-sessions-count">{{getDaySessions(day).length}} sessions</div>
         </div>
 
-        <!-- Day Rows -->
-        <div class="schedule-row" *ngFor="let day of workDays">
-          <div class="day-slot">{{getDayDisplayName(day)}}</div>
+        <div class="time-cells">
+          <div
+            class="time-cell"
+            *ngFor="let time of timeSlots"
+            [class.has-session]="hasSessionAtTime(day, time)"
+            [class.has-multiple-sessions]="getSessionsForTimeSlot(day, time).length > 1">
 
-          <div class="time-cell"
-               [class.has-multiple-sessions]="getSessionsForTimeSlot(day, time).length > 1"
-               *ngFor="let time of timeSlots">
-            <div class="session-container" *ngIf="hasSessionAtTime(day, time)">
-              <div
-                class="session-card"
-                *ngFor="let session of getSessionsForTimeSlot(day, time)"
-                [class]="'session-' + session.sessionType">
+            <!-- Get all sessions at this time -->
+            <ng-container *ngIf="getSessionsForTimeSlot(day, time) as sessionsAtTime">
+              <div class="sessions-container" *ngIf="sessionsAtTime.length > 0">
 
-                <div class="session-main-info">
-                  <div class="session-header">
-                    <span class="session-time">{{session.startTime}}-{{session.endTime}}</span>
-                    <span class="session-type-badge">{{getSessionTypeDisplay(session.sessionType)}}</span>
+                <!-- Single session -->
+                <div
+                  class="session-card single"
+                  *ngIf="sessionsAtTime.length === 1"
+                  [class.week-a]="sessionsAtTime[0].weekType === 'A'"
+                  [class.week-b]="sessionsAtTime[0].weekType === 'B'"
+                  [class.week-both]="sessionsAtTime[0].weekType === 'both'">
+
+                  <div class="session-content">
+                    <div class="session-header">
+                      <div class="subject-name">{{getCleanSubjectName(sessionsAtTime[0])}}</div>
+                      <div class="week-badge" *ngIf="sessionsAtTime[0].weekType !== 'both'">
+                        {{sessionsAtTime[0].weekType}}
+                      </div>
+                    </div>
+
+                    <div class="session-info">
+                      <span class="class-name">{{sessionsAtTime[0].className}}</span>
+                      <span class="room-name" *ngIf="sessionsAtTime[0].room">{{sessionsAtTime[0].room}}</span>
+                    </div>
                   </div>
+                </div>
 
-                  <div class="session-subject">{{getCleanSubjectName(session)}}</div>
+                <!-- Multiple sessions (Week A and B) -->
+                <div class="dual-session-container" *ngIf="sessionsAtTime.length > 1">
+                  <div
+                    class="session-card compact"
+                    *ngFor="let session of sessionsAtTime"
+                    [class.week-a]="session.weekType === 'A'"
+                    [class.week-b]="session.weekType === 'B'">
 
-                  <div class="session-secondary">
-                    <span class="session-class">{{session.className}} ({{session.classGrade}})</span>
-                    <span class="session-room" *ngIf="session.room">Salle {{session.room}}</span>
-                    <span class="session-week" *ngIf="session.weekType !== 'both'">{{getWeekTypeDisplay(session.weekType)}}</span>
+                    <div class="session-content">
+                      <div class="week-indicator">{{session.weekType}}</div>
+                      <div class="subject-name compact">{{getCleanSubjectName(session)}}</div>
+                      <div class="class-info compact">{{session.className}}</div>
+                      <div class="room-info compact" *ngIf="session.room">{{session.room}}</div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </ng-container>
           </div>
         </div>
       </div>
@@ -100,23 +120,12 @@
 
   <!-- Empty State -->
   <div class="empty-state" *ngIf="!loading && sessions.length === 0">
-    <div class="empty-icon">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-        <line x1="16" y1="2" x2="16" y2="6"/>
-        <line x1="8" y1="2" x2="8" y2="6"/>
-        <line x1="3" y1="10" x2="21" y2="10"/>
-      </svg>
-    </div>
-    <h3>Aucun emploi du temps trouvé</h3>
-    <p>Votre emploi du temps pour l'année {{selectedAcademicYear}}-{{(+selectedAcademicYear + 1)}} n'a pas encore été créé.</p>
-    <div class="empty-actions">
-      <button class="btn btn-secondary" (click)="onAcademicYearChange()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="23 4 23 10 17 10"/>
-          <polyline points="1 20 1 14 7 14"/>
-          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
-        </svg>
+    <div class="empty-content">
+      <div class="empty-icon">📅</div>
+      <h3>Aucun emploi du temps trouvé</h3>
+      <p>Votre emploi du temps pour l'année {{selectedAcademicYear}}-{{(+selectedAcademicYear + 1)}} n'a pas encore été créé.</p>
+      <button class="action-btn secondary-btn" (click)="onAcademicYearChange()">
+        <span class="btn-icon">🔄</span>
         Actualiser
       </button>
     </div>
@@ -130,4 +139,4 @@
 
   <!-- Toaster Component -->
   <app-toaster></app-toaster>
-</div>
+</section>
