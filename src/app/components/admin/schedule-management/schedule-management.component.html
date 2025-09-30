@@ -192,9 +192,20 @@
             Effacer Tout
           </button>
           
-          <div class="week-type-indicator">
-            <span class="current-week">Semaine Actuelle: {{getCurrentWeekType()}}</span>
-          </div>
+          <button
+            class="btn btn-secondary pdf-download-btn"
+            *ngIf="selectedTeacher && sessions.length > 0"
+            (click)="downloadSchedulePDF()"
+            title="Télécharger l'emploi du temps en PDF">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            Télécharger PDF
+          </button>
         </div>
       </div>
       
@@ -202,10 +213,10 @@
         <!-- En-tête des heures -->
         <div class="time-header">
           <div class="corner-cell">Heure</div>
-          <div 
+          <div
             class="time-slot"
             *ngFor="let time of timeSlots">
-            {{formatTimeDisplay(time)}}
+            {{time}}
           </div>
         </div>
         
@@ -235,43 +246,43 @@
       <div class="sessions-container" *ngIf="sessionsAtTime.length > 0">
         
         <!-- Single session or both weeks -->
-        <div 
-          class="session-block"
+        <div
+          class="session-card single"
           *ngIf="sessionsAtTime.length === 1"
           [class.week-a]="sessionsAtTime[0].weekType === 'A'"
           [class.week-b]="sessionsAtTime[0].weekType === 'B'"
           [class.week-both]="sessionsAtTime[0].weekType === 'both'"
           (click)="editSession(sessionsAtTime[0], $event)">
           
-          <div class="week-indicator" *ngIf="sessionsAtTime[0].weekType !== 'both'">
-            Semaine {{sessionsAtTime[0].weekType}}
-          </div>
-          
-          <div class="session-header">
-            <span class="session-subject">{{getSessionSubjectName(sessionsAtTime[0])}}</span>
-            <span class="session-duration">{{sessionsAtTime[0].formattedDuration}}</span>
-          </div>
-          
-          <div class="session-details">
-            <span class="session-class">{{sessionsAtTime[0].className}}</span>
-            <span class="session-room" *ngIf="sessionsAtTime[0].room">{{sessionsAtTime[0].room}}</span>
+          <div class="session-content">
+            <div class="session-header">
+              <div class="subject-name">{{getSessionSubjectName(sessionsAtTime[0])}}</div>
+              <div class="week-badge" *ngIf="sessionsAtTime[0].weekType !== 'both'">
+                {{sessionsAtTime[0].weekType}}
+              </div>
+            </div>
+
+            <div class="session-info">
+              <span class="class-name">{{sessionsAtTime[0].className}}</span>
+              <span class="room-name" *ngIf="sessionsAtTime[0].room">{{sessionsAtTime[0].room}}</span>
+            </div>
           </div>
           
           <div class="session-actions">
             <button 
-              class="session-action-btn edit"
+              class="action-btn edit"
               (click)="editSession(sessionsAtTime[0], $event)"
               title="Modifier">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
             </button>
             <button 
-              class="session-action-btn delete"
+              class="action-btn delete"
               (click)="openDeleteSessionModal(sessionsAtTime[0], $event)"
               title="Supprimer">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
               </svg>
@@ -280,27 +291,24 @@
         </div>
         
         <!-- Multiple sessions (Week A and B) -->
-        <div class="split-sessions" *ngIf="sessionsAtTime.length > 1">
-          <div 
-            class="split-session"
+        <div class="dual-session-container" *ngIf="sessionsAtTime.length > 1">
+          <div
+            class="session-card compact"
             *ngFor="let session of sessionsAtTime"
             [class.week-a]="session.weekType === 'A'"
             [class.week-b]="session.weekType === 'B'"
             (click)="editSession(session, $event)">
             
-            <div class="week-label">
-              Semaine {{session.weekType}}
+            <div class="session-content">
+              <div class="week-indicator">{{session.weekType}}</div>
+              <div class="subject-name compact">{{getSessionSubjectName(session)}}</div>
+              <div class="class-info compact">{{session.className}}</div>
+              <div class="room-info compact" *ngIf="session.room">{{session.room}}</div>
             </div>
-            
-            <div class="split-session-content">
-              <div class="session-subject-small">{{getSessionSubjectName(session)}}</div>
-              <div class="session-class-small">{{session.className}}</div>
-              <div class="session-room-small" *ngIf="session.room">{{session.room}}</div>
-            </div>
-            
-            <div class="split-session-actions">
-              <button 
-                class="mini-action-btn"
+
+            <div class="session-actions compact">
+              <button
+                class="action-btn mini edit"
                 (click)="editSession(session, $event)"
                 title="Modifier">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -308,8 +316,8 @@
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                 </svg>
               </button>
-              <button 
-                class="mini-action-btn"
+              <button
+                class="action-btn mini delete"
                 (click)="openDeleteSessionModal(session, $event)"
                 title="Supprimer">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -396,48 +404,200 @@
             </div>
           </div>
           
-          <!-- Matière et Classe -->
-          <div class="form-row">
-            <div class="form-group">
-              <label>Matière</label>
-              <select 
-                class="form-select"
-                [(ngModel)]="sessionForm.subjectId"
-                name="subjectId"
-                (ngModelChange)="onSubjectChange()"
-                required>
-                <option value="">Sélectionner une Matière</option>
-                <option 
-                  *ngFor="let subject of getTeacherSubjects(selectedTeacher!)" 
-                  [value]="subject._id">
-                  {{subject.name || 'Matière Sans Nom'}}
-                </option>
-              </select>
-              <div class="error-hint" *ngIf="getTeacherSubjects(selectedTeacher!).length === 0">
-                Aucune matière trouvée pour cet enseignant. Veuillez vérifier les assignations de matières de l'enseignant.
+          <!-- Type de Session d'abord -->
+          <div class="form-group full-width">
+            <label>Type d'Horaire</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input
+                  type="radio"
+                  name="scheduleType"
+                  value="every_week"
+                  [(ngModel)]="sessionForm.scheduleType"
+                  (ngModelChange)="onScheduleTypeChange()">
+                <span class="radio-label">
+                  <span class="radio-title">Chaque Semaine</span>
+                  <span class="radio-description">Même cours chaque semaine</span>
+                </span>
+              </label>
+
+              <label class="radio-option">
+                <input
+                  type="radio"
+                  name="scheduleType"
+                  value="alternating"
+                  [(ngModel)]="sessionForm.scheduleType"
+                  (ngModelChange)="onScheduleTypeChange()">
+                <span class="radio-label">
+                  <span class="radio-title">Alternance (Par 15)</span>
+                  <span class="radio-description">Différents cours selon Semaine A ou B</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Configuration pour "Chaque Semaine" -->
+          <div class="schedule-config every-week" *ngIf="sessionForm.scheduleType === 'every_week'">
+            <h4>Configuration du Cours</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Matière</label>
+                <select
+                  class="form-select"
+                  [(ngModel)]="sessionForm.subjectId"
+                  name="subjectId"
+                  (ngModelChange)="onSubjectChange()"
+                  required>
+                  <option value="">Sélectionner une Matière</option>
+                  <option
+                    *ngFor="let subject of getTeacherSubjects(selectedTeacher!)"
+                    [value]="subject._id">
+                    {{subject.name || 'Matière Sans Nom'}}
+                  </option>
+                </select>
+                <div class="error-hint" *ngIf="getTeacherSubjects(selectedTeacher!).length === 0">
+                  Aucune matière trouvée pour cet enseignant.
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Classe</label>
+                <select
+                  class="form-select"
+                  [(ngModel)]="sessionForm.classId"
+                  name="classId"
+                  (ngModelChange)="onClassChange()"
+                  required
+                  [disabled]="!sessionForm.subjectId || availableClasses.length === 0">
+                  <option value="">Sélectionner une Classe</option>
+                  <option
+                    *ngFor="let cls of availableClasses"
+                    [value]="cls._id">
+                    {{getClassDisplayName(cls)}}
+                  </option>
+                </select>
+                <div class="form-hint">{{getAvailableClassesInfo()}}</div>
+                <div class="error-hint" *ngIf="sessionForm.subjectId && availableClasses.length === 0">
+                  L'enseignant n'enseigne pas cette matière dans aucune classe.
+                </div>
               </div>
             </div>
-            
-            <div class="form-group">
-            <label>Classe</label>
-            <select 
-                class="form-select"
-                [(ngModel)]="sessionForm.classId"
-                name="classId"
-                (ngModelChange)="onClassChange()"
-                required
-                [disabled]="!sessionForm.subjectId || availableClasses.length === 0">
-                <option value="">Sélectionner une Classe</option>
-                <option 
-                *ngFor="let cls of availableClasses" 
-                [value]="cls._id">
-                {{getClassDisplayName(cls)}}
-                </option>
-            </select>
-            <div class="form-hint">{{getAvailableClassesInfo()}}</div>
-            <div class="error-hint" *ngIf="sessionForm.subjectId && availableClasses.length === 0">
-                L'enseignant n'enseigne pas cette matière dans aucune classe.
+          </div>
+
+          <!-- Configuration pour "Alternance" -->
+          <div class="schedule-config alternating" *ngIf="sessionForm.scheduleType === 'alternating'">
+            <h4>Configuration Alternée</h4>
+
+            <!-- Configuration Semaine A -->
+            <div class="week-config week-a">
+              <div class="week-header">
+                <div class="week-indicator">
+                  <span class="week-badge week-a-badge">A</span>
+                  <span class="week-title">Semaine A</span>
+                </div>
+                <label class="checkbox-wrapper">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="sessionForm.weekA.enabled"
+                    name="weekAEnabled"
+                    (ngModelChange)="onWeekConfigChange()">
+                  <span class="checkbox-label">Activer</span>
+                </label>
+              </div>
+
+              <div class="week-content" *ngIf="sessionForm.weekA.enabled">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Matière - Semaine A</label>
+                    <select
+                      class="form-select"
+                      [(ngModel)]="sessionForm.weekA.subjectId"
+                      name="weekASubjectId"
+                      (ngModelChange)="onWeekASubjectChange()"
+                      required>
+                      <option value="">Sélectionner une Matière</option>
+                      <option
+                        *ngFor="let subject of getTeacherSubjects(selectedTeacher!)"
+                        [value]="subject._id">
+                        {{subject.name || 'Matière Sans Nom'}}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Classe - Semaine A</label>
+                    <select
+                      class="form-select"
+                      [(ngModel)]="sessionForm.weekA.classId"
+                      name="weekAClassId"
+                      (ngModelChange)="onWeekAClassChange()"
+                      [disabled]="!sessionForm.weekA.subjectId || availableClassesWeekA.length === 0">
+                      <option value="">Sélectionner une Classe</option>
+                      <option
+                        *ngFor="let cls of availableClassesWeekA"
+                        [value]="cls._id">
+                        {{getClassDisplayName(cls)}}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <!-- Configuration Semaine B -->
+            <div class="week-config week-b">
+              <div class="week-header">
+                <div class="week-indicator">
+                  <span class="week-badge week-b-badge">B</span>
+                  <span class="week-title">Semaine B</span>
+                </div>
+                <label class="checkbox-wrapper">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="sessionForm.weekB.enabled"
+                    name="weekBEnabled"
+                    (ngModelChange)="onWeekConfigChange()">
+                  <span class="checkbox-label">Activer</span>
+                </label>
+              </div>
+
+              <div class="week-content" *ngIf="sessionForm.weekB.enabled">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Matière - Semaine B</label>
+                    <select
+                      class="form-select"
+                      [(ngModel)]="sessionForm.weekB.subjectId"
+                      name="weekBSubjectId"
+                      (ngModelChange)="onWeekBSubjectChange()"
+                      required>
+                      <option value="">Sélectionner une Matière</option>
+                      <option
+                        *ngFor="let subject of getTeacherSubjects(selectedTeacher!)"
+                        [value]="subject._id">
+                        {{subject.name || 'Matière Sans Nom'}}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Classe - Semaine B</label>
+                    <select
+                      class="form-select"
+                      [(ngModel)]="sessionForm.weekB.classId"
+                      name="weekBClassId"
+                      (ngModelChange)="onWeekBClassChange()"
+                      [disabled]="!sessionForm.weekB.subjectId || availableClassesWeekB.length === 0">
+                      <option value="">Sélectionner une Classe</option>
+                      <option
+                        *ngFor="let cls of availableClassesWeekB"
+                        [value]="cls._id">
+                        {{getClassDisplayName(cls)}}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -469,17 +629,6 @@
                 placeholder="ex. Salle 101, Labo A">
             </div>
             
-            <div class="form-group">
-              <label>Type de Semaine</label>
-              <select 
-                class="form-select"
-                [(ngModel)]="sessionForm.weekType"
-                name="weekType">
-                <option value="both">Deux Semaines</option>
-                <option value="A">Semaine A Seulement</option>
-                <option value="B">Semaine B Seulement</option>
-              </select>
-            </div>
           </div>
           
           <!-- Notes -->
@@ -671,4 +820,7 @@
     <div class="spinner"></div>
     <p>{{loadingMessage}}</p>
   </div>
+
+  <!-- Toaster Component -->
+  <app-toaster></app-toaster>
 </div>

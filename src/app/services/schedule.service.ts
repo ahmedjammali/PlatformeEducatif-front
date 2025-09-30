@@ -580,7 +580,7 @@ export class ScheduleService extends BaseService {
   // Search functionality
   searchSessions(sessions: Session[], query: string): Session[] {
     if (!query.trim()) return sessions;
-    
+
     const searchTerm = query.toLowerCase();
     return sessions.filter(session => {
       const teacherName = typeof session.teacher === 'string' ? '' : session.teacher.name.toLowerCase();
@@ -588,12 +588,26 @@ export class ScheduleService extends BaseService {
       const className = session.className.toLowerCase();
       const room = (session.room || '').toLowerCase();
       const notes = (session.notes || '').toLowerCase();
-      
+
       return teacherName.includes(searchTerm) ||
              subjectName.includes(searchTerm) ||
              className.includes(searchTerm) ||
              room.includes(searchTerm) ||
              notes.includes(searchTerm);
     });
+  }
+
+  // PDF Generation
+  generateSchedulePDF(scheduleData: any): Observable<Blob> {
+    return this.http.post(
+      `${this.apiUrl}${this.endpoint}/generate-pdf`,
+      scheduleData,
+      {
+        responseType: 'blob',
+        headers: {
+          'Accept': 'application/pdf'
+        }
+      }
+    );
   }
 }

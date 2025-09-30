@@ -37,6 +37,12 @@
     [classSubjectsMapping]="classSubjectsMapping">
   </app-teacher-classes>
 
+  <!-- Section Emploi du Temps -->
+  <app-teacher-schedule
+    *ngIf="activeSection === 'schedule'"
+    [currentUser]="currentUser">
+  </app-teacher-schedule>
+
   <!-- Section Notes -->
   <app-teacher-grades
     *ngIf="activeSection === 'grades'"

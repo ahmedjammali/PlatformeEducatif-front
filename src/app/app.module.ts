@@ -119,6 +119,7 @@ import { CombinedExportComponent } from './components/admin/combined-export/comb
 import { TimetableService } from './services/timetable.service';
 import { ScheduleService } from './services/schedule.service';
 import { ScheduleManagementComponent } from './components/admin/schedule-management/schedule-management.component';
+import { TeacherScheduleComponent } from './components/teacher/teacher-schedule/teacher-schedule.component';
 
 
 
@@ -203,6 +204,7 @@ const MaterialModules = [
     FinancialAnalyticsComponent,
     CombinedExportComponent,
     ScheduleManagementComponent,
+    TeacherScheduleComponent,
 
   ],
   imports: [

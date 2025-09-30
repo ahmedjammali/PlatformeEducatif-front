@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToasterService } from '../../../services/toaster.service';
 
 // Services
 import { UserService } from '../../../services/user.service';
@@ -26,14 +26,34 @@ interface SessionForm {
   sessionDate: string;
   startTime: string;
   endTime: string;
+  scheduleType: 'every_week' | 'alternating';
+
+  // For "every_week" schedule type
   subjectId: string;
   classId: string;
   className: string;
   classGrade: string;
+
+  // For "alternating" schedule type
+  weekA: {
+    enabled: boolean;
+    subjectId: string;
+    classId: string;
+    className: string;
+    classGrade: string;
+  };
+  weekB: {
+    enabled: boolean;
+    subjectId: string;
+    classId: string;
+    className: string;
+    classGrade: string;
+  };
+
   sessionType: string;
   room: string;
   notes: string;
-  weekType: string;
+  weekType: string; // Keep for compatibility
 }
 
 @Component({
@@ -64,8 +84,8 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
   // Emploi du temps
   workDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   timeSlots = [
-    '08:00', '09:00', '10:00', '11:00', '12:00', 
-    '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
+    '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00',
+    '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00'
   ];
   sessions: SessionWithMeta[] = [];
   selectedTimeSlot: { day: string; time: string } | null = null;
@@ -77,10 +97,25 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
     sessionDate: '',
     startTime: '',
     endTime: '',
+    scheduleType: 'every_week',
     subjectId: '',
     classId: '',
     className: '',
     classGrade: '',
+    weekA: {
+      enabled: false,
+      subjectId: '',
+      classId: '',
+      className: '',
+      classGrade: ''
+    },
+    weekB: {
+      enabled: false,
+      subjectId: '',
+      classId: '',
+      className: '',
+      classGrade: ''
+    },
     sessionType: 'lecture',
     room: '',
     notes: '',
@@ -95,13 +130,15 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
 
   // Classes disponibles pour l'enseignant et la matière sélectionnés
   availableClasses: Class[] = [];
+  availableClassesWeekA: Class[] = [];
+  availableClassesWeekB: Class[] = [];
 
   constructor(
     private userService: UserService,
     private classService: ClassService,
     private scheduleService: ScheduleService,
     private subjectService: SubjectService,
-    private snackBar: MatSnackBar
+    private toasterService: ToasterService
   ) {
     this.selectedAcademicYear = ScheduleUtils.getCurrentAcademicYear();
     this.academicYears = ScheduleUtils.getAcademicYearsList();
@@ -525,15 +562,17 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
     return this.sessions.filter(session => session.dayOfWeek === day);
   }
 
-getSessionsAtTime(day: string, time: string): SessionWithMeta[] {
-  const timeMinutes = ScheduleUtils.timeToMinutes(time);
-  
+getSessionsAtTime(day: string, timeInterval: string): SessionWithMeta[] {
+  // Extract start time from interval (e.g., "08:00-09:00" -> "08:00")
+  const startTime = timeInterval.split('-')[0];
+  const timeMinutes = ScheduleUtils.timeToMinutes(startTime);
+
   return this.sessions.filter(session => {
     if (session.dayOfWeek !== day) return false;
-    
+
     const sessionStart = ScheduleUtils.timeToMinutes(session.startTime);
     const sessionEnd = ScheduleUtils.timeToMinutes(session.endTime);
-    
+
     return timeMinutes >= sessionStart && timeMinutes < sessionEnd;
   });
 }
@@ -542,15 +581,15 @@ hasSessionAtTime(day: string, time: string): boolean {
   return this.getSessionsAtTime(day, time).length > 0;
 }
 
+hasMultipleSessionsAtTime(day: string, time: string): boolean {
+  return this.getSessionsAtTime(day, time).length > 1;
+}
+
 getSessionAtTime(day: string, time: string): SessionWithMeta | null {
   const sessions = this.getSessionsAtTime(day, time);
   return sessions.length > 0 ? sessions[0] : null;
 }
 
-// Check if there are multiple sessions at this time (Week A and B)
-hasMultipleSessionsAtTime(day: string, time: string): boolean {
-  return this.getSessionsAtTime(day, time).length > 1;
-}
 getSessionsByWeekType(sessions: SessionWithMeta[]): {
   weekA: SessionWithMeta[];
   weekB: SessionWithMeta[];
@@ -616,50 +655,69 @@ getSessionsByWeekType(sessions: SessionWithMeta[]): {
   // MÉTHODES DE MODAL DE SESSION
   // ===============================
 
-  openSessionModal(day?: string, time?: string): void {
+  openSessionModal(day?: string, timeInterval?: string): void {
     this.editingSession = null;
     this.resetSessionForm();
-    
-    if (day && time) {
+
+    if (day && timeInterval) {
       const today = new Date();
       const currentDay = today.getDay();
       const targetDay = this.workDays.indexOf(day) + 1;
-      
+
       let daysToAdd = targetDay - currentDay;
       if (daysToAdd <= 0) daysToAdd += 7;
-      
+
       const sessionDate = new Date(today);
       sessionDate.setDate(today.getDate() + daysToAdd);
-      
+
+      // Extract start and end times from interval (e.g., "08:00-09:00")
+      const [startTime, endTime] = timeInterval.split('-');
+
       this.sessionForm.sessionDate = ScheduleUtils.formatDate(sessionDate, 'iso');
-      this.sessionForm.startTime = time;
-      
-      const endTime = ScheduleUtils.timeToMinutes(time) + 60;
-      this.sessionForm.endTime = ScheduleUtils.minutesToTime(endTime);
+      this.sessionForm.startTime = startTime;
+      this.sessionForm.endTime = endTime;
       this.sessionForm.weekType = this.selectedWeekType;
     }
-    
+
     this.showSessionModal = true;
   }
 
   editSession(session: SessionWithMeta, event: Event): void {
     event.stopPropagation();
-    
+
     this.editingSession = session;
+
+    // For now, treat all existing sessions as "every_week" type for editing
+    // TODO: In the future, we could store the schedule type in the session metadata
     this.sessionForm = {
       sessionDate: ScheduleUtils.formatDate(session.sessionDate.date, 'iso'),
       startTime: session.startTime,
       endTime: session.endTime,
+      scheduleType: 'every_week',
       subjectId: typeof session.subject === 'string' ? session.subject : session.subject._id!,
       classId: typeof session.class === 'string' ? session.class : session.class?._id || '',
       className: session.className,
       classGrade: session.classGrade,
+      weekA: {
+        enabled: false,
+        subjectId: '',
+        classId: '',
+        className: '',
+        classGrade: ''
+      },
+      weekB: {
+        enabled: false,
+        subjectId: '',
+        classId: '',
+        className: '',
+        classGrade: ''
+      },
       sessionType: session.sessionType,
       room: session.room || '',
       notes: session.notes || '',
       weekType: session.weekType
     };
-    
+
     this.onSubjectChange();
     this.showSessionModal = true;
   }
@@ -676,10 +734,25 @@ getSessionsByWeekType(sessions: SessionWithMeta[]): {
       sessionDate: '',
       startTime: '',
       endTime: '',
+      scheduleType: 'every_week',
       subjectId: '',
       classId: '',
       className: '',
       classGrade: '',
+      weekA: {
+        enabled: false,
+        subjectId: '',
+        classId: '',
+        className: '',
+        classGrade: ''
+      },
+      weekB: {
+        enabled: false,
+        subjectId: '',
+        classId: '',
+        className: '',
+        classGrade: ''
+      },
       sessionType: 'lecture',
       room: '',
       notes: '',
@@ -687,6 +760,8 @@ getSessionsByWeekType(sessions: SessionWithMeta[]): {
     };
     this.validationErrors = [];
     this.availableClasses = [];
+    this.availableClassesWeekA = [];
+    this.availableClassesWeekB = [];
   }
 
   // ===============================
@@ -770,14 +845,197 @@ getAvailableClassesInfo(): string {
   }
 
   isSessionFormValid(): boolean {
-    return !!(
-      this.sessionForm.sessionDate &&
-      this.sessionForm.startTime &&
-      this.sessionForm.endTime &&
-      this.sessionForm.subjectId &&
-      (this.sessionForm.classId || this.sessionForm.className) &&
-      this.sessionForm.classGrade
-    );
+    if (this.sessionForm.scheduleType === 'every_week') {
+      return !!(
+        this.sessionForm.sessionDate &&
+        this.sessionForm.startTime &&
+        this.sessionForm.endTime &&
+        this.sessionForm.subjectId &&
+        (this.sessionForm.classId || this.sessionForm.className) &&
+        this.sessionForm.classGrade
+      );
+    } else {
+      // For alternating schedule, at least one week must be enabled and configured
+      const weekAValid = !this.sessionForm.weekA.enabled || (
+        this.sessionForm.weekA.subjectId &&
+        (this.sessionForm.weekA.classId || this.sessionForm.weekA.className) &&
+        this.sessionForm.weekA.classGrade
+      );
+
+      const weekBValid = !this.sessionForm.weekB.enabled || (
+        this.sessionForm.weekB.subjectId &&
+        (this.sessionForm.weekB.classId || this.sessionForm.weekB.className) &&
+        this.sessionForm.weekB.classGrade
+      );
+
+      const atLeastOneWeekEnabled = this.sessionForm.weekA.enabled || this.sessionForm.weekB.enabled;
+
+      const basicFieldsValid = !!(
+        this.sessionForm.sessionDate &&
+        this.sessionForm.startTime &&
+        this.sessionForm.endTime
+      );
+
+      // Debug logging
+      if (this.sessionForm.scheduleType === 'alternating') {
+        console.log('Form validation debug:', {
+          basicFieldsValid,
+          atLeastOneWeekEnabled,
+          weekAValid,
+          weekBValid,
+          weekA: this.sessionForm.weekA,
+          weekB: this.sessionForm.weekB
+        });
+      }
+
+      return !!(
+        basicFieldsValid &&
+        atLeastOneWeekEnabled &&
+        weekAValid &&
+        weekBValid
+      );
+    }
+  }
+
+  // Methods for alternating schedule functionality
+  onScheduleTypeChange(): void {
+    // Reset form when schedule type changes
+    if (this.sessionForm.scheduleType === 'alternating') {
+      // Clear regular fields
+      this.sessionForm.subjectId = '';
+      this.sessionForm.classId = '';
+      this.sessionForm.className = '';
+      this.sessionForm.classGrade = '';
+
+      // Enable Week A by default for alternating
+      this.sessionForm.weekA.enabled = true;
+      this.sessionForm.weekB.enabled = false;
+    } else {
+      // Clear alternating fields
+      this.sessionForm.weekA = {
+        enabled: false,
+        subjectId: '',
+        classId: '',
+        className: '',
+        classGrade: ''
+      };
+      this.sessionForm.weekB = {
+        enabled: false,
+        subjectId: '',
+        classId: '',
+        className: '',
+        classGrade: ''
+      };
+    }
+
+    // Reset available classes
+    this.availableClasses = [];
+    this.availableClassesWeekA = [];
+    this.availableClassesWeekB = [];
+  }
+
+  onWeekConfigChange(): void {
+    // Update available classes when week configuration changes
+    this.onWeekASubjectChange();
+    this.onWeekBSubjectChange();
+  }
+
+  onWeekASubjectChange(): void {
+    if (!this.selectedTeacher || !this.sessionForm.weekA.subjectId) {
+      this.availableClassesWeekA = [];
+      return;
+    }
+
+    this.loadClassesForSubject(this.sessionForm.weekA.subjectId, 'weekA');
+  }
+
+  onWeekBSubjectChange(): void {
+    if (!this.selectedTeacher || !this.sessionForm.weekB.subjectId) {
+      this.availableClassesWeekB = [];
+      return;
+    }
+
+    this.loadClassesForSubject(this.sessionForm.weekB.subjectId, 'weekB');
+  }
+
+  onWeekAClassChange(): void {
+    if (this.sessionForm.weekA.classId) {
+      const selectedClass = this.availableClassesWeekA.find(cls => cls._id === this.sessionForm.weekA.classId);
+      if (selectedClass) {
+        this.sessionForm.weekA.className = selectedClass.name;
+        this.sessionForm.weekA.classGrade = selectedClass.grade;
+      }
+    }
+  }
+
+  onWeekBClassChange(): void {
+    if (this.sessionForm.weekB.classId) {
+      const selectedClass = this.availableClassesWeekB.find(cls => cls._id === this.sessionForm.weekB.classId);
+      if (selectedClass) {
+        this.sessionForm.weekB.className = selectedClass.name;
+        this.sessionForm.weekB.classGrade = selectedClass.grade;
+      }
+    }
+  }
+
+  private loadClassesForSubject(subjectId: string, week: 'weekA' | 'weekB'): void {
+    const teachingClassesWithSubject = this.selectedTeacher?.teachingClasses?.filter(tc => {
+      if (Array.isArray(tc.subjects)) {
+        return tc.subjects.some(subject => {
+          return typeof subject === 'object'
+            ? subject._id === subjectId
+            : subject === subjectId;
+        });
+      }
+      return false;
+    }) || [];
+
+    if (teachingClassesWithSubject.length > 0) {
+      const classPromises = teachingClassesWithSubject.map(tc => {
+        if (typeof tc.class === 'string') {
+          return this.classService.getClassById(tc.class)
+            .pipe(takeUntil(this.destroy$))
+            .toPromise()
+            .then(response => response?.class)
+            .catch(error => {
+              console.error('Error loading class:', error);
+              return null;
+            });
+        } else {
+          return Promise.resolve(tc.class as Class);
+        }
+      });
+
+      Promise.all(classPromises).then(classes => {
+        const validClasses = classes.filter(cls => cls !== null) as Class[];
+
+        if (week === 'weekA') {
+          this.availableClassesWeekA = validClasses;
+
+          // Auto-select if only one class available
+          if (this.availableClassesWeekA.length === 1) {
+            this.sessionForm.weekA.classId = this.availableClassesWeekA[0]._id!;
+            this.sessionForm.weekA.className = this.availableClassesWeekA[0].name;
+            this.sessionForm.weekA.classGrade = this.availableClassesWeekA[0].grade;
+          }
+        } else {
+          this.availableClassesWeekB = validClasses;
+
+          // Auto-select if only one class available
+          if (this.availableClassesWeekB.length === 1) {
+            this.sessionForm.weekB.classId = this.availableClassesWeekB[0]._id!;
+            this.sessionForm.weekB.className = this.availableClassesWeekB[0].name;
+            this.sessionForm.weekB.classGrade = this.availableClassesWeekB[0].grade;
+          }
+        }
+      });
+    } else {
+      if (week === 'weekA') {
+        this.availableClassesWeekA = [];
+      } else {
+        this.availableClassesWeekB = [];
+      }
+    }
   }
 
   validateSessionForm(): boolean {
@@ -796,7 +1054,7 @@ getAvailableClassesInfo(): string {
       this.validationErrors.push('Les heures de début et de fin sont requises');
     } else {
       const timeValidation = ScheduleUtils.validateSessionTime(
-        this.sessionForm.startTime, 
+        this.sessionForm.startTime,
         this.sessionForm.endTime
       );
       if (!timeValidation.valid) {
@@ -804,16 +1062,50 @@ getAvailableClassesInfo(): string {
       }
     }
 
-    if (!this.sessionForm.subjectId) {
-      this.validationErrors.push('La matière est requise');
-    }
+    // Validate based on schedule type
+    if (this.sessionForm.scheduleType === 'every_week') {
+      if (!this.sessionForm.subjectId) {
+        this.validationErrors.push('La matière est requise');
+      }
 
-    if (!this.sessionForm.classId && !this.sessionForm.className) {
-      this.validationErrors.push('La classe est requise');
-    }
+      if (!this.sessionForm.classId && !this.sessionForm.className) {
+        this.validationErrors.push('La classe est requise');
+      }
 
-    if (!this.sessionForm.classGrade) {
-      this.validationErrors.push('Le niveau de classe est requis');
+      if (!this.sessionForm.classGrade) {
+        this.validationErrors.push('Le niveau de classe est requis');
+      }
+    } else if (this.sessionForm.scheduleType === 'alternating') {
+      // Check if at least one week is enabled
+      if (!this.sessionForm.weekA.enabled && !this.sessionForm.weekB.enabled) {
+        this.validationErrors.push('Au moins une semaine (A ou B) doit être activée');
+      }
+
+      // Validate Week A if enabled
+      if (this.sessionForm.weekA.enabled) {
+        if (!this.sessionForm.weekA.subjectId) {
+          this.validationErrors.push('La matière de la Semaine A est requise');
+        }
+        if (!this.sessionForm.weekA.classId && !this.sessionForm.weekA.className) {
+          this.validationErrors.push('La classe de la Semaine A est requise');
+        }
+        if (!this.sessionForm.weekA.classGrade) {
+          this.validationErrors.push('Le niveau de classe de la Semaine A est requis');
+        }
+      }
+
+      // Validate Week B if enabled
+      if (this.sessionForm.weekB.enabled) {
+        if (!this.sessionForm.weekB.subjectId) {
+          this.validationErrors.push('La matière de la Semaine B est requise');
+        }
+        if (!this.sessionForm.weekB.classId && !this.sessionForm.weekB.className) {
+          this.validationErrors.push('La classe de la Semaine B est requise');
+        }
+        if (!this.sessionForm.weekB.classGrade) {
+          this.validationErrors.push('Le niveau de classe de la Semaine B est requis');
+        }
+      }
     }
 
     if (this.validationErrors.length === 0) {
@@ -857,50 +1149,136 @@ getAvailableClassesInfo(): string {
     const duration = ScheduleUtils.calculateDuration(this.sessionForm.startTime, this.sessionForm.endTime);
     const dayOfWeek = ScheduleUtils.getDayOfWeekFromDate(this.sessionForm.sessionDate);
 
-    const sessionData: Partial<SessionWithMeta> = {
-      sessionDate: {
-        date: new Date(this.sessionForm.sessionDate),
-        dateString: this.sessionForm.sessionDate,
+    if (this.sessionForm.scheduleType === 'every_week') {
+      // Handle regular "every week" session
+      const sessionData: Partial<SessionWithMeta> = {
+        sessionDate: {
+          date: new Date(this.sessionForm.sessionDate),
+          dateString: this.sessionForm.sessionDate,
+          dayOfWeek: dayOfWeek,
+          isToday: ScheduleUtils.isToday(this.sessionForm.sessionDate),
+          isWeekend: ['saturday', 'sunday'].includes(dayOfWeek)
+        },
         dayOfWeek: dayOfWeek,
+        startTime: this.sessionForm.startTime,
+        endTime: this.sessionForm.endTime,
+        duration: duration,
+        teacher: this.selectedTeacher!,
+        className: this.sessionForm.className,
+        classGrade: this.sessionForm.classGrade,
+        subject: this.getTeacherSubjects(this.selectedTeacher!).find(s => s._id === this.sessionForm.subjectId)!,
+        sessionType: this.sessionForm.sessionType as any,
+        room: this.sessionForm.room,
+        notes: this.sessionForm.notes,
+        weekType: this.sessionForm.weekType as any,
+        status: 'scheduled' as any,
+        isActive: true,
+        formattedDuration: ScheduleUtils.formatDuration(duration),
+        formattedTime: `${this.sessionForm.startTime} - ${this.sessionForm.endTime}`,
         isToday: ScheduleUtils.isToday(this.sessionForm.sessionDate),
-        isWeekend: ['saturday', 'sunday'].includes(dayOfWeek)
-      },
-      dayOfWeek: dayOfWeek,
-      startTime: this.sessionForm.startTime,
-      endTime: this.sessionForm.endTime,
-      duration: duration, // S'assurer que la durée est calculée
-      teacher: this.selectedTeacher!,
-      className: this.sessionForm.className,
-      classGrade: this.sessionForm.classGrade,
-      subject: this.getTeacherSubjects(this.selectedTeacher!).find(s => s._id === this.sessionForm.subjectId)!,
-      sessionType: this.sessionForm.sessionType as any,
-      room: this.sessionForm.room,
-      notes: this.sessionForm.notes,
-      weekType: this.sessionForm.weekType as any,
-      status: 'scheduled' as any,
-      isActive: true,
-      formattedDuration: ScheduleUtils.formatDuration(duration),
-      formattedTime: `${this.sessionForm.startTime} - ${this.sessionForm.endTime}`,
-      isToday: ScheduleUtils.isToday(this.sessionForm.sessionDate),
-      currentStatus: 'scheduled' as any
-    };
+        currentStatus: 'scheduled' as any
+      };
 
-    if (this.editingSession) {
-      const index = this.sessions.findIndex(s => s._id === this.editingSession!._id);
-      if (index !== -1) {
-        this.sessions[index] = { ...this.editingSession, ...sessionData };
+      if (this.editingSession) {
+        const index = this.sessions.findIndex(s => s._id === this.editingSession!._id);
+        if (index !== -1) {
+          this.sessions[index] = { ...this.editingSession, ...sessionData };
+        }
+      } else {
+        const newSession: SessionWithMeta = {
+          _id: this.generateTempId(),
+          ...sessionData as SessionWithMeta,
+          schedule: ''
+        };
+        this.sessions.push(newSession);
       }
     } else {
-      const newSession: SessionWithMeta = {
-        _id: this.generateTempId(),
-        ...sessionData as SessionWithMeta,
-        schedule: ''
-      };
-      this.sessions.push(newSession);
+      // Handle alternating schedule - create separate sessions for Week A and B
+      const sessionsToCreate: Partial<SessionWithMeta>[] = [];
+
+      // Create Week A session if enabled
+      if (this.sessionForm.weekA.enabled) {
+        const weekASession: Partial<SessionWithMeta> = {
+          sessionDate: {
+            date: new Date(this.sessionForm.sessionDate),
+            dateString: this.sessionForm.sessionDate,
+            dayOfWeek: dayOfWeek,
+            isToday: ScheduleUtils.isToday(this.sessionForm.sessionDate),
+            isWeekend: ['saturday', 'sunday'].includes(dayOfWeek)
+          },
+          dayOfWeek: dayOfWeek,
+          startTime: this.sessionForm.startTime,
+          endTime: this.sessionForm.endTime,
+          duration: duration,
+          teacher: this.selectedTeacher!,
+          className: this.sessionForm.weekA.className,
+          classGrade: this.sessionForm.weekA.classGrade,
+          subject: this.getTeacherSubjects(this.selectedTeacher!).find(s => s._id === this.sessionForm.weekA.subjectId)!,
+          sessionType: this.sessionForm.sessionType as any,
+          room: this.sessionForm.room,
+          notes: this.sessionForm.notes,
+          weekType: 'A' as any,
+          status: 'scheduled' as any,
+          isActive: true,
+          formattedDuration: ScheduleUtils.formatDuration(duration),
+          formattedTime: `${this.sessionForm.startTime} - ${this.sessionForm.endTime}`,
+          isToday: ScheduleUtils.isToday(this.sessionForm.sessionDate),
+          currentStatus: 'scheduled' as any
+        };
+        sessionsToCreate.push(weekASession);
+      }
+
+      // Create Week B session if enabled
+      if (this.sessionForm.weekB.enabled) {
+        const weekBSession: Partial<SessionWithMeta> = {
+          sessionDate: {
+            date: new Date(this.sessionForm.sessionDate),
+            dateString: this.sessionForm.sessionDate,
+            dayOfWeek: dayOfWeek,
+            isToday: ScheduleUtils.isToday(this.sessionForm.sessionDate),
+            isWeekend: ['saturday', 'sunday'].includes(dayOfWeek)
+          },
+          dayOfWeek: dayOfWeek,
+          startTime: this.sessionForm.startTime,
+          endTime: this.sessionForm.endTime,
+          duration: duration,
+          teacher: this.selectedTeacher!,
+          className: this.sessionForm.weekB.className,
+          classGrade: this.sessionForm.weekB.classGrade,
+          subject: this.getTeacherSubjects(this.selectedTeacher!).find(s => s._id === this.sessionForm.weekB.subjectId)!,
+          sessionType: this.sessionForm.sessionType as any,
+          room: this.sessionForm.room,
+          notes: this.sessionForm.notes,
+          weekType: 'B' as any,
+          status: 'scheduled' as any,
+          isActive: true,
+          formattedDuration: ScheduleUtils.formatDuration(duration),
+          formattedTime: `${this.sessionForm.startTime} - ${this.sessionForm.endTime}`,
+          isToday: ScheduleUtils.isToday(this.sessionForm.sessionDate),
+          currentStatus: 'scheduled' as any
+        };
+        sessionsToCreate.push(weekBSession);
+      }
+
+      // Add the sessions to the schedule
+      if (this.editingSession) {
+        // For editing, remove the old session first
+        this.sessions = this.sessions.filter(s => s._id !== this.editingSession!._id);
+      }
+
+      // Add new sessions
+      sessionsToCreate.forEach(sessionData => {
+        const newSession: SessionWithMeta = {
+          _id: this.generateTempId(),
+          ...sessionData as SessionWithMeta,
+          schedule: ''
+        };
+        this.sessions.push(newSession);
+      });
     }
 
     this.closeSessionModal();
-    this.showSuccess(this.editingSession ? 'Session mise à jour !' : 'Session créée !');
+    this.showSuccess(this.editingSession ? 'Session mise à jour !' : 'Session(s) créée(s) !');
   }
 
   generateTempId(): string {
@@ -912,29 +1290,112 @@ getAvailableClassesInfo(): string {
   // ===============================
 
   showSuccess(message: string): void {
-    this.snackBar.open(message, 'Fermer', {
-      duration: 3000,
-      panelClass: ['success-snackbar']
-    });
+    this.toasterService.success(message);
   }
 
   showError(message: string): void {
-    this.snackBar.open(message, 'Fermer', {
-      duration: 5000,
-      panelClass: ['error-snackbar']
-    });
+    this.toasterService.error(message);
   }
 
   showWarning(message: string): void {
-    this.snackBar.open(message, 'Fermer', {
-      duration: 4000,
-      panelClass: ['warning-snackbar']
-    });
+    this.toasterService.warning(message);
   }
 
   // ===============================
   // MÉTHODES D'EXPORTATION
   // ===============================
+
+  private getCleanSubjectName(session: any): string {
+    try {
+      // First check if subject is populated and has a name
+      if (session.subject && typeof session.subject === 'object' && session.subject.name) {
+        // Clean the subject name of any non-printable characters
+        const subjectName = session.subject.name.toString().replace(/[^\x20-\x7E\u00C0-\u017F]/g, '');
+        return subjectName || 'Matière Inconnue';
+      }
+
+      // If subject is a string ID, try to find it in the subjects list
+      if (typeof session.subject === 'string' && this.allSubjects && this.allSubjects.length > 0) {
+        const foundSubject = this.allSubjects.find(s => s._id === session.subject);
+        if (foundSubject && foundSubject.name) {
+          const subjectName = foundSubject.name.toString().replace(/[^\x20-\x7E\u00C0-\u017F]/g, '');
+          return subjectName || 'Matière Inconnue';
+        }
+      }
+
+      // Fallback to session.subjectName if available
+      if (session.subjectName) {
+        const subjectName = session.subjectName.toString().replace(/[^\x20-\x7E\u00C0-\u017F]/g, '');
+        return subjectName || 'Matière Inconnue';
+      }
+
+      return 'Matière Inconnue';
+    } catch (error) {
+      console.error('Error getting clean subject name:', error);
+      return 'Matière Inconnue';
+    }
+  }
+
+  downloadSchedulePDF(): void {
+    if (!this.selectedTeacher || this.sessions.length === 0) {
+      this.showWarning('Aucun emploi du temps à exporter');
+      return;
+    }
+
+    this.loading = true;
+    this.loadingMessage = 'Génération du PDF en cours...';
+
+    // Prepare schedule data for PDF generation
+    const scheduleData = {
+      teacher: {
+        name: this.selectedTeacher.name,
+        email: this.selectedTeacher.email,
+        id: this.selectedTeacher._id
+      },
+      academicYear: this.selectedAcademicYear,
+      sessions: this.sessions.map(session => ({
+        date: ScheduleUtils.formatDate(session.sessionDate.date, 'iso'),
+        dayOfWeek: this.getDayDisplayName(session.dayOfWeek),
+        startTime: session.startTime,
+        endTime: session.endTime,
+        duration: session.formattedDuration,
+        subject: this.getCleanSubjectName(session),
+        className: session.className,
+        classGrade: session.classGrade,
+        room: session.room || '',
+        sessionType: this.getSessionTypeDisplay(session.sessionType),
+        weekType: this.getWeekTypeDisplay(session.weekType),
+        notes: session.notes || ''
+      })),
+      generatedAt: new Date().toISOString(),
+      totalSessions: this.sessions.length
+    };
+
+    // Call backend API to generate PDF
+    this.scheduleService.generateSchedulePDF(scheduleData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: Blob) => {
+          // Create download link
+          const url = window.URL.createObjectURL(response);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `emploi_du_temps_${this.selectedTeacher!.name.replace(/\s+/g, '_')}_${this.selectedAcademicYear}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+
+          this.loading = false;
+          this.showSuccess('PDF téléchargé avec succès !');
+        },
+        error: (error) => {
+          console.error('Erreur lors de la génération du PDF:', error);
+          this.loading = false;
+          this.showError('Échec de la génération du PDF');
+        }
+      });
+  }
 
   exportSchedule(format: 'csv' | 'json' = 'csv'): void {
     if (!this.selectedTeacher || this.sessions.length === 0) {
