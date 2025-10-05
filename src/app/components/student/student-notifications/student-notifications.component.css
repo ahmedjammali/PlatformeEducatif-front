@@ -12,7 +12,7 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 0.7rem;
-  animation: fadeIn 0.6s ease-out;
+  
 }
 
 /* Body scroll lock when modal is open */
@@ -43,13 +43,13 @@ body.modal-open {
   font-size: 3rem;
   font-weight: 800;
   margin-bottom: 0.5rem;
-  animation: slideInLeft 0.6s ease-out;
+  
 }
 
 .page-description {
   color: rgba(255, 255, 255, 0.9);
   font-size: 1.125rem;
-  animation: slideInLeft 0.8s ease-out;
+  
 }
 
 .header-decoration {
@@ -64,15 +64,15 @@ body.modal-open {
 .floating-icon {
   font-size: 2rem;
   opacity: 1;
-  animation: float 1s ease-in-out infinite;
+  
 }
 
 .floating-icon:nth-child(2) {
-  animation-delay: 1s;
+  
 }
 
 .floating-icon:nth-child(3) {
-  animation-delay: 2s;
+  
 }
 
 /* Quick Statistics */
@@ -96,7 +96,7 @@ body.modal-open {
   align-items: center;
   gap: 1.5rem;
   border: 2px solid transparent;
-  animation: slideInUp 0.6s ease-out;
+  
 }
 
 .quick-stat-card:hover {
@@ -157,7 +157,7 @@ body.modal-open {
   border-radius: 30px;
   padding: 2rem;
   box-shadow: 0 20px 40px rgba(74, 98, 138, 0.1);
-  animation: slideInUp 0.8s ease-out;
+  
 }
 
 .section-header {
@@ -353,7 +353,7 @@ body.modal-open {
   height: 10px;
   background: #7AB2D3;
   border-radius: 50%;
-  animation: pulse 2s ease-in-out infinite;
+  
 }
 
 .notification-icon {
@@ -419,14 +419,14 @@ body.modal-open {
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  animation: fadeIn 0.6s ease-out;
+  
 }
 
 .empty-icon {
   font-size: 5rem;
   margin-bottom: 1.5rem;
   opacity: 0.3;
-  animation: pulse 2s ease-in-out infinite;
+  
 }
 
 .empty-state h3 {
@@ -487,7 +487,7 @@ body.modal-open {
 .loading-container {
   text-align: center;
   padding: 4rem;
-  animation: fadeIn 0.6s ease-out;
+  
 }
 
 .loader {
@@ -497,24 +497,21 @@ body.modal-open {
   border-top-color: #4A628A;
   border-radius: 50%;
   margin: 0 auto 1.5rem;
-  animation: spin 1s linear infinite;
+  
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
 
 /* Error State */
 .error-container {
   text-align: center;
   padding: 4rem 2rem;
-  animation: slideInUp 0.6s ease-out;
+  
 }
 
 .error-icon {
   font-size: 4rem;
   margin-bottom: 1.5rem;
-  animation: pulse 2s ease-in-out infinite;
+  
 }
 
 .error-container h3 {
@@ -563,7 +560,7 @@ body.modal-open {
   justify-content: center;
   z-index: 9999;
   padding: 2rem;
-  animation: fadeIn 0.3s ease-out;
+  
   overflow-y: auto;
   box-sizing: border-box;
 }
@@ -577,7 +574,7 @@ body.modal-open {
   height: auto;
   overflow: hidden;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
-  animation: slideInUp 0.4s ease-out;
+  
   display: flex;
   flex-direction: column;
   margin: auto;
@@ -605,7 +602,7 @@ body.modal-open {
   height: 200px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
-  animation: float 10s ease-in-out infinite;
+  
 }
 
 .modal-title-section {
@@ -941,7 +938,7 @@ body.modal-open {
   justify-content: center;
   z-index: 3000;
   padding: 2rem;
-  animation: fadeIn 0.3s ease-out;
+  
 }
 
 .preview-modal-content {
@@ -951,7 +948,7 @@ body.modal-open {
   max-height: 90vh;
   overflow: hidden;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-  animation: slideInUp 0.4s ease-out;
+  
 }
 
 .preview-header {
@@ -1430,56 +1427,10 @@ body.modal-open {
 }
 
 /* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
 
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
-}
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
-}
 
 /* Priority Badges and Special States */
 .notification-card.urgent .notification-title {
@@ -1535,14 +1486,9 @@ button:focus-visible,
     rgba(255, 255, 255, 0.4) 50%, 
     transparent 100%
   );
-  animation: shimmer 2s infinite;
+  
 }
 
-@keyframes shimmer {
-  to {
-    left: 100%;
-  }
-}
 
 /* Notification Type Specific Styles */
 .notification-card[data-type="exam"] {

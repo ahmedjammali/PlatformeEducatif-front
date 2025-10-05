@@ -1,0 +1,173 @@
+<!-- student-schedule.component.html -->
+<div class="student-schedule">
+
+  <!-- Main Content -->
+  <div class="schedule-content">
+    <!-- Header Section -->
+    <div class="schedule-header">
+      <div class="header-content">
+        <h1>Mon Emploi du Temps</h1>
+        <p class="welcome-message" *ngIf="className">Classe: {{className}}</p>
+      </div>
+      <div class="header-actions">
+        <button
+          class="pdf-download-btn"
+          (click)="downloadSchedulePDF()"
+          [disabled]="sessions.length === 0"
+          *ngIf="!loading">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Télécharger PDF
+        </button>
+      </div>
+      <div class="header-decoration">
+        <div class="floating-icon">📅</div>
+        <div class="floating-icon">🕐</div>
+        <div class="floating-icon">📚</div>
+      </div>
+    </div>
+
+
+
+    <!-- Loading Indicator -->
+    <div *ngIf="loading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>{{loadingMessage}}</p>
+    </div>
+
+    <!-- Schedule Grid -->
+    <div *ngIf="!loading" class="schedule-grid-container">
+
+      <!-- Mobile Schedule View -->
+      <div class="mobile-schedule-view">
+        <!-- Day Selector -->
+        <div class="mobile-day-selector">
+          <button
+            *ngFor="let day of workDays"
+            class="mobile-day-btn"
+            [class.active]="selectedMobileDay === day"
+            (click)="selectMobileDay(day)">
+            {{getDayDisplayName(day)}}
+          </button>
+        </div>
+
+        <!-- Mobile Day Content -->
+        <div *ngFor="let day of workDays" class="mobile-day-content" [class.active]="selectedMobileDay === day">
+          <div *ngFor="let time of timeSlots" class="mobile-time-slot" [class.has-session]="hasSessionAtTime(day, time)">
+            <div class="mobile-time-header">
+              <span class="mobile-time-label">{{time}}</span>
+            </div>
+
+            <div class="mobile-session-list" *ngIf="getSessionsAtTime(day, time) as sessionsAtTime">
+              <ng-container *ngIf="sessionsAtTime.length > 0; else emptySlot">
+                <div *ngFor="let session of sessionsAtTime; let i = index">
+                  <div class="mobile-session-divider" *ngIf="i > 0"></div>
+                  <div class="mobile-session-card">
+                    <div class="session-header">
+                      <div class="subject-name">{{getCleanSubjectName(session)}}</div>
+                      <span class="week-badge week-{{session.weekType}}" *ngIf="session.weekType !== 'both'">
+                        {{session.weekType}}
+                      </span>
+                    </div>
+                    <div class="teacher-name">
+                      👨‍🏫 {{getTeacherName(session)}}
+                    </div>
+                    <div class="room-name" *ngIf="session.room">
+                      📍 {{session.room}}
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+              <ng-template #emptySlot>
+                <div class="mobile-empty-slot">Pas de cours</div>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop Schedule Grid -->
+      <div class="timetable-container">
+        <div class="timetable-header">
+          <h3>Emploi du Temps Hebdomadaire</h3>
+        </div>
+
+        <div class="timetable-grid">
+          <!-- Time Header -->
+          <div class="time-header">
+            <div class="corner-cell">Heure</div>
+            <div class="time-slot" *ngFor="let time of timeSlots">
+              {{time}}
+            </div>
+          </div>
+
+          <!-- Days and Sessions -->
+          <div class="days-container">
+            <div class="day-row" *ngFor="let day of workDays">
+              <div class="day-label">{{getDayDisplayName(day)}}</div>
+
+              <div class="day-slots">
+                <div
+                  class="time-cell"
+                  *ngFor="let time of timeSlots"
+                  [class.has-session]="hasSessionAtTime(day, time)">
+
+                  <!-- Sessions at this time -->
+                  <ng-container *ngIf="getSessionsAtTime(day, time) as sessionsAtTime">
+                    <div class="sessions-container" *ngIf="sessionsAtTime.length > 0">
+
+                      <!-- All sessions in one card with separator -->
+                      <div class="session-card unified">
+                        <div class="session-content">
+                          <ng-container *ngFor="let session of sessionsAtTime; let i = index">
+                            <!-- Separator line between sessions -->
+                            <div class="session-divider" *ngIf="i > 0"></div>
+
+                            <!-- Session Info -->
+                            <div class="session-block"
+                                 [class.session-today]="session.isToday"
+                                 [class.session-ongoing]="session.currentStatus === 'ongoing'">
+
+                              <!-- Subject Name with Week Badge -->
+                              <div class="session-header">
+                                <div class="subject-name">{{getCleanSubjectName(session)}}</div>
+                                <span class="week-badge week-{{session.weekType}}" *ngIf="session.weekType !== 'both'">
+                                  {{session.weekType}}
+                                </span>
+                              </div>
+
+                              <!-- Teacher -->
+                              <div class="teacher-name">
+                                {{getTeacherName(session)}}
+                              </div>
+
+                              <!-- Room -->
+                              <div class="room-name" *ngIf="session.room">
+                                📍 {{session.room}}
+                              </div>
+                            </div>
+                          </ng-container>
+                        </div>
+                      </div>
+
+                    </div>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="sessions.length === 0" class="empty-state">
+        <div class="empty-icon">📅</div>
+        <h3>Aucun cours programmé</h3>
+        <p>Il n'y a pas de cours programmés pour cette période.</p>
+      </div>
+    </div>
+  </div>
+</div>

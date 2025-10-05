@@ -141,18 +141,20 @@ export class SalaryManagementComponent implements OnInit {
       }
     });
   }
-
-  loadSalaryRecords(): void {
-    this.salaryService.getSalaryRecords(this.selectedAcademicYear).subscribe({
-      next: (records) => {
-        this.salaryRecords = records;
-      },
-      error: (error) => {
-        console.error('Error loading salary records:', error);
-        this.toasterService.error('Erreur lors du chargement des salaires');
-      }
-    });
-  }
+loadSalaryRecords(): void {
+  this.loading = true;
+  this.salaryService.getSalaryRecords(this.selectedAcademicYear).subscribe({
+    next: (records) => {
+      this.salaryRecords = records;
+      this.loading = false;
+    },
+    error: (error) => {
+      console.error('Error loading salary records:', error);
+      this.toasterService.error('Erreur lors du chargement des salaires');
+      this.loading = false;
+    }
+  });
+}
 
   loadSalarySummary(): void {
     this.salaryService.getSalarySummary(this.selectedAcademicYear).subscribe({
@@ -310,40 +312,43 @@ export class SalaryManagementComponent implements OnInit {
     return true;
   }
 
-  // Payment methods
-  openPaymentModal(record: TeacherAdminSalary, month: number): void {
-    this.selectedSalaryRecord = record;
-    this.paymentForm.month = month;
+openPaymentModal(record: TeacherAdminSalary, month: number): void {
+  // Find the latest version of this record from the salaryRecords array
+  const latestRecord = this.salaryRecords.find(r => r._id === record._id);
+  
+  // Use the latest record if found, otherwise use the passed record
+  this.selectedSalaryRecord = latestRecord || record;
+  this.paymentForm.month = month;
 
-    const payment = record.paymentSchedule.find(p => p.month === month);
-    if (payment) {
-      // Set the actual hours worked (default to regular hours if not set)
-      this.paymentForm.actualHoursWorked = payment.actualHoursWorked || payment.regularHours || 0;
+  const payment = this.selectedSalaryRecord.paymentSchedule.find(p => p.month === month);
+  if (payment) {
+    // Set the actual hours worked (default to regular hours if not set)
+    this.paymentForm.actualHoursWorked = payment.actualHoursWorked || payment.regularHours || 0;
 
-      // For hourly payments, calculate amount based on hours including extras
-      if (payment.paymentType === 'hourly') {
-        // Set paidAmount to the complete total (including extra hours)
-        if (payment.paymentStatus === 'partial') {
-          const totalAmount = this.getCurrentTotalAmount(payment);
-          this.paymentForm.paidAmount = totalAmount - (payment.paidAmount || 0);
-        } else {
-          this.paymentForm.paidAmount = this.getCurrentTotalAmount(payment);
-        }
-
-        // Trigger calculation to ensure everything is updated
-        this.updatePaymentCalculations();
+    // For hourly payments, calculate amount based on hours including extras
+    if (payment.paymentType === 'hourly') {
+      // Use getCurrentTotalAmount which should calculate correctly
+      const totalAmount = this.getCurrentTotalAmount(payment);
+      
+      if (payment.paymentStatus === 'partial') {
+        this.paymentForm.paidAmount = totalAmount - (payment.paidAmount || 0);
       } else {
-        // For fixed payments, use the predefined amounts
-        if (payment.paymentStatus === 'partial') {
-          this.paymentForm.paidAmount = payment.totalAmount - (payment.paidAmount || 0);
-        } else {
-          this.paymentForm.paidAmount = payment.totalAmount;
-        }
+        this.paymentForm.paidAmount = totalAmount;
+      }
+    } else {
+      // For fixed payments
+      if (payment.paymentStatus === 'partial') {
+        this.paymentForm.paidAmount = payment.totalAmount - (payment.paidAmount || 0);
+      } else {
+        this.paymentForm.paidAmount = payment.totalAmount;
       }
     }
+  }
 
-    this.showPaymentModal = true;
-  } closePaymentModal(): void {
+  this.showPaymentModal = true;
+}
+  
+  closePaymentModal(): void {
     this.showPaymentModal = false;
     this.selectedSalaryRecord = null;
     this.resetPaymentForm();
@@ -440,71 +445,62 @@ export class SalaryManagementComponent implements OnInit {
     this.updatePaymentCalculations();
   }
 
-  // Save hours and extra hours for a specific payment
-  saveHoursForPayment(record: TeacherAdminSalary, payment: any): void {
-    if (!record || !payment) {
-      this.toasterService.error('Impossible de sauvegarder: données manquantes');
-      return;
+saveHoursForPayment(record: TeacherAdminSalary, payment: any): void {
+  if (!record || !payment) {
+    this.toasterService.error('Impossible de sauvegarder: données manquantes');
+    return;
+  }
+
+  const userId = typeof record.user === 'string' ? record.user : (record.user as any)?._id;
+
+  if (!userId) {
+    this.toasterService.error('Impossible de sauvegarder: utilisateur non identifié');
+    return;
+  }
+
+  const hoursData = {
+    userId: userId,
+    month: payment.month,
+    actualHoursWorked: payment.actualHoursWorked || payment.regularHours || 0,
+    extraHours: payment.extraHours || 0
+  };
+
+  this.loading = true;
+  this.salaryService.updatePaymentHours(hoursData).subscribe({
+    next: (response: any) => {
+      this.toasterService.success('Heures sauvegardées avec succès');
+      
+      // CRITICAL: Reload salary records to get updated totals from backend
+      this.loadSalaryRecords();
+      
+      // Also reload summary to update dashboard cards
+      this.loadSalarySummary();
+    },
+    error: (error: any) => {
+      console.error('Erreur lors de la sauvegarde des heures:', error);
+      this.toasterService.error('Erreur lors de la sauvegarde des heures');
+      this.loading = false;
     }
+  });
+}
+calculateTotalForHoursCard(payment: any, hoursWorked: number): number {
+  if (!payment || payment.paymentType !== 'hourly' || hoursWorked < 0) return 0;
 
-    // Get user ID whether it's a User object or string
-    const userId = typeof record.user === 'string' ? record.user : (record.user as any)?._id;
+  const hourlyRate = Math.max(0, payment.hourlyRate || 0);
+  const extraHours = Math.max(0, payment.extraHours || 0);
 
-    if (!userId) {
-      this.toasterService.error('Impossible de sauvegarder: utilisateur non identifié');
-      return;
-    }
+  // All hours worked are paid at the same rate
+  const workedPayment = hoursWorked * hourlyRate;
 
-    const hoursData = {
-      userId: userId,
-      month: payment.month,
-      actualHoursWorked: payment.actualHoursWorked || payment.regularHours || 0,
-      extraHours: payment.extraHours || 0
-    };
+  // Calculate separate extra hours payment (bonus hours)
+  let extraPayment = 0;
+  if (payment.extraHourlyRate && payment.extraHourlyRate > 0) {
+    extraPayment = extraHours * payment.extraHourlyRate;
+  }
 
-    this.loading = true;
-    this.salaryService.updatePaymentHours(hoursData).subscribe({
-      next: (response: any) => {
-        this.toasterService.success('Heures sauvegardées avec succès');
-        // Refresh the data to ensure consistency
-        this.loadSalaryRecords();
-      },
-      error: (error: any) => {
-        console.error('Erreur lors de la sauvegarde des heures:', error);
-        this.toasterService.error('Erreur lors de la sauvegarde des heures');
-      },
-      complete: () => {
-        this.loading = false;
-      }
-    });
-  }  // Calculate total for hours specifically for card usage
-  calculateTotalForHoursCard(payment: any, hoursWorked: number): number {
-    if (!payment || payment.paymentType !== 'hourly' || hoursWorked < 0) return 0;
+  return workedPayment + extraPayment;
+}
 
-    const regularHours = Math.max(0, payment.regularHours || 0);
-    const hourlyRate = Math.max(0, payment.hourlyRate || 0);
-    const extraHours = Math.max(0, payment.extraHours || 0);
-
-    // Determine effective extra hourly rate
-    let extraHourlyRate = hourlyRate; // Default to regular rate
-    if (payment.extraHourlyRate !== undefined && payment.extraHourlyRate !== null) {
-      extraHourlyRate = Math.max(0, payment.extraHourlyRate);
-    }
-
-    // Calculate regular hours payment (up to regular hours limit)
-    const actualRegularHours = Math.min(hoursWorked, regularHours);
-    const regularPayment = actualRegularHours * hourlyRate;
-
-    // Calculate overtime payment (hours beyond regular hours)
-    const overtimeHours = Math.max(0, hoursWorked - regularHours);
-    const overtimePayment = overtimeHours * extraHourlyRate;
-
-    // Calculate separate extra hours payment (independent extra hours)
-    const extraHoursPayment = extraHours * extraHourlyRate;
-
-    // Total payment is regular + overtime + extra hours
-    return regularPayment + overtimePayment + extraHoursPayment;
-  }  // Update payment status based on current amounts
   updatePaymentStatus(payment: any): void {
     if (!payment) return;
 
@@ -568,39 +564,33 @@ export class SalaryManagementComponent implements OnInit {
       ? payment.extraHourlyRate
       : (payment.hourlyRate || 0);
   }
+getCurrentTotalAmount(payment: any): number {
+  if (!payment) return 0;
 
-  // Helper method to get the current total amount for a payment (updated with current hours and extras)
-  getCurrentTotalAmount(payment: any): number {
-    if (!payment) return 0;
+  if (payment.paymentType === 'hourly') {
+    // Get the actual hours worked (from the payment object itself)
+    const currentHours = Math.max(0, payment.actualHoursWorked || payment.regularHours || 0);
+    const hourlyRate = Math.max(0, payment.hourlyRate || 0);
+    
+    // Calculate base amount from ALL hours worked at regular rate
+    const baseAmount = currentHours * hourlyRate;
 
-    if (payment.paymentType === 'hourly') {
-      // Use the actualHoursWorked from form if available and valid, otherwise from payment
-      let currentHours = 0;
-      if (this.paymentForm.actualHoursWorked !== undefined && this.paymentForm.actualHoursWorked !== null) {
-        currentHours = Math.max(0, Number(this.paymentForm.actualHoursWorked));
-      } else {
-        currentHours = Math.max(0, payment.actualHoursWorked || payment.regularHours || 0);
-      }
+    // Add extra hours amount (independent extra hours)
+    const extraHours = Math.max(0, payment.extraHours || 0);
+    const extraHourlyRate = payment.extraHourlyRate || 0;
+    const extraAmount = extraHours * extraHourlyRate;
 
-      // Calculate base amount from hours worked
-      const baseAmount = this.calculateTotalForHours(currentHours);
+    return baseAmount + extraAmount;
+  } else {
+    // For monthly payments
+    const baseSalary = Math.max(0, payment.baseSalaryAmount || 0);
+    const extraHours = Math.max(0, payment.extraHours || 0);
+    const extraHourlyRate = payment.extraHourlyRate || 0;
+    const extraAmount = extraHours * extraHourlyRate;
 
-      // Add extra hours amount (independent extra hours)
-      const extraHours = Math.max(0, payment.extraHours || 0);
-      const extraHourlyRate = this.getEffectiveExtraHourlyRate(payment);
-      const extraAmount = extraHours * extraHourlyRate;
-
-      return baseAmount + extraAmount;
-    } else {
-      // For monthly payments, calculate base salary + extra hours
-      const baseSalary = Math.max(0, payment.baseSalaryAmount || 0);
-      const extraHours = Math.max(0, payment.extraHours || 0);
-      const extraHourlyRate = this.getEffectiveExtraHourlyRate(payment);
-      const extraAmount = extraHours * extraHourlyRate;
-
-      return baseSalary + extraAmount;
-    }
+    return baseSalary + extraAmount;
   }
+}
 
   // Helper method to get calculation breakdown details
   getCalculationBreakdown(payment: any, hoursWorked: number): any {
@@ -983,79 +973,85 @@ export class SalaryManagementComponent implements OnInit {
     this.selectedPrintData = null;
   }
 
-  downloadReceipt(): void {
-    if (!this.selectedPrintData) {
-      this.toasterService.error('Aucune donnée de reçu disponible');
-      return;
-    }
+downloadReceipt(): void {
+  if (!this.selectedPrintData) {
+    this.toasterService.error('Aucune donnée de reçu disponible');
+    return;
+  }
 
-    // Show loading state
-    this.loading = true;
-    this.toasterService.success('Génération du PDF en cours...');
+  // Show loading state
+  this.loading = true;
+  this.toasterService.success('Génération du PDF en cours...');
 
-    // Create a temporary element to render the receipt
-    const tempElement = document.createElement('div');
-    tempElement.style.position = 'absolute';
-    tempElement.style.left = '-9999px';
-    tempElement.style.top = '-9999px';
-    tempElement.style.width = '210mm'; // A4 width
-    tempElement.style.padding = '20mm';
-    tempElement.style.backgroundColor = 'white';
-    tempElement.style.fontFamily = 'Arial, sans-serif';
+  // Create a temporary element to render the receipt
+  const tempElement = document.createElement('div');
+  tempElement.style.position = 'absolute';
+  tempElement.style.left = '-9999px';
+  tempElement.style.top = '-9999px';
+  tempElement.style.width = '210mm'; // A4 width
+  tempElement.style.padding = '20mm';
+  tempElement.style.backgroundColor = 'white';
+  tempElement.style.fontFamily = 'Arial, sans-serif';
 
-    // Add the receipt content
-    tempElement.innerHTML = this.generateReceiptHTML();
+  // Add TWO copies of the receipt content with a separator
+  const receiptHTML = this.generateReceiptHTML();
+  tempElement.innerHTML = `
+    ${receiptHTML}
+    <div style="border-top: 2px dashed #999; margin: 30px 0; page-break-inside: avoid;"></div>
+    ${receiptHTML}
+  `;
 
-    // Apply styles directly
-    const styleElement = document.createElement('style');
-    styleElement.textContent = this.getPrintStyles().replace(/@page[^}]*}/g, '');
-    tempElement.appendChild(styleElement);
+  // Apply styles directly
+  const styleElement = document.createElement('style');
+  styleElement.textContent = this.getPrintStyles().replace(/@page[^}]*}/g, '');
+  tempElement.appendChild(styleElement);
 
-    // Add to document temporarily
-    document.body.appendChild(tempElement);
+  // Add to document temporarily
+  document.body.appendChild(tempElement);
 
-    // Use html2canvas and jsPDF to generate PDF
-    html2canvas(tempElement, {
-      useCORS: true,
-      allowTaint: false,
-      width: tempElement.scrollWidth,
-      height: tempElement.scrollHeight
-    }).then((canvas: HTMLCanvasElement) => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
+  // Use html2canvas and jsPDF to generate PDF
+  html2canvas(tempElement, {
+    useCORS: true,
+    allowTaint: false,
+    width: tempElement.scrollWidth,
+    height: tempElement.scrollHeight
+  }).then((canvas: HTMLCanvasElement) => {
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
 
-      const imgWidth = 190; // A4 width minus margins
-      const pageHeight = 297; // A4 height
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 10;
+    const imgWidth = 190; // A4 width minus margins
+    const pageHeight = 297; // A4 height
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 10;
 
+    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
       pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
+    }
 
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
+    const employeeName = this.getEmployeeName(this.selectedPrintData!.record).replace(/[^\w\s]/gi, '');
+    const monthName = this.monthNames[this.selectedPrintData!.payment.month - 1];
+    const filename = `recu_salaire_${employeeName.replace(/\s+/g, '_')}_${monthName}.pdf`;
 
-      const employeeName = this.getEmployeeName(this.selectedPrintData!.record).replace(/[^\w\s]/gi, '');
-      const monthName = this.monthNames[this.selectedPrintData!.payment.month - 1];
-      const filename = `recu_salaire_${employeeName.replace(/\s+/g, '_')}_${monthName}.pdf`;
+    pdf.save(filename);
+    this.loading = false;
+    this.toasterService.success('Reçu PDF téléchargé avec succès!');
 
-      pdf.save(filename);
-      this.loading = false;
-      this.toasterService.success('Reçu PDF téléchargé avec succès!');
-
-      // Clean up
-      document.body.removeChild(tempElement);
-    }).catch((error: any) => {
-      console.error('Error generating PDF:', error);
-      this.loading = false;
-      this.fallbackDownload(tempElement);
-    });
-  } private fallbackDownload(tempElement: HTMLElement): void {
+    // Clean up
+    document.body.removeChild(tempElement);
+  }).catch((error: any) => {
+    console.error('Error generating PDF:', error);
+    this.loading = false;
+    this.fallbackDownload(tempElement);
+  });
+}
+  private fallbackDownload(tempElement: HTMLElement): void {
     const employeeName = this.getEmployeeName(this.selectedPrintData!.record).replace(/[^\w\s]/gi, '');
     const monthName = this.monthNames[this.selectedPrintData!.payment.month - 1];
 
@@ -1395,20 +1391,29 @@ export class SalaryManagementComponent implements OnInit {
     return (payment.extraHours && payment.extraHours > 0) ||
            (payment.paymentType === 'hourly' && payment.actualHoursWorked !== payment.regularHours);
   }
+getReceiptTotalAmount(payment: any): number {
+  if (!payment) return 0;
 
-  // Get the correct total amount for receipt display
-  getReceiptTotalAmount(payment: any): number {
-    if (!payment) return 0;
-
-    if (payment.paymentType === 'monthly') {
-      const baseSalary = Math.max(0, payment.baseSalaryAmount || 0);
-      const extraHours = Math.max(0, payment.extraHours || 0);
-      const extraHourlyRate = this.getEffectiveExtraHourlyRate(payment);
-      const extraAmount = extraHours * extraHourlyRate;
-      return baseSalary + extraAmount;
-    } else {
-      // For hourly payments, use the existing calculation
-      return this.getCurrentTotalAmount(payment);
-    }
+  if (payment.paymentType === 'monthly') {
+    const baseSalary = Math.max(0, payment.baseSalaryAmount || 0);
+    const extraHours = Math.max(0, payment.extraHours || 0);
+    const extraHourlyRate = payment.extraHourlyRate || 0;
+    const extraAmount = extraHours * extraHourlyRate;
+    return baseSalary + extraAmount;
+  } else {
+    // For hourly payments, calculate from actualHoursWorked
+    const actualHours = Math.max(0, payment.actualHoursWorked || payment.regularHours || 0);
+    const hourlyRate = Math.max(0, payment.hourlyRate || 0);
+    
+    // Calculate base payment from all hours worked
+    const basePayment = actualHours * hourlyRate;
+    
+    // Add separate extra hours if any
+    const extraHours = Math.max(0, payment.extraHours || 0);
+    const extraHourlyRate = payment.extraHourlyRate || 0;
+    const extraPayment = extraHours * extraHourlyRate;
+    
+    return basePayment + extraPayment;
   }
+}
 }

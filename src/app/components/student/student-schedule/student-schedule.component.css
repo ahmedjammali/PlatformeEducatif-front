@@ -1,0 +1,790 @@
+.student-schedule {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--color-secondary) 0%, #F0F9E8 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+.schedule-content {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: var(--container-padding);
+}
+
+/* Header */
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-3xl);
+  padding: var(--spacing-xl);
+  background: var(--gradient-primary);
+  border-radius: var(--radius-lg);
+  color: var(--color-white);
+  position: relative;
+  overflow: hidden;
+}
+
+.schedule-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+}
+
+.header-content h1 {
+  font-size: var(--font-3xl);
+  margin-bottom: var(--spacing-sm);
+  font-weight: 700;
+  background: linear-gradient(45deg, #fff 0%, rgba(255,255,255,0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.welcome-message {
+  font-size: var(--font-lg);
+  margin: 0;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  z-index: var(--z-base);
+  position: relative;
+}
+
+.pdf-download-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-primary-dark);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.pdf-download-btn:hover:not(:disabled) {
+  background: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.pdf-download-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.pdf-download-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.header-decoration {
+  display: flex;
+  gap: var(--spacing-lg);
+  z-index: var(--z-base);
+  position: relative;
+}
+
+.floating-icon {
+  font-size: var(--font-3xl);
+  opacity: 0.8;
+}
+
+/* Filters and Info Section */
+.filters-and-info-section {
+  margin-bottom: var(--spacing-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  background: var(--color-white);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  min-width: 300px;
+  border: 2px solid var(--color-accent);
+  transition: var(--transition-base);
+}
+
+.filter-group:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.filter-group label {
+  display: block;
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  font-size: var(--font-base);
+  margin-bottom: var(--spacing-md);
+}
+
+.form-select {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 2px solid var(--color-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  color: var(--color-primary-dark);
+  font-size: var(--font-base);
+  font-weight: 500;
+  transition: var(--transition-base);
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(122, 178, 211, 0.2);
+}
+
+/* Loading Styles */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-3xl);
+  color: var(--color-primary-dark);
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--color-secondary);
+  border-top: 4px solid var(--color-primary);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--spacing-lg);
+}
+
+
+.info-card {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  background: var(--color-white);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: var(--radius-md);
+  color: var(--color-primary-dark);
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--color-accent);
+}
+
+.info-label {
+  font-weight: 600;
+  font-size: var(--font-base);
+}
+
+.info-value {
+  font-size: var(--font-2xl);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* Timetable Container */
+.timetable-container {
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  box-shadow: var(--shadow-lg);
+  border: 2px solid var(--color-accent);
+}
+
+.timetable-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 2px solid var(--color-secondary);
+}
+
+.timetable-header h3 {
+  font-size: var(--font-xl);
+  color: var(--color-primary-dark);
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Timetable Grid */
+.timetable-grid {
+  border: 2px solid var(--color-secondary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--color-white);
+}
+
+.time-header {
+  display: grid;
+  grid-template-columns: 120px repeat(auto-fit, minmax(100px, 1fr));
+  background-color: var(--color-accent);
+  border-bottom: 2px solid var(--color-secondary);
+}
+
+.corner-cell {
+  padding: var(--spacing-lg) var(--spacing-md);
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  background: var(--gradient-primary);
+  color: var(--color-white);
+  text-align: center;
+  font-size: var(--font-base);
+}
+
+.time-slot {
+  padding: var(--spacing-lg) var(--spacing-md);
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  text-align: center;
+  border-left: 1px solid var(--color-secondary);
+  font-size: var(--font-sm);
+}
+
+.days-container {
+  width: 100%;
+}
+
+.day-row {
+  display: grid;
+  grid-template-columns: 120px repeat(auto-fit, minmax(100px, 1fr));
+  border-bottom: 1px solid var(--color-secondary);
+}
+
+.day-row:last-child {
+  border-bottom: none;
+}
+
+.day-label {
+
+  font-weight: 600;
+  color: var(--color-white);
+  background: var(--gradient-primary);
+  text-align: center;
+  font-size: var(--font-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-slots {
+  display: contents;
+}
+
+.time-cell {
+  border-left: 1px solid var(--color-secondary);
+  padding: var(--spacing-xs);
+  min-height: 80px;
+  background: var(--color-gray-light);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  align-items: stretch;
+}
+
+.time-cell.has-session {
+  background: var(--color-white);
+}
+
+.sessions-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+/* Session Card */
+.session-card {
+  background: var(--gradient-primary);
+  color: var(--color-white);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-base);
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+}
+
+.session-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-accent);
+}
+
+/* Session Content */
+.session-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.subject-name {
+  font-weight: 700;
+  font-size: var(--font-xs);
+  line-height: 1.2;
+  color: var(--color-white);
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.session-time {
+  font-size: var(--font-xs);
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+.teacher-name,
+.room-name {
+  font-size: var(--font-xs);
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.session-type {
+  font-size: var(--font-xs);
+  background: rgba(255, 255, 255, 0.2);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  width: fit-content;
+}
+
+/* Week Type Styling */
+.week-badge {
+  background: rgba(255, 255, 255, 0.3);
+  color: var(--color-white);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* All sessions have the same color - no week type distinction */
+
+/* Dual Session Container */
+.dual-session-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.session-card.compact {
+  padding: var(--spacing-sm);
+  margin-bottom: 0;
+}
+
+.week-indicator {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-primary-dark);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: var(--spacing-xs);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.subject-name.compact {
+  font-size: var(--font-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.teacher-info.compact,
+.room-info.compact,
+.session-type.compact {
+  font-size: 0.7rem;
+  margin-bottom: var(--spacing-xs);
+}
+
+.session-type.compact {
+  padding: 2px var(--spacing-xs);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-3xl) var(--spacing-lg);
+  color: var(--color-primary-dark);
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--color-accent);
+}
+
+.empty-icon {
+  font-size: var(--font-4xl);
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.7;
+}
+
+.empty-state h3 {
+  font-size: var(--font-2xl);
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.empty-state p {
+  opacity: 0.8;
+  font-size: var(--font-base);
+  color: var(--color-gray-dark);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .schedule-content {
+    padding: var(--spacing-lg);
+  }
+
+  .schedule-header {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-lg);
+  }
+
+  .header-content h1 {
+    font-size: var(--font-2xl);
+  }
+}
+
+@media (max-width: 768px) {
+  .schedule-content {
+    padding: var(--spacing-md);
+  }
+
+  .schedule-header {
+    padding: var(--spacing-lg);
+  }
+
+  .header-content h1 {
+    font-size: var(--font-xl);
+  }
+
+  .filters-and-info-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+
+  .filter-group {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .timetable-grid {
+    font-size: var(--font-xs);
+  }
+
+  .session-card {
+    padding: var(--spacing-sm);
+  }
+
+  .session-subject {
+    font-size: var(--font-xs);
+  }
+
+  .time-cell,
+  .day-label {
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
+
+  .day-label {
+    min-width: 100px;
+  }
+
+  .time-header {
+    grid-template-columns: 100px repeat(auto-fit, minmax(80px, 1fr));
+  }
+
+  .day-row {
+    grid-template-columns: 100px repeat(auto-fit, minmax(80px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content h1 {
+    font-size: var(--font-lg);
+  }
+
+  .welcome-message {
+    font-size: var(--font-base);
+  }
+
+  .session-card {
+    padding: var(--spacing-sm);
+  }
+
+  .session-subject {
+    font-size: var(--font-xs);
+  }
+
+  .session-time,
+  .session-teacher,
+  .session-room {
+    font-size: 0.7rem;
+  }
+
+  .header-decoration {
+    display: none;
+  }
+
+  .pdf-download-btn {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--font-sm);
+  }
+
+  .pdf-download-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Mobile Schedule Layout - Show one day at a time */
+  .timetable-grid {
+    display: none;
+  }
+
+  .mobile-schedule-view {
+    display: block !important;
+  }
+
+  .schedule-grid-container {
+    position: relative;
+  }
+}
+
+/* Mobile Schedule View Styles */
+.mobile-schedule-view {
+  display: none;
+}
+
+.mobile-day-selector {
+  display: flex;
+  gap: var(--spacing-xs);
+  overflow-x: auto;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-sm);
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-day-selector::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-day-btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-gray-light);
+  border: 2px solid var(--color-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  font-size: var(--font-sm);
+  cursor: pointer;
+  transition: var(--transition-base);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mobile-day-btn.active {
+  background: var(--gradient-primary);
+  color: var(--color-white);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.mobile-day-content {
+  display: none;
+}
+
+.mobile-day-content.active {
+  display: block;
+}
+
+.mobile-time-slot {
+  background: var(--color-white);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--color-secondary);
+}
+
+.mobile-time-slot.has-session {
+  border-color: var(--color-primary);
+}
+
+.mobile-time-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--color-secondary);
+}
+
+.mobile-time-label {
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  font-size: var(--font-base);
+}
+
+.mobile-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.mobile-session-card {
+  background: var(--gradient-primary);
+  color: var(--color-white);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-md);
+}
+
+.mobile-session-card .subject-name {
+  font-size: var(--font-base);
+  font-weight: 700;
+  margin-bottom: var(--spacing-xs);
+}
+
+.mobile-session-card .teacher-name,
+.mobile-session-card .room-name {
+  font-size: var(--font-sm);
+  opacity: 0.95;
+  margin-bottom: var(--spacing-xs);
+}
+
+.mobile-session-card .week-badge {
+  display: inline-block;
+  margin-top: var(--spacing-xs);
+}
+
+.mobile-empty-slot {
+  text-align: center;
+  color: var(--color-gray-dark);
+  font-size: var(--font-sm);
+  opacity: 0.7;
+  padding: var(--spacing-sm);
+}
+
+.mobile-session-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  margin: var(--spacing-sm) 0;
+}
+
+/* Unified session layout with separator */
+.session-card.unified {
+  padding: 6px;
+}
+
+.session-card.unified .session-content {
+  gap: 0;
+}
+
+.session-block {
+  padding: 4px 6px;
+}
+
+.session-block:first-child {
+  padding-top: 2px;
+}
+
+.session-block:last-child {
+  padding-bottom: 2px;
+}
+
+/* Divider line between sessions */
+.session-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  margin: 6px 0;
+}
+
+.session-block .session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.session-block .subject-name {
+  font-weight: 700;
+  font-size: 0.68rem;
+  flex: 1;
+  line-height: 1.2;
+}
+
+/* Week badges with different colors */
+.session-block .week-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 1;
+  text-transform: uppercase;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.session-block .week-badge.week-A {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.session-block .week-badge.week-B {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.session-block .teacher-name,
+.session-block .room-name {
+  font-size: var(--font-xs);
+  opacity: 0.9;
+  margin-top: 2px;
+  line-height: 1.3;
+}

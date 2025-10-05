@@ -160,32 +160,6 @@ export class ScheduleUtils {
     return { valid: true };
   }
 
-  // Academic year utilities
-  static getCurrentAcademicYear(): string {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const academicYearStart = new Date(currentYear, 8, 1); // September 1st
-    
-    if (now < academicYearStart) {
-      return (currentYear - 1).toString();
-    } else {
-      return currentYear.toString();
-    }
-  }
-
-  static getAcademicYearsList(yearsBack: number = 3, yearsForward: number = 2): string[] {
-    const currentYear = parseInt(this.getCurrentAcademicYear());
-    const years: string[] = [];
-
-    // Start from 2025 minimum
-    const startYear = Math.max(currentYear - yearsBack, 2025);
-
-    for (let i = startYear; i <= currentYear + yearsForward; i++) {
-      years.push(i.toString());
-    }
-
-    return years;
-  }
 
   // Week utilities
   static getWeekDates(date: Date = new Date()): { start: Date; end: Date; dates: Date[] } {

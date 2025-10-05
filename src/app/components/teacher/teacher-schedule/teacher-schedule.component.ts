@@ -24,8 +24,6 @@ export class TeacherScheduleComponent implements OnInit, OnDestroy {
   loadingMessage = '';
 
   // Données de l'enseignant
-  selectedAcademicYear: string;
-  academicYears: string[] = [];
 
   // Emploi du temps
   workDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -35,13 +33,14 @@ export class TeacherScheduleComponent implements OnInit, OnDestroy {
   ];
   sessions: SessionWithMeta[] = [];
 
+  // Mobile view
+  selectedMobileDay: string = 'monday';
+
   constructor(
     private scheduleService: ScheduleService,
     private authService: AuthService,
     private toasterService: ToasterService
   ) {
-    this.selectedAcademicYear = ScheduleUtils.getCurrentAcademicYear();
-    this.academicYears = ScheduleUtils.getAcademicYearsList();
   }
 
   ngOnInit(): void {
@@ -104,7 +103,7 @@ export class TeacherScheduleComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.loadingMessage = 'Chargement de votre emploi du temps...';
 
-    this.scheduleService.getTeacherSchedule(teacherId, undefined, undefined, this.selectedAcademicYear)
+    this.scheduleService.getTeacherSchedule(teacherId, undefined, undefined)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -128,10 +127,6 @@ export class TeacherScheduleComponent implements OnInit, OnDestroy {
       });
   }
 
-  onAcademicYearChange(): void {
-    this.loadTeacherSchedule();
-  }
-
   downloadPDF(): void {
     if (!this.currentUser || this.sessions.length === 0) {
       this.toasterService.warning('Aucun emploi du temps à exporter');
@@ -153,81 +148,158 @@ export class TeacherScheduleComponent implements OnInit, OnDestroy {
   }
 
   private generateClientSidePDF(): void {
-    // Create PDF with UTF-8 support
-    const doc = new jsPDF('p', 'mm', 'a4');
-
-    // Try to set font that supports Unicode better
     try {
-      doc.setFont('helvetica');
-    } catch (error) {
-      console.warn('Could not set font, using default');
-    }
+      // Create PDF in landscape orientation
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+        putOnlyUsedFonts: true,
+        compress: true
+      });
 
-    // Header
-    doc.setFontSize(20);
-    doc.text('Emploi du Temps', 105, 20, { align: 'center' });
+      // Add title
+      doc.setFontSize(18);
+      doc.setTextColor(40, 40, 40);
+      doc.text('Emploi du Temps', 148, 15, { align: 'center' });
 
-    // Teacher info
-    doc.setFontSize(12);
-    doc.text(`Enseignant: ${this.currentUser.name}`, 20, 35);
-    doc.text(`Année Académique: ${this.selectedAcademicYear}`, 20, 45);
-    doc.text(`Total des séances: ${this.sessions.length}`, 20, 55);
-    doc.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')}`, 20, 65);
+      // Add teacher name
+      doc.setFontSize(12);
+      doc.text(`Enseignant: ${this.currentUser?.name || 'Enseignant'}`, 148, 23, { align: 'center' });
 
-    // Create table data
-    const tableData = this.createPDFTableData();
+      // Add generated date
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')}`, 148, 29, { align: 'center' });
 
-    // Generate table with enhanced configuration for multilingual support
-    autoTable(doc, {
-      head: [['Jour', 'Heure', 'Matière', 'Classe', 'Salle', 'Type', 'Semaine']],
-      body: tableData,
-      startY: 75,
-      styles: {
-        fontSize: 9,
-        cellPadding: 3,
-        halign: 'center',
-        valign: 'middle',
-        font: 'helvetica',
-        lineColor: [200, 200, 200],
-        lineWidth: 0.1,
-        overflow: 'linebreak',
-        cellWidth: 'wrap'
-      },
-      headStyles: {
-        fillColor: [41, 128, 185],
-        textColor: 255,
-        fontStyle: 'bold',
-        fontSize: 10,
-        halign: 'center'
-      },
-      alternateRowStyles: {
-        fillColor: [248, 249, 250]
-      },
-      columnStyles: {
-        0: { cellWidth: 20, halign: 'center' },  // Jour
-        1: { cellWidth: 25, halign: 'center' },  // Heure
-        2: { cellWidth: 60, halign: 'left', fontSize: 8, overflow: 'linebreak' }, // Matière - wider for transliterated text
-        3: { cellWidth: 20, halign: 'center' },  // Classe
-        4: { cellWidth: 15, halign: 'center' },  // Salle
-        5: { cellWidth: 20, halign: 'center' },  // Type
-        6: { cellWidth: 20, halign: 'center' }   // Semaine
-      },
-      // Enhanced cell parsing for multilingual text
-      didParseCell: function(data) {
-        if (data.column.index === 2 && data.cell.text) { // Subject column
-          // Ensure proper text handling for Arabic
-          if (Array.isArray(data.cell.text)) {
-            data.cell.text = data.cell.text.map(text => {
-              return String(text || '').trim();
-            });
+      // Prepare table data
+      const tableData: any[] = [];
+
+      // Create header row with time slots (excluding 18:00-19:00)
+      const timeSlotRanges = [
+        '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00',
+        '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00'
+      ];
+      const headerRow = ['Jour', ...timeSlotRanges];
+
+      // Create rows for each day
+      this.workDays.forEach(day => {
+        const row: any[] = [this.getDayDisplayName(day)];
+
+        timeSlotRanges.forEach(timeSlot => {
+          const sessionsAtTime = this.getSessionsAtTime(day, timeSlot);
+
+          if (sessionsAtTime.length > 0) {
+            // Format session info with French translation
+            const sessionInfo = sessionsAtTime.map(session => {
+              const subjectName = this.translateToFrench(this.getCleanSubjectName(session));
+              const className = session.className || '';
+              const room = session.room ? `Salle: ${session.room}` : '';
+              const weekBadge = session.weekType !== 'both' ? ` (Semaine ${session.weekType})` : '';
+
+              // Build session text
+              let text = `${subjectName}${weekBadge}\n${className}`;
+              if (room) {
+                text += `\n${room}`;
+              }
+              return text;
+            }).join('\n\n-----------------\n\n');
+
+            row.push(sessionInfo);
+          } else {
+            row.push('');
+          }
+        });
+
+        tableData.push(row);
+      });
+
+      // Generate table with improved design
+      autoTable(doc, {
+        head: [headerRow],
+        body: tableData,
+        startY: 35,
+        styles: {
+          fontSize: 8,
+          cellPadding: 2.5,
+          lineColor: [164, 180, 101],
+          lineWidth: 0.3,
+          halign: 'center',
+          valign: 'middle',
+          font: 'helvetica',
+          fontStyle: 'normal'
+        },
+        headStyles: {
+          fillColor: [102, 126, 234],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center',
+          fontSize: 8,
+          cellPadding: 2,
+          minCellHeight: 10
+        },
+        columnStyles: {
+          0: {
+            fillColor: [164, 180, 101],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            halign: 'center',
+            cellWidth: 20
+          }
+        },
+        bodyStyles: {
+          minCellHeight: 18,
+          fontSize: 7.5
+        },
+        alternateRowStyles: {
+          fillColor: [245, 247, 250]
+        },
+        didParseCell: (data: any) => {
+          // Color cells with sessions
+          if (data.section === 'body' && data.column.index > 0 && data.cell.text.length > 0 && data.cell.text[0] !== '') {
+            data.cell.styles.fillColor = [240, 249, 232];
+            data.cell.styles.textColor = [40, 40, 40];
+            data.cell.styles.fontStyle = 'normal';
           }
         }
-      }
-    });
+      });
 
-    // Save PDF
-    const fileName = `emploi_du_temps_${this.currentUser.name.replace(/\s+/g, '_')}_${this.selectedAcademicYear}.pdf`;
-    doc.save(fileName);
+      // Add footer with Edusphere branding
+      const pageCount = doc.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(102, 126, 234);
+      doc.text(
+        `Généré par Edusphere - Page 1/${pageCount}`,
+        148,
+        doc.internal.pageSize.height - 10,
+        { align: 'center' }
+      );
+
+      // Save PDF
+      const fileName = `Emploi_du_Temps_${this.currentUser?.name?.replace(/\s+/g, '_') || 'Enseignant'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+
+      this.toasterService.success('PDF téléchargé avec succès');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      this.toasterService.error('Erreur lors de la génération du PDF');
+    }
+  }
+
+  getSessionsAtTime(day: string, timeInterval: string): SessionWithMeta[] {
+    // Extract start time from interval (e.g., "08:00-09:00" -> "08:00")
+    const startTime = timeInterval.split('-')[0];
+    const timeMinutes = this.timeToMinutes(startTime);
+
+    return this.sessions.filter(session => {
+      if (session.dayOfWeek !== day) return false;
+
+      const sessionStart = this.timeToMinutes(session.startTime);
+      const sessionEnd = this.timeToMinutes(session.endTime);
+
+      // Check if the time slot falls within the session duration
+      return timeMinutes >= sessionStart && timeMinutes < sessionEnd;
+    });
   }
 
   private createPDFTableData(): any[][] {
@@ -405,18 +477,17 @@ export class TeacherScheduleComponent implements OnInit, OnDestroy {
     try {
       // Check for subject object with name
       if (session.subject && typeof session.subject === 'object' && session.subject.name) {
-        // Return the subject name as-is to support Arabic and other languages
-        return session.subject.name.toString() || 'Matière Inconnue';
+        return session.subject.name || 'Matière Inconnue';
       }
 
       // Check for direct subjectName property
       if (session.subjectName) {
-        return session.subjectName.toString() || 'Matière Inconnue';
+        return session.subjectName || 'Matière Inconnue';
       }
 
       // Check for subject as string
       if (session.subject && typeof session.subject === 'string') {
-        return session.subject.toString() || 'Matière Inconnue';
+        return session.subject || 'Matière Inconnue';
       }
 
       // Check for subject ID and try to get from loaded data
@@ -427,16 +498,16 @@ export class TeacherScheduleComponent implements OnInit, OnDestroy {
       // Check for teacherSubject structure
       if (session.teacherSubject && session.teacherSubject.subject) {
         if (typeof session.teacherSubject.subject === 'object' && session.teacherSubject.subject.name) {
-          return session.teacherSubject.subject.name.toString() || 'Matière Inconnue';
+          return session.teacherSubject.subject.name || 'Matière Inconnue';
         }
         if (typeof session.teacherSubject.subject === 'string') {
-          return session.teacherSubject.subject.toString() || 'Matière Inconnue';
+          return session.teacherSubject.subject || 'Matière Inconnue';
         }
       }
 
       // Check if there's a populated subject reference
       if (session.subjectId && typeof session.subjectId === 'object' && session.subjectId.name) {
-        return session.subjectId.name.toString() || 'Matière Inconnue';
+        return session.subjectId.name || 'Matière Inconnue';
       }
 
       return 'Matière Inconnue';
@@ -444,6 +515,59 @@ export class TeacherScheduleComponent implements OnInit, OnDestroy {
       console.error('Error getting clean subject name:', error, session);
       return 'Matière Inconnue';
     }
+  }
+
+  private translateToFrench(text: string): string {
+    if (!text) return '';
+
+    // Common Arabic to French translations
+    const translations: { [key: string]: string } = {
+      'التاريخ والجغرافيا': 'Histoire et Géographie',
+      'التاريخ': 'Histoire',
+      'الجغرافيا': 'Géographie',
+      'التربية السلمية': 'Éducation Civique',
+      'التربية الإسلامية': 'Éducation Islamique',
+      'اللغة العربية': 'Langue Arabe',
+      'اللغة الفرنسية': 'Langue Française',
+      'الرياضيات': 'Mathématiques',
+      'الفيزياء': 'Physique',
+      'الكيمياء': 'Chimie',
+      'علوم الحياة والأرض': 'Sciences de la Vie et de la Terre',
+      'SVT': 'SVT',
+      'الفلسفة': 'Philosophie',
+      'الرياضة': 'Éducation Physique',
+      'التربية البدنية': 'Éducation Physique',
+      'الموسيقى': 'Musique',
+      'الفنون': 'Arts Plastiques',
+      'الإعلاميات': 'Informatique',
+      'الاقتصاد': 'Économie',
+      'الإنجليزية': 'Anglais',
+      'الإسبانية': 'Espagnol',
+      'الألمانية': 'Allemand',
+      'الإيطالية': 'Italien'
+    };
+
+    // Check if there's an exact match
+    if (translations[text]) {
+      return translations[text];
+    }
+
+    // Check if text contains Arabic characters
+    const hasArabic = /[\u0600-\u06FF]/.test(text);
+
+    if (hasArabic) {
+      // Try partial matches
+      for (const [arabic, french] of Object.entries(translations)) {
+        if (text.includes(arabic)) {
+          return french;
+        }
+      }
+      // If no translation found, return a generic label
+      return '[Matière en Arabe]';
+    }
+
+    // No Arabic, return as-is
+    return text;
   }
 
   getSessionsForTimeSlot(day: string, time: string): SessionWithMeta[] {
@@ -459,6 +583,18 @@ export class TeacherScheduleComponent implements OnInit, OnDestroy {
 
   getDaySessions(day: string): SessionWithMeta[] {
     return this.sessions.filter(session => session.dayOfWeek === day);
+  }
+
+  selectMobileDay(day: string): void {
+    this.selectedMobileDay = day;
+  }
+
+  // Time slots as intervals for mobile view
+  get timeSlotIntervals(): string[] {
+    return [
+      '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00',
+      '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00'
+    ];
   }
 
   private addMetaToSession(session: Session): SessionWithMeta {

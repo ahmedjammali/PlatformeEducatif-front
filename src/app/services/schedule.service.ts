@@ -10,13 +10,11 @@ import {
   UpdateScheduleRequest,
   CreateSessionRequest,
   UpdateSessionRequest,
-  CloneScheduleRequest,
   ScheduleResponse,
   SchedulesResponse,
   SessionResponse,
   SessionsResponse,
   ScheduleWithSessionsResponse,
-  CloneScheduleResponse,
   ScheduleStatisticsResponse,
   ScheduleFilters,
   SessionFilters,
@@ -131,13 +129,11 @@ export class ScheduleService extends BaseService {
   getTeacherSchedule(
     teacherId: string,
     startDate?: string,
-    endDate?: string,
-    academicYear?: string
+    endDate?: string
   ): Observable<TeacherScheduleResponse> {
     const params = this.buildParams({
       ...(startDate && { startDate }),
-      ...(endDate && { endDate }),
-      ...(academicYear && { academicYear })
+      ...(endDate && { endDate })
     });
     return this.http.get<TeacherScheduleResponse>(
       `${this.apiUrl}${this.endpoint}/teacher/${teacherId}`,
@@ -158,7 +154,6 @@ export class ScheduleService extends BaseService {
   }
 
   getAllClassesSchedules(filters?: {
-    academicYear?: string;
     weekType?: string;
     date?: string;
   }): Observable<AllClassesScheduleResponse> {
@@ -170,15 +165,7 @@ export class ScheduleService extends BaseService {
   }
 
   // Advanced schedule operations
-  cloneScheduleToNewYear(
-    scheduleId: string, 
-    cloneRequest: CloneScheduleRequest
-  ): Observable<CloneScheduleResponse> {
-    return this.http.post<CloneScheduleResponse>(
-      `${this.apiUrl}${this.endpoint}/${scheduleId}/clone`,
-      cloneRequest
-    );
-  }
+  // Clone method removed - each teacher can only have one schedule now
 
   getScheduleStatistics(scheduleId: string): Observable<ScheduleStatisticsResponse> {
     return this.http.get<ScheduleStatisticsResponse>(
@@ -231,23 +218,13 @@ export class ScheduleService extends BaseService {
     return this.updateSchedule(scheduleId, { isActive: false, status: 'suspended' });
   }
 
-  getActiveSchedules(academicYear?: string): Observable<Schedule[]> {
+  getActiveSchedules(): Observable<Schedule[]> {
     const filters: ScheduleFilters = { status: 'active' };
-    if (academicYear) {
-      filters.academicYear = academicYear;
-    }
     return this.getScheduleList(filters);
   }
 
-  getSchedulesByYear(academicYear: string): Observable<Schedule[]> {
-    return this.getScheduleList({ academicYear });
-  }
-
-  getSchedulesByTeacher(teacherId: string, academicYear?: string): Observable<Schedule[]> {
+  getSchedulesByTeacher(teacherId: string): Observable<Schedule[]> {
     const filters: ScheduleFilters = { teacherId };
-    if (academicYear) {
-      filters.academicYear = academicYear;
-    }
     return this.getScheduleList(filters);
   }
 

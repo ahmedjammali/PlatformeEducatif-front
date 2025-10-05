@@ -11,17 +11,7 @@
         <div class="schedule-header-content">
           <div class="schedule-title-section">
             <div class="title-with-filter">
-              <h3 class="subsection-title">Année {{selectedAcademicYear}}-{{(+selectedAcademicYear + 1)}}</h3>
-              <div class="year-selector-inline">
-                <select
-                  [(ngModel)]="selectedAcademicYear"
-                  (ngModelChange)="onAcademicYearChange()"
-                  class="form-select-inline">
-                  <option *ngFor="let year of academicYears" [value]="year">
-                    {{year}}-{{(+year + 1)}}
-                  </option>
-                </select>
-              </div>
+              <h3 class="subsection-title">Mon Emploi du Temps</h3>
             </div>
             <div class="schedule-stats">
               <div class="stat-item">
@@ -44,6 +34,55 @@
       </div>
     </div>
 
+    <!-- Mobile Schedule View -->
+    <div class="mobile-schedule-view">
+      <!-- Day Selector -->
+      <div class="mobile-day-selector">
+        <button
+          *ngFor="let day of workDays"
+          class="mobile-day-btn"
+          [class.active]="selectedMobileDay === day"
+          (click)="selectMobileDay(day)">
+          {{getDayDisplayName(day)}}
+        </button>
+      </div>
+
+      <!-- Mobile Day Content -->
+      <div *ngFor="let day of workDays" class="mobile-day-content" [class.active]="selectedMobileDay === day">
+        <div *ngFor="let time of timeSlotIntervals" class="mobile-time-slot" [class.has-session]="hasSessionAtTime(day, time)">
+          <div class="mobile-time-header">
+            <span class="mobile-time-label">{{time}}</span>
+          </div>
+
+          <div class="mobile-session-list" *ngIf="getSessionsAtTime(day, time) as sessionsAtTime">
+            <ng-container *ngIf="sessionsAtTime.length > 0; else emptySlot">
+              <div *ngFor="let session of sessionsAtTime; let i = index">
+                <div class="mobile-session-divider" *ngIf="i > 0"></div>
+                <div class="mobile-session-card">
+                  <div class="session-header">
+                    <div class="subject-name">{{getCleanSubjectName(session)}}</div>
+                    <span class="week-badge week-{{session.weekType}}" *ngIf="session.weekType !== 'both'">
+                      {{session.weekType}}
+                    </span>
+                  </div>
+                  <div class="teacher-name" *ngIf="session.className">
+                    🎓 {{session.className}}
+                  </div>
+                  <div class="room-name" *ngIf="session.room">
+                    📍 {{session.room}}
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #emptySlot>
+              <div class="mobile-empty-slot">Pas de cours</div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop Schedule Grid -->
     <div class="schedule-grid">
       <!-- Time Slots Header -->
       <div class="time-slots-header">
@@ -123,8 +162,8 @@
     <div class="empty-content">
       <div class="empty-icon">📅</div>
       <h3>Aucun emploi du temps trouvé</h3>
-      <p>Votre emploi du temps pour l'année {{selectedAcademicYear}}-{{(+selectedAcademicYear + 1)}} n'a pas encore été créé.</p>
-      <button class="action-btn secondary-btn" (click)="onAcademicYearChange()">
+      <p>Votre emploi du temps n'a pas encore été créé.</p>
+      <button class="action-btn secondary-btn" (click)="loadTeacherSchedule()">
         <span class="btn-icon">🔄</span>
         Actualiser
       </button>

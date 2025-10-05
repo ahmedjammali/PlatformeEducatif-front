@@ -19,8 +19,9 @@
         Retour aux Enseignants
       </button>
       
-      <button 
-        class="btn btn-primary" 
+      <button
+        class="btn btn-primary"
+        [class.btn-warning]="hasUnsavedChanges"
         (click)="saveSchedule()"
         [disabled]="!selectedTeacher || sessions.length === 0"
         *ngIf="selectedTeacher">
@@ -29,7 +30,8 @@
           <polyline points="17,21 17,13 7,13 7,21"/>
           <polyline points="7,3 7,8 15,8"/>
         </svg>
-        Sauvegarder l'Emploi du Temps
+        <span *ngIf="!hasUnsavedChanges">Sauvegarder l'Emploi du Temps</span>
+        <span *ngIf="hasUnsavedChanges">⚠️ Modifications Non Sauvegardées</span>
       </button>
     </div>
   </div>
@@ -161,15 +163,6 @@
       
       <div class="schedule-info">
         <div class="info-card">
-          <span class="info-label">Année Académique</span>
-          <select class="year-select" [(ngModel)]="selectedAcademicYear" (ngModelChange)="onAcademicYearChange()">
-            <option *ngFor="let year of academicYears" [value]="year">{{year}}-{{(+year + 1)}}</option>
-          </select>
-        </div>
-        
-
-        
-        <div class="info-card">
           <span class="info-label">Sessions Créées</span>
           <span class="session-count">{{sessions.length}}</span>
         </div>
@@ -208,7 +201,72 @@
           </button>
         </div>
       </div>
-      
+
+      <!-- Mobile Schedule View -->
+      <div class="mobile-schedule-view">
+        <!-- Day Selector -->
+        <div class="mobile-day-selector">
+          <button
+            *ngFor="let day of workDays"
+            class="mobile-day-btn"
+            [class.active]="selectedMobileDay === day"
+            (click)="selectMobileDay(day)">
+            {{getDayDisplayName(day)}}
+          </button>
+        </div>
+
+        <!-- Mobile Day Content -->
+        <div *ngFor="let day of workDays" class="mobile-day-content" [class.active]="selectedMobileDay === day">
+          <div *ngFor="let time of timeSlots" class="mobile-time-slot" [class.has-session]="hasSessionAtTime(day, time)">
+            <div class="mobile-time-header">
+              <span class="mobile-time-label">{{time}}</span>
+              <button class="mobile-add-btn" (click)="selectTimeSlot(day, time)" *ngIf="!hasSessionAtTime(day, time)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="mobile-session-list" *ngIf="getSessionsAtTime(day, time) as sessionsAtTime">
+              <ng-container *ngIf="sessionsAtTime.length > 0; else emptySlot">
+                <div *ngFor="let session of sessionsAtTime; let i = index">
+                  <div class="mobile-session-divider" *ngIf="i > 0"></div>
+                  <div class="mobile-session-card" (click)="editSession(session, $event)">
+                    <div class="session-header">
+                      <div class="subject-name">{{getCleanSubjectName(session)}}</div>
+                      <span class="week-badge week-{{session.weekType}}" *ngIf="session.weekType !== 'both'">
+                        {{session.weekType}}
+                      </span>
+                    </div>
+                    <div class="teacher-name" *ngIf="session.className">
+                      🎓 {{session.className}}
+                    </div>
+                    <div class="room-name" *ngIf="session.room">
+                      📍 {{session.room}}
+                    </div>
+                    <div class="session-actions-mobile">
+                      <button class="edit-btn-mobile" (click)="editSession(session, $event)">
+                        ✏️
+                      </button>
+                      <button class="delete-btn-mobile" (click)="openDeleteSessionModal(session, $event)">
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+              <ng-template #emptySlot>
+                <div class="mobile-empty-slot" (click)="selectTimeSlot(day, time)">
+                  Appuyez pour ajouter un cours
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop Schedule Grid -->
       <div class="timetable-grid">
         <!-- En-tête des heures -->
         <div class="time-header">

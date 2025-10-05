@@ -9,7 +9,6 @@
     name: string;
     teacher: User | string; // Each schedule belongs to a specific teacher
     weekType: 'A' | 'B' | 'both';
-    academicYear: string;
     description?: string;
     status: 'draft' | 'active' | 'completed' | 'suspended';
     school: School | string;
@@ -53,14 +52,12 @@
     name: string;
     teacherId: string; // Required - teacher ID
     weekType: 'A' | 'B' | 'both';
-    academicYear: string;
     description?: string;
   }
 
   export interface UpdateScheduleRequest {
     name?: string;
     weekType?: 'A' | 'B' | 'both';
-    academicYear?: string;
     description?: string;
     status?: 'draft' | 'active' | 'completed' | 'suspended';
     isActive?: boolean;
@@ -93,10 +90,6 @@ export interface CreateSessionRequest {
     status?: 'scheduled' | 'ongoing' | 'completed' | 'cancelled' | 'rescheduled';
   }
 
-  export interface CloneScheduleRequest {
-    newAcademicYear: string;
-    newName?: string;
-  }
 
   // Response interfaces
   export interface ScheduleResponse {
@@ -128,11 +121,6 @@ export interface CreateSessionRequest {
     statistics: ScheduleStatistics;
   }
 
-  export interface CloneScheduleResponse {
-    message: string;
-    schedule: Schedule;
-    originalTeacher: string;
-  }
 
   // NEW: Class schedule response for students
   export interface ClassScheduleResponse {
@@ -163,7 +151,6 @@ export interface CreateSessionRequest {
       uniqueSubjects: number;
     };
     filters: {
-      academicYear?: string;
       weekType?: string;
       date?: string;
     };
@@ -179,7 +166,6 @@ export interface CreateSessionRequest {
     schedule: {
       _id: string;
       name: string;
-      academicYear: string;
       weekType: string;
     };
     sessions: GroupedSessionsByDate;
@@ -272,7 +258,6 @@ export interface CreateSessionRequest {
       _id: string;
       name: string;
       teacher: User;
-      academicYear: string;
       weekType: string;
     };
     statistics: DetailedScheduleStatistics;
@@ -297,7 +282,6 @@ export interface CreateSessionRequest {
   export interface ScheduleFilters {
     page?: number;
     limit?: number;
-    academicYear?: string;
     weekType?: 'A' | 'B' | 'both';
     teacherId?: string;
     status?: 'draft' | 'active' | 'completed' | 'suspended';
@@ -318,7 +302,6 @@ export interface CreateSessionRequest {
     startDate?: string;
     endDate?: string;
     weekType?: 'A' | 'B' | 'both';
-    academicYear?: string;
   }
 
   // Utility types

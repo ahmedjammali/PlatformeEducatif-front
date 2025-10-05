@@ -22,6 +22,10 @@ import {
 // Utils
 import { ScheduleUtils } from '../../../utils/schedule.utils';
 
+// PDF Generation
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
 interface SessionForm {
   sessionDate: string;
   startTime: string;
@@ -77,9 +81,7 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
   allSubjects: SubjectModel[] = [];
 
   // Création d'emploi du temps
-  selectedAcademicYear: string;
   selectedWeekType: string = 'both';
-  academicYears: string[] = [];
   
   // Emploi du temps
   workDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -89,6 +91,9 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
   ];
   sessions: SessionWithMeta[] = [];
   selectedTimeSlot: { day: string; time: string } | null = null;
+
+  // Mobile view
+  selectedMobileDay: string = 'monday';
 
   // Modal de session
   showSessionModal = false;
@@ -128,6 +133,10 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
   showClearAllModal = false;
   sessionToDelete: SessionWithMeta | null = null;
 
+  // Track unsaved changes
+  hasUnsavedChanges = false;
+  lastSavedSessionsCount = 0;
+
   // Classes disponibles pour l'enseignant et la matière sélectionnés
   availableClasses: Class[] = [];
   availableClassesWeekA: Class[] = [];
@@ -140,8 +149,6 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
     private subjectService: SubjectService,
     private toasterService: ToasterService
   ) {
-    this.selectedAcademicYear = ScheduleUtils.getCurrentAcademicYear();
-    this.academicYears = ScheduleUtils.getAcademicYearsList();
   }
 
   ngOnInit(): void {
@@ -155,6 +162,14 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // Warn before leaving page with unsaved changes
+  @HostListener('window:beforeunload', ['$event'])
+  unloadNotification($event: any): void {
+    if (this.hasUnsavedChanges) {
+      $event.returnValue = true;
+    }
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -283,24 +298,39 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
   }
 
   selectTeacher(teacher: User): void {
+    // Warn if there are unsaved changes
+    if (this.hasUnsavedChanges) {
+      const confirmSwitch = confirm(
+        'Vous avez des modifications non sauvegardées. Si vous changez d\'enseignant, ces modifications seront perdues.\n\nVoulez-vous continuer ?'
+      );
+      if (!confirmSwitch) {
+        return;
+      }
+    }
+
     this.selectedTeacher = teacher;
     this.sessions = [];
+    this.hasUnsavedChanges = false;
     this.loadExistingSchedule();
   }
 
   resetSelection(): void {
+    // Warn if there are unsaved changes
+    if (this.hasUnsavedChanges) {
+      const confirmReset = confirm(
+        'Vous avez des modifications non sauvegardées. Si vous quittez, ces modifications seront perdues.\n\nVoulez-vous continuer ?'
+      );
+      if (!confirmReset) {
+        return;
+      }
+    }
+
     this.selectedTeacher = null;
     this.sessions = [];
+    this.hasUnsavedChanges = false;
     this.closeSessionModal();
     this.closeDeleteSessionModal();
     this.closeClearAllModal();
-  }
-
-  onAcademicYearChange(): void {
-    if (this.selectedTeacher) {
-      this.sessions = [];
-      this.loadExistingSchedule();
-    }
   }
 
   // ===============================
@@ -373,7 +403,7 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.loadingMessage = 'Chargement de l\'emploi du temps existant...';
 
-    this.scheduleService.getSchedulesByTeacher(this.selectedTeacher._id, this.selectedAcademicYear)
+    this.scheduleService.getSchedulesByTeacher(this.selectedTeacher._id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (schedules) => {
@@ -395,9 +425,10 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (sessions) => {
-          this.sessions = sessions.map(session => 
+          this.sessions = sessions.map(session =>
             ScheduleUtils.enhanceSession(session)
           );
+          this.hasUnsavedChanges = false;
           this.loading = false;
         },
         error: (error) => {
@@ -414,7 +445,7 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
     this.loadingMessage = 'Sauvegarde de l\'emploi du temps...';
 
     // D'abord, vérifier s'il existe déjà un emploi du temps
-    this.scheduleService.getSchedulesByTeacher(this.selectedTeacher._id, this.selectedAcademicYear)
+    this.scheduleService.getSchedulesByTeacher(this.selectedTeacher._id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (schedules) => {
@@ -436,10 +467,9 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
 
   private createNewSchedule(): void {
     const scheduleRequest: CreateScheduleRequest = {
-      name: `${this.selectedTeacher!.name} - ${this.selectedAcademicYear}`,
+      name: `${this.selectedTeacher!.name} - Schedule`,
       teacherId: this.selectedTeacher!._id,
-      weekType: this.selectedWeekType as any,
-      academicYear: this.selectedAcademicYear
+      weekType: this.selectedWeekType as any
     };
 
     this.scheduleService.createSchedule(scheduleRequest)
@@ -528,6 +558,7 @@ export class ScheduleManagementComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (responses) => {
           this.loading = false;
+          this.hasUnsavedChanges = false;
           this.showSuccess(`${responses.length} session(s) sauvegardée(s) avec succès !`);
           this.loadExistingSchedule();
         },
@@ -597,6 +628,10 @@ getSessionAtTime(day: string, time: string): SessionWithMeta | null {
   return sessions.length > 0 ? sessions[0] : null;
 }
 
+selectMobileDay(day: string): void {
+  this.selectedMobileDay = day;
+}
+
 getSessionsByWeekType(sessions: SessionWithMeta[]): {
   weekA: SessionWithMeta[];
   weekB: SessionWithMeta[];
@@ -635,6 +670,7 @@ getSessionsByWeekType(sessions: SessionWithMeta[]): {
 
   confirmClearAll(): void {
     this.sessions = [];
+    this.hasUnsavedChanges = true;
     this.closeClearAllModal();
     this.showSuccess('Toutes les sessions ont été effacées');
   }
@@ -653,6 +689,7 @@ getSessionsByWeekType(sessions: SessionWithMeta[]): {
   confirmDeleteSession(): void {
     if (this.sessionToDelete) {
       this.sessions = this.sessions.filter(s => s._id !== this.sessionToDelete!._id);
+      this.hasUnsavedChanges = true;
       this.showSuccess('Session supprimée avec succès');
       this.closeDeleteSessionModal();
     }
@@ -1198,6 +1235,7 @@ getAvailableClassesInfo(): string {
           schedule: ''
         };
         this.sessions.push(newSession);
+        this.hasUnsavedChanges = true;
       }
     } else {
       // Handle alternating schedule - create separate sessions for Week A and B
@@ -1282,6 +1320,7 @@ getAvailableClassesInfo(): string {
         };
         this.sessions.push(newSession);
       });
+      this.hasUnsavedChanges = true;
     }
 
     this.closeSessionModal();
@@ -1312,28 +1351,24 @@ getAvailableClassesInfo(): string {
   // MÉTHODES D'EXPORTATION
   // ===============================
 
-  private getCleanSubjectName(session: any): string {
+  getCleanSubjectName(session: any): string {
     try {
       // First check if subject is populated and has a name
       if (session.subject && typeof session.subject === 'object' && session.subject.name) {
-        // Clean the subject name of any non-printable characters
-        const subjectName = session.subject.name.toString().replace(/[^\x20-\x7E\u00C0-\u017F]/g, '');
-        return subjectName || 'Matière Inconnue';
+        return session.subject.name || 'Matière Inconnue';
       }
 
       // If subject is a string ID, try to find it in the subjects list
       if (typeof session.subject === 'string' && this.allSubjects && this.allSubjects.length > 0) {
         const foundSubject = this.allSubjects.find(s => s._id === session.subject);
         if (foundSubject && foundSubject.name) {
-          const subjectName = foundSubject.name.toString().replace(/[^\x20-\x7E\u00C0-\u017F]/g, '');
-          return subjectName || 'Matière Inconnue';
+          return foundSubject.name || 'Matière Inconnue';
         }
       }
 
       // Fallback to session.subjectName if available
       if (session.subjectName) {
-        const subjectName = session.subjectName.toString().replace(/[^\x20-\x7E\u00C0-\u017F]/g, '');
-        return subjectName || 'Matière Inconnue';
+        return session.subjectName || 'Matière Inconnue';
       }
 
       return 'Matière Inconnue';
@@ -1341,6 +1376,59 @@ getAvailableClassesInfo(): string {
       console.error('Error getting clean subject name:', error);
       return 'Matière Inconnue';
     }
+  }
+
+  private translateToFrench(text: string): string {
+    if (!text) return '';
+
+    // Common Arabic to French translations
+    const translations: { [key: string]: string } = {
+      'التاريخ والجغرافيا': 'Histoire et Géographie',
+      'التاريخ': 'Histoire',
+      'الجغرافيا': 'Géographie',
+      'التربية السلمية': 'Éducation Civique',
+      'التربية الإسلامية': 'Éducation Islamique',
+      'اللغة العربية': 'Langue Arabe',
+      'اللغة الفرنسية': 'Langue Française',
+      'الرياضيات': 'Mathématiques',
+      'الفيزياء': 'Physique',
+      'الكيمياء': 'Chimie',
+      'علوم الحياة والأرض': 'Sciences de la Vie et de la Terre',
+      'SVT': 'SVT',
+      'الفلسفة': 'Philosophie',
+      'الرياضة': 'Éducation Physique',
+      'التربية البدنية': 'Éducation Physique',
+      'الموسيقى': 'Musique',
+      'الفنون': 'Arts Plastiques',
+      'الإعلاميات': 'Informatique',
+      'الاقتصاد': 'Économie',
+      'الإنجليزية': 'Anglais',
+      'الإسبانية': 'Espagnol',
+      'الألمانية': 'Allemand',
+      'الإيطالية': 'Italien'
+    };
+
+    // Check if there's an exact match
+    if (translations[text]) {
+      return translations[text];
+    }
+
+    // Check if text contains Arabic characters
+    const hasArabic = /[\u0600-\u06FF]/.test(text);
+
+    if (hasArabic) {
+      // Try partial matches
+      for (const [arabic, french] of Object.entries(translations)) {
+        if (text.includes(arabic)) {
+          return french;
+        }
+      }
+      // If no translation found, return a generic label
+      return '[Matière en Arabe]';
+    }
+
+    // No Arabic, return as-is
+    return text;
   }
 
   createScheduleTableData(): any {
@@ -1388,64 +1476,171 @@ getAvailableClassesInfo(): string {
       return;
     }
 
-    this.loading = true;
-    this.loadingMessage = 'Génération du PDF en cours...';
+    try {
+      this.loading = true;
+      this.loadingMessage = 'Génération du PDF en cours...';
 
-    // Create schedule table data structure
-    const scheduleTable = this.createScheduleTableData();
+      // Create PDF in landscape orientation
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+        putOnlyUsedFonts: true,
+        compress: true
+      });
 
-    // Prepare schedule data for PDF generation
-    const scheduleData = {
-      teacher: {
-        name: this.selectedTeacher.name,
-        email: this.selectedTeacher.email,
-        id: this.selectedTeacher._id
-      },
-      academicYear: this.selectedAcademicYear,
-      format: 'table', // Specify table format
-      table: scheduleTable,
-      sessions: this.sessions.map(session => ({
-        date: ScheduleUtils.formatDate(session.sessionDate.date, 'iso'),
-        dayOfWeek: this.getDayDisplayName(session.dayOfWeek),
-        startTime: session.startTime,
-        endTime: session.endTime,
-        duration: session.formattedDuration,
-        subject: this.getCleanSubjectName(session),
-        className: session.className,
-        classGrade: session.classGrade,
-        room: session.room || '',
-        sessionType: this.getSessionTypeDisplay(session.sessionType),
-        weekType: this.getWeekTypeDisplay(session.weekType),
-        notes: session.notes || ''
-      })),
-      generatedAt: new Date().toISOString(),
-      totalSessions: this.sessions.length
-    };
+      // Add title
+      doc.setFontSize(18);
+      doc.setTextColor(40, 40, 40);
+      doc.text('Emploi du Temps', 148, 15, { align: 'center' });
 
-    // Call backend API to generate PDF
-    this.scheduleService.generateSchedulePDF(scheduleData)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response: Blob) => {
-          // Create download link
-          const url = window.URL.createObjectURL(response);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `emploi_du_temps_${this.selectedTeacher!.name.replace(/\s+/g, '_')}_${this.selectedAcademicYear}.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
+      // Add teacher name
+      doc.setFontSize(12);
+      doc.text(`Enseignant: ${this.selectedTeacher.name}`, 148, 23, { align: 'center' });
 
-          this.loading = false;
-          this.showSuccess('PDF téléchargé avec succès !');
+      // Add generated date
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')}`, 148, 29, { align: 'center' });
+
+      // Prepare table data
+      const tableData: any[] = [];
+
+      // Create header row with time slots (excluding 18:00-19:00)
+      const timeSlotRanges = [
+        '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00',
+        '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00'
+      ];
+      const headerRow = ['Jour', ...timeSlotRanges];
+
+      // Work days
+      const workDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+      // Create rows for each day
+      workDays.forEach(day => {
+        const row: any[] = [this.getDayDisplayName(day)];
+
+        timeSlotRanges.forEach(timeSlot => {
+          const sessionsAtTime = this.getSessionsAtTimeForPDF(day, timeSlot);
+
+          if (sessionsAtTime.length > 0) {
+            // Format session info with French translation
+            const sessionInfo = sessionsAtTime.map(session => {
+              const subjectName = this.translateToFrench(this.getCleanSubjectName(session));
+              const className = session.className || '';
+              const room = session.room ? `Salle: ${session.room}` : '';
+              const weekBadge = session.weekType !== 'both' ? ` (Semaine ${session.weekType})` : '';
+
+              // Build session text
+              let text = `${subjectName}${weekBadge}\n${className}`;
+              if (room) {
+                text += `\n${room}`;
+              }
+              return text;
+            }).join('\n\n-----------------\n\n');
+
+            row.push(sessionInfo);
+          } else {
+            row.push('');
+          }
+        });
+
+        tableData.push(row);
+      });
+
+      // Generate table with improved design
+      autoTable(doc, {
+        head: [headerRow],
+        body: tableData,
+        startY: 35,
+        styles: {
+          fontSize: 8,
+          cellPadding: 2.5,
+          lineColor: [164, 180, 101],
+          lineWidth: 0.3,
+          halign: 'center',
+          valign: 'middle',
+          font: 'helvetica',
+          fontStyle: 'normal'
         },
-        error: (error) => {
-          console.error('Erreur lors de la génération du PDF:', error);
-          this.loading = false;
-          this.showError('Échec de la génération du PDF');
+        headStyles: {
+          fillColor: [102, 126, 234],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center',
+          fontSize: 8,
+          cellPadding: 2,
+          minCellHeight: 10
+        },
+        columnStyles: {
+          0: {
+            fillColor: [164, 180, 101],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            halign: 'center',
+            cellWidth: 20
+          }
+        },
+        bodyStyles: {
+          minCellHeight: 18,
+          fontSize: 7.5
+        },
+        alternateRowStyles: {
+          fillColor: [245, 247, 250]
+        },
+        didParseCell: (data: any) => {
+          // Color cells with sessions
+          if (data.section === 'body' && data.column.index > 0 && data.cell.text.length > 0 && data.cell.text[0] !== '') {
+            data.cell.styles.fillColor = [240, 249, 232];
+            data.cell.styles.textColor = [40, 40, 40];
+            data.cell.styles.fontStyle = 'normal';
+          }
         }
       });
+
+      // Add footer with Edusphere branding
+      const pageCount = doc.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(102, 126, 234);
+      doc.text(
+        `Généré par Edusphere - Page 1/${pageCount}`,
+        148,
+        doc.internal.pageSize.height - 10,
+        { align: 'center' }
+      );
+
+      // Save PDF
+      const fileName = `Emploi_du_Temps_${this.selectedTeacher.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+
+      this.loading = false;
+      this.showSuccess('PDF téléchargé avec succès !');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      this.loading = false;
+      this.showError('Erreur lors de la génération du PDF');
+    }
+  }
+
+  getSessionsAtTimeForPDF(day: string, timeInterval: string): SessionWithMeta[] {
+    // Extract start time from interval (e.g., "08:00-09:00" -> "08:00")
+    const startTime = timeInterval.split('-')[0];
+    const timeMinutes = this.timeToMinutes(startTime);
+
+    return this.sessions.filter(session => {
+      if (session.dayOfWeek !== day) return false;
+
+      const sessionStart = this.timeToMinutes(session.startTime);
+      const sessionEnd = this.timeToMinutes(session.endTime);
+
+      // Check if the time slot falls within the session duration
+      return timeMinutes >= sessionStart && timeMinutes < sessionEnd;
+    });
+  }
+
+  private timeToMinutes(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
   }
 
   exportSchedule(format: 'csv' | 'json' = 'csv'): void {
@@ -1495,7 +1690,7 @@ getAvailableClassesInfo(): string {
 
     this.downloadFile(
       csvContent,
-      `emploi_du_temps_${this.selectedTeacher!.name}_${this.selectedAcademicYear}.csv`,
+      `emploi_du_temps_${this.selectedTeacher!.name}.csv`,
       'text/csv'
     );
   }
@@ -1506,7 +1701,6 @@ getAvailableClassesInfo(): string {
         nom: this.selectedTeacher!.name,
         email: this.selectedTeacher!.email
       },
-      anneeAcademique: this.selectedAcademicYear,
       typeSemaine: this.selectedWeekType,
       dateExportation: new Date().toISOString(),
       sessions: sessions.map(session => ({
@@ -1527,7 +1721,7 @@ getAvailableClassesInfo(): string {
     const jsonContent = JSON.stringify(exportData, null, 2);
     this.downloadFile(
       jsonContent,
-      `emploi_du_temps_${this.selectedTeacher!.name}_${this.selectedAcademicYear}.json`,
+      `emploi_du_temps_${this.selectedTeacher!.name}.json`,
       'application/json'
     );
   }

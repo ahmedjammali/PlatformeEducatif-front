@@ -36,6 +36,7 @@ import { AdminDashboardComponent } from './components/admin/admin-dashboard/admi
 import { StudentLayoutComponent } from './components/student/student-layout/student-layout.component';
 import { StudentNotificationsComponent } from './components/student/student-notifications/student-notifications.component';
 import { StudentChatComponent } from './components/student/student-chat/student-chat.component';
+import { StudentScheduleComponent } from './components/student/student-schedule/student-schedule.component';
 import { PaymentManagementComponent } from './components/admin/payment-management/payment-management.component';
 import { PaymentConfigComponent } from './components/admin/payment-config/payment-config.component';
 import { ChargesComponent } from './components/admin/charges/charges.component';
@@ -130,6 +131,7 @@ const routes: Routes = [
       { path: 'exercise/:id/attempt/:attemptId', component: StudentExerciseResultsComponent },
       { path: 'grades', component: StudentGradesPageComponent },
       { path: 'teachers', component: StudentTeachersComponent },
+      { path: 'schedule', component: StudentScheduleComponent },
       { path: 'notifications', component: StudentNotificationsComponent },
       
       
