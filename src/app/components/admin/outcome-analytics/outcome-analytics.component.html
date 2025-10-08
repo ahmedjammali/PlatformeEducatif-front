@@ -146,16 +146,36 @@
           </select>
         </div>
 
-        <!-- Date Range Filters -->
-        <div class="filter-group">
-          <label for="startDate">Date de Début</label>
-          <input type="date" id="startDate" [(ngModel)]="activeFilters.startDate" (change)="applyFilters()">
-        </div>
+        <!-- Date Range Filters - Modifiés pour Caissier -->
+<div class="filter-group">
+  <label for="startDate">Date de Début</label>
+  <input 
+    type="date" 
+    id="startDate" 
+    [(ngModel)]="activeFilters.startDate" 
+    (change)="applyFilters()"
+    [disabled]="isCaissier"
+    [class.disabled]="isCaissier">
+  <!-- ✅ Message pour caissier -->
+  <small *ngIf="isCaissier" class="filter-info">
+    🔒 Filtré sur la date du jour
+  </small>
+</div>
 
-        <div class="filter-group">
-          <label for="endDate">Date de Fin</label>
-          <input type="date" id="endDate" [(ngModel)]="activeFilters.endDate" (change)="applyFilters()">
-        </div>
+<div class="filter-group">
+  <label for="endDate">Date de Fin</label>
+  <input 
+    type="date" 
+    id="endDate" 
+    [(ngModel)]="activeFilters.endDate" 
+    (change)="applyFilters()"
+    [disabled]="isCaissier"
+    [class.disabled]="isCaissier">
+  <!-- ✅ Message pour caissier -->
+  <small *ngIf="isCaissier" class="filter-info">
+    🔒 Filtré sur la date du jour
+  </small>
+</div>
       </div>
 
       <div class="filter-actions">

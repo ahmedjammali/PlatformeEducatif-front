@@ -21,7 +21,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   activeRoute = 'dashboard';
   isSuperAdmin = false;
   unreadNotificationCount = 0;
-
+  isCaissier = false; // ✅ Ajout
   // Logout modal state
   showLogoutModal = false;
   isLoggingOut = false;
@@ -56,7 +56,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
     this.isSuperAdmin = this.authService.isSuperAdmin();
-
+    this.isCaissier = this.authService.getCurrentUser()?.role === 'caissier'; 
     // Load school info
     this.loadSchoolInfo();
 
@@ -198,7 +198,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'superadmin': 'Super Administrateur',
       'admin': 'Administrateur',
       'teacher': 'Enseignant',
-      'student': 'Étudiant'
+      'student': 'Étudiant' , 
+      'caissier': 'Caissier' // ✅ Nouveau
     };
 
     return roleLabels[this.currentUser?.role || ''] || 'Utilisateur';

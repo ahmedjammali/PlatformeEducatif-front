@@ -1,4 +1,4 @@
-// Outcome Analytics Component TypeScript
+// Outcome Analytics Component TypeScript - Modifications pour Caissier
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
@@ -7,6 +7,7 @@ import { throwError } from 'rxjs';
 import { OutcomeAnalyticsService, OutcomeAnalyticsData, OutcomeFilters, OutcomeFilterOptions } from '../../../services/outcome-analytics.service';
 import { ToasterService } from '../../../services/toaster.service';
 import { SchoolService } from '../../../services/school.service';
+import { AuthService } from '../../../services/auth.service'; // ✅ AJOUT
 
 @Component({
   selector: 'app-outcome-analytics',
@@ -21,6 +22,9 @@ export class OutcomeAnalyticsComponent implements OnInit, OnDestroy {
   filterOptions: OutcomeFilterOptions | null = null;
   schools: any[] = [];
   currentSchool: any = null;
+
+  // ✅ AJOUT - Propriété pour vérifier si l'utilisateur est caissier
+  isCaissier = false;
 
   // Filter properties
   activeFilters: OutcomeFilters = {
@@ -49,10 +53,21 @@ export class OutcomeAnalyticsComponent implements OnInit, OnDestroy {
   constructor(
     private outcomeAnalyticsService: OutcomeAnalyticsService,
     private toasterService: ToasterService,
-    private schoolService: SchoolService
+    private schoolService: SchoolService,
+    private authService: AuthService // ✅ AJOUT
   ) { }
 
   ngOnInit(): void {
+    // ✅ AJOUT - Vérifier si l'utilisateur est caissier
+    this.isCaissier = this.authService.getCurrentUser()?.role === 'caissier';
+    
+    // ✅ AJOUT - Si caissier, définir les dates sur aujourd'hui
+    if (this.isCaissier) {
+      const today = this.getTodayDate();
+      this.activeFilters.startDate = today;
+      this.activeFilters.endDate = today;
+    }
+
     this.loadSchools();
     this.loadFilterOptions();
   }
@@ -60,6 +75,15 @@ export class OutcomeAnalyticsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // ✅ AJOUT - Nouvelle méthode pour obtenir la date d'aujourd'hui au format YYYY-MM-DD
+  private getTodayDate(): string {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   /**
@@ -138,6 +162,12 @@ export class OutcomeAnalyticsComponent implements OnInit, OnDestroy {
    * Apply filters
    */
   applyFilters(): void {
+    // ✅ AJOUT - Si caissier, maintenir les dates du jour
+    if (this.isCaissier) {
+      const today = this.getTodayDate();
+      this.activeFilters.startDate = today;
+      this.activeFilters.endDate = today;
+    }
     this.loadAnalytics();
   }
 
@@ -150,8 +180,8 @@ export class OutcomeAnalyticsComponent implements OnInit, OnDestroy {
       academicYear: this.currentAcademicYear,
       chargeCategory: '',
       userRole: '',
-      startDate: '',
-      endDate: ''
+      startDate: this.isCaissier ? this.getTodayDate() : '', // ✅ AJOUT
+      endDate: this.isCaissier ? this.getTodayDate() : ''    // ✅ AJOUT
     };
     this.loadAnalytics();
   }
@@ -163,6 +193,8 @@ export class OutcomeAnalyticsComponent implements OnInit, OnDestroy {
     this.loadFilterOptions();
     this.loadAnalytics();
   }
+
+  // ... Le reste du code reste identique ...
 
   /**
    * Get filtered charges for pagination and search
@@ -253,9 +285,6 @@ export class OutcomeAnalyticsComponent implements OnInit, OnDestroy {
       this.currentSalariesPage = page;
     }
   }
-
-
-
 
   /**
    * Format currency

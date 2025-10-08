@@ -77,12 +77,12 @@ export class AuthService {
 
   isAdminOrHigher(): boolean {
     const role = this.getUserRole();
-    return role === 'superadmin' || role === 'admin';
+    return role === 'superadmin' || role === 'admin' || role === 'caissier';
   }
 
   isTeacherOrHigher(): boolean {
     const role = this.getUserRole();
-    return role === 'superadmin' || role === 'admin' || role === 'teacher';
+    return role === 'superadmin' || role === 'admin' || role === 'caissier' || role === 'teacher';
   }
 
   hasRole(requiredRoles: string[]): boolean {

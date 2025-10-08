@@ -6,6 +6,7 @@ import { takeUntil } from 'rxjs/operators';
 import { IncomeAnalyticsService, IncomeAnalyticsData, IncomeFilters, FilterOptions } from '../../../services/income-analytics.service';
 import { ToasterService } from '../../../services/toaster.service';
 import { SchoolService } from '../../../services/school.service';
+import { AuthService } from '../../../services/auth.service'; // ✅ Ajout
 
 @Component({
   selector: 'app-income-analytics',
@@ -20,6 +21,9 @@ export class IncomeAnalyticsComponent implements OnInit, OnDestroy {
   filterOptions: FilterOptions | null = null;
   schools: any[] = [];
   currentSchool: any = null;
+
+  // ✅ Ajout pour vérifier si l'utilisateur est caissier
+  isCaissier = false;
 
   // Filter properties
   activeFilters: IncomeFilters = {
@@ -48,17 +52,36 @@ export class IncomeAnalyticsComponent implements OnInit, OnDestroy {
     private incomeAnalyticsService: IncomeAnalyticsService,
     private toasterService: ToasterService,
     private schoolService: SchoolService,
+    private authService: AuthService // ✅ Ajout
   ) { }
 
   ngOnInit(): void {
+    // ✅ Vérifier si l'utilisateur est caissier
+    this.isCaissier = this.authService.getCurrentUser()?.role === 'caissier';
+    
+    // ✅ Si caissier, définir les dates sur aujourd'hui
+    if (this.isCaissier) {
+      const today = this.getTodayDate();
+      this.activeFilters.startDate = today;
+      this.activeFilters.endDate = today;
+    }
+
     this.loadSchools();
     this.loadFilterOptions();
-    // Analytics will be loaded after filter options are loaded
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // ✅ Nouvelle méthode pour obtenir la date d'aujourd'hui au format YYYY-MM-DD
+  private getTodayDate(): string {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   /**
@@ -137,6 +160,12 @@ export class IncomeAnalyticsComponent implements OnInit, OnDestroy {
    * Apply filters
    */
   applyFilters(): void {
+    // ✅ Si caissier, maintenir les dates du jour
+    if (this.isCaissier) {
+      const today = this.getTodayDate();
+      this.activeFilters.startDate = today;
+      this.activeFilters.endDate = today;
+    }
     this.loadAnalytics();
   }
 
@@ -150,8 +179,8 @@ export class IncomeAnalyticsComponent implements OnInit, OnDestroy {
       grade: '',
       component: '',
       category: '',
-      startDate: '',
-      endDate: ''
+      startDate: this.isCaissier ? this.getTodayDate() : '', // ✅ Si caissier, date du jour
+      endDate: this.isCaissier ? this.getTodayDate() : ''    // ✅ Si caissier, date du jour
     };
     this.loadAnalytics();
   }

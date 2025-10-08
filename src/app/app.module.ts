@@ -107,7 +107,7 @@ import { StudentChatComponent } from './components/student/student-chat/student-
 import { PaymentManagementComponent } from './components/admin/payment-management/payment-management.component';
 import { PaymentDialogComponent } from './components/admin/payment-dialog/payment-dialog.component';
 import { PaymentConfigComponent } from './components/admin/payment-config/payment-config.component';
-import { FinancialOverviewComponent } from './components/admin/financial-overview/financial-overview.component';
+
 import { InvoiceComponent } from './components/admin/invoice/invoice.component';
 import { InvoiceDialogComponent } from './components/admin/invoice-dialog/invoice-dialog.component';
 import { ChargesComponent } from './components/admin/charges/charges.component';
@@ -195,7 +195,6 @@ const MaterialModules = [
     PaymentManagementComponent,
     PaymentDialogComponent,
     PaymentConfigComponent,
-    FinancialOverviewComponent,
     InvoiceComponent,
     InvoiceDialogComponent,
     ChargesComponent,

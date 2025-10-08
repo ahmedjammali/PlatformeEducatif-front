@@ -54,7 +54,7 @@
     <nav class="sidebar-nav">
       <ul class="nav-list">
         <!-- Dashboard -->
-        <li class="nav-item" [class.active]="activeRoute === 'dashboard'">
+        <li class="nav-item"*ngIf="!isCaissier" [class.active]="activeRoute === 'dashboard'">
           <a (click)="navigateTo('dashboard')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="7" height="7" />
@@ -67,7 +67,7 @@
         </li>
 
         <!-- Users Management -->
-        <li class="nav-item" [class.active]="activeRoute === 'users'">
+        <li class="nav-item"*ngIf="!isCaissier" [class.active]="activeRoute === 'users'">
           <a (click)="navigateTo('users')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -80,7 +80,7 @@
         </li>
 
         <!-- Classes Management -->
-        <li class="nav-item" [class.active]="activeRoute === 'classes'">
+        <li class="nav-item"*ngIf="!isCaissier" [class.active]="activeRoute === 'classes'">
           <a (click)="navigateTo('classes')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M2 3h20v18H2zM2 9h20M8 3v6" />
@@ -90,7 +90,7 @@
         </li>
 
         <!-- Subjects Management -->
-        <li class="nav-item" [class.active]="activeRoute === 'subjects'">
+        <li class="nav-item" *ngIf="!isCaissier"[class.active]="activeRoute === 'subjects'">
           <a (click)="navigateTo('subjects')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
@@ -116,7 +116,7 @@
         </li> -->
 
         <!-- Notifications -->
-        <li class="nav-item" [class.active]="activeRoute === 'notifications'"
+        <li class="nav-item" *ngIf="!isCaissier"[class.active]="activeRoute === 'notifications'"
           [class.has-notifications]="unreadNotificationCount > 0">
           <a (click)="navigateTo('notifications')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -129,7 +129,7 @@
         </li>
 
         <!-- Student Grades -->
-        <li class="nav-item" [class.active]="activeRoute === 'grades'">
+        <li class="nav-item"*ngIf="!isCaissier" [class.active]="activeRoute === 'grades'">
           <a (click)="navigateTo('grades')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z" />
@@ -142,7 +142,7 @@
         </li>
 
         <!-- Payments - For all admin types -->
-        <li class="nav-item" [class.active]="activeRoute === 'payments'">
+        <li class="nav-item" *ngIf="!isCaissier"[class.active]="activeRoute === 'payments'">
           <a (click)="navigateTo('payments')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
@@ -153,7 +153,7 @@
         </li>
 
         <!-- Financial Overview - SuperAdmin Only -->
-        <li class="nav-item" *ngIf="isSuperAdmin" [class.active]="activeRoute === 'financialOverview'">
+        <li class="nav-item"  [class.active]="activeRoute === 'financialOverview'">
           <a (click)="navigateTo('financialOverview')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="2" y="6" width="20" height="12" rx="2" />
@@ -165,7 +165,7 @@
         </li>
 
         <!-- Charges Management -->
-        <li class="nav-item" [class.active]="activeRoute === 'charges'">
+        <li class="nav-item" *ngIf="!isCaissier" [class.active]="activeRoute === 'charges'">
           <a (click)="navigateTo('charges')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -179,7 +179,7 @@
         </li>
 
         <!-- Salary Management -->
-        <li class="nav-item" [class.active]="activeRoute === 'salary'">
+        <li class="nav-item" *ngIf="!isCaissier" [class.active]="activeRoute === 'salary'">
           <a (click)="navigateTo('salary')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
@@ -189,7 +189,7 @@
         </li>
 
         <!-- Contact Page -->
-        <li class="nav-item" [class.active]="activeRoute === 'contact'">
+        <li class="nav-item" *ngIf="!isCaissier" [class.active]="activeRoute === 'contact'">
           <a (click)="navigateTo('contact')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -200,11 +200,10 @@
         </li>
 
         <!-- Divider -->
-        <li class="nav-divider" *ngIf="isSuperAdmin">
+        <!-- <li class="nav-divider" *ngIf="isSuperAdmin">
           <span>Administration</span>
         </li>
 
-        <!-- SuperAdmin Only Section -->
         <li class="nav-item" *ngIf="isSuperAdmin" [class.active]="activeRoute === 'schools'">
           <a (click)="navigateTo('schools')" class="nav-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -212,7 +211,7 @@
             </svg>
             <span class="nav-text">Gestion École</span>
           </a>
-        </li>
+        </li> -->
 
 
       </ul>

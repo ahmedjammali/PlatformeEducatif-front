@@ -20,7 +20,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   // Data
   users: User[] = [];
   paginatedUsers: User[] = [];
-  classNamesCache: { [key: string]: string } = {}; // Cache for class names
+  classNamesCache: { [key: string]: string } = {};
   
   // UI State
   isLoading = false;
@@ -52,6 +52,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   totalStudents = 0;
   totalTeachers = 0;
   totalAdmins = 0;
+  totalCaissiers = 0; // ✅ Nouveau stat pour caissiers
   
   // Forms
   userForm!: FormGroup;
@@ -89,9 +90,7 @@ export class UsersComponent implements OnInit, OnDestroy {
       email: ['', [Validators.required, Validators.email]],
       password: [''],
       role: ['', Validators.required],
-      // Teacher-specific fields
       phoneNumber: [''],
-      // Student-specific fields
       parentName: [''],
       parentCin: [''],
       parentPhoneNumber: ['']
@@ -109,7 +108,6 @@ export class UsersComponent implements OnInit, OnDestroy {
       });
   }
 
-  // Add this method to your UsersComponent class
   trackByUserId(index: number, user: any): string {
     return user._id || index.toString();
   }
@@ -137,18 +135,15 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   private async loadMissingClassNames(): Promise<void> {
-    // Collect all unique class IDs that need to be loaded
     const classIdsToLoad = new Set<string>();
     
     this.users.forEach(user => {
-      // Check student class
       if (user.role === 'student' && user.studentClass && typeof user.studentClass === 'string') {
         if (!this.classNamesCache[user.studentClass]) {
           classIdsToLoad.add(user.studentClass);
         }
       }
       
-      // Check teaching classes
       if (user.role === 'teacher' && user.teachingClasses) {
         user.teachingClasses.forEach(tc => {
           if (typeof tc.class === 'string' && !this.classNamesCache[tc.class]) {
@@ -159,10 +154,9 @@ export class UsersComponent implements OnInit, OnDestroy {
     });
 
     if (classIdsToLoad.size === 0) {
-      return; // No classes to load
+      return;
     }
 
-    // Load all missing classes
     const classRequests = Array.from(classIdsToLoad).map(classId =>
       this.classService.getClassById(classId).pipe(
         takeUntil(this.destroy$)
@@ -172,7 +166,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     try {
       const classResponses = await forkJoin(classRequests).toPromise();
       
-      // Cache the class names
       classResponses?.forEach((response, index) => {
         const classId = Array.from(classIdsToLoad)[index];
         this.classNamesCache[classId] = response.class.name;
@@ -188,12 +181,12 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.totalStudents = this.users.filter(u => u.role === 'student').length;
     this.totalTeachers = this.users.filter(u => u.role === 'teacher').length;
     this.totalAdmins = this.users.filter(u => u.role === 'admin').length;
+    this.totalCaissiers = this.users.filter(u => u.role === 'caissier').length; // ✅ Stat caissiers
   }
 
   filterAndPaginateUsers(): void {
     let filtered = [...this.users];
     
-    // Apply search filter
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(user => 
@@ -202,17 +195,14 @@ export class UsersComponent implements OnInit, OnDestroy {
       );
     }
     
-    // Apply role filter
     if (this.selectedRole) {
       filtered = filtered.filter(user => user.role === this.selectedRole);
     }
     
-    // Apply sorting
     filtered.sort((a, b) => {
       let aVal: any = a[this.sortField as keyof User];
       let bVal: any = b[this.sortField as keyof User];
       
-      // Handle undefined values
       if (aVal === undefined || aVal === null) aVal = '';
       if (bVal === undefined || bVal === null) bVal = '';
       
@@ -233,7 +223,6 @@ export class UsersComponent implements OnInit, OnDestroy {
       }
     });
     
-    // Calculate pagination
     this.totalPages = Math.ceil(filtered.length / this.itemsPerPage);
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
@@ -259,12 +248,10 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.toasterService.info('Filtres réinitialisés');
   }
 
-  // Form validation helpers - FIXED
   get formRole(): string {
     return this.userForm.get('role')?.value || '';
   }
 
-  // FIXED: Use formRole getter consistently
   get Role(): string {
     return this.formRole;
   }
@@ -279,63 +266,57 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.filterAndPaginateUsers();
   }
 
-shouldShowPasswordField(): boolean {
-  const role = this.formRole;
-  // Show password field for all roles when creating new users
-  return !this.editingUser && ['admin', 'superadmin', 'teacher', 'student'].includes(role);
-}
+  shouldShowPasswordField(): boolean {
+    const role = this.formRole;
+    // ✅ Ajout de 'caissier' dans les rôles qui nécessitent un mot de passe
+    return !this.editingUser && ['admin', 'superadmin', 'caissier', 'teacher', 'student'].includes(role);
+  }
 
-
-isPasswordRequired(): boolean {
-  const role = this.formRole;
-  // Password is now required for all roles when creating new users
-  return ['admin', 'superadmin', 'teacher', 'student'].includes(role);
-}
+  isPasswordRequired(): boolean {
+    const role = this.formRole;
+    // ✅ Mot de passe requis pour caissier
+    return ['admin', 'superadmin', 'caissier'].includes(role);
+  }
 
   onRoleChange(): void {
     const role = this.formRole;
     this.updateFormValidators(role);
   }
 
-private updateFormValidators(role: string): void {
-  // Clear all conditional validators first
-  this.userForm.get('password')?.clearValidators();
-  this.userForm.get('phoneNumber')?.clearValidators();
-  this.userForm.get('parentName')?.clearValidators();
-  this.userForm.get('parentCin')?.clearValidators();
-  this.userForm.get('parentPhoneNumber')?.clearValidators();
+  private updateFormValidators(role: string): void {
+    this.userForm.get('password')?.clearValidators();
+    this.userForm.get('phoneNumber')?.clearValidators();
+    this.userForm.get('parentName')?.clearValidators();
+    this.userForm.get('parentCin')?.clearValidators();
+    this.userForm.get('parentPhoneNumber')?.clearValidators();
 
-  // Set password validators based on role (only for new users)
-  if (!this.editingUser) {
-    if (this.isPasswordRequired()) {
-      this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
-    } else {
-      this.userForm.get('password')?.setValidators([Validators.minLength(6)]); // Optional but min length if provided
+    if (!this.editingUser) {
+      if (this.isPasswordRequired()) {
+        this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
+      } else {
+        this.userForm.get('password')?.setValidators([Validators.minLength(6)]);
+      }
     }
+
+    if (role === 'teacher') {
+      this.userForm.get('phoneNumber')?.setValidators([Validators.required]);
+    } else if (role === 'student') {
+      this.userForm.get('parentName')?.setValidators([Validators.required]);
+      this.userForm.get('parentCin')?.setValidators([Validators.required]);
+      this.userForm.get('parentPhoneNumber')?.setValidators([Validators.required]);
+    }
+
+    this.userForm.get('password')?.updateValueAndValidity();
+    this.userForm.get('phoneNumber')?.updateValueAndValidity();
+    this.userForm.get('parentName')?.updateValueAndValidity();
+    this.userForm.get('parentCin')?.updateValueAndValidity();
+    this.userForm.get('parentPhoneNumber')?.updateValueAndValidity();
   }
 
-  // Set role-specific validators
-  if (role === 'teacher') {
-    this.userForm.get('phoneNumber')?.setValidators([Validators.required]);
-  } else if (role === 'student') {
-    this.userForm.get('parentName')?.setValidators([Validators.required]);
-    this.userForm.get('parentCin')?.setValidators([Validators.required]);
-    this.userForm.get('parentPhoneNumber')?.setValidators([Validators.required]);
-  }
-
-  // Update validation status
-  this.userForm.get('password')?.updateValueAndValidity();
-  this.userForm.get('phoneNumber')?.updateValueAndValidity();
-  this.userForm.get('parentName')?.updateValueAndValidity();
-  this.userForm.get('parentCin')?.updateValueAndValidity();
-  this.userForm.get('parentPhoneNumber')?.updateValueAndValidity();
-}
-
-  // Modal Methods
   openCreateUserModal(): void {
     this.editingUser = null;
     this.userForm.reset();
-    this.updateFormValidators(''); // Clear validators initially
+    this.updateFormValidators('');
     this.showUserModal = true;
   }
 
@@ -351,11 +332,9 @@ private updateFormValidators(role: string): void {
       parentPhoneNumber: user.parentPhoneNumber || ''
     });
     
-    // For editing, password is never required
     this.userForm.get('password')?.clearValidators();
     this.userForm.get('password')?.updateValueAndValidity();
     
-    // Set role-specific validators for editing
     this.updateFormValidators(user.role);
     
     this.showUserModal = true;
@@ -407,19 +386,16 @@ private updateFormValidators(role: string): void {
     this.isSaving = true;
     const formValue = this.userForm.value;
     
-    // Prepare user data with role-specific fields
     const userData: Partial<User> = {
       name: formValue.name,
       email: formValue.email,
       role: formValue.role
     };
     
-    // Add password only if provided and it's a new user
     if (!this.editingUser && formValue.password) {
       userData.password = formValue.password;
     }
 
-    // Add role-specific fields
     if (formValue.role === 'teacher') {
       userData.phoneNumber = formValue.phoneNumber;
     } else if (formValue.role === 'student') {
@@ -452,7 +428,6 @@ private updateFormValidators(role: string): void {
     });
   }
 
-  // Delete Modal Methods
   openDeleteModal(user: User): void {
     this.userToDelete = user;
     this.showDeleteModal = true;
@@ -475,7 +450,6 @@ private updateFormValidators(role: string): void {
         next: () => {
           this.closeDeleteModal();
           this.loadUsers();
-          // Clear selection if deleted user was selected
           this.selectedUsers = this.selectedUsers.filter(id => id !== userId);
           this.toasterService.success(`${userName} a été supprimé avec succès!`);
         },
@@ -490,7 +464,6 @@ private updateFormValidators(role: string): void {
     this.openDeleteModal(user);
   }
 
-  // Selection methods
   toggleSelectAll(event: any): void {
     if (event.target.checked) {
       this.selectedUsers = this.paginatedUsers.map(u => u._id!);
@@ -528,7 +501,6 @@ private updateFormValidators(role: string): void {
       `La suppression en masse de ${count} utilisateur(s) n'est pas encore disponible.`,
       'Fonctionnalité à venir'
     );
-
   }
 
   exportSelected(): void {
@@ -540,11 +512,8 @@ private updateFormValidators(role: string): void {
     this.toasterService.info(
       `Export de ${this.selectedUsers.length} utilisateur(s) en cours...`
     );
-    
-
   }
 
-  // Pagination
   goToPage(page: number): void {
     this.currentPage = page;
     this.filterAndPaginateUsers();
@@ -568,7 +537,6 @@ private updateFormValidators(role: string): void {
     return pages;
   }
 
-  // Utility methods
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
   }
@@ -583,6 +551,7 @@ private updateFormValidators(role: string): void {
       'student': 'Étudiant',
       'teacher': 'Enseignant',
       'admin': 'Administrateur',
+      'caissier': 'Caissier', // ✅ Label pour caissier
       'superadmin': 'Super Admin'
     };
     return labels[role] || role;
@@ -611,7 +580,6 @@ private updateFormValidators(role: string): void {
     return colors[Math.abs(hash) % colors.length];
   }
 
-  // Helper methods for safe property access
   getSchoolName(school: School | string | undefined): string {
     if (!school) return 'Non spécifié';
     return typeof school === 'string' ? school : school.name;
@@ -626,7 +594,6 @@ private updateFormValidators(role: string): void {
     if (!classRef) return 'Non assigné';
     
     if (typeof classRef === 'string') {
-      // Try to get from cache first
       return this.classNamesCache[classRef] || classRef;
     }
     
@@ -638,13 +605,11 @@ private updateFormValidators(role: string): void {
     return typeof subject === 'string' ? subject : subject.name;
   }
 
-  // Helper method to safely get subjects array for template
   getSubjectsArray(subjects: SubjectModel[] | string[] | undefined): any[] {
     if (!subjects) return [];
     return Array.isArray(subjects) ? subjects : [];
   }
 
-  // Helper method to get teaching classes display for table
   getTeachingClassesDisplay(teachingClasses: TeachingClass[] | undefined): string {
     if (!teachingClasses || teachingClasses.length === 0) {
       return 'Non assigné';
@@ -653,7 +618,6 @@ private updateFormValidators(role: string): void {
     return teachingClasses.map(tc => this.getClassName(tc.class)).join(', ');
   }
 
-  // Helper method to get user's assigned classes for deletion warning
   getUserAssignedClasses(user: User): string[] {
     const classes: string[] = [];
     

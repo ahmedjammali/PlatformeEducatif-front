@@ -3,11 +3,11 @@ import { School } from "./school.model";
 import { Subject } from "./subject.model";
 
 export interface User {
-  _id: string; // Make _id required since backend always returns it
+  _id: string;
   name: string;
   email: string;
   password?: string;
-  role: 'superadmin' | 'admin' | 'teacher' | 'student';
+  role: 'superadmin' | 'admin' | 'caissier' | 'teacher' | 'student'; // ✅ Ajout de 'caissier'
   school?: School | string;
   teachingClasses?: TeachingClass[];
   studentClass?: Class | string;
@@ -16,7 +16,7 @@ export interface User {
   updatedAt?: Date;
   phoneNumber?: string;
   parentName?: string;
-  parentCin   ?: string;
+  parentCin?: string;
   parentPhoneNumber?: string;
 }
 

@@ -35,31 +35,50 @@
 
         <div class="filters-grid">
             <!-- General Filters -->
-            <div class="filter-group">
-                <h4 class="filter-group-title">Filtres Généraux</h4>
+            <!-- Date Range Filters - Modifiés pour Caissier dans Combined Export -->
+<div class="filter-group">
+    <h4 class="filter-group-title">Filtres Généraux</h4>
 
-                <!-- Academic Year -->
-                <div class="filter-item">
-                    <label class="filter-label">Année Académique</label>
-                    <select class="filter-select" [(ngModel)]="activeFilters.academicYear">
-                        <option value="">Toutes les années</option>
-                        <option *ngFor="let year of incomeFilterOptions?.academicYears" [value]="year">
-                            {{ year }}
-                        </option>
-                    </select>
-                </div>
+    <!-- Academic Year -->
+    <div class="filter-item">
+        <label class="filter-label">Année Académique</label>
+        <select class="filter-select" [(ngModel)]="activeFilters.academicYear">
+            <option value="">Toutes les années</option>
+            <option *ngFor="let year of incomeFilterOptions?.academicYears" [value]="year">
+                {{ year }}
+            </option>
+        </select>
+    </div>
 
-                <!-- Date Range -->
-                <div class="filter-item">
-                    <label class="filter-label">Date de début</label>
-                    <input type="date" class="filter-input" [(ngModel)]="activeFilters.startDate">
-                </div>
+    <!-- Date Range avec restriction pour caissier -->
+    <div class="filter-item">
+        <label class="filter-label">Date de début</label>
+        <input 
+            type="date" 
+            class="filter-input" 
+            [(ngModel)]="activeFilters.startDate"
+            [disabled]="isCaissier"
+            [class.disabled]="isCaissier">
+        <!-- ✅ Message pour caissier -->
+        <small *ngIf="isCaissier" class="filter-info">
+            🔒 Filtré sur la date du jour
+        </small>
+    </div>
 
-                <div class="filter-item">
-                    <label class="filter-label">Date de fin</label>
-                    <input type="date" class="filter-input" [(ngModel)]="activeFilters.endDate">
-                </div>
-            </div>
+    <div class="filter-item">
+        <label class="filter-label">Date de fin</label>
+        <input 
+            type="date" 
+            class="filter-input" 
+            [(ngModel)]="activeFilters.endDate"
+            [disabled]="isCaissier"
+            [class.disabled]="isCaissier">
+        <!-- ✅ Message pour caissier -->
+        <small *ngIf="isCaissier" class="filter-info">
+            🔒 Filtré sur la date du jour
+        </small>
+    </div>
+</div>
 
             <!-- Income Filters -->
             <div class="filter-group">

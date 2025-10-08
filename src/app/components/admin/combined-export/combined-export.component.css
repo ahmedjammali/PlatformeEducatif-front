@@ -777,4 +777,53 @@
   .filter-group {
     break-inside: avoid;
   }
+}/* Combined Export Component CSS - Styles pour restriction Caissier */
+
+/* Style pour les champs désactivés pour caissier */
+.filter-input.disabled,
+.filter-input:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.6;
+  border-color: #d1d5db;
+}
+
+/* Message d'information pour caissier */
+.filter-info {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+  padding: 2px 0;
+}
+
+/* Ajuster l'espacement du filter-item quand il y a un message info */
+.filter-item {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+/* Style alternatif pour mettre en évidence la restriction */
+.filter-input:disabled + .filter-info {
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+/* Icône de cadenas dans le message */
+.filter-info::before {
+  margin-right: 4px;
+}
+
+/* Hover state pour les champs désactivés */
+.filter-input:disabled:hover {
+  cursor: not-allowed;
+  border-color: #d1d5db;
+}
+
+/* Focus state désactivé pour les champs bloqués */
+.filter-input:disabled:focus {
+  outline: none;
+  border-color: #d1d5db;
+  box-shadow: none;
 }

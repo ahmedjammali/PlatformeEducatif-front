@@ -1369,3 +1369,10 @@ select:focus {
     transform: none;
   }
 }
+
+/* Ajoutez ce style après les autres role-badge */
+.role-badge.caissier {
+  background-color: rgba(33, 150, 243, 0.2);
+  color: #1976d2;
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}

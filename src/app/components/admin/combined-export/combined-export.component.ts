@@ -1,4 +1,4 @@
-// Combined Export Component TypeScript
+// Combined Export Component TypeScript - Modifications pour Caissier
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
@@ -7,6 +7,7 @@ import { ExportService, CombinedExportFilters } from '../../../services/export.s
 import { IncomeAnalyticsService, FilterOptions } from '../../../services/income-analytics.service';
 import { OutcomeAnalyticsService, OutcomeFilterOptions } from '../../../services/outcome-analytics.service';
 import { ToasterService } from '../../../services/toaster.service';
+import { AuthService } from '../../../services/auth.service'; // ✅ AJOUT
 
 @Component({
   selector: 'app-combined-export',
@@ -21,6 +22,9 @@ export class CombinedExportComponent implements OnInit, OnDestroy {
   outcomeFilterOptions: OutcomeFilterOptions | null = null;
   schools: any[] = [];
   currentSchool: any = null;
+
+  // ✅ AJOUT - Propriété pour vérifier si l'utilisateur est caissier
+  isCaissier = false;
 
   // Filter properties
   activeFilters: CombinedExportFilters = {
@@ -59,9 +63,20 @@ export class CombinedExportComponent implements OnInit, OnDestroy {
     private incomeAnalyticsService: IncomeAnalyticsService,
     private outcomeAnalyticsService: OutcomeAnalyticsService,
     private toasterService: ToasterService,
+    private authService: AuthService // ✅ AJOUT
   ) { }
 
   ngOnInit(): void {
+    // ✅ AJOUT - Vérifier si l'utilisateur est caissier
+    this.isCaissier = this.authService.getCurrentUser()?.role === 'caissier';
+    
+    // ✅ AJOUT - Si caissier, définir les dates sur aujourd'hui
+    if (this.isCaissier) {
+      const today = this.getTodayDate();
+      this.activeFilters.startDate = today;
+      this.activeFilters.endDate = today;
+    }
+
     this.loadFilterOptions();
   }
 
@@ -70,7 +85,14 @@ export class CombinedExportComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-
+  // ✅ AJOUT - Nouvelle méthode pour obtenir la date d'aujourd'hui au format YYYY-MM-DD
+  private getTodayDate(): string {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
   /**
    * Load filter options for both income and outcome
@@ -118,8 +140,8 @@ export class CombinedExportComponent implements OnInit, OnDestroy {
   clearFilters(): void {
     this.activeFilters = {
       academicYear: this.currentAcademicYear,
-      startDate: '',
-      endDate: '',
+      startDate: this.isCaissier ? this.getTodayDate() : '', // ✅ AJOUT
+      endDate: this.isCaissier ? this.getTodayDate() : '',   // ✅ AJOUT
       grade: '',
       component: '',
       category: '',
@@ -134,6 +156,13 @@ export class CombinedExportComponent implements OnInit, OnDestroy {
   exportToExcel(): void {
     console.log('exportToExcel called');
     console.log('activeFilters:', this.activeFilters);
+
+    // ✅ AJOUT - Assurer que les dates sont maintenues pour caissier
+    if (this.isCaissier) {
+      const today = this.getTodayDate();
+      this.activeFilters.startDate = today;
+      this.activeFilters.endDate = today;
+    }
 
     this.isLoading = true;
     console.log('Starting Excel export...');
@@ -162,6 +191,13 @@ export class CombinedExportComponent implements OnInit, OnDestroy {
   exportToPDF(): void {
     console.log('exportToPDF called');
     console.log('activeFilters:', this.activeFilters);
+
+    // ✅ AJOUT - Assurer que les dates sont maintenues pour caissier
+    if (this.isCaissier) {
+      const today = this.getTodayDate();
+      this.activeFilters.startDate = today;
+      this.activeFilters.endDate = today;
+    }
 
     this.isLoading = true;
     console.log('Starting PDF export...');

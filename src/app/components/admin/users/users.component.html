@@ -41,14 +41,15 @@
     </div>
 
     <div class="filter-group">
-      <label>Rôle</label>
-      <select [(ngModel)]="selectedRole" (ngModelChange)="onFilterChange()">
-        <option value="">Tous les rôles</option>
-        <option value="teacher">Enseignants</option>
-        <option value="student">Étudiants</option>
-        <option value="admin" *ngIf="isSuperAdmin">Administrateurs</option>
-      </select>
-    </div>
+  <label>Rôle</label>
+  <select [(ngModel)]="selectedRole" (ngModelChange)="onFilterChange()">
+    <option value="">Tous les rôles</option>
+    <option value="teacher">Enseignants</option>
+    <option value="student">Étudiants</option>
+    <option value="admin" *ngIf="isSuperAdmin">Administrateurs</option>
+    <option value="caissier" *ngIf="isSuperAdmin">Caissiers</option> <!-- ✅ Nouveau -->
+  </select>
+</div>
 
     <button class="btn-secondary" (click)="resetFilters()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -121,6 +122,9 @@
         </div>
         <div class="user-assignments" *ngIf="user.role === 'admin'">
           <strong>Rôle:</strong> Administrateur
+        </div>
+        <div *ngIf="user.role === 'caissier'" class="user-assignments">
+          <strong>Rôle:</strong> Caissier
         </div>
         <div class="user-meta">
           <span class="user-date">Créé le {{ formatDate(user.createdAt) }}</span>
@@ -478,6 +482,7 @@
               <option value="teacher">Enseignant</option>
               <option value="student">Étudiant</option>
               <option value="admin" *ngIf="isSuperAdmin">Administrateur</option>
+              <option value="caissier" *ngIf="isSuperAdmin">Caissier</option> <!-- ✅ Nouveau -->
             </select>
             <span class="error-message" *ngIf="isFieldInvalid('role')">
               Le rôle est requis
