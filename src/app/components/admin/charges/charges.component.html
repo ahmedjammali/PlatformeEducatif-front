@@ -91,7 +91,7 @@
     </div>
   </div>
   <!-- Summary Cards -->
-  <div class="summary-cards" *ngIf="chargeSummary">
+<!--   <div class="summary-cards" *ngIf="chargeSummary">
     <div class="summary-card">
       <div class="card-icon">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -132,7 +132,7 @@
         <p>Total ce mois</p>
       </div>
     </div>
-  </div>
+  </div> -->
 
 
 
@@ -169,7 +169,7 @@
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
               </svg>
             </button>
-            <button class="btn-action delete" (click)="confirmDeleteCharge(charge)" title="Supprimer">
+            <button class="btn-action delete" *ngIf="isSuperAdmin" (click)="confirmDeleteCharge(charge)" title="Supprimer" >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3,6 5,6 21,6" />
                 <path d="m19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2-2h4a2,2 0 0,1,2,2v2" />

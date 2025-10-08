@@ -60,7 +60,7 @@
   </div>
 
   <!-- Quick Actions Section -->
-  <div class="quick-actions">
+  <div class="quick-actions" *ngIf="isSuperAdmin"  >
     <h2>Actions Rapides</h2>
     <div class="action-grid">
       <button class="quick-action-btn" (click)="quickAction('add-student')">

@@ -8,6 +8,7 @@ import { ToasterService } from '../../../services/toaster.service';
 import { Subject as SubjectModel } from '../../../models/subject.model';
 import { Class } from '../../../models/class.model';
 import { User } from '../../../models/user.model';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-subjects',
@@ -41,6 +42,7 @@ export class SubjectsComponent implements OnInit, OnDestroy {
   private destroy$ = new RxSubject<void>();
 
   constructor(
+    private authService: AuthService,
     private fb: FormBuilder,
     private subjectService: SubjectService,
     private classService: ClassService,
@@ -50,7 +52,11 @@ export class SubjectsComponent implements OnInit, OnDestroy {
     this.initializeForm();
   }
 
+  // Auth
+  isSuperAdmin = false;
+
   ngOnInit(): void {
+    this.isSuperAdmin = this.authService.isSuperAdmin();
     this.loadSubjects();
     this.loadRelatedData();
   }

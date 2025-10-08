@@ -5,7 +5,7 @@ import { Subject, BehaviorSubject, Observable, combineLatest } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged, startWith, map, catchError } from 'rxjs/operators';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { Router, ActivatedRoute } from '@angular/router';
-
+import { AuthService } from '../../../services/auth.service';
 import { PaymentService } from '../../../services/payment.service';
 import { ClassService } from '../../../services/class.service';
 import { UserService } from '../../../services/user.service';
@@ -209,6 +209,7 @@ componentOnlyForInvoice?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD '
     private paymentService: PaymentService,
     private classService: ClassService,
     private userService: UserService,
+    private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
     private fb: FormBuilder,
@@ -240,7 +241,11 @@ componentOnlyForInvoice?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD '
   });
   }
 
+    // Auth
+  isSuperAdmin = false;
+
   ngOnInit(): void {
+    this.isSuperAdmin = this.authService.isSuperAdmin();
     this.loadInitialData();
     this.setupFilters();
     this.loadDashboard();

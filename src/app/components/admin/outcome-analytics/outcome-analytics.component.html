@@ -82,13 +82,13 @@
           </div>
         </div>
 
-        <div class="stat-item stat-warning">
+<!--         <div class="stat-item stat-warning">
           <div class="stat-icon">⏳</div>
           <div class="stat-content">
             <div class="stat-value">{{ formatCurrency(analyticsData.summary.pending_salaries) }}</div>
             <div class="stat-label">Salaires en Attente</div>
           </div>
-        </div>
+        </div> -->
 
         <div class="stat-item stat-info">
           <div class="stat-icon">💸</div>
@@ -320,18 +320,18 @@
               <div class="amount-value">{{ formatCurrency(salary.total_paid) }}</div>
               <div class="amount-label">Salaires Payés</div>
             </div>
-            <div class="stat-box warning">
+<!--             <div class="stat-box warning">
               <div class="amount-value">{{ formatCurrency(salary.total_pending) }}</div>
               <div class="amount-label">En Attente</div>
-            </div>
+            </div> -->
             <div class="stat-box info">
               <div class="amount-value">{{ salary.employee_count }}</div>
               <div class="amount-label">Employés</div>
             </div>
-            <div class="stat-box primary">
+<!--             <div class="stat-box primary">
               <div class="amount-value">{{ formatPercentage(salary.payment_rate) }}</div>
               <div class="amount-label">Taux de Paiement</div>
-            </div>
+            </div> -->
           </div>
 
           <div class="payment-type-info">
@@ -358,9 +358,9 @@
               <th>Rôle</th>
               <th>Année Académique</th>
               <th>Type de Paiement</th>
-              <th>Total Attendu</th>
+              <!-- <th>Total Attendu</th> -->
               <th>Payé</th>
-              <th>En Attente</th>
+              <!-- <th>En Attente</th> -->
               <th>Statut</th>
             </tr>
           </thead>

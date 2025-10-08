@@ -82,21 +82,21 @@
           </div>
         </div>
 
-        <div class="stat-item stat-warning">
+<!--         <div class="stat-item stat-warning">
           <div class="stat-icon">⏳</div>
           <div class="stat-content">
             <div class="stat-value">{{ formatCurrency(analyticsData.summary.total_en_attente) }}</div>
             <div class="stat-label">En Attente</div>
           </div>
-        </div>
+        </div> -->
 
-        <div class="stat-item stat-info">
+<!--         <div class="stat-item stat-info">
           <div class="stat-icon">📈</div>
           <div class="stat-content">
             <div class="stat-value">{{ formatPercentage(analyticsData.summary.taux_global) }}</div>
             <div class="stat-label">Taux Global</div>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </header>
@@ -152,6 +152,8 @@
             <option *ngFor="let year of filterOptions?.academicYears" [value]="year">{{ year }}</option>
           </select>
         </div>
+      
+
 
         <!-- Date Range Filters -->
 <div class="filter-group">
@@ -239,29 +241,29 @@
           </div>
 
           <div class="component-stats">
-            <div class="stat-row">
+<!--             <div class="stat-row">
               <span class="stat-label">Attendu:</span>
               <span class="stat-value expected">{{ formatCurrency(component.attendu) }}</span>
-            </div>
+            </div> -->
             <div class="stat-row">
               <span class="stat-label">Collecté:</span>
               <span class="stat-value collected">{{ formatCurrency(component.collecte) }}</span>
             </div>
-            <div class="stat-row">
+<!--             <div class="stat-row">
               <span class="stat-label">En Attente:</span>
               <span class="stat-value pending">{{ formatCurrency(component.en_attente) }}</span>
-            </div>
+            </div> -->
           </div>
 
           <div class="component-progress">
-            <div class="progress-bar">
+<!--             <div class="progress-bar">
               <div class="progress-fill" [style.width.%]="getProgressWidth(component.collecte, component.attendu)"
                 [style.background-color]="getRateColor(component.taux)">
               </div>
-            </div>
-            <div class="progress-text" [style.color]="getRateColor(component.taux)">
+            </div> -->
+<!--             <div class="progress-text" [style.color]="getRateColor(component.taux)">
               {{ formatPercentage(component.taux) }}
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
@@ -283,20 +285,20 @@
             </div>
 
             <div class="category-amounts">
-              <div class="amount-item">
+<!--               <div class="amount-item">
                 <span class="amount-label">Attendu</span>
                 <span class="amount-value">{{ formatCurrency(category.attendu) }}</span>
-              </div>
+              </div> -->
               <div class="amount-item">
                 <span class="amount-label">Collecté</span>
                 <span class="amount-value collected">{{ formatCurrency(category.collecte) }}</span>
               </div>
-              <div class="amount-item">
+<!--               <div class="amount-item">
                 <span class="amount-label">Taux</span>
                 <span class="amount-value" [style.color]="getRateColor(category.taux)">
                   {{ formatPercentage(category.taux) }}
                 </span>
-              </div>
+              </div> -->
             </div>
           </div>
         </div>
@@ -317,10 +319,10 @@
               <th>Niveau</th>
               <th>Catégorie</th>
               <th>Nbr Étudiants</th>
-              <th>Attendu</th>
+              <!-- <th>Attendu</th> -->
               <th>Collecté</th>
               <th>En Attente</th>
-              <th>Taux</th>
+              <!-- <th>Taux</th> -->
             </tr>
           </thead>
           <tbody>
@@ -332,12 +334,12 @@
                 </span>
               </td>
               <td class="student-count">{{ level.nbr_etudiants }}</td>
-              <td class="amount expected">{{ formatCurrency(level.attendu) }}</td>
+              <!-- <td class="amount expected">{{ formatCurrency(level.attendu) }}</td> -->
               <td class="amount collected">{{ formatCurrency(level.collecte) }}</td>
               <td class="amount pending">{{ formatCurrency(level.en_attente) }}</td>
-              <td class="rate" [style.color]="getRateColor(level.taux)">
+<!--               <td class="rate" [style.color]="getRateColor(level.taux)">
                 {{ formatPercentage(level.taux) }}
-              </td>
+              </td> -->
             </tr>
           </tbody>
         </table>

@@ -25,7 +25,7 @@
       <div class="actions-section">
         <!-- Navigation Buttons -->
         <div class="nav-actions">
-          <button class="btn-action btn-config" (click)="navigateToConfig()" title="Configurer les tarifs par niveau">
+          <button class="btn-action btn-config" *ngIf="isSuperAdmin"  (click)="navigateToConfig()" title="Configurer les tarifs par niveau">
             <div class="btn-icon-wrapper">
               <span class="btn-icon">⚙️</span>
             </div>
@@ -89,6 +89,7 @@
 
           <button 
             class="btn-action btn-delete-all" 
+            *ngIf="isSuperAdmin" 
             (click)="deleteAllPaymentRecords()" 
             [disabled]="isLoading || getStudentsWithRecord() === 0" 
             [class.btn-loading]="isLoading"
@@ -594,15 +595,15 @@
                       <!-- Edit Payment Record -->
                       <button 
                         class="action-btn edit" 
+                        *ngIf="isSuperAdmin" 
                         title="Modifier les composants"
-                        *ngIf="student.hasPaymentRecord"
                         (click)="editPaymentRecord(student)">
                         <span class="btn-icon">✏️</span>
                       </button>
 
                       <!-- Apply/Edit Discount -->
                       <button 
-                        class="action-btn discount"
+                        class="action-btn discount" 
                         title="Appliquer une remise"
                         *ngIf="student.hasPaymentRecord && !hasDiscount(student)"
                         (click)="openDiscountDialog(student)">
@@ -612,8 +613,8 @@
                       <!-- Remove Discount -->
                       <button 
                         class="action-btn remove-discount"
+                        *ngIf="isSuperAdmin" 
                         [title]="'Supprimer la remise de ' + getDiscountPercentage(student) + '%'"
-                        *ngIf="student.hasPaymentRecord && hasDiscount(student)"
                         (click)="removeDiscount(student)">
                         <span class="btn-icon">❌</span>
                       </button>
@@ -622,7 +623,7 @@
                       <button 
                         class="action-btn delete"
                         title="Supprimer dossier"
-                        *ngIf="student.hasPaymentRecord"
+                        *ngIf="isSuperAdmin"
                         (click)="deletePaymentRecord(student)">
                         <span class="btn-icon">🗑️</span>
                       </button>

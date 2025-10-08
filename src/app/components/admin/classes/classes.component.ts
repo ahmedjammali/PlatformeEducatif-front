@@ -9,6 +9,7 @@ import { ToasterService } from '../../../services/toaster.service'; // Add this 
 import { Class, TeacherSubject } from '../../../models/class.model';
 import { User } from '../../../models/user.model';
 import { Subject as SubjectModel } from '../../../models/subject.model';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-classes',
@@ -64,12 +65,15 @@ export class ClassesComponent implements OnInit, OnDestroy {
     private classService: ClassService,
     private userService: UserService,
     private subjectService: SubjectService,
+    private authService: AuthService,
     private toasterService: ToasterService // Add this
   ) {
     this.initializeForm();
   }
-
-  ngOnInit(): void {
+  // Auth
+  isSuperAdmin = false;
+  ngOnInit(): void {    
+    this.isSuperAdmin = this.authService.isSuperAdmin();
     this.loadClasses();
     this.loadSubjects();
     this.loadAllStudents();

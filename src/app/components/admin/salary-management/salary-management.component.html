@@ -24,7 +24,7 @@
   </div>
 
   <!-- Summary Cards -->
-  <div class="summary-cards" *ngIf="salarySummary">
+<!--   <div class="summary-cards" *ngIf="salarySummary">
     <div class="summary-card">
       <div class="card-icon success">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -75,7 +75,7 @@
         <p class="card-value">{{ salarySummary.overdue }}</p>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <!-- Filters Section -->
   <div class="filters-section">
@@ -158,9 +158,9 @@
           <div class="col-details">Détails</div>
           <div class="col-config-status">Actions</div>
           <div class="col-payment-type">Type de Paiement</div>
-          <div class="col-total">Total Programmé</div>
-          <div class="col-paid">Total Payé</div>
-          <div class="col-pending">En Attente</div>
+          <div class="col-total" *ngIf="isSuperAdmin" >Total Programmé</div>
+          <div class="col-paid" *ngIf="isSuperAdmin" >Total Payé</div>
+          <div class="col-pending" *ngIf="isSuperAdmin" >En Attente</div>
           <div class="col-actions">Payment</div>
         </div>
 
@@ -218,10 +218,10 @@
                       {{ getPaymentTypeDisplay(record) }}
                     </span>
                   </div>
-                  <div class="col-total" data-label="Total Programmé">{{ formatCurrency(record.totalScheduledAmount) }}
+                  <div class="col-total" *ngIf="isSuperAdmin" data-label="Total Programmé">{{ formatCurrency(record.totalScheduledAmount) }}
                   </div>
-                  <div class="col-paid" data-label="Total Payé">{{ formatCurrency(record.totalPaidAmount) }}</div>
-                  <div class="col-pending" data-label="En Attente">{{ formatCurrency(record.totalPendingAmount) }}</div>
+                  <div class="col-paid" *ngIf="isSuperAdmin" data-label="Total Payé">{{ formatCurrency(record.totalPaidAmount) }}</div>
+                  <div class="col-pending" *ngIf="isSuperAdmin" data-label="En Attente">{{ formatCurrency(record.totalPendingAmount) }}</div>
                 </ng-container>
               </ng-container>
             </ng-container>
@@ -253,7 +253,7 @@
                 <div *ngIf="getUserId(record.user) === user._id" class="payment-schedule">
                   <div class="payment-schedule-header">
                     <h4>Calendrier des Paiements - {{ user.name }}</h4>
-                    <button class="btn-delete-config" (click)="deleteConfigurationFromRecord(record)"
+                    <button class="btn-delete-config" *ngIf="isSuperAdmin" (click)="deleteConfigurationFromRecord(record)"
                       title="Supprimer la configuration">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">
@@ -781,7 +781,7 @@
 
       <div class="modal-footer">
         <button class="btn-secondary" (click)="closeConfigDetailsModal()">Fermer</button>
-        <button class="btn-confirm" (click)="deleteConfigurationFromModal()" [disabled]="loading">
+        <button class="btn-confirm" *ngIf="isSuperAdmin" (click)="deleteConfigurationFromModal()" [disabled]="loading">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
             <line x1="10" y1="11" x2="10" y2="17" />

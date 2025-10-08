@@ -81,7 +81,11 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     private router: Router
   ) {}
 
-  ngOnInit(): void {
+  // Auth
+  isSuperAdmin = false;
+  
+  ngOnInit(): void {    
+    this.isSuperAdmin = this.authService.isSuperAdmin();
     this.initializeColors();
     this.loadDashboardData();
   }

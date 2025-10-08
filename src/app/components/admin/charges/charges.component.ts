@@ -5,6 +5,7 @@ import { Subject as RxSubject, takeUntil } from 'rxjs';
 import { ChargeService } from '../../../services/charge.service';
 import { ToasterService } from '../../../services/toaster.service';
 import { Charge, ChargeSummary } from '../../../models/charge.model';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-charges',
@@ -75,14 +76,17 @@ export class ChargesComponent implements OnInit, OnDestroy {
     private toasterService: ToasterService,
     private router: Router,
     private route: ActivatedRoute,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {
     this.initializeForms();
   }
-
+  // Auth
+  isSuperAdmin = false;
   ngOnInit(): void {
     // Initialize filters from URL parameters first, but don't subscribe to changes yet
     this.initializeFiltersFromUrl();
+    this.isSuperAdmin = this.authService.isSuperAdmin();
   }
 
   ngOnDestroy(): void {

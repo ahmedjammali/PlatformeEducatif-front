@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { SalaryService } from '../../../services/salary.service';
 import { User } from '../../../models/user.model';
+import { AuthService } from '../../../services/auth.service';
 import {
   SalaryConfiguration,
   TeacherAdminSalary,
@@ -94,12 +95,16 @@ export class SalaryManagementComponent implements OnInit {
   selectedPrintData: { record: TeacherAdminSalary, payment: any, year: string } | null = null;
 
   constructor(
+    private authService: AuthService,
     private salaryService: SalaryService,
     private toasterService: ToasterService
   ) { }
 
+  // Auth
+  isSuperAdmin = false;
   ngOnInit(): void {
     // Ensure the create form uses the current selected academic year
+    this.isSuperAdmin = this.authService.isSuperAdmin();
     this.createConfigForm.academicYear = this.selectedAcademicYear;
     this.loadData();
   }
