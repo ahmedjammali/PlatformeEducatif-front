@@ -100,6 +100,7 @@ export interface IncomeFilters {
   startDate?: string;
   endDate?: string;
   academicYear?: string;
+  month?: string; // ✅ Added
 }
 
 export interface FilterOptions {
@@ -146,6 +147,7 @@ export class IncomeAnalyticsService {
     if (filters.startDate) params = params.set('startDate', filters.startDate);
     if (filters.endDate) params = params.set('endDate', filters.endDate);
     if (filters.academicYear) params = params.set('academicYear', filters.academicYear);
+    if (filters.month) params = params.set('month', filters.month);
 
     return new Observable(observer => {
       this.http.get<IncomeAnalyticsResponse>(this.apiUrl, { params }).subscribe({
@@ -186,6 +188,7 @@ export class IncomeAnalyticsService {
     if (filters.startDate) params = params.set('startDate', filters.startDate);
     if (filters.endDate) params = params.set('endDate', filters.endDate);
     if (filters.academicYear) params = params.set('academicYear', filters.academicYear);
+    if (filters.month) params = params.set('month', filters.month);
 
     return this.http.get(`${this.apiUrl}/export/excel`, { 
       params,
@@ -207,6 +210,7 @@ export class IncomeAnalyticsService {
     if (filters.startDate) params = params.set('startDate', filters.startDate);
     if (filters.endDate) params = params.set('endDate', filters.endDate);
     if (filters.academicYear) params = params.set('academicYear', filters.academicYear);
+    if (filters.month) params = params.set('month', filters.month);
 
     return this.http.get(`${this.apiUrl}/export/pdf`, { 
       params,

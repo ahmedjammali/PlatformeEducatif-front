@@ -56,15 +56,15 @@
     <div class="student-box">
       <div class="student-row">
         <span class="student-label">Doit :</span>
-        <span>{{ invoiceData.student._id || '000000' | slice:0:8 }} {{ invoiceData.student.name | uppercase }}</span>
+        <span>{{ invoiceData.student.name | uppercase }}</span>
       </div>
       <div class="student-row">
-        <span class="student-label">Matricule Fiscal :</span>
-        <span>-</span>
+        <span class="student-label">ID :</span>
+        <span>{{ invoiceData.student._id || '000000' | slice:0:8 }} </span>
       </div>
       <div class="student-row">
-        <span class="student-label">Mode de paiement :</span>
-        <span>Mixte</span>
+        <span class="student-label">classe :</span>
+        <span>{{ invoiceData.student.studentClass?.name }}</span>
       </div>
     </div>
 

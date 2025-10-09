@@ -21,6 +21,22 @@ export class IncomeAnalyticsComponent implements OnInit, OnDestroy {
   filterOptions: FilterOptions | null = null;
   schools: any[] = [];
   currentSchool: any = null;
+  // Add this inside the component class
+  months = [
+    { value: '01', label: 'Janvier' },
+    { value: '02', label: 'Février' },
+    { value: '03', label: 'Mars' },
+    { value: '04', label: 'Avril' },
+    { value: '05', label: 'Mai' },
+    { value: '06', label: 'Juin' },
+    { value: '07', label: 'Juillet' },
+    { value: '08', label: 'Août' },
+    { value: '09', label: 'Septembre' },
+    { value: '10', label: 'Octobre' },
+    { value: '11', label: 'Novembre' },
+    { value: '12', label: 'Décembre' }
+  ];
+
 
   // ✅ Ajout pour vérifier si l'utilisateur est caissier
   isCaissier = false;
@@ -32,7 +48,8 @@ export class IncomeAnalyticsComponent implements OnInit, OnDestroy {
     category: '',
     academicYear: '',
     startDate: '',
-    endDate: ''
+    endDate: '',
+    month: ''
   };
 
   // UI state
@@ -73,6 +90,29 @@ export class IncomeAnalyticsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // Called when user selects a month
+  onMonthChange(event: any) {
+    const selectedMonth = this.activeFilters.month;
+    if (selectedMonth) {
+      const currentYear = new Date().getFullYear();
+    // Premier jour du mois choisi
+    let start = new Date(currentYear, parseInt(selectedMonth) - 1, 1);
+    start.setDate(start.getDate() + 1);
+
+    // Dernier jour du mois choisi
+    let end = new Date(currentYear, parseInt(selectedMonth), 0);
+    end.setDate(end.getDate() + 1);
+
+      this.activeFilters.startDate = start.toISOString().split('T')[0];
+      this.activeFilters.endDate = end.toISOString().split('T')[0];
+    } else {
+      this.activeFilters.startDate = '';
+      this.activeFilters.endDate = '';
+    }
+
+    this.applyFilters(); // Recharger les données
   }
 
   // ✅ Nouvelle méthode pour obtenir la date d'aujourd'hui au format YYYY-MM-DD

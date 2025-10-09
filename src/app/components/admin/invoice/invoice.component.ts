@@ -152,7 +152,7 @@ export class InvoiceComponent implements OnInit {
       schoolInfo: {
         name: 'Ons School',
         address: 'Rue de la Liberté, 9110 Jilma',
-        phone: '+216 76 65 70 82',
+        phone: '51333695 / 94051936 / 55000611',
         email: 'onsschool2019@gmail.com'
       }
     };
@@ -612,14 +612,14 @@ hasInscriptionFeeForCurrentInvoice(): boolean {
 
       // Generate canvas with better settings for single page
       const canvas = await html2canvas(pdfContainer, {
-        scale: 1.5,
+        // scale: 1.5,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff',
+        // backgroundColor: '#ffffff',
         width: 794,
         height: Math.min(1123, pdfContainer.scrollHeight + 80),
-        windowWidth: 794,
-        windowHeight: 1123
+        // windowWidth: 794,
+        // windowHeight: 1123
       });
 
       document.body.removeChild(pdfContainer);
