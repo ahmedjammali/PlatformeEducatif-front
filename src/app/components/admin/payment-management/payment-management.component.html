@@ -120,111 +120,187 @@
     </div>
   </header>
 
-  <!-- Updated Filters Section -->
-  <section class="filters-section">
-    <div class="filter-card">
-      <div class="filter-header">
-        <h3>Filtres & Recherche</h3>
-        <button class="btn-clear" (click)="clearFilters()" title="Effacer les filtres">
-          <span class="icon">🗑️</span>
+  <!-- Replace the existing filters-section in your HTML -->
+<!-- Replace the existing filters-section in your HTML -->
+<section class="filters-section">
+  <div class="filter-card">
+    <div class="filter-header">
+      <h3>Filtres & Recherche</h3>
+      <button class="btn-clear" (click)="clearFilters()" title="Effacer les filtres">
+        <span class="icon">🗑️</span>
+      </button>
+    </div>
+    
+    <div class="filter-container">
+      <!-- Search Input -->
+      <div class="search-field">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          [value]="searchControl.value" 
+          (input)="onSearchInput($event)"
+          placeholder="Rechercher un étudiant..."
+          class="search-input">
+        <button 
+          *ngIf="searchControl.value" 
+          (click)="searchControl.setValue('')"
+          class="clear-search">
+          <span class="icon">✖️</span>
         </button>
       </div>
-      
-      <div class="filter-container">
-        <!-- Search Input -->
-        <div class="search-field">
-          <span class="search-icon">🔍</span>
-          <input 
-            type="text" 
-            [value]="searchControl.value" 
-            (input)="onSearchInput($event)"
-            placeholder="Rechercher un étudiant..."
-            class="search-input">
-          <button 
-            *ngIf="searchControl.value" 
-            (click)="searchControl.setValue('')"
-            class="clear-search">
-            <span class="icon">✖️</span>
-          </button>
+
+      <!-- Filter Controls Grid -->
+      <div class="filter-controls">
+        <!-- Academic Year -->
+        <div class="form-group">
+          <label for="academicYear">Année Académique</label>
+          <select 
+            id="academicYear"
+            [value]="filterForm.get('academicYear')?.value"
+            (change)="onAcademicYearChange($event)"
+            class="form-select">
+            <option *ngFor="let year of academicYears" [value]="year">
+              {{ year }}
+            </option>
+          </select>
         </div>
 
-        <!-- Filter Controls -->
-        <div class="filter-controls">
-          <div class="form-group">
-            <label for="academicYear">Année Académique</label>
-            <select 
-              id="academicYear"
-              [value]="filterForm.get('academicYear')?.value"
-              (change)="onAcademicYearChange($event)"
-              class="form-select">
-              <option *ngFor="let year of academicYears" [value]="year">
-                {{ year }}
-              </option>
-            </select>
-          </div>
+        <!-- Payment Status -->
+        <div class="form-group">
+          <label for="paymentStatus">Statut de Paiement</label>
+          <select 
+            id="paymentStatus"
+            [value]="filterForm.get('paymentStatus')?.value"
+            (change)="onPaymentStatusChange($event)"
+            class="form-select">
+            <option value="">Tous les statuts</option>
+            <option *ngFor="let status of paymentStatuses.slice(1)" [value]="status.value">
+              {{ status.label }}
+            </option>
+          </select>
+        </div>
 
-          <div class="form-group">
-            <label for="paymentStatus">Statut de Paiement</label>
-            <select 
-              id="paymentStatus"
-              [value]="filterForm.get('paymentStatus')?.value"
-              (change)="onPaymentStatusChange($event)"
-              class="form-select">
-              <option value="">Tous les statuts</option>
-              <option *ngFor="let status of paymentStatuses.slice(1)" [value]="status.value">
-                {{ status.label }}
-              </option>
-            </select>
-          </div>
+        <!-- ✅ NEW: Component Filter -->
+        <div class="form-group">
+          <label for="component">Composant</label>
+          <select 
+            id="component"
+            [value]="filterForm.get('component')?.value"
+            (change)="onComponentChange($event)"
+            class="form-select">
+            <option *ngFor="let comp of componentOptions" [value]="comp.value">
+              {{ comp.icon }} {{ comp.label }}
+            </option>
+          </select>
+        </div>
 
-          <!-- Grade Category Filter -->
-          <div class="form-group">
-            <label for="gradeCategory">Niveau d'Éducation</label>
-            <select 
-              id="gradeCategory"
-              [value]="filterForm.get('gradeCategory')?.value"
-              (change)="onGradeCategoryChange($event)"
-              class="form-select">
-              <option value="">Tous les niveaux</option>
-              <option *ngFor="let category of gradeCategories.slice(1)" [value]="category.value">
-                {{ category.label }}
-              </option>
-            </select>
-          </div>
+        <!-- ✅ NEW: Month Filter -->
+        <div class="form-group">
+          <label for="month">Mois</label>
+          <select 
+            id="month"
+            [value]="filterForm.get('month')?.value"
+            (change)="onMonthChange($event)"
+            class="form-select">
+            <option *ngFor="let month of monthOptions" [value]="month.value">
+              {{ month.label }}
+            </option>
+          </select>
+        </div>
 
-          <!-- Specific Grade Filter -->
-          <div class="form-group">
-            <label for="grade">Classe Spécifique</label>
-            <select 
-              id="grade"
-              [value]="filterForm.get('grade')?.value"
-              (change)="onGradeChange($event)"
-              class="form-select">
-              <option value="">Toutes les classes</option>
-              <option *ngFor="let grade of getFilteredGrades().slice(1)" [value]="grade.value">
-                {{ grade.label }}
-              </option>
-            </select>
-          </div>
+        <!-- Grade Category Filter -->
+        <div class="form-group">
+          <label for="gradeCategory">Niveau d'Éducation</label>
+          <select 
+            id="gradeCategory"
+            [value]="filterForm.get('gradeCategory')?.value"
+            (change)="onGradeCategoryChange($event)"
+            class="form-select">
+            <option value="">Tous les niveaux</option>
+            <option *ngFor="let category of gradeCategories.slice(1)" [value]="category.value">
+              {{ category.label }}
+            </option>
+          </select>
+        </div>
 
-          <!-- Class Filter -->
-          <div class="form-group">
-            <label for="classId">Section</label>
-            <select 
-              id="classId"
-              [value]="filterForm.get('classId')?.value"
-              (change)="onClassIdChange($event)"
-              class="form-select">
-              <option value="">Toutes les sections</option>
-              <option *ngFor="let classItem of getFilteredClasses()" [value]="classItem._id">
-                {{ classItem.name }} ({{ classItem.grade }})
-              </option>
-            </select>
-          </div>
+        <!-- Specific Grade Filter -->
+        <div class="form-group">
+          <label for="grade">Classe Spécifique</label>
+          <select 
+            id="grade"
+            [value]="filterForm.get('grade')?.value"
+            (change)="onGradeChange($event)"
+            class="form-select">
+            <option value="">Toutes les classes</option>
+            <option *ngFor="let grade of getFilteredGrades().slice(1)" [value]="grade.value">
+              {{ grade.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Class Filter -->
+        <div class="form-group">
+          <label for="classId">Section</label>
+          <select 
+            id="classId"
+            [value]="filterForm.get('classId')?.value"
+            (change)="onClassIdChange($event)"
+            class="form-select">
+            <option value="">Toutes les sections</option>
+            <option *ngFor="let classItem of getFilteredClasses()" [value]="classItem._id">
+              {{ classItem.name }} ({{ classItem.grade }})
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ✅ NEW: Active Filters Summary -->
+      <div class="active-filters-summary" *ngIf="hasActiveFilters()">
+        <div class="summary-header">
+          <span class="summary-icon">🔍</span>
+          <span class="summary-title">Filtres actifs:</span>
+        </div>
+        <div class="summary-tags">
+          <span class="filter-tag" *ngIf="filterForm.get('paymentStatus')?.value">
+            <span class="tag-label">Statut:</span>
+            <span class="tag-value">{{ getStatusLabel(filterForm.get('paymentStatus')?.value) }}</span>
+            <button class="tag-remove" (click)="filterForm.patchValue({ paymentStatus: '' })">✖️</button>
+          </span>
+
+          <span class="filter-tag" *ngIf="filterForm.get('component')?.value">
+            <span class="tag-label">Composant:</span>
+            <span class="tag-value">{{ getComponentLabel(filterForm.get('component')?.value) }}</span>
+            <button class="tag-remove" (click)="clearComponentFilter()">✖️</button>
+          </span>
+
+          <span class="filter-tag" *ngIf="filterForm.get('month')?.value">
+            <span class="tag-label">Mois:</span>
+            <span class="tag-value">{{ getMonthLabel(filterForm.get('month')?.value) }}</span>
+            <button class="tag-remove" (click)="clearMonthFilter()">✖️</button>
+          </span>
+
+          <span class="filter-tag" *ngIf="filterForm.get('gradeCategory')?.value">
+            <span class="tag-label">Niveau:</span>
+            <span class="tag-value">{{ getGradeCategoryLabelForFilter(filterForm.get('gradeCategory')?.value) }}</span>
+            <button class="tag-remove" (click)="clearGradeCategoryFilter()">✖️</button>
+          </span>
+
+          <span class="filter-tag" *ngIf="filterForm.get('grade')?.value">
+            <span class="tag-label">Classe:</span>
+            <span class="tag-value">{{ getGradeLabelForFilter(filterForm.get('grade')?.value) }}</span>
+            <button class="tag-remove" (click)="clearGradeFilter()">✖️</button>
+          </span>
+
+          <span class="filter-tag" *ngIf="searchControl.value">
+            <span class="tag-label">Recherche:</span>
+            <span class="tag-value">{{ searchControl.value }}</span>
+            <button class="tag-remove" (click)="searchControl.setValue('')">✖️</button>
+          </span>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
   <!-- Quick Actions -->
   <section class="quick-actions-section" *ngIf="getQuickActions().length > 0">

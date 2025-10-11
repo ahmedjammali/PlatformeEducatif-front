@@ -146,7 +146,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, AfterViewI
   
   // ===== FORMS AND FILTERS =====
   filterForm: FormGroup;
-  searchControl: FormControl;
+  searchControl: FormControl = new FormControl('');
   generateForm: FormGroup;
   editForm: FormGroup;
   academicYears: string[] = [];
@@ -190,9 +190,29 @@ componentOnlyForInvoice?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD '
     { value: 'completed', label: 'Payé', icon: 'check_circle', color: '#4CAF50' },
     { value: 'partial', label: 'Partiel', icon: 'schedule', color: '#FF9800' },
     { value: 'pending', label: 'En attente', icon: 'hourglass_empty', color: '#7AB2D3' },
-    { value: 'overdue', label: 'En retard', icon: 'error', color: '#F44336' },
     { value: 'no_record', label: 'Sans dossier', icon: 'help_outline', color: '#666666' }
   ];
+
+  componentOptions = [
+  { value: '', label: 'Tous les composants', icon: '📋' },
+  { value: 'inscriptionFee', label: 'Frais d\'inscription', icon: '📋' },
+  { value: 'uniform', label: 'Uniforme', icon: '👔' },
+  { value: 'transportation', label: 'Transport', icon: '🚌' }
+];
+
+monthOptions = [
+  { value: '', label: 'Tous les mois', number: null },
+  { value: 'septembre', label: 'Septembre', number: 0 },
+  { value: 'octobre', label: 'Octobre', number: 1 },
+  { value: 'novembre', label: 'Novembre', number: 2 },
+  { value: 'decembre', label: 'Décembre', number: 3 },
+  { value: 'janvier', label: 'Janvier', number: 4 },
+  { value: 'fevrier', label: 'Février', number: 5 },
+  { value: 'mars', label: 'Mars', number: 6 },
+  { value: 'avril', label: 'Avril', number: 7 },
+  { value: 'mai', label: 'Mai', number: 8 },
+  { value: 'juin', label: 'Juin', number: 9 }
+];
   
   gradeCategories: GradeCategoryOption[] = [
     { value: '', label: 'Tous les niveaux', color: '#666666' },
@@ -218,14 +238,14 @@ componentOnlyForInvoice?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD '
     this.currentAcademicYear = this.paymentService.getCurrentAcademicYear();
     this.academicYears = this.paymentService.getAcademicYears();
     
-    // Initialize forms
-    this.searchControl = new FormControl('');
     this.filterForm = this.fb.group({
-      paymentStatus: [''],
-      gradeCategory: [''],
-      grade: [''],
-      classId: [''],
-      academicYear: [this.currentAcademicYear]
+    paymentStatus: [''],
+    gradeCategory: [''],
+    grade: [''],
+    classId: [''],
+    academicYear: [this.currentAcademicYear],
+    component: [''], // ✅ NEW: Component filter
+     month: ['']      // ✅ NEW: Month filter
     });
 
   this.generateForm = this.fb.group({
@@ -531,37 +551,49 @@ getCurrentInscriptionFeeStatus(student: StudentWithPayment): boolean {
 
   // ===== DATA LOADING METHODS =====
 
-  loadStudents(): void {
-    this.isLoading = true;
-    
-    // In the loadStudents method, modify the filters object:
-const filters: PaymentFilters = {
-  search: this.searchControl.value?.trim() || undefined,
-  paymentStatus: this.filterForm.get('paymentStatus')?.value || undefined,
-  gradeCategory: this.filterForm.get('gradeCategory')?.value || undefined,
-  grade: this.filterForm.get('grade')?.value || undefined,
-  classId: this.filterForm.get('classId')?.value || undefined,
-  academicYear: this.filterForm.get('academicYear')?.value,
-  page: this.currentPage,
-  // Increase page size when filtering to show more results
-  limit: this.hasActiveFilters() ? 500 : this.pageSize
-};
+loadStudents(): void {
+  this.isLoading = true;
+  
+  const filters: PaymentFilters = {
+    search: this.searchControl.value?.trim() || undefined,
+    paymentStatus: this.filterForm.get('paymentStatus')?.value || undefined,
+    gradeCategory: this.filterForm.get('gradeCategory')?.value || undefined,
+    grade: this.filterForm.get('grade')?.value || undefined,
+    classId: this.filterForm.get('classId')?.value || undefined,
+    academicYear: this.filterForm.get('academicYear')?.value,
+    page: this.currentPage,
+    limit: this.hasActiveFilters() ? 500 : this.pageSize
+  };
 
-    this.paymentService.getAllStudentsWithPayments(filters).subscribe({
-      next: (response) => {
-        this.students = response.students || [];
-        this.totalStudents = response.pagination?.totalStudents || 0;
-        this.totalPages = Math.ceil(this.totalStudents / this.pageSize);
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading students:', error);
-        this.showError('Erreur lors du chargement des étudiants');
-        this.isLoading = false;
-        this.students = [];
+  this.paymentService.getAllStudentsWithPayments(filters).subscribe({
+    next: (response) => {
+      // ✅ Apply client-side filtering for component and month
+      let filteredStudents = response.students || [];
+      
+      const componentFilter = this.filterForm.get('component')?.value;
+      const monthFilter = this.filterForm.get('month')?.value;
+      
+      if (componentFilter || monthFilter) {
+        filteredStudents = this.applyComponentAndMonthFilters(
+          filteredStudents, 
+          componentFilter, 
+          monthFilter
+        );
       }
-    });
-  }
+      
+      this.students = filteredStudents;
+      this.totalStudents = filteredStudents.length;
+      this.totalPages = Math.ceil(this.totalStudents / this.pageSize);
+      this.isLoading = false;
+    },
+    error: (error) => {
+      console.error('Error loading students:', error);
+      this.showError('Erreur lors du chargement des étudiants');
+      this.isLoading = false;
+      this.students = [];
+    }
+  });
+}
 
   loadDashboard(): void {
     const academicYear = this.filterForm.get('academicYear')?.value;
@@ -1218,26 +1250,30 @@ openPaymentDialog(student: StudentWithPayment, type: 'tuition_monthly' | 'tuitio
     this.filterForm.patchValue({ paymentStatus: status });
   }
 
-  clearFilters(): void {
-    this.searchControl.setValue('');
-    this.filterForm.patchValue({
-      paymentStatus: '',
-      gradeCategory: '',
-      grade: '',
-      classId: ''
-    });
-  }
+ clearFilters(): void {
+  this.searchControl.setValue('');
+  this.filterForm.patchValue({
+    paymentStatus: '',
+    gradeCategory: '',
+    grade: '',
+    classId: '',
+    component: '',  // ✅ NEW
+    month: ''       // ✅ NEW
+  });
+}
 
   hasActiveFilters(): boolean {
-    const formValues = this.filterForm.value;
-    return !!(
-      this.searchControl.value ||
-      formValues.paymentStatus ||
-      formValues.gradeCategory ||
-      formValues.grade ||
-      formValues.classId
-    );
-  }
+  const formValues = this.filterForm.value;
+  return !!(
+    this.searchControl.value ||
+    formValues.paymentStatus ||
+    formValues.gradeCategory ||
+    formValues.grade ||
+    formValues.classId ||
+    formValues.component ||  // ✅ NEW
+    formValues.month         // ✅ NEW
+  );
+}
 
   // ===== NAVIGATION METHODS =====
 
@@ -1641,7 +1677,6 @@ getComponentStatusLabel(student: StudentWithPayment, component: 'tuition' | 'uni
     case 'completed': return `${componentName} - Payé`;
     case 'partial': return `${componentName} - Paiement partiel`;
     case 'pending': return `${componentName} - En attente`;
-    case 'overdue': return `${componentName} - En retard`;
     case 'not_applicable': return `${componentName} - Non applicable`;
     default: return `${componentName} - ${status}`;
   }
@@ -2389,5 +2424,182 @@ openUniformInvoice(student: StudentWithPayment): void {
 
   this.isInvoiceDialogOpen = true;
   document.body.style.overflow = 'hidden';
+}
+
+onComponentChange(event: Event): void {
+  const target = event.target as HTMLSelectElement;
+  this.filterForm.patchValue({ component: target.value });
+}
+
+onMonthChange(event: Event): void {
+  const target = event.target as HTMLSelectElement;
+  this.filterForm.patchValue({ month: target.value });
+}
+
+
+applyComponentAndMonthFilters(
+  students: StudentWithPayment[], 
+  component: string, 
+  monthValue: string
+): StudentWithPayment[] {
+  let filtered = [...students];
+  
+  // Get month number from monthValue
+  const monthOption = this.monthOptions.find(m => m.value === monthValue);
+  const monthNumber = monthOption?.number;
+  
+  // Apply component filter
+  if (component) {
+    filtered = filtered.filter(student => {
+      if (!student.paymentRecord) return false;
+      
+      // Check if student has this component
+      switch (component) {
+        case 'tuition':
+          return true; // All students have tuition
+          
+        case 'inscriptionFee':
+          if (!student.paymentRecord.inscriptionFee?.applicable) return false;
+          break;
+          
+        case 'uniform':
+          if (!student.paymentRecord.uniform?.purchased) return false;
+          break;
+          
+        case 'transportation':
+          if (!student.paymentRecord.transportation?.using) return false;
+          break;
+      }
+      
+      // If month filter is active, check specific month
+      if (monthNumber !== null && monthNumber !== undefined) {
+        return this.hasUnpaidComponentForMonth(student, component, monthNumber);
+      }
+      
+      // If no month filter, just check if component has any unpaid amount
+      return this.hasUnpaidComponent(student, component);
+    });
+  } else if (monthNumber !== null && monthNumber !== undefined) {
+    // If only month filter is active (no component filter)
+    filtered = filtered.filter(student => {
+      if (!student.paymentRecord) return false;
+      return this.hasAnyUnpaidComponentForMonth(student, monthNumber);
+    });
+  }
+  
+  return filtered;
+}
+hasUnpaidComponent(student: StudentWithPayment, component: string): boolean {
+  if (!student.paymentRecord) return false;
+  
+  const remaining = this.getRemainingAmounts(student);
+  
+  switch (component) {
+    case 'tuition':
+      return remaining.tuition > 0;
+      
+    case 'inscriptionFee':
+      return remaining.inscriptionFee > 0;
+      
+    case 'uniform':
+      return remaining.uniform > 0;
+      
+    case 'transportation':
+      return remaining.transportation > 0;
+      
+    default:
+      return false;
+  }
+}
+
+
+hasUnpaidComponentForMonth(
+  student: StudentWithPayment, 
+  component: string, 
+  monthIndex: number
+): boolean {
+  if (!student.paymentRecord) return false;
+  
+  switch (component) {
+    case 'tuition':
+      const tuitionPayments = student.paymentRecord.tuitionMonthlyPayments;
+      if (!tuitionPayments || monthIndex >= tuitionPayments.length) return false;
+      const tuitionPayment = tuitionPayments[monthIndex];
+      return tuitionPayment.status !== 'paid';
+      
+    case 'inscriptionFee':
+      // Inscription fee is not monthly, so return unpaid status regardless of month
+      return !student.paymentRecord.inscriptionFee?.isPaid;
+      
+    case 'uniform':
+      // Uniform is not monthly, so return unpaid status regardless of month
+      return !student.paymentRecord.uniform?.isPaid;
+      
+    case 'transportation':
+      const transportPayments = student.paymentRecord.transportation?.monthlyPayments;
+      if (!transportPayments || monthIndex >= transportPayments.length) return false;
+      const transportPayment = transportPayments[monthIndex];
+      return transportPayment.status !== 'paid';
+      
+    default:
+      return false;
+  }
+}
+
+// 9. Helper method to check if student has any unpaid component for specific month:
+hasAnyUnpaidComponentForMonth(student: StudentWithPayment, monthIndex: number): boolean {
+  if (!student.paymentRecord) return false;
+  
+  // Check tuition for this month
+  const tuitionPayments = student.paymentRecord.tuitionMonthlyPayments;
+  if (tuitionPayments && monthIndex < tuitionPayments.length) {
+    if (tuitionPayments[monthIndex].status !== 'paid') return true;
+  }
+  
+  // Check transportation for this month
+  const transportPayments = student.paymentRecord.transportation?.monthlyPayments;
+  if (transportPayments && monthIndex < transportPayments.length) {
+    if (transportPayments[monthIndex].status !== 'paid') return true;
+  }
+  
+  return false;
+}
+getComponentLabel(value: string): string {
+  const comp = this.componentOptions.find(c => c.value === value);
+  return comp ? comp.label : value;
+}
+
+getMonthLabel(value: string): string {
+  const month = this.monthOptions.find(m => m.value === value);
+  return month ? month.label : value;
+}
+
+getGradeCategoryLabelForFilter(value: string): string {
+  const category = this.gradeCategories.find(g => g.value === value);
+  return category ? category.label : value;
+}
+
+getGradeLabelForFilter(value: string): string {
+  const grade = this.grades.find(g => g.value === value);
+  return grade ? grade.label : value;
+}
+
+// ===== 10. CLEAR INDIVIDUAL FILTER METHODS =====
+// Add these methods for removing individual filter tags:
+
+clearComponentFilter(): void {
+  this.filterForm.patchValue({ component: '' });
+}
+
+clearMonthFilter(): void {
+  this.filterForm.patchValue({ month: '' });
+}
+
+clearGradeCategoryFilter(): void {
+  this.filterForm.patchValue({ gradeCategory: '', grade: '' });
+}
+
+clearGradeFilter(): void {
+  this.filterForm.patchValue({ grade: '' });
 }
 }
