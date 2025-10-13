@@ -403,7 +403,26 @@
                         </ng-container>
 
                         <!-- Show save and payment buttons for unpaid months -->
-                        <ng-container *ngIf="payment.paymentStatus !== 'paid'">
+                        <ng-container *ngIf="payment.paymentStatus === 'pending'">
+                          <button class="btn-save-hours" (click)="saveHoursForPayment(record, payment)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                              stroke-width="2">
+                              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                              <polyline points="17,21 17,13 7,13 7,21" />
+                              <polyline points="7,3 7,8 15,8" />
+                            </svg>
+                            Sauvegarder
+                          </button>
+                          <button class="btn-pay-card" (click)="openPaymentModal(record, payment.month)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                              stroke-width="2">
+                              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                            </svg>
+                            Enregistrer Paiement
+                          </button>
+                        </ng-container>
+                        <!-- Show save and payment buttons for partial months -->
+                        <ng-container *ngIf="payment.paymentStatus === 'partial'">
                           <button class="btn-save-hours" (click)="saveHoursForPayment(record, payment)">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                               stroke-width="2">
@@ -419,8 +438,15 @@
                               stroke-width="2">
                               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                             </svg>
-                            {{ payment.paymentStatus === 'partial' ? 'Paiement Partiel - Continuer' :
-                            'Enregistrer Paiement' }}
+                            Paiement Partiel - Continuer
+                          </button>
+                          <button class="btn-preview-receipt" (click)="openReceiptAvancePreview(record, payment)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                              stroke-width="2">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            Voir Reçu Avance
                           </button>
                         </ng-container>
                       </div>
@@ -1010,6 +1036,97 @@
     </div>
   </div>
 
+  <!-- Receipt Avance Preview Modal -->
+  <div class="modal-overlay" *ngIf="showReceiptAvancePreviewModal" (click)="closeReceiptAvancePreview()">
+    <div class="modal-content receipt-preview-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Aperçu du Avance sur Salaire</h3>
+        <button class="btn-close" (click)="closeReceiptAvancePreview()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body receipt-preview-body">
+        <div class="receipt-preview-container" *ngIf="selectedPrintData">
+          <!-- Receipt Preview Content -->
+          <div class="receipt-part">
+            <div class="receipt-header">
+              <h2>REÇU POUR AVANCE SUR SALAIRE EN ESPÈCES</h2>
+            </div>
+
+            <div class="receipt-content">
+              <p class="receipt-paragraph">
+                Je soussigné, <span class="field-value">{{ getEmployeeName(selectedPrintData.record) }}</span>
+                , certifie avoir reçu la somme de <span class="field-value">{{
+                  convertAmountToWords(getReceiptTotalAmount(selectedPrintData.payment)) }}</span> TND (en toutes lettres), soit en
+                chiffre : <span class="field-value">{{ formatCurrency(getReceiptTotalAmount(selectedPrintData.payment)) }}</span>
+                TND. Montant d' avance sur salaire du mois de <span class="field-value">{{ monthNames[selectedPrintData.payment.month - 1] }}</span>, de la
+                part de <span class="field-value">Ons School</span>.
+              </p>
+
+              <!-- Salary Breakdown -->
+              <div class="receipt-breakdown" *ngIf="shouldShowSalaryBreakdown(selectedPrintData.payment)">
+                <h4>Détail du Salaire:</h4>
+                <div class="breakdown-items">
+                  <div class="breakdown-item" *ngIf="selectedPrintData.payment.paymentType === 'monthly'">
+                    <span class="breakdown-label">Salaire de base:</span>
+                    <span class="breakdown-value">{{ formatCurrency(selectedPrintData.payment.baseSalaryAmount || 0) }}</span>
+                  </div>
+                  <div class="breakdown-item" *ngIf="selectedPrintData.payment.paymentType === 'hourly'">
+                    <span class="breakdown-label">Salaire régulier ({{ selectedPrintData.payment.actualHoursWorked || selectedPrintData.payment.regularHours || 0 }}h × {{ formatCurrency(selectedPrintData.payment.hourlyRate || 0) }}/h):</span>
+                    <span class="breakdown-value">{{ formatCurrency(selectedPrintData.payment.regularAmount || 0) }}</span>
+                  </div>
+                  <div class="breakdown-item" *ngIf="(selectedPrintData.payment.extraHours || 0) > 0">
+                    <span class="breakdown-label">Heures Supplémentaires ({{ selectedPrintData.payment.extraHours }}h × {{ formatCurrency(selectedPrintData.payment.extraHourlyRate || 0) }}/h):</span>
+                    <span class="breakdown-value">{{ formatCurrency((selectedPrintData.payment.extraHours || 0) * (selectedPrintData.payment.extraHourlyRate || 0)) }}</span>
+                  </div>
+                  <div class="breakdown-total">
+                    <span class="breakdown-label"><strong>Total:</strong></span>
+                    <span class="breakdown-value"><strong>{{ formatCurrency(getReceiptTotalAmount(selectedPrintData.payment)) }}</strong></span>
+                  </div>
+                </div>
+              </div>
+
+              <p class="receipt-paragraph">
+                Fait à <span class="field-value">....................</span>, le <span class="field-value">{{
+                  formatDate(selectedPrintData.payment.paidDate) || getCurrentDate() }}</span>.
+              </p>
+
+              <div class="receipt-signatures">
+                <div class="signature-section">
+                  <p>« Lu et approuvé »</p>
+                  <p>Signature de l'école</p>
+                  <div class="signature-space"></div>
+                </div>
+                <div class="signature-section">
+                  <p>« Lu et approuvé »</p>
+                  <p>Signature de l'employé</p>
+                  <div class="signature-space"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeReceiptAvancePreview()">Fermer</button>
+        <button class="btn-download" (click)="downloadReceiptAvance()" [disabled]="loading">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            *ngIf="!loading">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7,10 12,15 17,10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+
+          {{ loading ? 'Génération' : 'Télécharger PDF' }}
+        </button>
+      </div>
+    </div>
+  </div>
   <!-- Templates -->
   <ng-template #loadingTemplate>
     <div class="loading-spinner">

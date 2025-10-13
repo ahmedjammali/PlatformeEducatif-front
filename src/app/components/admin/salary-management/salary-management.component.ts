@@ -39,6 +39,7 @@ export class SalaryManagementComponent implements OnInit {
   showConfigDetailsModal: boolean = false;
   showUserDetailsModal: boolean = false;
   showReceiptPreviewModal: boolean = false;
+  showReceiptAvancePreviewModal: boolean = false;
 
   // Loading states
   loading: boolean = false;
@@ -973,8 +974,22 @@ getCurrentTotalAmount(payment: any): number {
     this.showReceiptPreviewModal = true;
   }
 
+  openReceiptAvancePreview(record: TeacherAdminSalary, payment: any): void {
+    this.selectedPrintData = {
+      record: record,
+      payment: payment,
+      year: this.selectedAcademicYear
+    };
+    this.showReceiptAvancePreviewModal = true;
+  }
+
   closeReceiptPreview(): void {
     this.showReceiptPreviewModal = false;
+    this.selectedPrintData = null;
+  }
+
+  closeReceiptAvancePreview(): void {
+    this.showReceiptAvancePreviewModal = false;
     this.selectedPrintData = null;
   }
 
@@ -1323,6 +1338,351 @@ downloadReceipt(): void {
     `;
   }
 
+
+downloadReceiptAvance(): void {
+  if (!this.selectedPrintData) {
+    this.toasterService.error('Aucune donnée de reçu disponible');
+    return;
+  }
+
+  // Show loading state
+  this.loading = true;
+  this.toasterService.success('Génération du PDF en cours...');
+
+  // Create a temporary element to render the receipt
+  const tempElement = document.createElement('div');
+  tempElement.style.position = 'absolute';
+  tempElement.style.left = '-9999px';
+  tempElement.style.top = '-9999px';
+  tempElement.style.width = '210mm'; // A4 width
+  tempElement.style.padding = '20mm';
+  tempElement.style.backgroundColor = 'white';
+  tempElement.style.fontFamily = 'Arial, sans-serif';
+
+  // Add TWO copies of the receipt content with a separator
+  const receiptHTML = this.generateReceiptAvanceHTML();
+  tempElement.innerHTML = `
+    ${receiptHTML}
+    <div style="border-top: 2px dashed #999; margin: 30px 0; page-break-inside: avoid;"></div>
+    ${receiptHTML}
+  `;
+
+  // Apply styles directly
+  const styleElement = document.createElement('style');
+  styleElement.textContent = this.getPrintStylesAvance().replace(/@page[^}]*}/g, '');
+  tempElement.appendChild(styleElement);
+
+  // Add to document temporarily
+  document.body.appendChild(tempElement);
+
+  // Use html2canvas and jsPDF to generate PDF
+  html2canvas(tempElement, {
+    useCORS: true,
+    allowTaint: false,
+    width: tempElement.scrollWidth,
+    height: tempElement.scrollHeight
+  }).then((canvas: HTMLCanvasElement) => {
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    const imgWidth = 190; // A4 width minus margins
+    const pageHeight = 297; // A4 height
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 10;
+
+    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    const employeeName = this.getEmployeeName(this.selectedPrintData!.record).replace(/[^\w\s]/gi, '');
+    const monthName = this.monthNames[this.selectedPrintData!.payment.month - 1];
+    const filename = `recu_avance_salaire_${employeeName.replace(/\s+/g, '_')}_${monthName}.pdf`;
+
+    pdf.save(filename);
+    this.loading = false;
+    this.toasterService.success('Reçu PDF téléchargé avec succès!');
+
+    // Clean up
+    document.body.removeChild(tempElement);
+  }).catch((error: any) => {
+    console.error('Error generating PDF:', error);
+    this.loading = false;
+    this.fallbackDownloadAvance(tempElement);
+  });
+}
+  private fallbackDownloadAvance(tempElement: HTMLElement): void {
+    const employeeName = this.getEmployeeName(this.selectedPrintData!.record).replace(/[^\w\s]/gi, '');
+    const monthName = this.monthNames[this.selectedPrintData!.payment.month - 1];
+
+    // Create HTML content for download
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Reçu de Salaire - ${employeeName} - ${monthName}</title>
+        <meta charset="utf-8">
+        <style>
+          ${this.getPrintStylesAvance()}
+          body { margin: 0; padding: 20mm; background: white; }
+          @media print {
+            body { margin: 0; padding: 20mm; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        ${this.generateReceiptAvanceHTML()}
+      </body>
+      </html>
+    `;
+
+    // Create blob and download
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `recu_salaire_${employeeName.replace(/\s+/g, '_')}_${monthName}.html`;
+    link.style.display = 'none';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    // Clean up temp element
+    if (tempElement.parentNode) {
+      document.body.removeChild(tempElement);
+    }
+
+    this.toasterService.success('Reçu téléchargé en format HTML (ouvrez avec votre navigateur pour imprimer en PDF)');
+  }
+
+  private getPrintStylesAvance(): string {
+    return `
+      @page {
+        size: A4;
+        margin: 20mm;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.4;
+        color: #000;
+        background: white;
+      }
+
+      .receipt-container {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0;
+      }
+
+      .receipt-part {
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .receipt-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+      }
+
+      .receipt-header h2 {
+        font-size: 16px;
+        font-weight: bold;
+        margin: 0 0 8px 0;
+        text-transform: uppercase;
+      }
+
+      .receipt-header p {
+        font-size: 11px;
+        margin: 0;
+        font-style: italic;
+      }
+
+      .receipt-paragraph {
+        margin-bottom: 12px;
+        line-height: 1.5;
+        font-size: 13px;
+        text-align: justify;
+      }
+
+      .field-value {
+        font-weight: bold;
+        margin: 0 2px;
+      }
+
+      .field-suffix {
+        font-weight: normal;
+      }
+
+      .receipt-signatures {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 25px;
+        padding-top: 15px;
+      }
+
+      .signature-section {
+        text-align: center;
+        width: 45%;
+      }
+
+      .signature-section p {
+        margin: 3px 0;
+        font-size: 11px;
+      }
+
+      .signature-space {
+        height: 45px;
+        border-bottom: 1px solid #000;
+        margin-top: 15px;
+      }
+
+      /* Receipt breakdown styles */
+      .receipt-breakdown {
+        margin: 15px 0;
+        padding: 12px;
+        border: 1px solid #000;
+        border-radius: 4px;
+        background-color: white;
+      }
+
+      .receipt-breakdown h4 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #000;
+        border-bottom: 1px solid #333;
+        padding-bottom: 6px;
+      }
+
+      .breakdown-items {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .breakdown-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+        font-size: 12px;
+      }
+
+      .breakdown-label {
+        color: #333;
+        flex: 1;
+      }
+
+      .breakdown-value {
+        font-weight: 500;
+        color: #000;
+        min-width: 70px;
+        text-align: right;
+      }
+
+      .breakdown-total {
+        border-top: 1px solid #333;
+        margin-top: 6px;
+        padding-top: 6px;
+        font-size: 13px;
+      }
+
+      .breakdown-total .breakdown-label,
+      .breakdown-total .breakdown-value {
+        color: #000;
+        font-weight: bold;
+      }
+    `;
+  }
+
+  private generateSalaryBreakdownAvanceHTML(payment: any): string {
+    if (!this.shouldShowSalaryBreakdown(payment)) {
+      return '';
+    }
+
+    const extraHoursAmount = (payment.extraHours || 0) * (payment.extraHourlyRate || 0);
+
+    return `
+      <div class="receipt-breakdown">
+        <h4>Détail du Salaire:</h4>
+        <div class="breakdown-items">
+          ${payment.paymentType === 'monthly' ?
+            `<div class="breakdown-item">
+              <span class="breakdown-label">Salaire de base:</span>
+              <span class="breakdown-value">${this.formatCurrency(payment.baseSalaryAmount || 0)}</span>
+            </div>` :
+            `<div class="breakdown-item">
+              <span class="breakdown-label">Salaire régulier (${payment.actualHoursWorked || payment.regularHours || 0}h × ${this.formatCurrency(payment.hourlyRate || 0)}/h):</span>
+              <span class="breakdown-value">${this.formatCurrency(payment.regularAmount || 0)}</span>
+            </div>`
+          }
+          ${(payment.extraHours || 0) > 0 ?
+            `<div class="breakdown-item">
+              <span class="breakdown-label">Heures Supplémentaires (${payment.extraHours}h × ${this.formatCurrency(payment.extraHourlyRate || 0)}/h):</span>
+              <span class="breakdown-value">${this.formatCurrency(extraHoursAmount)}</span>
+            </div>` : ''
+          }
+          <div class="breakdown-total">
+            <span class="breakdown-label"><strong>Total:</strong></span>
+            <span class="breakdown-value"><strong>${this.formatCurrency(this.getReceiptTotalAmount(payment))}</strong></span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private generateReceiptAvanceHTML(): string {
+    if (!this.selectedPrintData) return '';
+
+    const totalAmount = this.getReceiptTotalAmount(this.selectedPrintData.payment);
+    const amountInWords = this.convertAmountToWords(totalAmount);
+
+    return `
+      <div class="receipt-container">
+        <div class="receipt-part">
+          <div class="receipt-header">
+            <h2>REÇU POUR AVANCE SUR SALAIRE EN ESPÈCES</h2>
+          </div>
+
+          <div class="receipt-content">
+            <p class="receipt-paragraph">
+              Je soussigné, <span class="field-value">${this.getEmployeeName(this.selectedPrintData.record)}</span> , certifie avoir reçu la somme de <span class="field-value">${amountInWords}</span> TND (en toutes lettres), soit en chiffre : <span class="field-value">${this.formatCurrency(totalAmount)}</span> TND. Montant d' avance sur salaire du mois de <span class="field-value">${this.monthNames[this.selectedPrintData.payment.month - 1]}</span>, de la part de <span class="field-value">Ons School</span>.
+            </p>
+
+            ${this.generateSalaryBreakdownAvanceHTML(this.selectedPrintData.payment)}
+
+            <p class="receipt-paragraph">
+              Fait à <span class="field-value">.....................</span>, le <span class="field-value">${this.formatDate(this.selectedPrintData.payment.paidDate) || this.getCurrentDate()}</span>.
+            </p>
+
+            <div class="receipt-signatures">
+              <div class="signature-section">
+                <p>« Lu et approuvé »</p>
+                <p>Signature de l'école</p>
+                <div class="signature-space"></div>
+              </div>
+              <div class="signature-section">
+                <p>« Lu et approuvé »</p>
+                <p>Signature de l'employé</p>
+                <div class="signature-space"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
   getEmployeeName(record: TeacherAdminSalary): string {
     if (typeof record.user === 'string') {
       return 'Utilisateur inconnu';
@@ -1398,27 +1758,47 @@ downloadReceipt(): void {
   }
 getReceiptTotalAmount(payment: any): number {
   if (!payment) return 0;
-
-  if (payment.paymentType === 'monthly') {
-    const baseSalary = Math.max(0, payment.baseSalaryAmount || 0);
-    const extraHours = Math.max(0, payment.extraHours || 0);
-    const extraHourlyRate = payment.extraHourlyRate || 0;
-    const extraAmount = extraHours * extraHourlyRate;
-    return baseSalary + extraAmount;
-  } else {
-    // For hourly payments, calculate from actualHoursWorked
-    const actualHours = Math.max(0, payment.actualHoursWorked || payment.regularHours || 0);
-    const hourlyRate = Math.max(0, payment.hourlyRate || 0);
-    
-    // Calculate base payment from all hours worked
-    const basePayment = actualHours * hourlyRate;
-    
-    // Add separate extra hours if any
-    const extraHours = Math.max(0, payment.extraHours || 0);
-    const extraHourlyRate = payment.extraHourlyRate || 0;
-    const extraPayment = extraHours * extraHourlyRate;
-    
-    return basePayment + extraPayment;
+  if (payment.baseSalaryAmount === payment.paidAmount ) {
+    if (payment.paymentType === 'monthly') {
+      const baseSalary = Math.max(0, payment.baseSalaryAmount || 0);
+      const extraHours = Math.max(0, payment.extraHours || 0);
+      const extraHourlyRate = payment.extraHourlyRate || 0;
+      const extraAmount = extraHours * extraHourlyRate;
+      return baseSalary + extraAmount;
+    } else {
+      // For hourly payments, calculate from actualHoursWorked
+      const actualHours = Math.max(0, payment.actualHoursWorked || payment.regularHours || 0);
+      const hourlyRate = Math.max(0, payment.hourlyRate || 0);
+      
+      // Calculate base payment from all hours worked
+      const basePayment = actualHours * hourlyRate;
+      
+      // Add separate extra hours if any
+      const extraHours = Math.max(0, payment.extraHours || 0);
+      const extraHourlyRate = payment.extraHourlyRate || 0;
+      const extraPayment = extraHours * extraHourlyRate;
+      
+      return basePayment + extraPayment;
+    }
+  }else{
+        if (payment.paymentType === 'monthly') {
+      const paidAmount = Math.max(0, payment.paidAmount || 0);
+      return paidAmount;
+    } else {
+      // For hourly payments, calculate from actualHoursWorked
+      const actualHours = Math.max(0, payment.actualHoursWorked || payment.regularHours || 0);
+      const hourlyRate = Math.max(0, payment.hourlyRate || 0);
+      
+      // Calculate base payment from all hours worked
+      const basePayment = actualHours * hourlyRate;
+      
+      // Add separate extra hours if any
+      const extraHours = Math.max(0, payment.extraHours || 0);
+      const extraHourlyRate = payment.extraHourlyRate || 0;
+      const extraPayment = extraHours * extraHourlyRate;
+      
+      return basePayment + extraPayment;
+    }
   }
 }
 }
