@@ -1,0 +1,940 @@
+/* bl.component.css - Enhanced with single full-page watermark overlay */
+
+.bl-container {
+  max-width: 250mm;
+  min-height: 350mm;
+  margin: 0 auto;
+  background: white;
+  padding: 20mm;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #000;
+  position: relative;
+  overflow: hidden; /* Important: Hide overflow to prevent scrollbars */
+}
+
+/* ====================================
+  PRINT ACTIONS (HIDDEN IN PRINT)
+  ==================================== */
+.bl-actions {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  outline: none;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.download-btn {
+  background: linear-gradient(135deg, #28a745, #218838);
+}
+
+.download-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #218838, #1e7e34);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ====================================
+  SINGLE FULL-PAGE WATERMARK OVERLAY
+  ==================================== */
+.watermark-fullpage {
+  position: fixed; /* Use fixed positioning for better control */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 90px; /* Reduced size to fit full text */
+  font-weight: bold;
+  color: rgba(44, 82, 130, 0.08); /* Light transparency */
+  z-index: 9999; /* Above all content */
+  pointer-events: none; /* Click through watermark */
+  user-select: none;
+  white-space: nowrap;
+  font-family: Arial, sans-serif;
+  letter-spacing: 15px;
+  text-transform: uppercase;
+  text-align: center;
+  min-width: 200%; /* Ensure it's wide enough */
+}
+
+/* Alternative approach for bl-content container */
+.bl-content {
+  background: white;
+  position: relative;
+  z-index: 1; /* Below watermark */
+  overflow: visible; /* Allow watermark to be visible */
+}
+
+/* For better watermark display within the bl container */
+.bl-container .watermark-fullpage {
+  position: absolute; /* Absolute within container */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 80px; /* Optimized size for A4 */
+  font-weight: 900; /* Extra bold */
+  color: rgba(44, 82, 130, 0.07); /* Light but visible */
+  z-index: 9999;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  font-family: 'Arial Black', Arial, sans-serif;
+  letter-spacing: 12px;
+  text-transform: uppercase;
+  width: auto;
+  height: auto;
+}
+
+/* Header Section */
+.bl-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #000;
+  padding-bottom: 15px;
+  position: relative;
+}
+
+.school-info {
+  flex: 1;
+}
+
+.school-name {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  margin-top: 0;
+  text-transform: uppercase;
+}
+
+.school-details p {
+  margin: 3px 0;
+  font-size: 13px;
+}
+
+.bl-meta {
+  text-align: right;
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+/* Logo styling */
+.school-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  background: rgba(248, 250, 252, 0.9);
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.school-logo svg {
+  width: 80px;
+  height: 80px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Student Info Box */
+.student-box {
+  border: 2px solid #000;
+  padding: 15px;
+  margin-bottom: 25px;
+  position: relative;
+  background: white;
+}
+
+.student-row {
+  display: flex;
+  margin: 5px 0;
+  font-size: 13px;
+}
+
+.student-label {
+  min-width: 150px;
+  font-weight: bold;
+}
+
+/* bl Details Box */
+.bl-details-box {
+  border: 2px solid #000;
+  margin-bottom: 25px;
+  position: relative;
+  background: white;
+}
+
+.bl-details-header {
+  background: #f0f0f0;
+  padding: 10px;
+  border-bottom: 1px solid #000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.facture-title {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.page-info {
+  font-size: 12px;
+}
+
+.bl-details-content {
+  padding: 15px;
+}
+
+.details-row {
+  display: flex;
+  margin: 5px 0;
+  font-size: 13px;
+}
+
+.details-label {
+  min-width: 120px;
+  font-weight: bold;
+}
+
+/* Main Table */
+.main-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid #000;
+  margin-bottom: 25px;
+  position: relative;
+  background: white;
+}
+
+.main-table th {
+  border: 1px solid #000;
+  padding: 12px 8px;
+  text-align: center;
+  font-weight: bold;
+  background: #f0f0f0;
+  font-size: 13px;
+}
+
+.main-table td {
+  border: 1px solid #000;
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 12px;
+  vertical-align: top;
+  background: white;
+}
+
+.main-table .designation-col {
+  text-align: left;
+  width: 35%;
+}
+
+.main-table .ref-col {
+  width: 8%;
+}
+
+.main-table .qty-col {
+  width: 8%;
+}
+
+.main-table .price-col {
+  width: 15%;
+  text-align: right;
+}
+
+.main-table .amount-col {
+  width: 15%;
+  text-align: right;
+}
+
+.main-table .tva-col {
+  width: 12%;
+  text-align: right;
+}
+
+/* Payment rows in table */
+.payment-row td {
+  height: 35px;
+}
+
+/* Hide empty rows */
+.payment-row:empty,
+.payment-row td:empty {
+  display: none;
+}
+
+.payment-row:has(td:empty):has(td:not(:empty)) {
+  display: table-row;
+}
+
+.main-table tbody tr:empty {
+  display: none !important;
+}
+
+.main-table tbody tr:not(:has(td:not(:empty))) {
+  display: none !important;
+}
+
+/* Service icons styling */
+.service-icon {
+  font-size: 16px;
+  margin-right: 6px;
+}
+
+.amount-positive {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.amount-pending {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* Totals Section */
+.totals-section {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 25px;
+  position: relative;
+}
+
+.tva-box {
+  border: 2px solid #000;
+  padding: 15px;
+  width: 220px;
+  background: white;
+}
+
+.tva-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tva-table th,
+.tva-table td {
+  border: 1px solid #000;
+  padding: 8px;
+  text-align: center;
+  font-size: 12px;
+  background: white;
+}
+
+.tva-table th {
+  background: #f0f0f0;
+  font-weight: bold;
+}
+
+.totals-box {
+  text-align: right;
+  width: 220px;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.total-line {
+  margin: 6px 0;
+  padding: 6px 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.total-ht {
+  border-top: 1px solid #000;
+  padding-top: 6px;
+  font-weight: bold;
+}
+
+.total-ttc {
+  border-top: 2px solid #000;
+  border-bottom: 2px solid #000;
+  padding: 10px 0;
+  font-weight: bold;
+  font-size: 15px;
+  background: #f9f9f9;
+}
+
+.total-amount {
+  font-weight: bold;
+}
+
+/* Component-specific and Current Month Summary */
+.component-summary,
+.current-month-summary {
+  margin: 20px 0;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  position: relative;
+}
+
+.component-summary h4,
+.current-month-summary h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dotted #ccc;
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-item.summary-total {
+  grid-column: 1 / -1;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 2px solid #333;
+  border-bottom: none;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #555;
+}
+
+.summary-amount {
+  font-size: 12px;
+  font-weight: bold;
+  color: #333;
+}
+
+.summary-total .summary-label,
+.summary-total .summary-amount {
+  font-size: 14px;
+  color: #000;
+}
+
+/* Discount info styling */
+.discount-info {
+  margin-top: 6px;
+  padding: 6px;
+  background-color: #e8f5e8;
+  border-radius: 3px;
+  border-left: 3px solid #4caf50;
+}
+
+.discount-info small {
+  display: block;
+  line-height: 1.3;
+  font-size: 10px;
+}
+
+/* Enhanced payment row styling */
+.payment-row .amount-col.amount-positive {
+  background-color: #e8f5e8;
+  font-weight: bold;
+}
+
+.payment-row .amount-col.amount-pending {
+  background-color: #fff3cd;
+  font-style: italic;
+}
+
+/* Footer */
+.footer-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 30px;
+  position: relative;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.amount-words {
+  flex: 1;
+  font-size: 12px;
+  margin-right: 20px;
+  line-height: 1.3;
+}
+
+.signature-section {
+  text-align: center;
+  width: 150px;
+}
+
+.signature-box {
+  border: 2px solid #000;
+  height: 80px;
+  margin-top: 12px;
+  position: relative;
+  background: white;
+}
+
+.signature-label {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+/* TVA Highlighting */
+.tva-highlight {
+  background-color: #fff3cd;
+  color: #856404;
+  font-weight: bold;
+}
+
+/* ====================================
+  PRINT STYLES - OPTIMIZED FOR A4
+  ==================================== */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .bl-container {
+    max-width: 210mm; /* A4 width */
+    min-height: 297mm; /* A4 height */
+    margin: 0;
+    padding: 10mm;
+    box-shadow: none;
+    background: white;
+    font-size: 11px;
+    line-height: 1.3;
+    overflow: visible !important;
+    position: relative;
+  }
+  
+  /* Watermark for print - optimized for A4 */
+  .watermark-fullpage {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) rotate(-45deg) !important;
+    font-size: 70px !important; /* Perfect size for A4 to show full text */
+    font-weight: 900 !important;
+    color: rgba(44, 82, 130, 0.10) !important; /* Visible but light in print */
+    opacity: 1 !important;
+    z-index: 9999 !important;
+    white-space: nowrap !important;
+    letter-spacing: 10px !important;
+    width: auto !important;
+    pointer-events: none !important;
+  }
+  
+  /* Ensure content is below watermark */
+  .bl-content {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  
+  /* Keep backgrounds white for better print contrast */
+  .student-box,
+  .bl-details-box,
+  .main-table,
+  .main-table td,
+  .main-table th,
+  .tva-table th,
+  .tva-table td,
+  .totals-box,
+  .component-summary,
+  .current-month-summary,
+  .footer-section,
+  .signature-box,
+  .discount-info,
+  .payment-row .amount-col.amount-positive,
+  .payment-row .amount-col.amount-pending,
+  .tva-highlight {
+    background: white !important;
+  }
+  
+  .total-ttc {
+    background: #f0f0f0 !important;
+  }
+  
+  .school-logo {
+    background: white !important;
+    border: 1px solid #ccc !important;
+  }
+  
+  .bl-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
+  
+  .school-name {
+    font-size: 16px;
+  }
+  
+  .school-details p {
+    font-size: 10px;
+  }
+  
+  .school-logo svg {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .student-box {
+    margin-bottom: 15px;
+    padding: 10px;
+  }
+  
+  .bl-details-box {
+    margin-bottom: 15px;
+  }
+  
+  .facture-title {
+    font-size: 13px;
+  }
+  
+  .main-table {
+    margin-bottom: 15px;
+  }
+  
+  .main-table th,
+  .main-table td {
+    padding: 6px 5px;
+    font-size: 10px;
+  }
+  
+  .payment-row td {
+    height: 25px;
+  }
+  
+  .service-icon {
+    font-size: 12px;
+  }
+  
+  .totals-section {
+    margin-bottom: 15px;
+  }
+  
+  .total-line {
+    font-size: 10px;
+  }
+  
+  .total-ttc {
+    font-size: 12px;
+  }
+  
+  .footer-section {
+    margin-top: 20px;
+  }
+  
+  .component-summary,
+  .current-month-summary {
+    margin: 12px 0;
+    padding: 8px;
+    border: 1px solid #000 !important;
+  }
+  
+  .component-summary h4,
+  .current-month-summary h4 {
+    font-size: 12px;
+  }
+  
+  .summary-label,
+  .summary-amount {
+    font-size: 9px;
+  }
+  
+  .discount-info {
+    border-left: 2px solid #000 !important;
+  }
+  
+  .signature-box {
+    height: 60px;
+  }
+  
+  .amount-words {
+    font-size: 9px;
+  }
+  
+  /* Ensure proper page breaks */
+  .student-box,
+  .bl-details-box,
+  .totals-section,
+  .footer-section,
+  .component-summary,
+  .current-month-summary {
+    page-break-inside: avoid;
+  }
+  
+  .main-table {
+    page-break-inside: auto;
+  }
+  
+  .main-table thead {
+    display: table-header-group;
+  }
+  
+  .main-table tbody tr {
+    page-break-inside: avoid;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 0; /* No margin for full page coverage */
+  }
+}
+
+/* ====================================
+  RESPONSIVE DESIGN
+  ==================================== */
+@media (max-width: 768px) {
+  .bl-container {
+    padding: 1rem;
+    font-size: 12px;
+  }
+  
+  .watermark-fullpage {
+    font-size: 50px; /* Smaller for tablet */
+    letter-spacing: 8px;
+  }
+  
+  .bl-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .bl-meta {
+    text-align: center;
+    justify-content: center;
+  }
+  
+  .school-name {
+    font-size: 16px;
+  }
+  
+  .school-logo svg {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .totals-section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .tva-box,
+  .totals-box {
+    width: 100%;
+  }
+  
+  .footer-section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .amount-words {
+    margin-right: 0;
+    font-size: 11px;
+  }
+  
+  .signature-section {
+    width: 100%;
+  }
+  
+  .main-table {
+    font-size: 10px;
+  }
+  
+  .main-table th,
+  .main-table td {
+    padding: 8px 4px;
+    font-size: 10px;
+  }
+  
+  .student-label,
+  .details-label {
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bl-container {
+    padding: 0.5rem;
+    font-size: 10px;
+    overflow-x: hidden;
+  }
+  
+  .watermark-fullpage {
+    font-size: 50px; /* Increased from 35px */
+    letter-spacing: 8px;
+  }
+  
+  .school-name {
+    font-size: 14px;
+  }
+  
+  .facture-title {
+    font-size: 12px;
+  }
+  
+  .main-table th,
+  .main-table td {
+    padding: 6px 3px;
+    font-size: 9px;
+  }
+  
+  .student-box,
+  .bl-details-box {
+    padding: 10px;
+  }
+  
+  .student-label,
+  .details-label {
+    min-width: 100px;
+    font-size: 9px;
+  }
+  
+  .school-logo svg {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .service-icon {
+    font-size: 12px;
+  }
+  
+  .totals-box {
+    padding: 8px;
+  }
+  
+  .total-line {
+    font-size: 10px;
+  }
+  
+  .total-ttc {
+    font-size: 12px;
+  }
+  
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-label,
+  .summary-amount {
+    font-size: 10px;
+  }
+  
+  .discount-info small {
+    font-size: 8px;
+  }
+  
+  .amount-words {
+    font-size: 9px;
+  }
+  
+  .signature-box {
+    height: 60px;
+  }
+}
+
+/* ====================================
+  UTILITY CLASSES
+  ==================================== */
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.font-bold {
+  font-weight: bold;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.p-1 {
+  padding: 0.25rem;
+}
+
+.p-2 {
+  padding: 0.5rem;
+}
+
+.p-3 {
+  padding: 1rem;
+}

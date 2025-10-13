@@ -109,7 +109,9 @@ import { PaymentDialogComponent } from './components/admin/payment-dialog/paymen
 import { PaymentConfigComponent } from './components/admin/payment-config/payment-config.component';
 
 import { InvoiceComponent } from './components/admin/invoice/invoice.component';
+import { InvoiceProformatComponent } from './components/admin/invoice-proformat/invoice-proformat.component';
 import { InvoiceDialogComponent } from './components/admin/invoice-dialog/invoice-dialog.component';
+import { InvoiceProformatDialogComponent } from './components/admin/invoice-proformat-dialog/invoice-proformat-dialog.component';
 import { ChargesComponent } from './components/admin/charges/charges.component';
 import { SalaryManagementComponent } from './components/admin/salary-management/salary-management.component';
 import { IncomeAnalyticsComponent } from './components/admin/income-analytics/income-analytics.component';
@@ -121,6 +123,8 @@ import { ScheduleService } from './services/schedule.service';
 import { ScheduleManagementComponent } from './components/admin/schedule-management/schedule-management.component';
 import { TeacherScheduleComponent } from './components/teacher/teacher-schedule/teacher-schedule.component';
 import { StudentScheduleComponent } from './components/student/student-schedule/student-schedule.component';
+import { blComponent } from './components/admin/bl/bl.component';
+import { BlDialogComponent } from './components/admin/bl-dialog/bl-dialog.component';
 
 
 
@@ -196,7 +200,11 @@ const MaterialModules = [
     PaymentDialogComponent,
     PaymentConfigComponent,
     InvoiceComponent,
+    blComponent,
+    BlDialogComponent,
+    InvoiceProformatComponent,
     InvoiceDialogComponent,
+    InvoiceProformatDialogComponent,
     ChargesComponent,
     SalaryManagementComponent,
     IncomeAnalyticsComponent,

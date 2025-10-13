@@ -49,6 +49,16 @@
             </option>
         </select>
     </div>
+            <!-- Month Filter -->
+    <div class="filter-item">
+        <label class="filter-label">Mois</label>
+        <select class="filter-select" [(ngModel)]="activeFilters.month" (change)="onMonthChange($event)">
+            <option value="">Toutes les mois</option>
+            <option *ngFor="let m of months" [value]="m.value">
+                {{ m.label }}
+            </option>
+        </select>
+    </div>
 
     <!-- Date Range avec restriction pour caissier -->
     <div class="filter-item">

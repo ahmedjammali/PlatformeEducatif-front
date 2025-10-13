@@ -657,6 +657,15 @@
                           (click)="openInvoiceDialog(student, true, getCurrentMonthIndex(student))">
                           <span class="btn-icon">📅</span>
                         </button>
+
+                        <!-- Monthly Invoice Button (if monthly payments exist) -->
+                        <button 
+                          class="action-btn invoice-proformat"
+                          title="Facture proformat"
+                          *ngIf="(student.paymentRecord?.tuitionMonthlyPayments?.length ?? 0) > 0"
+                          (click)="openInvoiceProformatDialog(student, true, getCurrentMonthIndex(student))">
+                          <span class="btn-icon">📅</span>
+                        </button>
                       </div>
 
                       <!-- View Details -->
@@ -895,6 +904,12 @@
             <span class="btn-icon">📋</span>
             Payer les frais d'inscription
           </button>
+            <button 
+              class="btn btn-primary btn-small"
+              (click)="openInscriptionFeeBl(student)">
+            <span class="btn-icon">📋</span>
+            Bon de livraison
+          </button>
         </div>
       </div>
     </div>
@@ -963,6 +978,13 @@
                                   <span class="btn-icon">💳</span>
                                   {{ payment.status === 'partial' ? 'Compléter' : 'Payer' }}
                                 </button>
+                                <button 
+                                  *ngIf="payment.status !== 'paid'" 
+                                  class="btn btn-small pay-btn"
+                                  (click)="openMonthlyTuitionBl(student, idx)">
+                                  <span class="btn-icon">💳</span>
+                                  Bon de livraison
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -1029,6 +1051,13 @@
                                   <span class="btn-icon">🚌</span>
                                   {{ payment.status === 'partial' ? 'Compléter' : 'Payer' }}
                                 </button>
+                                <button 
+                                  *ngIf="payment.status !== 'paid'"
+                                  class="btn btn-small pay-btn transportation"
+                                  (click)="openUniformBl(student)">
+                                  <span class="btn-icon">🚌</span>
+                                  Bon de livraison
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -1079,6 +1108,12 @@
             (click)="openPaymentDialog(student, 'uniform')">
             <span class="btn-icon">👔</span>
             Payer l'uniforme
+          </button>
+          <button 
+            class="btn btn-primary btn-small"
+            (click)="openUniformBl(student)">
+            <span class="btn-icon">👔</span>
+            Bon de livraison
           </button>
         </div>
       </div>
@@ -1582,6 +1617,41 @@
   [componentOnly]="componentOnlyForInvoice"
   (dialogClosed)="closeInvoiceDialog()">
 </app-invoice-dialog>
+    </div>
+  </div>
+
+  <!-- Bl Dialog Modal -->
+  <div class="modal-overlay" *ngIf="isBlDialogOpen" (click)="closeBlDialog()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+<app-bl-dialog
+  *ngIf="selectedStudentForbl"
+  [student]="selectedStudentForbl"
+  [academicYear]="currentAcademicYear"
+  [showCurrentMonthOnly]="showCurrentMonthOnlyInbl"
+  [currentMonthIndex]="currentMonthIndexForbl"
+  [currentPaymentDate]="currentPaymentDateForbl"
+  [monthName]="monthNameForbl"
+  [componentOnly]="componentOnlyForbl"
+  (dialogClosed)="closeBlDialog()">
+</app-bl-dialog>
+    </div>
+  </div>
+
+
+  <!-- Invoice Proformat Dialog Modal -->
+  <div class="modal-overlay" *ngIf="isInvoiceProformatDialogOpen" (click)="closeInvoiceDialog()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+<app-invoice-proformat-dialog
+  *ngIf="selectedStudentForInvoice"
+  [student]="selectedStudentForInvoice"
+  [academicYear]="currentAcademicYear"
+  [showCurrentMonthOnly]="showCurrentMonthOnlyInInvoice"
+  [currentMonthIndex]="currentMonthIndexForInvoice"
+  [currentPaymentDate]="currentPaymentDateForInvoice"
+  [monthName]="monthNameForInvoice"
+  [componentOnly]="componentOnlyForInvoice"
+  (dialogClosed)="closeInvoiceProformatDialog()">
+</app-invoice-proformat-dialog>
     </div>
   </div>
 

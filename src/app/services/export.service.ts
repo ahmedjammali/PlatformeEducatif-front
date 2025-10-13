@@ -14,6 +14,7 @@ export interface CombinedExportFilters {
   startDate?: string;
   endDate?: string;
   academicYear?: string;
+  month?: string;
   // Outcome filters
   userRole?: string;
   chargeCategory?: string;

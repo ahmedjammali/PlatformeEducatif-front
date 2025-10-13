@@ -1,0 +1,276 @@
+<!-- bl.component.html - Updated with single full-page watermark -->
+<div class="bl-container" *ngIf="blData">
+  <div class="bl-actions no-print">
+    <button 
+      class="btn btn-primary download-btn" 
+      (click)="downloadPDF()"
+      [disabled]="isGeneratingPdf">
+      <span class="btn-icon" *ngIf="!isGeneratingPdf">📥</span>
+      <span class="spinner" *ngIf="isGeneratingPdf">⏳</span>
+      {{ isGeneratingPdf ? 'Génération...' : 'Télécharger PDF' }}
+    </button>
+  </div>
+
+  <!-- bl Content with Single Full-Page Watermark -->
+  <div class="bl-content">
+    <!-- Single Full-Page Background Watermark -->
+    <div class="watermark-fullpage">ONS SCHOOL</div>
+    
+    <!-- Header -->
+    <div class="bl-header">
+      <div class="school-info">
+        <h1 class="school-name">{{ blData.schoolInfo.name }}</h1>
+        <div class="school-details">
+          <p>{{ blData.schoolInfo.address }}</p>
+          <p>Tél: {{ blData.schoolInfo.phone }}</p>
+          <p>Email: {{ blData.schoolInfo.email }}</p>
+        </div>
+      </div>
+      <div class="bl-meta">
+        <!-- Logo replacing Code TVA -->
+        <div class="school-logo">
+          <svg width="80" height="80" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <style>
+                .shield-outline { fill: none; stroke: #2c5282; stroke-width: 6; }
+                .shield-fill { fill: #f7fafc; }
+                .text { font-family: Arial, sans-serif; font-weight: bold; fill: #2c5282; text-anchor: middle; }
+                .ons-text { font-size: 42px; }
+                .school-text { font-size: 28px; }
+              </style>
+            </defs>
+            
+            <!-- Shield shape -->
+            <path class="shield-fill" d="M100 20 C140 20, 170 32, 170 55 L170 110 C170 140, 140 170, 100 185 C60 170, 30 140, 30 110 L30 55 C30 32, 60 20, 100 20 Z"/>
+            <path class="shield-outline" d="M100 20 C140 20, 170 32, 170 55 L170 110 C170 140, 140 170, 100 185 C60 170, 30 140, 30 110 L30 55 C30 32, 60 20, 100 20 Z"/>
+            
+            <!-- Text -->
+            <text x="100" y="85" class="text ons-text">ONS</text>
+            <text x="100" y="115" class="text school-text">SCHOOL</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Information Box -->
+    <div class="student-box">
+      <div class="student-row">
+        <span class="student-label">Doit :</span>
+        <span>{{ blData.student.name | uppercase }}</span>
+      </div>
+      <div class="student-row">
+        <span class="student-label">ID :</span>
+        <span>{{ blData.student._id || '000000' | slice:0:8 }} </span>
+      </div>
+      <div class="student-row">
+        <span class="student-label">classe :</span>
+        <span>{{ blData.student.studentClass?.name }}</span>
+      </div>
+    </div>
+
+    <!-- bl Details Box -->
+    <div class="bl-details-box">
+      <div class="bl-details-header">
+        <span class="facture-title">{{ getblTitle() }}</span>
+        <span class="page-info">Page 1/1</span>
+      </div>
+      <div class="bl-details-content">
+        <div class="details-row">
+          <span class="details-label">Date :</span>
+          <span>{{ formatDateShort(blData.generatedDate) }}</span>
+        </div>
+        <div class="details-row" *ngIf="showCurrentMonthOnly && blData.currentMonthInfo">
+          <span class="details-label">Période :</span>
+          <span>{{ blData.currentMonthInfo.monthName }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Table -->
+    <table class="main-table">
+      <thead>
+        <tr>
+          <th class="ref-col">Référence</th>
+          <th class="designation-col">Désignation</th>
+          <th class="qty-col">Qté</th>
+          <th class="price-col">Prix HT</th>
+          <th class="amount-col">Montant HT</th>
+          <th class="tva-col">TVA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Tuition Fee Row - Only display if amount > 0 -->
+        <!-- Tuition Fee Row for tuition-only bls -->
+        <!-- Tuition Fee Row - Display for regular bls and tuition-only bls -->
+        <tr class="payment-row" *ngIf="((componentOnly === 'tuition') || (!componentOnly)) && getHTAmount('tuition') > 0">
+          <td>001</td>
+          <td class="designation-col">
+            <span class="service-icon">📚</span>
+            {{ getTuitionPeriodDescription() }}
+            <div *ngIf="hasDiscount()" class="discount-info">
+              <small style="color: #666; font-style: italic;">
+                Montant original: {{ formatCurrencyTable(getOriginalTuitionAmount()) }} DT<br>
+                Remise {{ getDiscountPercentage() }}%: -{{ formatCurrencyTable(getDiscountAmount()) }} DT
+              </small>
+            </div>
+          </td>
+          <td>1,00</td>
+          <td class="price-col">
+            {{ formatCurrencyTable(hasDiscount() ? getOriginalTuitionAmount() : getOriginalAmountForCurrentMonth('tuition')) }}
+          </td>
+          <td class="amount-col" [class.amount-positive]="getHTAmount('tuition') > 0">
+            {{ formatCurrencyTable(getHTAmount('tuition')) }}
+          </td>
+          <td>{{ formatCurrencyTable(getTVAAmount('tuition')) }}</td>
+        </tr>
+        <!-- Uniform Row - Only display if has uniform payment -->
+        <tr class="payment-row" *ngIf="hasUniformForCurrentbl() && getHTAmount('uniform') > 0">
+          <td>{{ (!componentOnly && getHTAmount('tuition') > 0) ? '002' : '001' }}</td>
+          <td class="designation-col">
+            <span class="service-icon">👔</span>
+            UNIFORME SCOLAIRE
+          </td>
+          <td>1,00</td>
+          <td class="price-col">{{ formatCurrencyTable(getOriginalAmountForCurrentMonth('uniform')) }}</td>
+          <td class="amount-col" [class.amount-positive]="getHTAmount('uniform') > 0">
+            {{ formatCurrencyTable(getHTAmount('uniform')) }}
+          </td>
+          <td>{{ formatCurrencyTable(getTVAAmount('uniform')) }}</td>
+        </tr>
+
+        <!-- Transportation Row - Only display if amount > 0 -->
+        <tr class="payment-row" *ngIf="!componentOnly && hasTransportationForCurrentbl() && getHTAmount('transportation') > 0">
+          <td>{{ getNextReferenceNumber() }}</td>
+          <td class="designation-col">
+            <span class="service-icon">🚌</span>
+            {{ getTransportationPeriodDescription() }}
+          </td>
+          <td>1,00</td>
+          <td class="price-col">{{ formatCurrencyTable(getOriginalAmountForCurrentMonth('transportation')) }}</td>
+          <td class="amount-col" [class.amount-positive]="getHTAmount('transportation') > 0">
+            {{ formatCurrencyTable(getHTAmount('transportation')) }}
+          </td>
+          <td>{{ formatCurrencyTable(getTVAAmount('transportation')) }}</td>
+        </tr>
+
+        <!-- Inscription Fee Row - Only display if amount > 0 -->
+        <tr class="payment-row" *ngIf="hasInscriptionFeeForCurrentbl() && getHTAmount('inscriptionFee') > 0">
+          <td>{{ getNextReferenceNumber() }}</td>
+          <td class="designation-col">
+            <span class="service-icon">📝</span>
+            FRAIS D'INSCRIPTION
+            
+          </td>
+          <td>1,00</td>
+          <td class="price-col">{{ formatCurrencyTable(getOriginalAmountForCurrentMonth('inscriptionFee')) }}</td>
+          <td class="amount-col" [class.amount-positive]="getHTAmount('inscriptionFee') > 0">
+            {{ formatCurrencyTable(getHTAmount('inscriptionFee')) }}
+          </td>
+          <td>{{ formatCurrencyTable(getTVAAmount('inscriptionFee')) }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Totals Section -->
+    <div class="totals-section">
+      <div class="tva-box">
+        <table class="tva-table">
+          <thead>
+            <tr>
+              <th>Base</th>
+              <th>TVA%</th>
+              <th>TVA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ formatCurrencyTable(blData.totalsWithTVA.totalHT) }}</td>
+              <td>{{ blData.tva.rate }},00</td>
+              <td>{{ formatCurrencyTable(blData.tva.totalTVA) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="totals-box">
+        <div class="total-line total-ht">
+          <strong>Total H.T</strong>
+          <span class="total-amount">{{ formatCurrencyTable(blData.totalsWithTVA.totalHT) }}</span>
+        </div>
+        <div class="total-line">
+          <strong>T.V.A. ({{ blData.tva.rate }}%)</strong>
+          <span class="total-amount">{{ formatCurrencyTable(blData.tva.totalTVA) }}</span>
+        </div>
+        <div class="total-line">
+          <strong>Timbre fiscal</strong>
+          <span class="total-amount">0,00</span>
+        </div>
+        <div class="total-line total-ttc">
+          <strong>Total TTC</strong>
+          <span class="total-amount">{{ formatCurrencyTable(blData.totalsWithTVA.totalTTC) }}</span>
+        </div>
+      </div>
+    </div>
+
+<!-- Component-specific Summary -->
+    <!-- <div class="component-summary" *ngIf="componentOnly">
+      <h4 *ngIf="componentOnly === 'uniform'">Résumé du Paiement - Uniforme Scolaire</h4>
+      <h4 *ngIf="componentOnly === 'inscriptionFee'">Résumé du Paiement - Frais d'Inscription</h4>
+      <div class="summary-grid">
+        <div class="summary-item summary-total">
+          <span class="summary-label"><strong>Montant Payé:</strong></span>
+          <span class="summary-amount"><strong>{{ formatCurrencyTable(blData.totalsWithTVA.totalTTC) }} DT</strong></span>
+        </div>
+        <div class="summary-item" *ngIf="componentOnly === 'uniform'">
+          <span class="summary-label">Date de paiement:</span>
+          <span class="summary-amount">{{ formatDateShort(blData.student.paymentRecord?.uniform?.paymentDate || blData.generatedDate) }}</span>
+        </div>
+        <div class="summary-item" *ngIf="componentOnly === 'inscriptionFee'">
+          <span class="summary-label">Date de paiement:</span>
+          <span class="summary-amount">{{ formatDateShort(blData.student.paymentRecord?.inscriptionFee?.paymentDate || blData.generatedDate) }}</span>
+        </div>
+      </div>
+    </div> -->
+
+    <!-- Current Month Summary (for current month bls only) -->
+    <div class="current-month-summary" *ngIf="!componentOnly && showCurrentMonthOnly && blData.currentMonthInfo">
+      <h4>Résumé du Paiement - {{ blData.currentMonthInfo.monthName }}</h4>
+      <div class="summary-grid">
+        <div class="summary-item" *ngIf="getHTAmount('tuition') > 0">
+          <span class="summary-label">Frais Scolaires:</span>
+          <span class="summary-amount">{{ formatCurrencyTable(getHTAmount('tuition')) }} DT</span>
+        </div>
+        <div class="summary-item" *ngIf="getHTAmount('uniform') > 0">
+          <span class="summary-label">Uniforme:</span>
+          <span class="summary-amount">{{ formatCurrencyTable(getHTAmount('uniform')) }} DT</span>
+        </div>
+        <div class="summary-item" *ngIf="getHTAmount('transportation') > 0">
+          <span class="summary-label">Transport:</span>
+          <span class="summary-amount">{{ formatCurrencyTable(getHTAmount('transportation')) }} DT</span>
+        </div>
+        <div class="summary-item" *ngIf="getHTAmount('inscriptionFee') > 0">
+          <span class="summary-label">Frais d'inscription:</span>
+          <span class="summary-amount">{{ formatCurrencyTable(getHTAmount('inscriptionFee')) }} DT</span>
+        </div>
+        <div class="summary-item summary-total">
+          <span class="summary-label"><strong>Total Payé:</strong></span>
+          <span class="summary-amount"><strong>{{ formatCurrencyTable(blData.totalsWithTVA.totalTTC) }} DT</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-section">
+      <div class="amount-words">
+        <strong>{{ getblTitle() }} à la somme de :</strong><br>
+        {{ convertAmountToWords(blData.totalsWithTVA.totalTTC) | uppercase }}
+      </div>
+      <div class="signature-section">
+        <div class="signature-label"><strong>Signature</strong></div>
+        <div class="signature-box">
+          <!-- Optional: Add school stamp/logo here -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

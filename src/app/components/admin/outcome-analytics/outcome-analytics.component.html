@@ -146,6 +146,14 @@
           </select>
         </div>
 
+        <!-- Month Filter -->
+        <div class="filter-group">
+          <label for="month">Mois</label>
+          <select id="month" [(ngModel)]="activeFilters.month" (change)="onMonthChange($event)">
+            <option value="">Tous les mois</option>
+            <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+          </select>
+        </div>
         <!-- Date Range Filters - Modifiés pour Caissier -->
 <div class="filter-group">
   <label for="startDate">Date de Début</label>

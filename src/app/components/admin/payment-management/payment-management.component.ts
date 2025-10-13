@@ -166,13 +166,19 @@ componentOnlyForInvoice?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD '
   isGenerateDialogOpen = false;
   isEditDialogOpen = false;
   currentDialogData: PaymentDialogData | null = null;
-
-   showCurrentMonthOnlyInInvoice = false;
+  selectedStudentForbl: StudentWithPayment | null = null;
+  showCurrentMonthOnlyInbl = false;
+  currentMonthIndexForbl?: number;
+  currentPaymentDateForbl?: Date;
+  monthNameForbl?: string;
+  componentOnlyForbl?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD 'tuition'
+  
+  showCurrentMonthOnlyInInvoice = false;
   currentMonthIndexForInvoice?: number;
   currentPaymentDateForInvoice?: Date;
   monthNameForInvoice?: string;
-
-
+  isInvoiceProformatDialogOpen = false;
+  isBlDialogOpen = false;
   isInvoiceDialogOpen = false;
 
   selectedStudentForInvoice: StudentWithPayment | null = null;
@@ -642,6 +648,35 @@ loadStudents(): void {
     this.isInvoiceDialogOpen = true;
     document.body.style.overflow = 'hidden';
   }
+
+   openInvoiceProformatDialog(student: StudentWithPayment, showCurrentMonthOnly = false, monthIndex?: number): void {
+    if (!student.hasPaymentRecord) {
+      this.showWarning('Aucun dossier de paiement trouvé pour cet étudiant');
+      return;
+    }
+
+    this.selectedStudentForInvoice = student;
+    
+    // ✅ NEW: Set monthly context parameters
+    this.showCurrentMonthOnlyInInvoice = showCurrentMonthOnly;
+    this.currentMonthIndexForInvoice = monthIndex;
+    
+    // Set month name and payment date if showing specific month
+    if (showCurrentMonthOnly && monthIndex !== undefined && student.paymentRecord?.tuitionMonthlyPayments) {
+      const monthPayment = student.paymentRecord.tuitionMonthlyPayments[monthIndex];
+      if (monthPayment) {
+        this.monthNameForInvoice = monthPayment.monthName;
+        this.currentPaymentDateForInvoice = new Date(monthPayment.dueDate);
+      }
+    } else {
+      this.monthNameForInvoice = undefined;
+      this.currentPaymentDateForInvoice = undefined;
+    }
+
+    this.isInvoiceProformatDialogOpen = true;
+    document.body.style.overflow = 'hidden';
+  }
+
 closeInvoiceDialog(): void {
   this.isInvoiceDialogOpen = false;
   this.selectedStudentForInvoice = null;
@@ -655,6 +690,35 @@ closeInvoiceDialog(): void {
   
   document.body.style.overflow = 'auto';
 }
+
+closeInvoiceProformatDialog(): void {
+  this.isInvoiceProformatDialogOpen = false;
+  this.selectedStudentForInvoice = null;
+  
+  // Reset monthly context parameters
+  this.showCurrentMonthOnlyInInvoice = false;
+  this.currentMonthIndexForInvoice = undefined;
+  this.currentPaymentDateForInvoice = undefined;
+  this.monthNameForInvoice = undefined;
+  this.componentOnlyForInvoice = undefined; // ADD THIS LINE
+  
+  document.body.style.overflow = 'auto';
+}
+
+closeBlDialog(): void {
+  this.isBlDialogOpen = false;
+  this.selectedStudentForbl = null;
+  
+  // Reset monthly context parameters
+  this.showCurrentMonthOnlyInbl = false;
+  this.currentMonthIndexForbl = undefined;
+  this.currentPaymentDateForbl = undefined;
+  this.monthNameForbl = undefined;
+  this.componentOnlyForbl = undefined; // ADD THIS LINE
+  
+  document.body.style.overflow = 'auto';
+}
+
 
    getCurrentMonthName(): string {
     const monthNames = [
@@ -1490,6 +1554,40 @@ openMonthlyTuitionInvoice(student: StudentWithPayment, monthIndex: number): void
   this.componentOnlyForInvoice = 'tuition'; // Add this line
 
   this.isInvoiceDialogOpen = true;
+  document.body.style.overflow = 'hidden';
+}
+
+
+
+openMonthlyTuitionBl(student: StudentWithPayment, monthIndex: number): void {
+  if (!student.hasPaymentRecord) {
+    this.showWarning('Aucun dossier de paiement trouvé pour cet étudiant');
+    return;
+  }
+
+  const monthPayment = student.paymentRecord?.tuitionMonthlyPayments?.[monthIndex];
+/*   if (!monthPayment || monthPayment.status !== 'paid') {
+    this.showWarning('Ce mois n\'a pas encore été payé');
+    return;
+  } */
+
+  this.selectedStudentForbl = student;
+  
+  // Set monthly context for TUITION ONLY
+  this.showCurrentMonthOnlyInbl = true;
+  this.currentMonthIndexForbl = monthIndex;
+  this.monthNameForbl = monthPayment?.monthName;
+  const paymentDate: string | Date =
+    monthPayment?.paymentDate ||
+    monthPayment?.dueDate ||
+    new Date().toISOString(); // ✅ always defined
+
+  this.currentPaymentDateForbl = new Date(paymentDate);
+  
+  // ✅ KEY CHANGE: Set component to tuition only
+  this.componentOnlyForbl = 'tuition'; // Add this line
+
+  this.isBlDialogOpen = true;
   document.body.style.overflow = 'hidden';
 }
 getRemainingAmounts(student: StudentWithPayment): any {
@@ -2406,6 +2504,23 @@ openInscriptionFeeInvoice(student: StudentWithPayment): void {
   document.body.style.overflow = 'hidden';
 }
 
+openInscriptionFeeBl(student: StudentWithPayment): void {
+/*   if (!student.hasPaymentRecord || !student.paymentRecord?.inscriptionFee?.isPaid) {
+    this.showWarning('Les frais d\'inscription n\'ont pas encore été payés');
+    return;
+  } */
+
+  this.selectedStudentForbl = student;
+  this.showCurrentMonthOnlyInbl = false;
+  this.currentMonthIndexForbl = undefined;
+  this.currentPaymentDateForbl = undefined;
+  this.monthNameForbl = undefined;
+  this.componentOnlyForbl = 'inscriptionFee'; // NEW: Set component-only mode
+
+  this.isBlDialogOpen = true;
+  document.body.style.overflow = 'hidden';
+}
+
 /**
  * Open invoice dialog specifically for uniform
  */
@@ -2425,6 +2540,24 @@ openUniformInvoice(student: StudentWithPayment): void {
   this.isInvoiceDialogOpen = true;
   document.body.style.overflow = 'hidden';
 }
+
+openUniformBl(student: StudentWithPayment): void {
+/*   if (!student.hasPaymentRecord || !student.paymentRecord?.uniform?.isPaid) {
+    this.showWarning('L\'uniforme n\'a pas encore été payé');
+    return;
+  } */
+
+  this.selectedStudentForbl = student;
+  this.showCurrentMonthOnlyInbl = false;
+  this.currentMonthIndexForbl = undefined;
+  this.currentPaymentDateForbl = undefined;
+  this.monthNameForbl = undefined;
+  this.componentOnlyForbl = 'uniform'; // NEW: Set component-only mode
+
+  this.isBlDialogOpen = true;
+  document.body.style.overflow = 'hidden';
+}
+
 
 onComponentChange(event: Event): void {
   const target = event.target as HTMLSelectElement;

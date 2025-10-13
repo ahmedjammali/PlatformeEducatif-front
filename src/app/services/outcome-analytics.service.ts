@@ -14,6 +14,7 @@ export interface OutcomeFilters {
   category?: string;
   userRole?: string;
   chargeCategory?: string;
+  month?: string;
 }
 
 export interface ChargeCategoryAnalysis {
