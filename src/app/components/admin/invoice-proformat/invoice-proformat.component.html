@@ -1,4 +1,4 @@
-<!-- invoice.component.html - Updated with single full-page watermark -->
+<!-- invoice-proformat.component.html - Updated for yearly amounts -->
 <div class="invoice-proformat-container" *ngIf="InvoiceProformatData">
   <div class="invoice-proformat-actions no-print">
     <button 
@@ -11,7 +11,6 @@
     </button>
   </div>
 
-  <!-- Invoice Content with Single Full-Page Watermark -->
   <div class="invoice-proformat-content">
     <!-- Single Full-Page Background Watermark -->
     <div class="watermark-fullpage">ONS SCHOOL</div>
@@ -27,7 +26,6 @@
         </div>
       </div>
       <div class="invoice-proformat-meta">
-        <!-- Logo replacing Code TVA -->
         <div class="school-logo">
           <svg width="80" height="80" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -40,11 +38,9 @@
               </style>
             </defs>
             
-            <!-- Shield shape -->
             <path class="shield-fill" d="M100 20 C140 20, 170 32, 170 55 L170 110 C170 140, 140 170, 100 185 C60 170, 30 140, 30 110 L30 55 C30 32, 60 20, 100 20 Z"/>
             <path class="shield-outline" d="M100 20 C140 20, 170 32, 170 55 L170 110 C170 140, 140 170, 100 185 C60 170, 30 140, 30 110 L30 55 C30 32, 60 20, 100 20 Z"/>
             
-            <!-- Text -->
             <text x="100" y="85" class="text ons-text">ONS</text>
             <text x="100" y="115" class="text school-text">SCHOOL</text>
           </svg>
@@ -60,10 +56,10 @@
       </div>
       <div class="student-row">
         <span class="student-label">ID :</span>
-        <span>{{ InvoiceProformatData.student._id || '000000' | slice:0:8 }} </span>
+        <span>{{ InvoiceProformatData.student._id || '000000' | slice:0:8 }}</span>
       </div>
       <div class="student-row">
-        <span class="student-label">classe :</span>
+        <span class="student-label">Classe :</span>
         <span>{{ InvoiceProformatData.student.studentClass?.name }}</span>
       </div>
     </div>
@@ -88,20 +84,31 @@
           <th class="ref-col">Référence</th>
           <th class="designation-col">Désignation</th>
           <th class="qty-col">Qté</th>
-          <th class="price-col">Prix HT</th>
-          <th class="amount-col">Montant HT</th>
+          <th class="amount-col">Montant Total</th>
           <th class="tva-col">TVA</th>
         </tr>
       </thead>
       <tbody>
-        <!-- Tuition Fee Row - Only display if amount > 0 -->
-        <!-- Tuition Fee Row for tuition-only invoices -->
-        <!-- Tuition Fee Row - Display for regular invoices and tuition-only invoices -->
-        <tr class="payment-row" *ngIf="((componentOnly === 'tuition') || (!componentOnly)) && getHTAmount('tuition') > 0">
+        <!-- Inscription Fee Row -->
+        <tr class="payment-row" *ngIf="hasInscriptionFeeForCurrentInvoiceProformat() && getHTAmount('inscriptionFee') > 0">
           <td>001</td>
           <td class="designation-col">
+            <span class="service-icon">📝</span>
+            FRAIS D'INSCRIPTION
+          </td>
+          <td>1,00</td>
+          <td class="amount-col" [class.amount-positive]="getHTAmount('inscriptionFee') > 0">
+            {{ formatCurrencyTable(getHTAmount('inscriptionFee')) }}
+          </td>
+          <td>{{ formatCurrencyTable(getTVAAmount('inscriptionFee')) }}</td>
+        </tr>
+
+        <!-- Tuition Fee Row -->
+        <tr class="payment-row" *ngIf="getHTAmount('tuition') > 0">
+          <td>{{ hasInscriptionFeeForCurrentInvoiceProformat() && getHTAmount('inscriptionFee') > 0 ? '002' : '001' }}</td>
+          <td class="designation-col">
             <span class="service-icon">📚</span>
-            {{ getTuitionPeriodDescription() }}
+            FRAIS SCOLAIRES - ANNÉE COMPLÈTE {{ academicYear }}
             <div *ngIf="hasDiscount()" class="discount-info">
               <small style="color: #666; font-style: italic;">
                 Montant original: {{ formatCurrencyTable(getOriginalTuitionAmount()) }} DT<br>
@@ -110,58 +117,38 @@
             </div>
           </td>
           <td>1,00</td>
-          <td class="price-col">
-            {{ formatCurrencyTable(hasDiscount() ? getOriginalTuitionAmount() : getOriginalAmountForCurrentMonth('tuition')) }}
-          </td>
           <td class="amount-col" [class.amount-positive]="getHTAmount('tuition') > 0">
             {{ formatCurrencyTable(getHTAmount('tuition')) }}
           </td>
           <td>{{ formatCurrencyTable(getTVAAmount('tuition')) }}</td>
         </tr>
-        <!-- Uniform Row - Only display if has uniform payment -->
+        
+        <!-- Uniform Row -->
         <tr class="payment-row" *ngIf="hasUniformForCurrentInvoiceProformat() && getHTAmount('uniform') > 0">
-          <td>{{ (!componentOnly && getHTAmount('tuition') > 0) ? '002' : '001' }}</td>
+          <td>{{ getNextReferenceNumber() }}</td>
           <td class="designation-col">
             <span class="service-icon">👔</span>
             UNIFORME SCOLAIRE
           </td>
           <td>1,00</td>
-          <td class="price-col">{{ formatCurrencyTable(getOriginalAmountForCurrentMonth('uniform')) }}</td>
           <td class="amount-col" [class.amount-positive]="getHTAmount('uniform') > 0">
             {{ formatCurrencyTable(getHTAmount('uniform')) }}
           </td>
           <td>{{ formatCurrencyTable(getTVAAmount('uniform')) }}</td>
         </tr>
 
-        <!-- Transportation Row - Only display if amount > 0 -->
-        <tr class="payment-row" *ngIf="!componentOnly && hasTransportationForCurrentInvoiceProformat() && getHTAmount('transportation') > 0">
+        <!-- Transportation Row -->
+        <tr class="payment-row" *ngIf="hasTransportationForCurrentInvoiceProformat() && getHTAmount('transportation') > 0">
           <td>{{ getNextReferenceNumber() }}</td>
           <td class="designation-col">
             <span class="service-icon">🚌</span>
-            {{ getTransportationPeriodDescription() }}
+            TRANSPORT - {{ getTransportationType().toUpperCase() }} - ANNÉE COMPLÈTE
           </td>
           <td>1,00</td>
-          <td class="price-col">{{ formatCurrencyTable(getOriginalAmountForCurrentMonth('transportation')) }}</td>
           <td class="amount-col" [class.amount-positive]="getHTAmount('transportation') > 0">
             {{ formatCurrencyTable(getHTAmount('transportation')) }}
           </td>
           <td>{{ formatCurrencyTable(getTVAAmount('transportation')) }}</td>
-        </tr>
-
-        <!-- Inscription Fee Row - Only display if amount > 0 -->
-        <tr class="payment-row" *ngIf="hasInscriptionFeeForCurrentInvoiceProformat() && getHTAmount('inscriptionFee') > 0">
-          <td>{{ getNextReferenceNumber() }}</td>
-          <td class="designation-col">
-            <span class="service-icon">📝</span>
-            FRAIS D'INSCRIPTION
-            
-          </td>
-          <td>1,00</td>
-          <td class="price-col">{{ formatCurrencyTable(getOriginalAmountForCurrentMonth('inscriptionFee')) }}</td>
-          <td class="amount-col" [class.amount-positive]="getHTAmount('inscriptionFee') > 0">
-            {{ formatCurrencyTable(getHTAmount('inscriptionFee')) }}
-          </td>
-          <td>{{ formatCurrencyTable(getTVAAmount('inscriptionFee')) }}</td>
         </tr>
       </tbody>
     </table>
@@ -207,32 +194,16 @@
       </div>
     </div>
 
-    <!-- Component-specific Summary -->
-    <div class="component-summary" *ngIf="componentOnly">
-      <h4 *ngIf="componentOnly === 'uniform'">Résumé du Paiement - Uniforme Scolaire</h4>
-      <h4 *ngIf="componentOnly === 'inscriptionFee'">Résumé du Paiement - Frais d'Inscription</h4>
+    <!-- Yearly Summary -->
+    <div class="yearly-summary">
+      <h4>Résumé Annuel - Année Académique {{ academicYear }}</h4>
       <div class="summary-grid">
-        <div class="summary-item summary-total">
-          <span class="summary-label"><strong>Montant Payé:</strong></span>
-          <span class="summary-amount"><strong>{{ formatCurrencyTable(InvoiceProformatData.totalsWithTVA.totalTTC) }} DT</strong></span>
+        <div class="summary-item" *ngIf="getHTAmount('inscriptionFee') > 0">
+          <span class="summary-label">Frais d'inscription:</span>
+          <span class="summary-amount">{{ formatCurrencyTable(getHTAmount('inscriptionFee')) }} DT</span>
         </div>
-        <div class="summary-item" *ngIf="componentOnly === 'uniform'">
-          <span class="summary-label">Date de paiement:</span>
-          <span class="summary-amount">{{ formatDateShort(InvoiceProformatData.student.paymentRecord?.uniform?.paymentDate || InvoiceProformatData.generatedDate) }}</span>
-        </div>
-        <div class="summary-item" *ngIf="componentOnly === 'inscriptionFee'">
-          <span class="summary-label">Date de paiement:</span>
-          <span class="summary-amount">{{ formatDateShort(InvoiceProformatData.student.paymentRecord?.inscriptionFee?.paymentDate || InvoiceProformatData.generatedDate) }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Current Month Summary (for current month invoices only) -->
-    <div class="current-month-summary" *ngIf="!componentOnly && showCurrentMonthOnly && InvoiceProformatData.currentMonthInfo">
-      <h4>Résumé du Paiement - {{ InvoiceProformatData.currentMonthInfo.monthName }}</h4>
-      <div class="summary-grid">
         <div class="summary-item" *ngIf="getHTAmount('tuition') > 0">
-          <span class="summary-label">Frais Scolaires:</span>
+          <span class="summary-label">Frais Scolaires (année complète):</span>
           <span class="summary-amount">{{ formatCurrencyTable(getHTAmount('tuition')) }} DT</span>
         </div>
         <div class="summary-item" *ngIf="getHTAmount('uniform') > 0">
@@ -240,15 +211,11 @@
           <span class="summary-amount">{{ formatCurrencyTable(getHTAmount('uniform')) }} DT</span>
         </div>
         <div class="summary-item" *ngIf="getHTAmount('transportation') > 0">
-          <span class="summary-label">Transport:</span>
+          <span class="summary-label">Transport (année complète):</span>
           <span class="summary-amount">{{ formatCurrencyTable(getHTAmount('transportation')) }} DT</span>
         </div>
-        <div class="summary-item" *ngIf="getHTAmount('inscriptionFee') > 0">
-          <span class="summary-label">Frais d'inscription:</span>
-          <span class="summary-amount">{{ formatCurrencyTable(getHTAmount('inscriptionFee')) }} DT</span>
-        </div>
         <div class="summary-item summary-total">
-          <span class="summary-label"><strong>Total Payé:</strong></span>
+          <span class="summary-label"><strong>Total Annuel TTC:</strong></span>
           <span class="summary-amount"><strong>{{ formatCurrencyTable(InvoiceProformatData.totalsWithTVA.totalTTC) }} DT</strong></span>
         </div>
       </div>
@@ -257,7 +224,7 @@
     <!-- Footer -->
     <div class="footer-section">
       <div class="amount-words">
-        <strong>Cette facture est proforma et ne vaut pas facture définitive.<br> Aucun paiement n’est exigible.**</strong>
+        <strong>Cette facture est proformative et ne vaut pas facture définitive.<br> Aucun paiement n'est exigible.**</strong>
       </div>
       <div class="signature-section">
         <div class="signature-label"><strong>Signature</strong></div>

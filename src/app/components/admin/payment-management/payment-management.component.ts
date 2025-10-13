@@ -9,6 +9,8 @@ import { AuthService } from '../../../services/auth.service';
 import { PaymentService } from '../../../services/payment.service';
 import { ClassService } from '../../../services/class.service';
 import { UserService } from '../../../services/user.service';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 import {
   StudentWithPayment,
@@ -2735,4 +2737,178 @@ clearGradeCategoryFilter(): void {
 clearGradeFilter(): void {
   this.filterForm.patchValue({ grade: '' });
 }
+
+
+// ===== PDF EXPORT METHOD =====
+// Add this method to your PaymentManagementComponent class
+
+downloadFilteredList(): void {
+  if (this.students.length === 0) {
+    this.showWarning('Aucun étudiant à exporter');
+    return;
+  }
+
+  try {
+    this.showInfo('Génération du PDF en cours...', 'Téléchargement');
+    
+    const doc = new jsPDF('landscape', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    // Title
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Liste des Paiements Étudiants', pageWidth / 2, 15, { align: 'center' });
+    
+    // Academic Year and Date
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Année Académique: ${this.currentAcademicYear}`, pageWidth / 2, 22, { align: 'center' });
+    doc.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth / 2, 27, { align: 'center' });
+    
+    // Active Filters
+    const activeFilters = this.getActiveFiltersText();
+    if (activeFilters) {
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      doc.text(`Filtres appliqués: ${activeFilters}`, 14, 33);
+      doc.setTextColor(0);
+    }
+
+    // Table data without status & progression
+    const tableData = this.students.map(student => {
+      const total = this.getTotalAmounts(student)?.grandTotal || 0;
+      const paid = this.getPaidAmounts(student)?.grandTotal || 0;
+      const remaining = this.getRemainingAmounts(student)?.grandTotal || 0;
+
+      return [
+        student.name || 'N/A',
+        this.getClassGrade(student) || 'N/A',
+        this.getClassName(student) || 'N/A',
+       total + "dt",
+        paid + "dt",
+        remaining + "dt",
+        this.hasDiscount(student) ? `${this.getDiscountPercentage(student)}%` : '-',
+        this.getComponentsText(student)
+      ];
+    });
+
+    // Table configuration
+    autoTable(doc, {
+      startY: activeFilters ? 38 : 33,
+      head: [[
+        'Nom',
+        'Niveau',
+        'Section',
+        'Total',
+        'Payé',
+        'Restant',
+        'Remise',
+        'Composants'
+      ]],
+      body: tableData,
+      theme: 'grid',
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+        overflow: 'linebreak',
+        halign: 'left'
+      },
+      headStyles: {
+        fillColor: [102, 126, 234],
+        textColor: 255,
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      columnStyles: {
+        0: { cellWidth: 55 }, // Nom
+        1: { cellWidth: 40 }, // Niveau
+        2: { cellWidth: 25 }, // Section
+        3: { cellWidth: 25, halign: 'right' }, // Total
+        4: { cellWidth: 25, halign: 'right' }, // Payé
+        5: { cellWidth: 25, halign: 'right' }, // Restant
+        6: { cellWidth: 15, halign: 'center' }, // Remise
+        7: { cellWidth: 'auto' } // Composants
+      },
+      alternateRowStyles: {
+        fillColor: [245, 247, 250]
+      },
+      margin: { top: 10, right: 14, bottom: 20, left: 14 },
+      didDrawPage: () => {
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Page ${doc.getCurrentPageInfo().pageNumber}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      }
+    });
+
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `paiements_etudiants_${this.currentAcademicYear}_${timestamp}.pdf`;
+    doc.save(filename);
+    this.showSuccess('PDF téléchargé avec succès', 'Téléchargement');
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    this.showError('Erreur lors de la génération du PDF', 'Téléchargement');
+  }
+}
+
+
+/**
+ * Get active filters as readable text
+ */
+private getActiveFiltersText(): string {
+  const filters: string[] = [];
+  const formValues = this.filterForm.value;
+  
+  if (this.searchControl.value) {
+    filters.push(`Recherche: "${this.searchControl.value}"`);
+  }
+  
+  if (formValues.paymentStatus) {
+    filters.push(`Statut: ${this.getStatusLabel(formValues.paymentStatus)}`);
+  }
+  
+  if (formValues.component) {
+    filters.push(`Composant: ${this.getComponentLabel(formValues.component)}`);
+  }
+  
+  if (formValues.month) {
+    filters.push(`Mois: ${this.getMonthLabel(formValues.month)}`);
+  }
+  
+  if (formValues.gradeCategory) {
+    filters.push(`Niveau: ${this.getGradeCategoryLabelForFilter(formValues.gradeCategory)}`);
+  }
+  
+  if (formValues.grade) {
+    filters.push(`Classe: ${this.getGradeLabelForFilter(formValues.grade)}`);
+  }
+  
+  return filters.join(' | ');
+}
+
+/**
+ * Get components text for a student
+ */
+private getComponentsText(student: StudentWithPayment): string {
+  if (!student.paymentRecord) return 'Aucun dossier';
+  
+  const components: string[] = ['Frais scolaires'];
+  
+  if (this.hasInscriptionFee(student)) {
+    components.push('Inscription');
+  }
+  
+  if (this.hasUniform(student)) {
+    components.push('Uniforme');
+  }
+  
+  if (this.hasTransportation(student)) {
+    const type = this.getTransportationType(student);
+    components.push(`Transport (${type})`);
+  }
+  
+  return components.join(', ');
+}
+
+
 }

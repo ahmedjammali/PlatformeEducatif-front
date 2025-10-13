@@ -1,4 +1,4 @@
-// Enhanced invoice-dialog.component.ts - Updated for component-specific invoices
+// invoice-proformat-dialog.component.ts - Updated
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { StudentWithPayment } from '../../../models/payment.model';
 
@@ -11,18 +11,7 @@ import { StudentWithPayment } from '../../../models/payment.model';
           <div class="header-content">
             <div class="header-icon">📋</div>
             <div class="header-text">
-              <h2>
-                Facture Proformat - {{ student?.name }}
-                <span *ngIf="showCurrentMonthOnly && monthName" class="month-badge">
-                  {{ monthName }}
-                </span>
-                <span *ngIf="componentOnly === 'uniform'" class="component-badge uniform-badge">
-                  Uniforme
-                </span>
-                <span *ngIf="componentOnly === 'inscriptionFee'" class="component-badge inscription-badge">
-                  Frais d'inscription
-                </span>
-              </h2>
+              <h2>Facture Proformative - {{ student?.name }}</h2>
               <p>{{ academicYear }}</p>
               <small class="invoice-proformat-type">
                 {{ getInvoiceProformatTypeDescription() }}
@@ -38,11 +27,8 @@ import { StudentWithPayment } from '../../../models/payment.model';
           <app-invoice-proformat
             [student]="student" 
             [academicYear]="academicYear"
-            [showCurrentMonthOnly]="showCurrentMonthOnly"
-            [currentMonthIndex]="currentMonthIndex"
-            [currentPaymentDate]="currentPaymentDate"
-            [componentOnly]="componentOnly"
-            [showPaymentHistory]="!showCurrentMonthOnly && !componentOnly">
+            [showCurrentMonthOnly]="false"
+            [showPaymentHistory]="false">
           </app-invoice-proformat>
         </div>
       </div>
@@ -167,10 +153,6 @@ import { StudentWithPayment } from '../../../models/payment.model';
       font-size: var(--font-xl, 1.25rem);
       font-weight: 700;
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
     }
 
     .header-text p {
@@ -178,33 +160,6 @@ import { StudentWithPayment } from '../../../models/payment.model';
       font-size: var(--font-sm, 0.875rem);
       opacity: 0.9;
       font-weight: 500;
-    }
-
-    .month-badge {
-      background: rgba(255, 255, 255, 0.2);
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    .component-badge {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    .uniform-badge {
-      background: rgba(255, 152, 0, 0.2);
-      color: white;
-    }
-
-    .inscription-badge {
-      background: rgba(156, 39, 176, 0.2);
-      color: white;
     }
 
     .invoice-proformat-type {
@@ -286,12 +241,6 @@ import { StudentWithPayment } from '../../../models/payment.model';
         font-size: 1rem;
       }
       
-      .component-badge,
-      .month-badge {
-        font-size: 0.65rem;
-        padding: 3px 6px;
-      }
-      
       .header-icon {
         width: 50px;
         height: 50px;
@@ -307,10 +256,7 @@ export class InvoiceProformatDialogComponent implements OnInit, OnDestroy {
   @Input() currentMonthIndex?: number;
   @Input() currentPaymentDate?: Date;
   @Input() monthName?: string;
-  
-  // NEW: Component-specific invoice inputs
-// NEW: Component-specific invoice inputs
-@Input() componentOnly?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD 'tuition'
+  @Input() componentOnly?: 'uniform' | 'inscriptionFee' | 'tuition';
   
   @Output() dialogClosed = new EventEmitter<void>();
 
@@ -363,20 +309,7 @@ export class InvoiceProformatDialogComponent implements OnInit, OnDestroy {
     this.closeDialog();
   }
 
-getInvoiceProformatTypeDescription(): string {
-  if (this.componentOnly === 'uniform') {
-    return 'Facture uniforme scolaire';
+  getInvoiceProformatTypeDescription(): string {
+    return 'Facture proformative pour l\'année académique complète';
   }
-  if (this.componentOnly === 'inscriptionFee') {
-    return 'Facture frais d\'inscription';
-  }
-  // ✅ ADD: Handle tuition-only monthly invoices
-  if (this.componentOnly === 'tuition'  && this.monthName) {
-    return `Facture frais scolaires - ${this.monthName}`;
-  }
-  if (  this.monthName) {
-    return `Facture mensuelle - ${this.monthName}`;
-  }
-  return 'Facture PROFORMA';
-}
 }

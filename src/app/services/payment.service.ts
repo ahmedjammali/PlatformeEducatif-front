@@ -331,14 +331,16 @@ getComponentIcon(component: string): string {
   return iconMap[component] || 'help_outline';
 }
 
-  formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('fr-TN', {
-      style: 'currency',
-      currency: 'TND',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2
-    }).format(amount);
-  }
+  formatCurrency(amount: number | string): string {
+  const value = Number(amount) || 0;
+  return new Intl.NumberFormat('fr-TN', {
+    style: 'currency',
+    currency: 'TND',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
 
   calculatePaymentProgress(paidAmount: number, totalAmount: number): number {
     if (totalAmount === 0) return 0;

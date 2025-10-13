@@ -259,6 +259,14 @@
         <div class="summary-header">
           <span class="summary-icon">🔍</span>
           <span class="summary-title">Filtres actifs:</span>
+          <button 
+      class="btn-download-filtered" 
+      (click)="downloadFilteredList()"
+      [disabled]="students.length === 0"
+      title="Télécharger la liste filtrée en PDF">
+      <span class="download-icon">📥</span>
+      Télécharger PDF
+    </button>
         </div>
         <div class="summary-tags">
           <span class="filter-tag" *ngIf="filterForm.get('paymentStatus')?.value">
@@ -904,12 +912,7 @@
             <span class="btn-icon">📋</span>
             Payer les frais d'inscription
           </button>
-            <button 
-              class="btn btn-primary btn-small"
-              (click)="openInscriptionFeeBl(student)">
-            <span class="btn-icon">📋</span>
-            Bon de livraison
-          </button>
+
         </div>
       </div>
     </div>
@@ -978,13 +981,7 @@
                                   <span class="btn-icon">💳</span>
                                   {{ payment.status === 'partial' ? 'Compléter' : 'Payer' }}
                                 </button>
-                                <button 
-                                  *ngIf="payment.status !== 'paid'" 
-                                  class="btn btn-small pay-btn"
-                                  (click)="openMonthlyTuitionBl(student, idx)">
-                                  <span class="btn-icon">💳</span>
-                                  Bon de livraison
-                                </button>
+
                               </div>
                             </div>
                           </div>
@@ -1051,13 +1048,7 @@
                                   <span class="btn-icon">🚌</span>
                                   {{ payment.status === 'partial' ? 'Compléter' : 'Payer' }}
                                 </button>
-                                <button 
-                                  *ngIf="payment.status !== 'paid'"
-                                  class="btn btn-small pay-btn transportation"
-                                  (click)="openUniformBl(student)">
-                                  <span class="btn-icon">🚌</span>
-                                  Bon de livraison
-                                </button>
+
                               </div>
                             </div>
                           </div>
@@ -1108,12 +1099,6 @@
             (click)="openPaymentDialog(student, 'uniform')">
             <span class="btn-icon">👔</span>
             Payer l'uniforme
-          </button>
-          <button 
-            class="btn btn-primary btn-small"
-            (click)="openUniformBl(student)">
-            <span class="btn-icon">👔</span>
-            Bon de livraison
           </button>
         </div>
       </div>
