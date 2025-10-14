@@ -675,7 +675,7 @@
           }
 
           // Generate filename
-          let fileName = `Facture_${this.student.name.replace(/\s+/g, '_')}_${this.invoiceData.invoiceNumber.split('-').pop()}`;
+          let fileName = `Bon de Livraraison_${this.student.name.replace(/\s+/g, '_')}_${this.invoiceData.invoiceNumber.split('-').pop()}`;
           
           if (this.componentOnly === 'uniform') {
             fileName += '_Uniforme';
@@ -850,19 +850,19 @@
 
     getInvoiceTitle(): string {
       if (this.componentOnly === 'uniform') {
-        return 'FACTURE - UNIFORME SCOLAIRE';
+        return 'Bon de Livraraison - UNIFORME SCOLAIRE';
       }
       if (this.componentOnly === 'inscriptionFee') {
-        return 'FACTURE - FRAIS D\'INSCRIPTION';
+        return 'Bon de Livraraison - FRAIS D\'INSCRIPTION';
       }
       // Add this new condition:
       if (this.componentOnly === 'tuition' && this.showCurrentMonthOnly && this.invoiceData?.currentMonthInfo) {
-        return `FACTURE - FRAIS SCOLAIRES ${this.invoiceData.currentMonthInfo.monthName.toUpperCase()}`;
+        return `Bon de Livraraison - FRAIS SCOLAIRES ${this.invoiceData.currentMonthInfo.monthName.toUpperCase()}`;
       }
       if (this.showCurrentMonthOnly && this.invoiceData?.currentMonthInfo) {
-        return `FACTURE - ${this.invoiceData.currentMonthInfo.monthName.toUpperCase()}`;
+        return `Bon de Livraraison - ${this.invoiceData.currentMonthInfo.monthName.toUpperCase()}`;
       }
-      return 'B.L. FACTURE';
+      return 'Bon de Livraraison';
     }
 
       getTuitionPeriodDescription(): string {

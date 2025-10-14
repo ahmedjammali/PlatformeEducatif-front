@@ -652,7 +652,7 @@
                         <!-- Default Invoice Button (Cumulative) -->
                         <button 
                           class="action-btn invoice"
-                          title="Facture cumulative"
+                          title="Bon de Livraraison cumulative"
                           (click)="openInvoiceDialog(student, false)">
                           <span class="btn-icon">📄</span>
                         </button>
@@ -660,7 +660,7 @@
                         <!-- Monthly Invoice Button (if monthly payments exist) -->
                         <button 
                           class="action-btn invoice-monthly"
-                          title="Facture du mois en cours"
+                          title="Bon de Livraraison du mois en cours"
                           *ngIf="(student.paymentRecord?.tuitionMonthlyPayments?.length ?? 0) > 0"
                           (click)="openInvoiceDialog(student, true, getCurrentMonthIndex(student))">
                           <span class="btn-icon">📅</span>
@@ -669,7 +669,7 @@
                         <!-- Monthly Invoice Button (if monthly payments exist) -->
                         <button 
                           class="action-btn invoice-proformat"
-                          title="Facture proformat"
+                          title="Bon de Livraraison proformat"
                           *ngIf="(student.paymentRecord?.tuitionMonthlyPayments?.length ?? 0) > 0"
                           (click)="openInvoiceProformatDialog(student, true, getCurrentMonthIndex(student))">
                           <span class="btn-icon">📅</span>
@@ -688,7 +688,6 @@
                       <!-- Edit Payment Record -->
                       <button 
                         class="action-btn edit" 
-                        *ngIf="isSuperAdmin" 
                         title="Modifier les composants"
                         (click)="editPaymentRecord(student)">
                         <span class="btn-icon">✏️</span>
@@ -706,7 +705,6 @@
                       <!-- Remove Discount -->
                       <button 
                         class="action-btn remove-discount"
-                        *ngIf="isSuperAdmin" 
                         [title]="'Supprimer la remise de ' + getDiscountPercentage(student) + '%'"
                         (click)="removeDiscount(student)">
                         <span class="btn-icon">❌</span>
@@ -891,9 +889,9 @@
           <button 
             class="btn btn-primary btn-small"
             (click)="openInscriptionFeeInvoice(student)"
-            title="Extraire facture frais d'inscription">
+            title="Extraire Bon de Livraraison frais d'inscription">
             <span class="btn-icon">📄</span>
-            Extraire facture
+            Extraire Bon de Livraraison
           </button>
         </div>
       </div>
@@ -964,10 +962,10 @@
                                   <button 
                                     *ngIf="payment.status === 'paid' || payment.status === 'partial'"
                                     class="btn btn-small invoice-btn"
-                                    title="Facture frais scolaires pour ce mois"
+                                    title="Bon de Livraraison frais scolaires pour ce mois"
                                     (click)="openMonthlyTuitionInvoice(student, idx)">
                                     <span class="btn-icon">📄</span>
-                                    Facture frais scolaires
+                                    Bon de Livraraison frais scolaires
                                   </button>
                                 </div>
                               </div>
@@ -1031,10 +1029,10 @@
                                   <button 
                                     *ngIf="payment.status === 'paid' || payment.status === 'partial'"
                                     class="btn btn-small invoice-btn"
-                                    title="Facture transport pour ce mois"
+                                    title="Bon de Livraraison transport pour ce mois"
                                     (click)="openInvoiceDialog(student, true, idx)">
                                     <span class="btn-icon">📄</span>
-                                    Facture transport
+                                    Bon de Livraraison transport
                                   </button>
                                 </div>
                               </div>
@@ -1079,9 +1077,9 @@
           <button 
             class="btn btn-primary btn-small"
             (click)="openUniformInvoice(student)"
-            title="Extraire facture uniforme">
+            title="Extraire Bon de Livraraison uniforme">
             <span class="btn-icon">📄</span>
-            Extraire facture
+            Extraire Bon de Livraraison
           </button>
         </div>
       </div>

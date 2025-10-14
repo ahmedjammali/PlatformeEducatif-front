@@ -12,7 +12,7 @@ import { StudentWithPayment } from '../../../models/payment.model';
             <div class="header-icon">📋</div>
             <div class="header-text">
               <h2>
-                Facture - {{ student?.name }}
+                Bon de Livraraison - {{ student?.name }}
                 <span *ngIf="showCurrentMonthOnly && monthName" class="month-badge">
                   {{ monthName }}
                 </span>
@@ -365,18 +365,18 @@ export class InvoiceDialogComponent implements OnInit, OnDestroy {
 
 getInvoiceTypeDescription(): string {
   if (this.componentOnly === 'uniform') {
-    return 'Facture uniforme scolaire';
+    return 'Bon de Livraraison uniforme scolaire';
   }
   if (this.componentOnly === 'inscriptionFee') {
-    return 'Facture frais d\'inscription';
+    return 'Bon de Livraraison frais d\'inscription';
   }
   // ✅ ADD: Handle tuition-only monthly invoices
   if (this.componentOnly === 'tuition' && this.showCurrentMonthOnly && this.monthName) {
-    return `Facture frais scolaires - ${this.monthName}`;
+    return `Bon de Livraraison frais scolaires - ${this.monthName}`;
   }
   if (this.showCurrentMonthOnly && this.monthName) {
-    return `Facture mensuelle - ${this.monthName}`;
+    return `Bon de Livraraison mensuelle - ${this.monthName}`;
   }
-  return 'Facture cumulative';
+  return 'Bon de Livraraison cumulative';
 }
 }
