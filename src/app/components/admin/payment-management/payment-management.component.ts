@@ -2784,7 +2784,6 @@ downloadFilteredList(): void {
       return [
         student.name || 'N/A',
         this.getClassGrade(student) || 'N/A',
-        this.getClassName(student) || 'N/A',
        total + "dt",
         paid + "dt",
         remaining + "dt",
@@ -2799,7 +2798,6 @@ downloadFilteredList(): void {
       head: [[
         'Nom',
         'Niveau',
-        'Section',
         'Total',
         'Payé',
         'Restant',
@@ -2823,12 +2821,11 @@ downloadFilteredList(): void {
       columnStyles: {
         0: { cellWidth: 55 }, // Nom
         1: { cellWidth: 40 }, // Niveau
-        2: { cellWidth: 25 }, // Section
-        3: { cellWidth: 25, halign: 'right' }, // Total
-        4: { cellWidth: 25, halign: 'right' }, // Payé
-        5: { cellWidth: 25, halign: 'right' }, // Restant
-        6: { cellWidth: 15, halign: 'center' }, // Remise
-        7: { cellWidth: 'auto' } // Composants
+        2: { cellWidth: 25, halign: 'right' }, // Total
+        3: { cellWidth: 25, halign: 'right' }, // Payé
+        4: { cellWidth: 25, halign: 'right' }, // Restant
+        5: { cellWidth: 15, halign: 'center' }, // Remise
+        6: { cellWidth: 'auto' } // Composants
       },
       alternateRowStyles: {
         fillColor: [245, 247, 250]
