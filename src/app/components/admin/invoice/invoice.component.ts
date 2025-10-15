@@ -80,10 +80,9 @@
       @Input() currentMonthIndex?: number;
       @Input() currentPaymentDate?: Date;
       @Input() showCurrentMonthOnly: boolean = false;
-      // NEW: Component-specific invoice inputs
-      // NEW: Component-specific invoice inputs
-    @Input() componentOnly?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD 'tuition'
-      
+      @Input() componentOnly?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD 'tuition'
+      @Input() selectedInvoiceType?: 'bonLivraison' | 'facture' | 'proforma' | null = null;
+
       invoiceData!: InvoiceData;
       isLoading = false;
       isGeneratingPdf = false;
@@ -675,7 +674,7 @@
           }
 
           // Generate filename
-          let fileName = `Bon de Livraraison_${this.student.name.replace(/\s+/g, '_')}_${this.invoiceData.invoiceNumber.split('-').pop()}`;
+          let fileName = `${this.student.name.replace(/\s+/g, '_')}_${this.invoiceData.invoiceNumber.split('-').pop()}`;
           
           if (this.componentOnly === 'uniform') {
             fileName += '_Uniforme';
@@ -848,22 +847,38 @@
         return this.invoiceData?.discount?.percentage || 0;
       }
 
-    getInvoiceTitle(): string {
-      if (this.componentOnly === 'uniform') {
-        return 'Bon de Livraraison - UNIFORME SCOLAIRE';
+      getInvoiceTitle(): string {
+        // If no type selected yet, return a neutral title
+        if (!this.selectedInvoiceType) {
+          return 'Sélectionnez un type de document';
+        }
+
+        let baseTitle = '';
+
+        if (this.componentOnly === 'uniform') {
+          baseTitle = 'UNIFORME SCOLAIRE';
+        } else if (this.componentOnly === 'inscriptionFee') {
+          baseTitle = 'FRAIS D\'INSCRIPTION';
+        } else if (this.componentOnly === 'tuition' && this.showCurrentMonthOnly && this.invoiceData?.currentMonthInfo) {
+          baseTitle = `FRAIS SCOLAIRES ${this.invoiceData.currentMonthInfo.monthName.toUpperCase()}`;
+        } else if (this.showCurrentMonthOnly && this.invoiceData?.currentMonthInfo) {
+          baseTitle = this.invoiceData.currentMonthInfo.monthName.toUpperCase();
+        } else {
+          baseTitle = 'FACTURE CUMULATIVE';
+        }
+
+        switch (this.selectedInvoiceType) {
+          case 'bonLivraison':
+            return `Bon de livraison - ${baseTitle}`;
+          case 'facture':
+            return `Facture - ${baseTitle}`;
+          case 'proforma':
+            return `Facture Proforma - ${baseTitle}`;
+          default:
+            return `Bon de livraison - ${baseTitle}`;
+        }
       }
-      if (this.componentOnly === 'inscriptionFee') {
-        return 'Bon de Livraraison - FRAIS D\'INSCRIPTION';
-      }
-      // Add this new condition:
-      if (this.componentOnly === 'tuition' && this.showCurrentMonthOnly && this.invoiceData?.currentMonthInfo) {
-        return `Bon de Livraraison - FRAIS SCOLAIRES ${this.invoiceData.currentMonthInfo.monthName.toUpperCase()}`;
-      }
-      if (this.showCurrentMonthOnly && this.invoiceData?.currentMonthInfo) {
-        return `Bon de Livraraison - ${this.invoiceData.currentMonthInfo.monthName.toUpperCase()}`;
-      }
-      return 'Bon de Livraraison';
-    }
+
 
       getTuitionPeriodDescription(): string {
         if (this.showCurrentMonthOnly && this.invoiceData?.currentMonthInfo) {

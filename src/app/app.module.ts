@@ -123,8 +123,6 @@ import { ScheduleService } from './services/schedule.service';
 import { ScheduleManagementComponent } from './components/admin/schedule-management/schedule-management.component';
 import { TeacherScheduleComponent } from './components/teacher/teacher-schedule/teacher-schedule.component';
 import { StudentScheduleComponent } from './components/student/student-schedule/student-schedule.component';
-import { blComponent } from './components/admin/bl/bl.component';
-import { BlDialogComponent } from './components/admin/bl-dialog/bl-dialog.component';
 
 
 
@@ -200,8 +198,6 @@ const MaterialModules = [
     PaymentDialogComponent,
     PaymentConfigComponent,
     InvoiceComponent,
-    blComponent,
-    BlDialogComponent,
     InvoiceProformatComponent,
     InvoiceDialogComponent,
     InvoiceProformatDialogComponent,

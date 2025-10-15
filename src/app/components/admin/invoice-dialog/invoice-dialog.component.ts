@@ -12,7 +12,7 @@ import { StudentWithPayment } from '../../../models/payment.model';
             <div class="header-icon">📋</div>
             <div class="header-text">
               <h2>
-                Bon de Livraraison - {{ student?.name }}
+                Extraire - {{ student?.name }}
                 <span *ngIf="showCurrentMonthOnly && monthName" class="month-badge">
                   {{ monthName }}
                 </span>
@@ -24,17 +24,41 @@ import { StudentWithPayment } from '../../../models/payment.model';
                 </span>
               </h2>
               <p>{{ academicYear }}</p>
-              <small class="invoice-type">
+              <small class="invoice-type" *ngIf="selectedInvoiceType">
                 {{ getInvoiceTypeDescription() }}
               </small>
             </div>
           </div>
+
+          <!-- ✅ Type Selection Buttons -->
+          <div class="invoice-type-buttons">
+            <button 
+              class="type-btn" 
+              [class.active]="selectedInvoiceType === 'bonLivraison'" 
+              (click)="setInvoiceType('bonLivraison')">
+              Bon de livraison
+            </button>
+            <button 
+              class="type-btn" 
+              [class.active]="selectedInvoiceType === 'facture'" 
+              (click)="setInvoiceType('facture')">
+              Facture
+            </button>
+            <button 
+              class="type-btn" 
+              [class.active]="selectedInvoiceType === 'proforma'" 
+              (click)="setInvoiceType('proforma')">
+              Proforma
+            </button>
+          </div>
+
           <button class="close-btn" (click)="closeDialog()" type="button" title="Fermer">
             <span>✖️</span>
           </button>
         </div>
+
         
-        <div class="invoice-dialog-content">
+        <div class="invoice-dialog-content" *ngIf="selectedInvoiceType">
           <app-invoice 
             [student]="student" 
             [academicYear]="academicYear"
@@ -42,7 +66,8 @@ import { StudentWithPayment } from '../../../models/payment.model';
             [currentMonthIndex]="currentMonthIndex"
             [currentPaymentDate]="currentPaymentDate"
             [componentOnly]="componentOnly"
-            [showPaymentHistory]="!showCurrentMonthOnly && !componentOnly">
+            [showPaymentHistory]="!showCurrentMonthOnly && !componentOnly"
+            [selectedInvoiceType]="selectedInvoiceType">
           </app-invoice>
         </div>
       </div>
@@ -63,6 +88,43 @@ import { StudentWithPayment } from '../../../models/payment.model';
       backdrop-filter: blur(15px);
       animation: fadeInBackdrop 0.3s ease-out;
     }
+
+    .invoice-type-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.1);
+    }
+
+    .type-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.25s ease;
+    }
+
+    .type-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .type-btn.active {
+      background: white;
+      color: #4A628A;
+      border-color: white;
+      font-weight: 700;
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+    }
+
 
     @keyframes fadeInBackdrop {
       from {
@@ -307,11 +369,8 @@ export class InvoiceDialogComponent implements OnInit, OnDestroy {
   @Input() currentMonthIndex?: number;
   @Input() currentPaymentDate?: Date;
   @Input() monthName?: string;
-  
-  // NEW: Component-specific invoice inputs
-// NEW: Component-specific invoice inputs
-@Input() componentOnly?: 'uniform' | 'inscriptionFee' | 'tuition'; // ✅ ADD 'tuition'
-  
+  @Input() componentOnly?: 'uniform' | 'inscriptionFee' | 'tuition';
+  @Input() selectedInvoiceType: 'bonLivraison' | 'facture' | 'proforma' | null = null;
   @Output() dialogClosed = new EventEmitter<void>();
 
   ngOnInit(): void {
@@ -333,6 +392,10 @@ export class InvoiceDialogComponent implements OnInit, OnDestroy {
     document.body.style.overflow = 'auto';
     document.body.classList.remove('invoice-dialog-open');
     document.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  setInvoiceType(type: 'bonLivraison' | 'facture' | 'proforma'): void {
+    this.selectedInvoiceType = type;
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
@@ -363,20 +426,34 @@ export class InvoiceDialogComponent implements OnInit, OnDestroy {
     this.closeDialog();
   }
 
-getInvoiceTypeDescription(): string {
-  if (this.componentOnly === 'uniform') {
-    return 'Bon de Livraraison uniforme scolaire';
+  getInvoiceTypeDescription(): string {
+    if (!this.selectedInvoiceType) return '';
+
+    let baseDescription = '';
+
+    if (this.componentOnly === 'uniform') {
+      baseDescription = 'Uniforme scolaire';
+    } else if (this.componentOnly === 'inscriptionFee') {
+      baseDescription = 'Frais d\'inscription';
+    } else if (this.componentOnly === 'tuition' && this.showCurrentMonthOnly && this.monthName) {
+      baseDescription = `Frais scolaires - ${this.monthName}`;
+    } else if (this.showCurrentMonthOnly && this.monthName) {
+      baseDescription = `Mensuel - ${this.monthName}`;
+    } else {
+      baseDescription = 'Cumulative';
+    }
+
+    switch (this.selectedInvoiceType) {
+      case 'facture':
+        return `Facture ${baseDescription}`;
+      case 'proforma':
+        return `Facture Proforma ${baseDescription}`;
+      case 'bonLivraison':
+        return `Bon de livraison ${baseDescription}`;
+      default:
+        return baseDescription;
+    }
   }
-  if (this.componentOnly === 'inscriptionFee') {
-    return 'Bon de Livraraison frais d\'inscription';
-  }
-  // ✅ ADD: Handle tuition-only monthly invoices
-  if (this.componentOnly === 'tuition' && this.showCurrentMonthOnly && this.monthName) {
-    return `Bon de Livraraison frais scolaires - ${this.monthName}`;
-  }
-  if (this.showCurrentMonthOnly && this.monthName) {
-    return `Bon de Livraraison mensuelle - ${this.monthName}`;
-  }
-  return 'Bon de Livraraison cumulative';
-}
+
+
 }

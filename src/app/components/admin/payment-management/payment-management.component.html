@@ -652,7 +652,7 @@
                         <!-- Default Invoice Button (Cumulative) -->
                         <button 
                           class="action-btn invoice"
-                          title="Bon de Livraraison cumulative"
+                          title="Extraire cumulative"
                           (click)="openInvoiceDialog(student, false)">
                           <span class="btn-icon">📄</span>
                         </button>
@@ -660,7 +660,7 @@
                         <!-- Monthly Invoice Button (if monthly payments exist) -->
                         <button 
                           class="action-btn invoice-monthly"
-                          title="Bon de Livraraison du mois en cours"
+                          title="Extraire du mois en cours"
                           *ngIf="(student.paymentRecord?.tuitionMonthlyPayments?.length ?? 0) > 0"
                           (click)="openInvoiceDialog(student, true, getCurrentMonthIndex(student))">
                           <span class="btn-icon">📅</span>
@@ -669,7 +669,7 @@
                         <!-- Monthly Invoice Button (if monthly payments exist) -->
                         <button 
                           class="action-btn invoice-proformat"
-                          title="Bon de Livraraison proformat"
+                          title="Extraire Facture Proformat Total"
                           *ngIf="(student.paymentRecord?.tuitionMonthlyPayments?.length ?? 0) > 0"
                           (click)="openInvoiceProformatDialog(student, true, getCurrentMonthIndex(student))">
                           <span class="btn-icon">📅</span>
@@ -889,9 +889,9 @@
           <button 
             class="btn btn-primary btn-small"
             (click)="openInscriptionFeeInvoice(student)"
-            title="Extraire Bon de Livraraison frais d'inscription">
+            title="Extraire frais d'inscription">
             <span class="btn-icon">📄</span>
-            Extraire Bon de Livraraison
+            Extraire
           </button>
         </div>
       </div>
@@ -962,10 +962,10 @@
                                   <button 
                                     *ngIf="payment.status === 'paid' || payment.status === 'partial'"
                                     class="btn btn-small invoice-btn"
-                                    title="Bon de Livraraison frais scolaires pour ce mois"
+                                    title="Extraire pour ce mois"
                                     (click)="openMonthlyTuitionInvoice(student, idx)">
                                     <span class="btn-icon">📄</span>
-                                    Bon de Livraraison frais scolaires
+                                    Extraire
                                   </button>
                                 </div>
                               </div>
@@ -1029,10 +1029,10 @@
                                   <button 
                                     *ngIf="payment.status === 'paid' || payment.status === 'partial'"
                                     class="btn btn-small invoice-btn"
-                                    title="Bon de Livraraison transport pour ce mois"
+                                    title="Extraire transport pour ce mois"
                                     (click)="openInvoiceDialog(student, true, idx)">
                                     <span class="btn-icon">📄</span>
-                                    Bon de Livraraison transport
+                                    Extraire
                                   </button>
                                 </div>
                               </div>
@@ -1077,9 +1077,9 @@
           <button 
             class="btn btn-primary btn-small"
             (click)="openUniformInvoice(student)"
-            title="Extraire Bon de Livraraison uniforme">
+            title="Extraire uniforme">
             <span class="btn-icon">📄</span>
-            Extraire Bon de Livraraison
+            Extraire
           </button>
         </div>
       </div>
@@ -1603,22 +1603,6 @@
     </div>
   </div>
 
-  <!-- Bl Dialog Modal -->
-  <div class="modal-overlay" *ngIf="isBlDialogOpen" (click)="closeBlDialog()">
-    <div class="modal-container" (click)="$event.stopPropagation()">
-<app-bl-dialog
-  *ngIf="selectedStudentForbl"
-  [student]="selectedStudentForbl"
-  [academicYear]="currentAcademicYear"
-  [showCurrentMonthOnly]="showCurrentMonthOnlyInbl"
-  [currentMonthIndex]="currentMonthIndexForbl"
-  [currentPaymentDate]="currentPaymentDateForbl"
-  [monthName]="monthNameForbl"
-  [componentOnly]="componentOnlyForbl"
-  (dialogClosed)="closeBlDialog()">
-</app-bl-dialog>
-    </div>
-  </div>
 
 
   <!-- Invoice Proformat Dialog Modal -->
