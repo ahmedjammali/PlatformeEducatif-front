@@ -6,6 +6,9 @@ import { ChargeService } from '../../../services/charge.service';
 import { ToasterService } from '../../../services/toaster.service';
 import { Charge, ChargeSummary } from '../../../models/charge.model';
 import { AuthService } from '../../../services/auth.service';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 
 @Component({
   selector: 'app-charges',
@@ -410,4 +413,275 @@ export class ChargesComponent implements OnInit, OnDestroy {
         }
       });
   }
+
+  generateReceipt(charge: Charge): void {
+    const formattedDate = this.formatDate(charge.date);
+    const formattedAmount = this.formatCurrency(charge.montant);
+
+    // Inline style + two identical receipts
+    const receiptHTML = `
+      <style>
+        @page {
+          size: A4 landscape;
+          margin: 10mm;
+        }
+
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.4;
+          color: #000;
+          background: white;
+          margin: 0;
+          padding: 0;
+        }
+
+        .receipt-container {
+          display: flex;
+          flex-direction: column; 
+          justify-content: space-between;
+          width: 100%;
+          height: 45%; 
+          padding: 0;
+          margin: 0;
+        }
+
+        /* dashed separator between the two receipts */
+        .receipt-part + .receipt-part {
+          border-top: 2px dashed #000;
+        }
+
+        .receipt-header {
+          text-align: center;
+          margin-bottom: 20px;
+          padding-bottom: 10px;
+        }
+
+        .receipt-header h2 {
+          font-size: 18px;
+          font-weight: bold;
+          margin: 0 0 8px 0;
+          text-transform: uppercase;
+        }
+
+        .receipt-header p {
+          font-size: 12px;
+          margin: 0;
+          font-style: italic;
+        }
+
+        .receipt-paragraph {
+          margin-bottom: 12px;
+          line-height: 1.5;
+          font-size: 14px;
+          text-align: justify;
+        }
+
+        .field-value {
+          font-weight: bold;
+          margin: 0 2px;
+        }
+
+        .field-suffix {
+          font-weight: normal;
+        }
+
+        .receipt-signatures {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 30px;
+          padding-top: 15px;
+        }
+
+        .receipt-part {
+          height: 48%; /* slightly smaller to leave spacing between receipts */
+          border: 2 px solid #000;
+          box-sizing: border-box;
+          padding: 25px 35px 60px 35px; /* extra bottom padding */
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+
+
+
+        .signature-section {
+          text-align: center;
+          width: 45%;
+        }
+
+        .signature-section p {
+          margin: 3px 0;
+          font-size: 11px;
+        }
+
+        .signature-space {
+          height: 80px; 
+          border-bottom: 1px solid #000;
+          margin-top: 15px;
+        }
+
+
+        .receipt-breakdown {
+          margin: 15px 0;
+          padding: 12px;
+          border: 1px solid #000;
+          border-radius: 4px;
+          background-color: white;
+        }
+
+        .receipt-breakdown h4 {
+          margin: 0 0 10px 0;
+          font-size: 15px;
+          font-weight: 600;
+          color: #000;
+          border-bottom: 1px solid #333;
+          padding-bottom: 6px;
+        }
+
+        .breakdown-items {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .breakdown-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 4px 0;
+          font-size: 13px;
+        }
+
+        .breakdown-label {
+          color: #333;
+          flex: 1;
+        }
+
+        .breakdown-value {
+          font-weight: 500;
+          color: #000;
+          min-width: 70px;
+          text-align: right;
+        }
+
+        .breakdown-total {
+          border-top: 1px solid #333;
+          margin-top: 6px;
+          padding-top: 6px;
+          font-size: 14px;
+        }
+        
+        .receipt-part + .receipt-part {
+          border-top: 15px dashed #000;
+          margin-top: 50px;
+        }
+
+
+        .breakdown-total .breakdown-label,
+        .breakdown-total .breakdown-value {
+          color: #000;
+          font-weight: bold;
+        }
+      </style>
+
+      <div class="receipt-container" id="receipt-container">
+        <div class="receipt-part">
+          ${this.generateReceiptSection(charge, formattedDate, formattedAmount, 'COPIE ÉTABLISSEMENT')}
+        </div>
+        <hr class="separator" />
+        <div class="receipt-part">
+          ${this.generateReceiptSection(charge, formattedDate, formattedAmount, 'COPIE CLIENT')}
+        </div>
+      </div>
+    `;
+
+    // Create a temporary DOM element
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = receiptHTML;
+    document.body.appendChild(wrapper);
+
+    const receiptElement = wrapper.querySelector('#receipt-container') as HTMLElement;
+
+    html2canvas(receiptElement,).then(canvas => {
+      const pdf = new jsPDF('landscape', 'mm', 'a4');
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgData = canvas.toDataURL('image/png');
+
+      // Scale image to fit full page width (or smaller if you want some margins)
+      const maxWidth = pageWidth * 0.9;  // 10% margin horizontally
+      const maxHeight = pageHeight * 0.9; // 10% margin vertically
+      let imgWidth = (canvas.width * maxHeight) / canvas.height;
+      let imgHeight = maxHeight;
+
+      // If width is too big, scale down to fit width
+      if (imgWidth > maxWidth) {
+        imgWidth = maxWidth;
+        imgHeight = (canvas.height * imgWidth) / canvas.width;
+      }
+
+      // Center the image
+      const xPos = (pageWidth - imgWidth) / 2;
+      const yPos = (pageHeight - imgHeight) / 2;
+
+      pdf.addImage(imgData, 'PNG', xPos, yPos, imgWidth, imgHeight);
+      pdf.save(`Reçu-${charge.categorie}-${formattedDate}.pdf`);
+
+      document.body.removeChild(wrapper);
+    });
+
+  }
+
+  // Helper to generate each receipt section
+  private generateReceiptSection(charge: Charge, formattedDate: string, formattedAmount: string, copyLabel: string): string {
+    return `
+      <div class="receipt-part">
+        <div class="receipt-header">
+          <h2>REÇU DE PAIEMENT - ${copyLabel}</h2>
+          <p>Émis le ${new Date().toLocaleDateString('fr-FR')}</p>
+        </div>
+
+        <div class="receipt-paragraph">
+          Nous confirmons la paiement pour la charge suivante :
+        </div>
+
+        <div class="receipt-breakdown">
+          <h4>Détails de la charge</h4>
+          <div class="breakdown-items">
+            <div class="breakdown-item">
+              <span class="breakdown-label">Catégorie :</span>
+              <span class="breakdown-value">${charge.categorie}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="breakdown-label">Description :</span>
+              <span class="breakdown-value">${charge.description}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="breakdown-label">Date :</span>
+              <span class="breakdown-value">${formattedDate}</span>
+            </div>
+            <div class="breakdown-item breakdown-total">
+              <span class="breakdown-label">Montant :</span>
+              <span class="breakdown-value">${formattedAmount}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="receipt-signatures">
+          <div class="signature-section">
+            <p>Signature du responsable</p>
+            <div class="signature-space"></div>
+          </div>
+          <div class="signature-section">
+            <p>Signature du bénéficiaire</p>
+            <div class="signature-space"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+
 }
