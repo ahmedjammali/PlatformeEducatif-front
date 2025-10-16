@@ -414,182 +414,207 @@ export class ChargesComponent implements OnInit, OnDestroy {
       });
   }
 
+  convertAmountToWords(amount: number): string {
+    // Simple number to words converter for French
+    const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf'];
+    const teens = ['dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+    const tens = ['', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante-dix', 'quatre-vingt', 'quatre-vingt-dix'];
+    const hundreds = ['', 'cent', 'deux cents', 'trois cents', 'quatre cents', 'cinq cents', 'six cents', 'sept cents', 'huit cents', 'neuf cents'];
+
+    if (amount === 0) return 'zéro';
+    if (amount < 0) return 'moins ' + this.convertAmountToWords(-amount);
+
+    let result = '';
+    const wholePart = Math.floor(amount);
+    const decimalPart = Math.round((amount - wholePart) * 100);
+
+    // Convert whole part
+    if (wholePart >= 1000) {
+      result += Math.floor(wholePart / 1000) === 1 ? 'mille ' : units[Math.floor(wholePart / 1000)] + ' mille ';
+    }
+
+    const remainder = wholePart % 1000;
+    if (remainder >= 100) {
+      result += hundreds[Math.floor(remainder / 100)] + ' ';
+    }
+
+    const lastTwo = remainder % 100;
+    if (lastTwo >= 20) {
+      result += tens[Math.floor(lastTwo / 10)];
+      if (lastTwo % 10 !== 0) {
+        result += '-' + units[lastTwo % 10];
+      }
+    } else if (lastTwo >= 10) {
+      result += teens[lastTwo - 10];
+    } else if (lastTwo > 0) {
+      result += units[lastTwo];
+    }
+
+    // Add decimal part if exists
+    if (decimalPart > 0) {
+      result += ' virgule ' + decimalPart;
+    }
+
+    return result.trim();
+  }
+
   generateReceipt(charge: Charge): void {
     const formattedDate = this.formatDate(charge.date);
-    const formattedAmount = this.formatCurrency(charge.montant);
-
+    const formattedAmount = charge.montant;
+    
     // Inline style + two identical receipts
     const receiptHTML = `
       <style>
-        @page {
-          size: A4 landscape;
-          margin: 10mm;
-        }
+      @page {
+        size: A4;
+        margin: 20mm;
+      }
 
-        body {
-          font-family: Arial, sans-serif;
-          line-height: 1.4;
-          color: #000;
-          background: white;
-          margin: 0;
-          padding: 0;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.4;
+        color: #000;
+        background: white;
+      }
 
-        .receipt-container {
-          display: flex;
-          flex-direction: column; 
-          justify-content: space-between;
-          width: 100%;
-          height: 45%; 
-          padding: 0;
-          margin: 0;
-        }
+      .receipt-container {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0;
+      }
 
-        /* dashed separator between the two receipts */
-        .receipt-part + .receipt-part {
-          border-top: 2px dashed #000;
-        }
+      .receipt-part-1 {
+        padding: 20px;
+        margin-bottom: 600px;
+      }
 
-        .receipt-header {
-          text-align: center;
-          margin-bottom: 20px;
-          padding-bottom: 10px;
-        }
+      .receipt-part-2 {
+        padding: 20px;
+        margin-top: 200px;
+      }
 
-        .receipt-header h2 {
-          font-size: 18px;
-          font-weight: bold;
-          margin: 0 0 8px 0;
-          text-transform: uppercase;
-        }
+      .receipt-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+      }
 
-        .receipt-header p {
-          font-size: 12px;
-          margin: 0;
-          font-style: italic;
-        }
+      .receipt-header h2 {
+        font-size: 48px;
+        font-weight: bold;
+        margin: 0 0 8px 0;
+        text-transform: uppercase;
+      }
 
-        .receipt-paragraph {
-          margin-bottom: 12px;
-          line-height: 1.5;
-          font-size: 14px;
-          text-align: justify;
-        }
+      .receipt-header p {
+        font-size: 48px;
+        margin: 0;
+        font-style: italic;
+      }
 
-        .field-value {
-          font-weight: bold;
-          margin: 0 2px;
-        }
+      .receipt-paragraph {
+        margin-bottom: 12px;
+        line-height: 1.5;
+        font-size: 32px;
+        text-align: justify;
+      }
 
-        .field-suffix {
-          font-weight: normal;
-        }
+      .field-value {
+        font-weight: bold;
+        margin: 0 2px;
+      }
 
-        .receipt-signatures {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 30px;
-          padding-top: 15px;
-        }
+      .field-suffix {
+        font-weight: normal;
+      }
 
-        .receipt-part {
-          height: 48%; /* slightly smaller to leave spacing between receipts */
-          border: 2 px solid #000;
-          box-sizing: border-box;
-          padding: 25px 35px 60px 35px; /* extra bottom padding */
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-        }
+      .receipt-signatures {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 25px;
+        padding-top: 15px;
+      }
 
+      .signature-section {
+        text-align: center;
+        width: 45%;
+      }
 
+      .signature-section p {
+        margin: 3px 0;
+        font-size: 32px;
+      }
 
-        .signature-section {
-          text-align: center;
-          width: 45%;
-        }
+      .signature-space {
+        height: 45px;
+        border-bottom: 1px solid #000;
+        margin-top: 15px;
+      }
 
-        .signature-section p {
-          margin: 3px 0;
-          font-size: 11px;
-        }
+      /* Receipt breakdown styles */
+      .receipt-breakdown {
+        margin: 15px 0;
+        padding: 12px;
+        border: 1px solid #000;
+        border-radius: 4px;
+        background-color: white;
+      }
 
-        .signature-space {
-          height: 80px; 
-          border-bottom: 1px solid #000;
-          margin-top: 15px;
-        }
+      .receipt-breakdown h4 {
+        margin: 0 0 10px 0;
+        font-size: 32px;
+        font-weight: 600;
+        color: #000;
+        border-bottom: 1px solid #333;
+        padding-bottom: 6px;
+      }
 
+      .breakdown-items {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
 
-        .receipt-breakdown {
-          margin: 15px 0;
-          padding: 12px;
-          border: 1px solid #000;
-          border-radius: 4px;
-          background-color: white;
-        }
+      .breakdown-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+        font-size: 12px;
+      }
 
-        .receipt-breakdown h4 {
-          margin: 0 0 10px 0;
-          font-size: 15px;
-          font-weight: 600;
-          color: #000;
-          border-bottom: 1px solid #333;
-          padding-bottom: 6px;
-        }
+      .breakdown-label {
+        color: #333;
+        flex: 1;
+      }
 
-        .breakdown-items {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
+      .breakdown-value {
+        font-weight: 500;
+        color: #000;
+        min-width: 70px;
+        text-align: right;
+      }
 
-        .breakdown-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 4px 0;
-          font-size: 13px;
-        }
+      .breakdown-total {
+        border-top: 1px solid #333;
+        margin-top: 6px;
+        padding-top: 6px;
+        font-size: 13px;
+      }
 
-        .breakdown-label {
-          color: #333;
-          flex: 1;
-        }
-
-        .breakdown-value {
-          font-weight: 500;
-          color: #000;
-          min-width: 70px;
-          text-align: right;
-        }
-
-        .breakdown-total {
-          border-top: 1px solid #333;
-          margin-top: 6px;
-          padding-top: 6px;
-          font-size: 14px;
-        }
-        
-        .receipt-part + .receipt-part {
-          border-top: 15px dashed #000;
-          margin-top: 50px;
-        }
-
-
-        .breakdown-total .breakdown-label,
-        .breakdown-total .breakdown-value {
-          color: #000;
-          font-weight: bold;
-        }
+      .breakdown-total .breakdown-label,
+      .breakdown-total .breakdown-value {
+        color: #000;
+        font-weight: bold;
+      }
       </style>
 
       <div class="receipt-container" id="receipt-container">
-        <div class="receipt-part">
+        <div class="receipt-part-1">
           ${this.generateReceiptSection(charge, formattedDate, formattedAmount, 'COPIE ÉTABLISSEMENT')}
         </div>
         <hr class="separator" />
-        <div class="receipt-part">
+        <div class="receipt-part-2">
           ${this.generateReceiptSection(charge, formattedDate, formattedAmount, 'COPIE CLIENT')}
         </div>
       </div>
@@ -603,7 +628,7 @@ export class ChargesComponent implements OnInit, OnDestroy {
     const receiptElement = wrapper.querySelector('#receipt-container') as HTMLElement;
 
     html2canvas(receiptElement,).then(canvas => {
-      const pdf = new jsPDF('landscape', 'mm', 'a4');
+      const pdf = new jsPDF('p', 'mm', 'a4');
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -635,51 +660,48 @@ export class ChargesComponent implements OnInit, OnDestroy {
   }
 
   // Helper to generate each receipt section
-  private generateReceiptSection(charge: Charge, formattedDate: string, formattedAmount: string, copyLabel: string): string {
+  private generateReceiptSection(charge: Charge, formattedDate: string, formattedAmount: number , copyLabel: string): string {
+    const amountInWords = this.convertAmountToWords(formattedAmount);
     return `
-      <div class="receipt-part">
-        <div class="receipt-header">
-          <h2>REÇU DE PAIEMENT - ${copyLabel}</h2>
-          <p>Émis le ${new Date().toLocaleDateString('fr-FR')}</p>
-        </div>
+        <div class="receipt-container">
+          <div class="receipt-part">
+            <div class="receipt-header">
+              <h2>REÇU POUR PAIEMENT DE FRAIS ${charge.categorie} EN ESPÈCES</h2>
+            </div>
 
-        <div class="receipt-paragraph">
-          Nous confirmons la paiement pour la charge suivante :
-        </div>
+            <div class="receipt-content">
+              <p class="receipt-paragraph">
+                Je soussigné(e), .........................................................,
+                déclare avoir reçu en ce jour la somme de <span class="field-value">${amountInWords}</span> dinars tunisiens (TND),
+                soit <span class="field-value">${formattedAmount}</span> TND,
+                correspondant au paiement de la charge suivante :
+                <span class="breakdown-value">${charge.description}</span>.
+                <br/>
+                Le paiement a été effectué par <span class="field-value">Ons School</span>,
+                en date du <span class="field-value">${formattedDate}</span>,
+                conformément aux modalités convenues.
 
-        <div class="receipt-breakdown">
-          <h4>Détails de la charge</h4>
-          <div class="breakdown-items">
-            <div class="breakdown-item">
-              <span class="breakdown-label">Catégorie :</span>
-              <span class="breakdown-value">${charge.categorie}</span>
-            </div>
-            <div class="breakdown-item">
-              <span class="breakdown-label">Description :</span>
-              <span class="breakdown-value">${charge.description}</span>
-            </div>
-            <div class="breakdown-item">
-              <span class="breakdown-label">Date :</span>
-              <span class="breakdown-value">${formattedDate}</span>
-            </div>
-            <div class="breakdown-item breakdown-total">
-              <span class="breakdown-label">Montant :</span>
-              <span class="breakdown-value">${formattedAmount}</span>
+                En foi de quoi, le présent reçu est établi pour servir de preuve de paiement.              </p>
+
+              <p class="receipt-paragraph">
+                Fait à Jilma, le <span class="breakdown-value">${formattedDate}</span>.
+              </p>
+
+              <div class="receipt-signatures">
+                <div class="signature-section">
+                  <p>« Lu et approuvé »</p>
+                  <p>Signature de l'école</p>
+                  <div class="signature-space"></div>
+                </div>
+                <div class="signature-section">
+                  <p>« Lu et approuvé »</p>
+                  <p>Signature</p>
+                  <div class="signature-space"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        <div class="receipt-signatures">
-          <div class="signature-section">
-            <p>Signature du responsable</p>
-            <div class="signature-space"></div>
-          </div>
-          <div class="signature-section">
-            <p>Signature du bénéficiaire</p>
-            <div class="signature-space"></div>
-          </div>
-        </div>
-      </div>
     `;
   }
 
