@@ -123,6 +123,7 @@ import { ScheduleService } from './services/schedule.service';
 import { ScheduleManagementComponent } from './components/admin/schedule-management/schedule-management.component';
 import { TeacherScheduleComponent } from './components/teacher/teacher-schedule/teacher-schedule.component';
 import { StudentScheduleComponent } from './components/student/student-schedule/student-schedule.component';
+import { CommonModule } from '@angular/common';
 
 
 
@@ -217,6 +218,7 @@ const MaterialModules = [
     AppRoutingModule,
     BrowserAnimationsModule,
     HttpClientModule,
+    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     RouterModule.forRoot([]),
