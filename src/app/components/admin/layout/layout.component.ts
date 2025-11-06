@@ -153,6 +153,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'schools': '/superadmin/schools',
       'payments': '/admin/payments',
       'financialOverview': '/admin/financial-overview',
+      'caisse': '/admin/caisse',
       'charges': '/admin/charges',
       'salary': '/admin/salary',
     };
@@ -186,6 +187,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
       'schools': 'Gestion de l\'École',
       'payments': 'Gestion des Paiements',
       'financialOverview': 'Aperçu Financier',
+      'caisse': 'caisse',
       'charges': 'Gestion des Charges',
       'salary': 'Gestion des Salaires',
     };
@@ -415,6 +417,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
       { path: '/admin/grades', route: 'grades' },
       { path: '/admin/contact', route: 'contact' },
       { path: '/admin/reports', route: 'reports' },
+      { path: '/admin/caisse', route: 'caisse' },
       { path: '/superadmin/schools', route: 'schools' },
     ];
 

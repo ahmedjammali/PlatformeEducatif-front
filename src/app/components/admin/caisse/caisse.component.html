@@ -1,0 +1,182 @@
+<div class="income-analytics-container">
+
+  <!-- HEADER -->
+  <div class="header-section" style="padding:1rem;">
+    <div class="title-content">
+      <span class="title-icon">💰</span>
+      <div class="title-wrapper">
+        <h1>Gestion de Caisse</h1>
+        <p class="subtitle-text">Suivi des caisses — journalier, transport, générale</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAISSE JOURNALIÈRE -->
+  <div class="component-card large-card" style="margin-bottom:1rem; padding:1rem;">
+    <div class="component-header"><div class="component-title">Caisse Journalière</div></div>
+
+    <div class="component-stats">
+      <div class="stat-row"><div class="stat-label">Recettes du jour</div><div class="stat-value collected">{{ dailyIncome | number:'1.2-2' }} DT</div></div>
+      <div class="stat-row"><div class="stat-label">Dépenses du jour</div><div class="stat-value expected">{{ dailyOutcome | number:'1.2-2' }} DT</div></div>
+      <div class="stat-row"><div class="stat-label">Solde journalier</div><div class="stat-value" style="font-weight:700">{{ dailyBalance | number:'1.2-2' }} DT</div></div>
+    </div>
+  </div>
+
+  <!-- CAISSE TRANSPORT -->
+  <div class="component-card component-transport large-card" style="margin-bottom:1rem; padding:1rem;">
+    <div class="component-header"><div class="component-title">Caisse Transport</div></div>
+
+    <div class="component-stats">
+      <div class="stat-row"><div class="stat-label">Total transport (depuis {{ transportStartDate }})</div><div class="stat-value collected" style="font-weight:700">{{ transportCaisse | number:'1.2-2' }} DT</div></div>
+    </div>
+  </div>
+
+  <!-- CAISSE GÉNÉRALE -->
+  <div class="component-card large-card" style="margin-bottom:1rem; padding:1rem;">
+    <div class="component-header"><div class="component-title">Caisse Générale</div></div>
+
+    <div class="component-stats">
+      <div class="stat-row"><div class="stat-label">Total accumulé (journaliers)</div><div class="stat-value collected">{{ caisseAccum | number:'1.2-2' }} DT</div></div>
+      <div class="stat-row"><div class="stat-label">Transport total</div><div class="stat-value collected">{{ transportCaisse | number:'1.2-2' }} DT</div></div>
+      <div class="stat-row"><div class="stat-label">Solde général</div><div class="stat-value" style="font-weight:700">{{ caisseGenerale | number:'1.2-2' }} DT</div></div>
+    </div>
+
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn-action" (click)="openExternalDeposit()">💸 Verser en caisse</button>
+      <button class="btn-action" (click)="openBankTransfer()">🏦 Transfert banque</button>
+      <!-- operations details button now opens the dedicated operations modal -->
+      <button class="btn-secondary" (click)="showOperationsDetails()">🔁 Détails Opérations</button>
+    </div>
+  </div>
+
+  <!-- DETAILS MODAL -->
+  <div *ngIf="showDetailsModal" class="component-card" style="position:fixed; inset:6% 6%; z-index:9999; max-height:88vh; overflow:auto; padding:1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0;">📋 Détails — {{ detailsTitle }}</h3>
+      <div><button class="btn-secondary" (click)="closeDetails()">Fermer</button></div>
+    </div>
+
+    <div style="margin-top:14px;">
+      <h4>Recettes</h4>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date paiement</th>
+              <th *ngIf="detailsShowOrigin">Provenance</th>
+              <th>Type / Description</th>
+              <th style="text-align:right;">Montant (DT)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of detailsData?.income">
+              <td>{{ r.date | date:'dd/MM/yyyy' }}</td>
+              <td *ngIf="detailsShowOrigin">{{ r.origin }}</td>
+              <td>{{ r.description || r.type }}</td>
+              <td class="amount collected" style="text-align:right;">{{ r.amount | number:'1.2-2' }}</td>
+            </tr>
+            <tr *ngIf="!detailsData?.income || detailsData.income.length === 0">
+              <td [attr.colspan]="detailsShowOrigin ? 4 : 3" class="empty-state">Aucune recette trouvée.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 style="margin-top:14px;">Dépenses</h4>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th *ngIf="detailsShowOrigin">Provenance</th>
+              <th>Catégorie / Description</th>
+              <th style="text-align:right;">Montant (DT)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of detailsData?.outcome">
+              <td>{{ o.date | date:'dd/MM/yyyy' }}</td>
+              <td *ngIf="detailsShowOrigin">{{ o.origin }}</td>
+              <td>{{ o.description || o.category }}</td>
+              <td class="amount" style="text-align:right;">{{ o.amount | number:'1.2-2' }}</td>
+            </tr>
+            <tr *ngIf="!detailsData?.outcome || detailsData.outcome.length === 0">
+              <td [attr.colspan]="detailsShowOrigin ? 4 : 3" class="empty-state">Aucune dépense trouvée.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPERATIONS MODAL (versements & bank transfers only) -->
+  <div *ngIf="showOperationsModal" class="component-card" style="position:fixed; inset:12% 18%; z-index:9999; max-height:76vh; overflow:auto; padding:1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0;">🔁 Détails Opérations — Versements & Transferts</h3>
+      <div><button class="btn-secondary" (click)="closeOperationsDetails()">Fermer</button></div>
+    </div>
+
+    <div style="margin-top:14px;">
+      <h4>Versements externes</h4>
+      <div class="table-container" style="margin-bottom:12px;">
+        <table class="data-table">
+          <thead>
+            <tr><th>Date</th><th style="text-align:right;">Montant (DT)</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let v of depositHistory">
+              <td>{{ v.date | date:'dd/MM/yyyy' }}</td>
+              <td class="amount collected" style="text-align:right;">{{ v.amount | number:'1.2-2' }}</td>
+            </tr>
+            <tr *ngIf="depositHistory.length === 0">
+              <td [attr.colspan]="2" class="empty-state">Aucun versement enregistré.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Transferts vers banque</h4>
+      <div class="table-container">
+        <table class="data-table">
+          <thead><tr><th>Date</th><th style="text-align:right;">Montant (DT)</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let t of bankTransferHistory">
+              <td>{{ t.date | date:'dd/MM/yyyy' }}</td>
+              <td class="amount" style="text-align:right;">{{ t.amount | number:'1.2-2' }}</td>
+            </tr>
+            <tr *ngIf="bankTransferHistory.length === 0">
+              <td [attr.colspan]="2" class="empty-state">Aucun transfert enregistré.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXTERNAL DEPOSIT MODAL -->
+  <div *ngIf="showExternalDeposit" class="component-card" style="position:fixed; inset:28% 30%; z-index:9999; max-width:540px; padding:1rem;">
+    <h3>💸 Versement en caisse</h3>
+    <div style="margin-top:8px;">
+      <label>Montant (DT)</label>
+      <input type="number" [(ngModel)]="externalAmount" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--color-border);" />
+    </div>
+    <div style="margin-top:12px; display:flex; gap:8px;">
+      <button class="btn-primary" (click)="confirmExternalDeposit()">Valider</button>
+      <button class="btn-secondary" (click)="cancelExternalDeposit()">Annuler</button>
+    </div>
+  </div>
+
+  <!-- BANK TRANSFER MODAL -->
+  <div *ngIf="showBankTransfer" class="component-card" style="position:fixed; inset:28% 30%; z-index:9999; max-width:540px; padding:1rem;">
+    <h3>🏦 Transfert vers Banque</h3>
+    <div style="margin-top:8px;">
+      <label>Montant (DT)</label>
+      <input type="number" [(ngModel)]="bankTransferAmount" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--color-border);" />
+    </div>
+    <div style="margin-top:12px; display:flex; gap:8px;">
+      <button class="btn-primary" (click)="confirmBankTransfer()">Valider</button>
+      <button class="btn-secondary" (click)="cancelBankTransfer()">Annuler</button>
+    </div>
+  </div>
+
+</div>

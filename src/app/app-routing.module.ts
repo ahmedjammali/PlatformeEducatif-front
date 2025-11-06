@@ -18,6 +18,7 @@ import { ReportsComponent } from './components/admin/reports/reports.component';
 import { ContactComponent } from './components/admin/contact/contact.component';
 import { GradesComponent } from './components/admin/grades/grades.component';
 import { NotificationComponent } from './components/admin/notification/notification.component';
+import { CaisseComponent } from './components/admin/caisse/caisse.component';
 
 
 
@@ -95,6 +96,11 @@ const routes: Routes = [
         path: 'salary',
         component: SalaryManagementComponent,
         data: { title: 'Salary Management' }
+      },
+      {
+        path: 'caisse',
+        component: CaisseComponent,
+        data: { title: 'Caisse Management' }
       },
       {
         path: 'financial-overview',

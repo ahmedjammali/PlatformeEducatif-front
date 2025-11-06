@@ -21,6 +21,7 @@ import { ContactService } from './services/contact.service';
 import { PaymentService } from './services/payment.service'; // Added PaymentService
 import { ChargeService } from './services/charge.service';
 import { SalaryService } from './services/salary.service';
+import { CaisseService } from './services/caisse.service';
 import { IncomeAnalyticsService } from './services/income-analytics.service';
 import { OutcomeAnalyticsService } from './services/outcome-analytics.service';
 import { ExportService } from './services/export.service';
@@ -113,6 +114,7 @@ import { InvoiceProformatComponent } from './components/admin/invoice-proformat/
 import { InvoiceDialogComponent } from './components/admin/invoice-dialog/invoice-dialog.component';
 import { InvoiceProformatDialogComponent } from './components/admin/invoice-proformat-dialog/invoice-proformat-dialog.component';
 import { ChargesComponent } from './components/admin/charges/charges.component';
+import { CaisseComponent } from './components/admin/caisse/caisse.component';
 import { SalaryManagementComponent } from './components/admin/salary-management/salary-management.component';
 import { IncomeAnalyticsComponent } from './components/admin/income-analytics/income-analytics.component';
 import { OutcomeAnalyticsComponent } from './components/admin/outcome-analytics/outcome-analytics.component';
@@ -197,6 +199,7 @@ const MaterialModules = [
     PaymentManagementComponent,
     PaymentDialogComponent,
     PaymentConfigComponent,
+    CaisseComponent,
     InvoiceComponent,
     InvoiceProformatComponent,
     InvoiceDialogComponent,
@@ -234,6 +237,7 @@ const MaterialModules = [
     GradeService,
     ProgressService,
     ContactService,
+    CaisseService,
     PaymentService, // Added PaymentService
     ChargeService,
     SalaryService,
