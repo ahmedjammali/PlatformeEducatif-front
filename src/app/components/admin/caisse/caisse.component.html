@@ -1,182 +1,521 @@
+<!-- caisse.component.html - Complete Version -->
+
 <div class="income-analytics-container">
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+    <button class="alert-close" (click)="dismissSuccess()">&times;</button>
+  </div>
+  
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+    <button class="alert-close" (click)="dismissError()">&times;</button>
+  </div>
 
-  <!-- HEADER -->
-  <div class="header-section" style="padding:1rem;">
-    <div class="title-content">
-      <span class="title-icon">💰</span>
-      <div class="title-wrapper">
-        <h1>Gestion de Caisse</h1>
-        <p class="subtitle-text">Suivi des caisses — journalier, transport, générale</p>
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-top">
+      <div class="title-section">
+        <div class="title-content">
+          <div class="title-icon">💰</div>
+          <div class="title-wrapper">
+            <h1>Gestion de la Caisse</h1>
+            <p class="subtitle-text">Tableau de bord financier et gestion des transactions</p>
+          </div>
+        </div>
+        <div class="academic-year-badge" *ngIf="dashboardData">
+          <span class="year-label">Date sélectionnée</span>
+          <span class="year-value">{{ selectedDate ? (selectedDate | date:'shortDate') : 'Aujourd\'hui' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-bottom">
+      <div class="quick-stats">
+        <div class="stat-item stat-success" *ngIf="dashboardData">
+          <span class="stat-icon">📈</span>
+          <div class="stat-content">
+            <span class="stat-value">{{ formatAmount(dashboardData.caisseJournaliere.recettes.total) }}</span>
+            <span class="stat-label">Recettes du jour</span>
+          </div>
+        </div>
+        <div class="stat-item stat-warning" *ngIf="dashboardData">
+          <span class="stat-icon">📉</span>
+          <div class="stat-content">
+            <span class="stat-value">{{ formatAmount(dashboardData.caisseJournaliere.depenses.total) }}</span>
+            <span class="stat-label">Dépenses du jour</span>
+          </div>
+        </div>
+        <div class="stat-item stat-primary" *ngIf="dashboardData">
+          <span class="stat-icon">💼</span>
+          <div class="stat-content">
+            <span class="stat-value">{{ formatAmount(dashboardData.caisseGenerale.soldeGeneral) }}</span>
+            <span class="stat-label">Solde général</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions-section">
+        <div class="nav-actions">
+          <button (click)="refreshDashboard()" class="btn-action btn-refresh" [disabled]="loading">
+            <div class="btn-icon-wrapper">
+              <span *ngIf="!loading">🔄</span>
+              <div *ngIf="loading" class="loading-spinner-sm"></div>
+            </div>
+            <div class="btn-content">
+              <span class="btn-title">Actualiser</span>
+            </div>
+          </button>
+          
+          <button (click)="openHistoryModal()" class="btn-action btn-history" *ngIf="dashboardData">
+            <span>📜</span>
+            <div class="btn-content">
+              <span class="btn-title">Historique</span>
+            </div>
+          </button>
+          
+          <button (click)="openInitializeModal()" class="btn-action btn-initialize" *ngIf="!dashboardData">
+            <span>🚀</span>
+            <div class="btn-content">
+              <span class="btn-title">Initialiser</span>
+            </div>
+          </button>
+          
+          <button (click)="openDeleteModal()" class="btn-action btn-delete" *ngIf="dashboardData">
+            <span>🗑️</span>
+            <div class="btn-content">
+              <span class="btn-title">Supprimer</span>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- CAISSE JOURNALIÈRE -->
-  <div class="component-card large-card" style="margin-bottom:1rem; padding:1rem;">
-    <div class="component-header"><div class="component-title">Caisse Journalière</div></div>
-
-    <div class="component-stats">
-      <div class="stat-row"><div class="stat-label">Recettes du jour</div><div class="stat-value collected">{{ dailyIncome | number:'1.2-2' }} DT</div></div>
-      <div class="stat-row"><div class="stat-label">Dépenses du jour</div><div class="stat-value expected">{{ dailyOutcome | number:'1.2-2' }} DT</div></div>
-      <div class="stat-row"><div class="stat-label">Solde journalier</div><div class="stat-value" style="font-weight:700">{{ dailyBalance | number:'1.2-2' }} DT</div></div>
-    </div>
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Chargement des données...</p>
   </div>
 
-  <!-- CAISSE TRANSPORT -->
-  <div class="component-card component-transport large-card" style="margin-bottom:1rem; padding:1rem;">
-    <div class="component-header"><div class="component-title">Caisse Transport</div></div>
-
-    <div class="component-stats">
-      <div class="stat-row"><div class="stat-label">Total transport (depuis {{ transportStartDate }})</div><div class="stat-value collected" style="font-weight:700">{{ transportCaisse | number:'1.2-2' }} DT</div></div>
-    </div>
+  <!-- Empty State - No Caisse -->
+  <div *ngIf="!loading && !dashboardData && !error" class="empty-state-lg">
+    <span class="empty-icon-lg">📦</span>
+    <h2>Aucune caisse initialisée</h2>
+    <p>Commencez par initialiser une caisse pour gérer vos transactions financières</p>
+    <button (click)="openInitializeModal()" class="btn-primary-lg">
+      <span>🚀</span>
+      <span>Initialiser la caisse</span>
+    </button>
   </div>
 
-  <!-- CAISSE GÉNÉRALE -->
-  <div class="component-card large-card" style="margin-bottom:1rem; padding:1rem;">
-    <div class="component-header"><div class="component-title">Caisse Générale</div></div>
-
-    <div class="component-stats">
-      <div class="stat-row"><div class="stat-label">Total accumulé (journaliers)</div><div class="stat-value collected">{{ caisseAccum | number:'1.2-2' }} DT</div></div>
-      <div class="stat-row"><div class="stat-label">Transport total</div><div class="stat-value collected">{{ transportCaisse | number:'1.2-2' }} DT</div></div>
-      <div class="stat-row"><div class="stat-label">Solde général</div><div class="stat-value" style="font-weight:700">{{ caisseGenerale | number:'1.2-2' }} DT</div></div>
-    </div>
-
-    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-      <button class="btn-action" (click)="openExternalDeposit()">💸 Verser en caisse</button>
-      <button class="btn-action" (click)="openBankTransfer()">🏦 Transfert banque</button>
-      <!-- operations details button now opens the dedicated operations modal -->
-      <button class="btn-secondary" (click)="showOperationsDetails()">🔁 Détails Opérations</button>
-    </div>
-  </div>
-
-  <!-- DETAILS MODAL -->
-  <div *ngIf="showDetailsModal" class="component-card" style="position:fixed; inset:6% 6%; z-index:9999; max-height:88vh; overflow:auto; padding:1rem;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 style="margin:0;">📋 Détails — {{ detailsTitle }}</h3>
-      <div><button class="btn-secondary" (click)="closeDetails()">Fermer</button></div>
-    </div>
-
-    <div style="margin-top:14px;">
-      <h4>Recettes</h4>
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Date paiement</th>
-              <th *ngIf="detailsShowOrigin">Provenance</th>
-              <th>Type / Description</th>
-              <th style="text-align:right;">Montant (DT)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let r of detailsData?.income">
-              <td>{{ r.date | date:'dd/MM/yyyy' }}</td>
-              <td *ngIf="detailsShowOrigin">{{ r.origin }}</td>
-              <td>{{ r.description || r.type }}</td>
-              <td class="amount collected" style="text-align:right;">{{ r.amount | number:'1.2-2' }}</td>
-            </tr>
-            <tr *ngIf="!detailsData?.income || detailsData.income.length === 0">
-              <td [attr.colspan]="detailsShowOrigin ? 4 : 3" class="empty-state">Aucune recette trouvée.</td>
-            </tr>
-          </tbody>
-        </table>
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading && dashboardData" class="content-area">
+    
+    <!-- Caisse Journalière Section -->
+    <div class="analysis-section">
+      <div class="section-header">
+        <h2>📊 Caisse Journalière</h2>
+        <p>{{ dashboardData.caisseJournaliere.date | date:'fullDate' }}</p>
       </div>
 
-      <h4 style="margin-top:14px;">Dépenses</h4>
+      <div class="component-grid">
+        <!-- Recettes Card -->
+        <div class="component-card component-frais_scolaires">
+          <div class="component-header">
+            <div class="component-icon">📈</div>
+            <h3 class="component-title">Recettes du jour</h3>
+          </div>
+          <div class="component-stats">
+            <div class="stat-row">
+              <span class="stat-label">Total des recettes</span>
+              <span class="stat-value collected">{{ formatAmount(dashboardData.caisseJournaliere.recettes.total) }}</span>
+            </div>
+          </div>
+          <div class="breakdown">
+            <div class="breakdown-item">
+              <span class="breakdown-label">Frais d'inscription</span>
+              <span class="breakdown-amount">{{ formatAmount(dashboardData.caisseJournaliere.recettes.inscriptionFee) }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="breakdown-label">Frais scolaires</span>
+              <span class="breakdown-amount">{{ formatAmount(dashboardData.caisseJournaliere.recettes.tuition) }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="breakdown-label">Uniforme</span>
+              <span class="breakdown-amount">{{ formatAmount(dashboardData.caisseJournaliere.recettes.uniform) }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="breakdown-label">Transport</span>
+              <span class="breakdown-amount">{{ formatAmount(dashboardData.caisseJournaliere.recettes.transportation) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dépenses Card -->
+        <div class="component-card component-uniforme">
+          <div class="component-header">
+            <div class="component-icon">📉</div>
+            <h3 class="component-title">Dépenses du jour</h3>
+          </div>
+          <div class="component-stats">
+            <div class="stat-row">
+              <span class="stat-label">Total des dépenses</span>
+              <span class="stat-value pending">{{ formatAmount(dashboardData.caisseJournaliere.depenses.total) }}</span>
+            </div>
+          </div>
+          <div class="breakdown">
+            <div class="breakdown-item">
+              <span class="breakdown-label">Salaires</span>
+              <span class="breakdown-amount">{{ formatAmount(dashboardData.caisseJournaliere.depenses.salaries) }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="breakdown-label">Charges</span>
+              <span class="breakdown-amount">{{ formatAmount(dashboardData.caisseJournaliere.depenses.charges) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Solde Card -->
+        <div class="component-card component-frais_inscription">
+          <div class="component-header">
+            <div class="component-icon">💰</div>
+            <h3 class="component-title">Solde journalier</h3>
+          </div>
+          <div class="component-stats">
+            <div class="stat-row">
+              <span class="stat-label">Balance</span>
+              <span class="stat-value" [ngClass]="getBalanceClass(dashboardData.caisseJournaliere.soldeJournalier)">
+                {{ formatAmount(dashboardData.caisseJournaliere.soldeJournalier) }}
+              </span>
+            </div>
+          </div>
+          <div class="component-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" 
+                   [style.width.%]="getProgressPercentage(dashboardData.caisseJournaliere.recettes.total, dashboardData.caisseJournaliere.depenses.total)"
+                   [style.background]="getProgressColor(dashboardData.caisseJournaliere.soldeJournalier)">
+              </div>
+            </div>
+            <span class="progress-text">
+              {{ getProgressPercentage(dashboardData.caisseJournaliere.recettes.total, dashboardData.caisseJournaliere.depenses.total) }}%
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Caisses Section -->
+    <div class="category-section">
+      <h3>💼 Caisses Spécifiques</h3>
+      <div class="category-grid">
+        <!-- Caisse Transport -->
+        <div class="category-card">
+          <div class="category-header">
+            <div class="category-icon">🚌</div>
+            <h4 class="category-title">Caisse Transport</h4>
+            <p class="category-count">Depuis le {{ dashboardData.caisseTransport.startDate | date:'shortDate' }}</p>
+          </div>
+          <div class="category-amounts">
+            <div class="amount-item">
+              <span class="amount-label">Total transport</span>
+              <span class="amount-value collected">{{ formatAmount(dashboardData.caisseTransport.totalTransport) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Caisse Générale -->
+        <div class="category-card">
+          <div class="category-header">
+            <div class="category-icon">🏛️</div>
+            <h4 class="category-title">Caisse Générale</h4>
+            <p class="category-count">État global</p>
+          </div>
+          <div class="category-amounts">
+            <div class="amount-item">
+              <span class="amount-label">Total accumulé</span>
+              <span class="amount-value">{{ formatAmount(dashboardData.caisseGenerale.totalAccumuleJournaliers) }}</span>
+            </div>
+            <div class="amount-item">
+              <span class="amount-label">Transport</span>
+              <span class="amount-value">{{ formatAmount(dashboardData.caisseGenerale.totalTransport) }}</span>
+            </div>
+            <div class="amount-item">
+              <span class="amount-label">Solde général</span>
+              <span class="amount-value collected" [ngClass]="getBalanceClass(dashboardData.caisseGenerale.soldeGeneral)">
+                {{ formatAmount(dashboardData.caisseGenerale.soldeGeneral) }}
+              </span>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-direction: column;">
+            <button (click)="openVerseModal()" class="btn-action btn-export" style="width: 100%;">
+              <span>💸</span>
+              <div class="btn-content">
+                <span class="btn-title">Verser en caisse</span>
+              </div>
+            </button>
+            <button (click)="openTransfertModal()" class="btn-action btn-export-pdf" style="width: 100%;">
+              <span>🏦</span>
+              <div class="btn-content">
+                <span class="btn-title">Transfert banque</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <!-- <div class="analysis-section">
+      <div class="section-header">
+        <h2>📝 Opérations récentes</h2>
+        <p>Dernières transactions enregistrées</p>
+      </div>
+
       <div class="table-container">
         <table class="data-table">
           <thead>
             <tr>
               <th>Date</th>
-              <th *ngIf="detailsShowOrigin">Provenance</th>
-              <th>Catégorie / Description</th>
-              <th style="text-align:right;">Montant (DT)</th>
+              <th>Type</th>
+              <th>Montant</th>
+              <th>Solde après</th>
+              <th>Enregistré par</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let o of detailsData?.outcome">
-              <td>{{ o.date | date:'dd/MM/yyyy' }}</td>
-              <td *ngIf="detailsShowOrigin">{{ o.origin }}</td>
-              <td>{{ o.description || o.category }}</td>
-              <td class="amount" style="text-align:right;">{{ o.amount | number:'1.2-2' }}</td>
-            </tr>
-            <tr *ngIf="!detailsData?.outcome || detailsData.outcome.length === 0">
-              <td [attr.colspan]="detailsShowOrigin ? 4 : 3" class="empty-state">Aucune dépense trouvée.</td>
+            <tr *ngFor="let transaction of dashboardData.recentTransactions">
+              <td>{{ transaction.date | date:'short' }}</td>
+              <td>
+                <span class="category-badge" 
+                      [ngClass]="transaction.type === 'verse_caisse' ? 'category-primaire' : 'category-secondaire'">
+                  {{ getTransactionLabel(transaction.type) }}
+                </span>
+              </td>
+              <td class="amount collected">{{ formatAmount(transaction.amount) }}</td>
+              <td class="amount">{{ formatAmount(transaction.balanceAfter) }}</td>
+              <td>{{ transaction.recordedBy || '-' }}</td>
             </tr>
           </tbody>
         </table>
+        <div *ngIf="dashboardData.recentTransactions.length === 0" class="empty-state">
+          <div class="empty-icon">📋</div>
+          <h3>Aucune transaction</h3>
+          <p>Aucune transaction récente à afficher</p>
+        </div>
+      </div>
+    </div> -->
+  </div>
+</div>
+
+<!-- Initialize Modal -->
+<div class="modal-overlay" [class.show]="showInitializeModal" *ngIf="showInitializeModal" (click)="showInitializeModal = false">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>🚀 Initialiser la caisse</h2>
+      <button class="modal-close" (click)="showInitializeModal = false">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-message" style="margin-bottom: 1rem;">
+        <strong>Information:</strong> L'initialisation créera une nouvelle caisse pour l'année académique spécifiée.
+      </div>
+      <form [formGroup]="initializeForm" (ngSubmit)="submitInitialize()">
+        <div class="form-group">
+          <label>Année académique *</label>
+          <input 
+            type="text" 
+            formControlName="academicYear" 
+            placeholder="Ex: 2024-2025"
+            [class.error]="initializeForm.get('academicYear')?.invalid && initializeForm.get('academicYear')?.touched">
+          <small style="display: block; margin-top: 0.25rem; color: var(--color-text-secondary);">
+            Format: YYYY-YYYY
+          </small>
+        </div>
+        <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
+          <button type="button" (click)="showInitializeModal = false" class="btn-secondary">
+            Annuler
+          </button>
+          <button 
+            type="submit" 
+            [disabled]="initializeForm.invalid || isInitializing" 
+            class="btn-success">
+            <span *ngIf="!isInitializing">✅ Initialiser</span>
+            <span *ngIf="isInitializing" style="display: flex; align-items: center; gap: 0.5rem;">
+              <div class="loading-spinner-sm"></div>
+              Initialisation...
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" [class.show]="showDeleteModal" *ngIf="showDeleteModal" (click)="showDeleteModal = false">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>🗑️ Supprimer la caisse</h2>
+      <button class="modal-close" (click)="showDeleteModal = false">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="warning-message">
+        <strong>⚠️ ATTENTION:</strong> Cette action est irréversible et supprimera toutes les données de la caisse!
+      </div>
+      <div class="form-group">
+        <label>Pour confirmer, tapez exactement: <strong>DELETE_CAISSE</strong></label>
+        <input 
+          type="text" 
+          [(ngModel)]="deleteConfirmText" 
+          placeholder="DELETE_CAISSE"
+          style="font-family: monospace;">
+      </div>
+      <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
+        <button type="button" (click)="showDeleteModal = false" class="btn-secondary">
+          Annuler
+        </button>
+        <button 
+          (click)="submitDelete()" 
+          [disabled]="deleteConfirmText !== 'DELETE_CAISSE' || isDeleting" 
+          class="btn-danger">
+          <span *ngIf="!isDeleting">🗑️ Supprimer définitivement</span>
+          <span *ngIf="isDeleting" style="display: flex; align-items: center; gap: 0.5rem;">
+            <div class="loading-spinner-sm"></div>
+            Suppression...
+          </span>
+        </button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- OPERATIONS MODAL (versements & bank transfers only) -->
-  <div *ngIf="showOperationsModal" class="component-card" style="position:fixed; inset:12% 18%; z-index:9999; max-height:76vh; overflow:auto; padding:1rem;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 style="margin:0;">🔁 Détails Opérations — Versements & Transferts</h3>
-      <div><button class="btn-secondary" (click)="closeOperationsDetails()">Fermer</button></div>
+<!-- Verse Modal -->
+<div class="modal-overlay" [class.show]="showVerseModal" *ngIf="showVerseModal" (click)="showVerseModal = false">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>💸 Versement en caisse</h2>
+      <button class="modal-close" (click)="showVerseModal = false">&times;</button>
     </div>
+    <div class="modal-body">
+      <form [formGroup]="verseForm" (ngSubmit)="submitVerse()">
+        <div class="form-group">
+          <label>Montant (DT) *</label>
+          <input type="number" formControlName="amount" step="0.01" min="0" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" rows="3" placeholder="Description du versement..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Référence</label>
+          <input type="text" formControlName="reference" placeholder="Numéro de référence (optionnel)">
+        </div>
+        <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
+          <button type="button" (click)="showVerseModal = false" class="btn-secondary">
+            Annuler
+          </button>
+          <button type="submit" [disabled]="verseForm.invalid" class="btn-success">
+            ✅ Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
-    <div style="margin-top:14px;">
-      <h4>Versements externes</h4>
-      <div class="table-container" style="margin-bottom:12px;">
-        <table class="data-table">
-          <thead>
-            <tr><th>Date</th><th style="text-align:right;">Montant (DT)</th></tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let v of depositHistory">
-              <td>{{ v.date | date:'dd/MM/yyyy' }}</td>
-              <td class="amount collected" style="text-align:right;">{{ v.amount | number:'1.2-2' }}</td>
-            </tr>
-            <tr *ngIf="depositHistory.length === 0">
-              <td [attr.colspan]="2" class="empty-state">Aucun versement enregistré.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+<!-- Transfert Modal -->
+<div class="modal-overlay" [class.show]="showTransfertModal" *ngIf="showTransfertModal" (click)="showTransfertModal = false">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>🏦 Transfert bancaire</h2>
+      <button class="modal-close" (click)="showTransfertModal = false">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="transfertForm" (ngSubmit)="submitTransfert()">
+        <div class="form-group">
+          <label>Montant (DT) *</label>
+          <input type="number" formControlName="amount" step="0.01" min="0" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" rows="3" placeholder="Description du transfert..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Référence bancaire</label>
+          <input type="text" formControlName="reference" placeholder="Numéro de référence bancaire">
+        </div>
+        <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
+          <button type="button" (click)="showTransfertModal = false" class="btn-secondary">
+            Annuler
+          </button>
+          <button type="submit" [disabled]="transfertForm.invalid" class="btn-primary">
+            ✅ Transférer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
-      <h4>Transferts vers banque</h4>
+<!-- History Modal -->
+<div class="modal-overlay modal-large" [class.show]="showHistoryModal" *ngIf="showHistoryModal" (click)="showHistoryModal = false">
+  <div class="modal-container modal-wide" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>📜 Historique des transactions</h2>
+      <button class="modal-close" (click)="showHistoryModal = false">&times;</button>
+    </div>
+    <div class="modal-body">
       <div class="table-container">
         <table class="data-table">
-          <thead><tr><th>Date</th><th style="text-align:right;">Montant (DT)</th></tr></thead>
-          <tbody>
-            <tr *ngFor="let t of bankTransferHistory">
-              <td>{{ t.date | date:'dd/MM/yyyy' }}</td>
-              <td class="amount" style="text-align:right;">{{ t.amount | number:'1.2-2' }}</td>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Montant</th>
+              <th>Solde après</th>
+              <th>Description</th>
+              <th>Référence</th>
             </tr>
-            <tr *ngIf="bankTransferHistory.length === 0">
-              <td [attr.colspan]="2" class="empty-state">Aucun transfert enregistré.</td>
+          </thead>
+          <tbody>
+            <tr *ngFor="let transaction of allTransactions">
+              <td>{{ transaction.date | date:'short' }}</td>
+              <td>
+                <span class="type-badge" 
+                      [ngClass]="transaction.type === 'verse_caisse' ? 'badge-success' : 'badge-primary'">
+                  {{ getTransactionLabel(transaction.type) }}
+                </span>
+              </td>
+              <td class="amount-cell success">{{ formatAmount(transaction.amount) }}</td>
+              <td class="amount-cell">{{ formatAmount(transaction.balanceAfter) }}</td>
+              <td>{{ transaction.description || '-' }}</td>
+              <td>{{ transaction.reference || '-' }}</td>
             </tr>
           </tbody>
         </table>
+        <div *ngIf="allTransactions.length === 0" class="empty-state">
+          <div class="empty-icon">📋</div>
+          <h3>Aucune transaction</h3>
+          <p>L'historique des transactions est vide</p>
+        </div>
+      </div>
+      
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="allTransactions.length > 0">
+        <button 
+          class="btn-pagination" 
+          (click)="previousPage()" 
+          [disabled]="currentPage === 1">
+          ← Précédent
+        </button>
+        <span class="pagination-info">Page {{ currentPage }} sur {{ totalPages }}</span>
+        <button 
+          class="btn-pagination" 
+          (click)="nextPage()" 
+          [disabled]="currentPage === totalPages">
+          Suivant →
+        </button>
       </div>
     </div>
   </div>
-
-  <!-- EXTERNAL DEPOSIT MODAL -->
-  <div *ngIf="showExternalDeposit" class="component-card" style="position:fixed; inset:28% 30%; z-index:9999; max-width:540px; padding:1rem;">
-    <h3>💸 Versement en caisse</h3>
-    <div style="margin-top:8px;">
-      <label>Montant (DT)</label>
-      <input type="number" [(ngModel)]="externalAmount" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--color-border);" />
-    </div>
-    <div style="margin-top:12px; display:flex; gap:8px;">
-      <button class="btn-primary" (click)="confirmExternalDeposit()">Valider</button>
-      <button class="btn-secondary" (click)="cancelExternalDeposit()">Annuler</button>
-    </div>
-  </div>
-
-  <!-- BANK TRANSFER MODAL -->
-  <div *ngIf="showBankTransfer" class="component-card" style="position:fixed; inset:28% 30%; z-index:9999; max-width:540px; padding:1rem;">
-    <h3>🏦 Transfert vers Banque</h3>
-    <div style="margin-top:8px;">
-      <label>Montant (DT)</label>
-      <input type="number" [(ngModel)]="bankTransferAmount" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--color-border);" />
-    </div>
-    <div style="margin-top:12px; display:flex; gap:8px;">
-      <button class="btn-primary" (click)="confirmBankTransfer()">Valider</button>
-      <button class="btn-secondary" (click)="cancelBankTransfer()">Annuler</button>
-    </div>
-  </div>
-
 </div>

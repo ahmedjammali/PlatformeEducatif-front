@@ -1019,8 +1019,7 @@
                                   </span>
                                 </div>
                                 
-                                <div class="payment-info" *ngIf="payment.paymentDate">
-                                  <span class="payment-date">{{ formatDate(payment.paymentDate) }}</span>
+                                <div class="payment-info" >
                                   <span class="payment-method">{{ getPaymentMethodLabel(payment.paymentMethod) }}</span>
                                   <span class="receipt-number" *ngIf="payment.receiptNumber">
                                     Reçu: {{ payment.receiptNumber }}
